@@ -1,0 +1,14 @@
+# Normalize all text files to LF on checkout
+* text=auto eol=lf
+
+# Explicitly enforce LF for Kotlin/Java source files
+*.kt text eol=lf
+*.kts text eol=lf
+*.java text eol=lf
+*.xml text eol=lf
+
+# Treat images/binaries as binary (prevent git from misinterpreting them as text)
+*.png binary
+*.jpg binary
+*.jks binary
+*.keystore binary
