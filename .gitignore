@@ -1,3 +1,21 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.aar
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
 # Gradle files
 .gradle/
 build/
@@ -16,12 +34,20 @@ captures/
 *.apk
 output-metadata.json
 
-# IntelliJ
+# IntelliJ / Android Studio
 *.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+.idea/*
+!.idea/codeStyles/
+!.idea/runConfigurations.xml
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/deploymentTargetDropDown.xml
+.idea/misc.xml
+.idea/render.experimental.xml
 
 # Keystore files
 *.jks
@@ -32,3 +58,25 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+claude.md
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Windows installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
