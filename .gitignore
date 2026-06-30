@@ -36,7 +36,6 @@ output-metadata.json
 
 # IntelliJ / Android Studio
 *.iml
-.idea/*
 !.idea/codeStyles/
 !.idea/runConfigurations.xml
 .idea/caches/
