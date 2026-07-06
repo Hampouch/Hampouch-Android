@@ -2,10 +2,14 @@ package com.example.hampouch.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val Main = Color(0xFF935C21)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val Sub1 = Color(0xFF5F3C16)
+
+val Sub2 = Color(0xFFAD865C)
+
+val Sub3 = Color(0xFFF7EFD8)
+
+val Sub4 = Color(0xFFF2E7C9)
+
+val Sub = Color(0xFFA65633)

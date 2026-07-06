@@ -47,6 +47,9 @@ output-metadata.json
 .idea/deploymentTargetDropDown.xml
 .idea/misc.xml
 .idea/render.experimental.xml
+.idea/gradle.xml
+.idea/.name
+.idea/deploymentTargetSelector.xml
 
 # Keystore files
 *.jks
