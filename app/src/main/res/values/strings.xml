@@ -1,3 +1,61 @@
 <resources>
     <string name="app_name">Hampouch</string>
+
+    <string name="cd_hampouch_logo">햄파우치 로고</string>
+    <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
+    <string name="cd_back">뒤로 가기</string>
+    <string name="cd_next">다음</string>
+    <string name="cd_previous_month">이전 달</string>
+    <string name="cd_next_month">다음 달</string>
+
+    <string name="onboarding_won_suffix">원</string>
+    <string name="onboarding_direct_input">직접 입력</string>
+    <string name="onboarding_confirm">확인</string>
+    <string name="onboarding_next">다음</string>
+    <string name="onboarding_button_next">다음으로</string>
+
+    <string name="onboarding_step2_title">식비 현실 진단</string>
+    <string name="onboarding_step2_subtitle">지난 한 달, 식비로 얼마나 쓰셨나요?</string>
+    <string name="onboarding_last_month_expense_label">지난달 식비</string>
+    <string name="onboarding_amount_placeholder">금액을 입력해주세요</string>
+
+    <string name="onboarding_step3_title">지난달 식비 입력</string>
+
+    <string name="onboarding_step4_title">챌린지 목표 설정</string>
+    <string name="onboarding_step4_subtitle">나만의 식비 절약 챌린지를 시작해보세요</string>
+    <string name="onboarding_period_label">챌린지 기간</string>
+    <string name="onboarding_period_1week">1주</string>
+    <string name="onboarding_period_2weeks">2주</string>
+    <string name="onboarding_period_1month">1개월</string>
+    <string name="onboarding_salary_day_label">월급날</string>
+    <string name="onboarding_salary_day_value">매달 %1$d일</string>
+    <string name="onboarding_target_amount_label">기간 내 식비 목표 금액</string>
+    <string name="onboarding_daily_budget_label">하루 목표 식비</string>
+    <string name="onboarding_daily_budget_value">일 %1$s원</string>
+
+    <string name="onboarding_step5_title">월급날 선택</string>
+    <string name="onboarding_salary_preset_1">매달 1일</string>
+    <string name="onboarding_salary_preset_10">매달 10일</string>
+    <string name="onboarding_salary_preset_25">매달 25일</string>
+
+    <string name="onboarding_step6_title">목표 금액 입력</string>
+
+    <string name="onboarding_step7_title">월급날 선택</string>
+    <string name="onboarding_calendar_month_format">%1$d년 %2$d월</string>
+
+    <string name="onboarding_step8_title">지출이 많은 카테고리</string>
+    <string name="onboarding_step8_subtitle">어디에 가장 많이 소비하고 있나요? (중복 선택 가능)</string>
+    <string name="onboarding_start_bytecut">바이트컷 시작하기</string>
+
+    <string name="category_food">식비</string>
+    <string name="category_cafe">카페</string>
+    <string name="category_delivery">배달음식</string>
+    <string name="category_convenience">편의점</string>
+    <string name="category_mart">마트</string>
+    <string name="category_dining_out">외식/술자리</string>
+    <string name="category_snack">간식</string>
+    <string name="category_subscription">구독서비스</string>
+    <string name="category_etc">기타</string>
+
+    <string name="onboarding_loading_message">챌린지를 준비하고 있어요</string>
 </resources>
