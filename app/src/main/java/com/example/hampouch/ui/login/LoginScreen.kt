@@ -1,11 +1,9 @@
 package com.example.hampouch.ui.login
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,11 +16,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,8 +25,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,9 +33,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.theme.Body16Bold
+import com.example.hampouch.ui.common.FooterLinkRow
+import com.example.hampouch.ui.common.LoginTextField
+import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.theme.HPBlack
-import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub3
@@ -203,91 +197,6 @@ private fun SocialLoginButton(
             )
             Spacer(modifier = Modifier.size(13.dp))
             Text(label, color = HPBlack, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
-private fun OrDivider(text: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 8f))
-
-        Canvas(
-            Modifier
-                .weight(1f)
-                .height(1.dp)
-        ) {
-            drawLine(HPText, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
-        }
-        Text(
-            text,
-            modifier = Modifier.padding(horizontal = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPText
-        )
-        Canvas(
-            Modifier
-                .weight(1f)
-                .height(1.dp)
-        ) {
-            drawLine(HPText, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
-        }
-    }
-}
-
-@Composable
-private fun LoginTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardOptions: KeyboardOptions,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        shape = RoundedCornerShape(10.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = HPGray5,
-            unfocusedContainerColor = HPWhite,
-            focusedContainerColor = HPWhite,
-        ),
-        placeholder = {
-            Text(text = placeholder, color = HPGray5, style = MaterialTheme.typography.bodyMedium)
-        },
-        visualTransformation = visualTransformation,
-        keyboardOptions = keyboardOptions,
-        trailingIcon = trailingIcon,
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-    )
-}
-
-@Composable
-private fun FooterLinkRow(
-    text: String,
-    linkText: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.height(24.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = HPText)
-        TextButton(
-            onClick = onClick,
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = HPSub)
-        ) {
-            Text(linkText, style = Body16Bold, color = HPSub)
         }
     }
 }
