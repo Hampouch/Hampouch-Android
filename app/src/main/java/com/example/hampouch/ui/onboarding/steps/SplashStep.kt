@@ -24,11 +24,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
 
-private const val SplashFadeInDurationMillis = 900
-private const val SplashHoldAfterFadeMillis = 2000
+private const val SplashFadeInDurationMillis = 2000
 
 @Composable
 fun SplashStep(
@@ -44,7 +44,7 @@ fun SplashStep(
 
     LaunchedEffect(Unit) {
         visible = true
-        delay((SplashFadeInDurationMillis + SplashHoldAfterFadeMillis).toLong())
+        delay((SplashFadeInDurationMillis).toLong())
         onTimeout()
     }
 
@@ -52,9 +52,10 @@ fun SplashStep(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(HPWhite)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(HPSub2, Color(0xFFE3D7B8))
+                        colors = listOf(HPSub2.copy(alpha = 0.35f), Color.Transparent)
                     )
                 ),
             contentAlignment = Alignment.Center

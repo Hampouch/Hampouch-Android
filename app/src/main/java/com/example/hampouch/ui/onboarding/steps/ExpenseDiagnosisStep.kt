@@ -1,7 +1,6 @@
 package com.example.hampouch.ui.onboarding.steps
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,7 +18,6 @@ import com.example.hampouch.R
 import com.example.hampouch.ui.onboarding.OnboardingUiState
 import com.example.hampouch.ui.onboarding.components.DirectInputOverlay
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
-import com.example.hampouch.ui.onboarding.components.OnboardingBottomNavBar
 import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
 import com.example.hampouch.ui.onboarding.components.OnboardingFootnoteText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
@@ -46,8 +44,7 @@ fun ExpenseDiagnosisStep(
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = { OnboardingBottomNavBar() }
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -78,8 +75,6 @@ fun ExpenseDiagnosisStep(
             }
 
             OnboardingFootnoteText(text = stringResource(R.string.onboarding_step2_footnote))
-
-            Box(modifier = Modifier.weight(1f))
 
             SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
 

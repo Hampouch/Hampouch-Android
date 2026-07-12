@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.onboarding.steps
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,6 @@ import com.example.hampouch.ui.onboarding.OnboardingMockData
 import com.example.hampouch.ui.onboarding.OnboardingUiState
 import com.example.hampouch.ui.onboarding.components.DirectInputOverlay
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
-import com.example.hampouch.ui.onboarding.components.OnboardingBottomNavBar
 import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
 import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
@@ -51,7 +51,6 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-import java.time.YearMonth
 
 private enum class GoalOverlay { NONE, TARGET_AMOUNT, PERIOD_CUSTOM, SALARY_CALENDAR }
 
@@ -81,14 +80,7 @@ fun ChallengeGoalStep(
         .let { if (it == -1) periodLabels.lastIndex else it }
 
     val salaryDateText = state.salaryDay?.let { day ->
-        val yearMonth = YearMonth.now()
-        val safeDay = day.coerceAtMost(yearMonth.lengthOfMonth())
-        stringResource(
-            R.string.onboarding_salary_date_format,
-            yearMonth.year,
-            yearMonth.monthValue,
-            safeDay
-        )
+        stringResource(R.string.onboarding_salary_day_recurring_format, day)
     } ?: stringResource(R.string.onboarding_direct_input)
 
     val dailyBudget = state.targetAmount?.let { amount ->
@@ -96,8 +88,7 @@ fun ChallengeGoalStep(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = { OnboardingBottomNavBar() }
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -161,6 +152,7 @@ fun ChallengeGoalStep(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(HPWhite, RoundedCornerShape(16.dp))
+                    .border(1.dp, HPGray5, RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically

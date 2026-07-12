@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.onboarding.OnboardingMockData
 import com.example.hampouch.ui.onboarding.components.CategoryChip
-import com.example.hampouch.ui.onboarding.components.OnboardingBottomNavBar
 import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
 import com.example.hampouch.ui.onboarding.components.OnboardingFootnoteText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
@@ -37,8 +36,7 @@ fun CategorySelectStep(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = { OnboardingBottomNavBar() }
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
             modifier = Modifier

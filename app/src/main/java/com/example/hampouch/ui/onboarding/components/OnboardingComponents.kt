@@ -24,13 +24,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -360,46 +355,6 @@ fun RowScope.CategoryChip(
             color = if (selected) HPWhite else HPSub1,
             maxLines = 1
         )
-    }
-}
-
-@Composable
-fun OnboardingBottomNavBar(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(HPWhite)
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BottomNavItem(icon = Icons.Outlined.Home, label = stringResource(R.string.nav_home))
-        BottomNavItem(icon = Icons.Outlined.LocalFireDepartment, label = stringResource(R.string.nav_hambattle))
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .background(HPMain, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = stringResource(R.string.nav_add),
-                tint = HPWhite
-            )
-        }
-        BottomNavItem(icon = Icons.Outlined.ChatBubbleOutline, label = stringResource(R.string.nav_community))
-        BottomNavItem(icon = Icons.Outlined.Person, label = stringResource(R.string.nav_mypage))
-    }
-}
-
-@Composable
-private fun BottomNavItem(icon: ImageVector, label: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Icon(imageVector = icon, contentDescription = label, tint = HPText, modifier = Modifier.size(24.dp))
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = HPText)
     }
 }
 
