@@ -4,6 +4,5 @@ enum class OnboardingStep {
     SPLASH,
     EXPENSE_DIAGNOSIS,
     CHALLENGE_GOAL,
-    CATEGORY_SELECT,
-    LOADING
+    CATEGORY_SELECT
 }

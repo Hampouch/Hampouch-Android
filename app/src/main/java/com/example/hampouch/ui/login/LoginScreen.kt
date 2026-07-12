@@ -52,7 +52,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
@@ -147,8 +147,8 @@ fun LoginScreen() {
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 다시 로직 작성
-                    showLoginError = true
+                    // TODO: 서버 연결 후 실제 로그인 검증으로 교체 (성공 시 onLoginSuccess, 실패 시 showLoginError = true)
+                    onLoginSuccess()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
