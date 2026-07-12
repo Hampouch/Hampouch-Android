@@ -1,28 +1,27 @@
 package com.example.hampouch.ui.onboarding.steps
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,65 +31,93 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.onboarding.OnboardingMockData
 import com.example.hampouch.ui.onboarding.OnboardingUiState
-import com.example.hampouch.ui.onboarding.components.AmountInputSheet
-import com.example.hampouch.ui.onboarding.components.FloatingNextButton
+import com.example.hampouch.ui.onboarding.components.DirectInputOverlay
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
+import com.example.hampouch.ui.onboarding.components.OnboardingBottomNavBar
+import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
 import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
+import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
 import com.example.hampouch.ui.onboarding.components.SegmentedSelector
+import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
+import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
+import com.example.hampouch.ui.theme.HPSub3
+import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlinx.coroutines.launch
+import java.time.YearMonth
 
-private enum class GoalSheet { NONE, SALARY_DAY, SALARY_CALENDAR, TARGET_AMOUNT }
+private enum class GoalOverlay { NONE, TARGET_AMOUNT, PERIOD_CUSTOM, SALARY_CALENDAR }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengeGoalStep(
     state: OnboardingUiState,
     onPeriodChange: (Int) -> Unit,
     onSalaryDayChange: (Int) -> Unit,
+    onResetOnSalaryDayChange: (Boolean) -> Unit,
     onTargetAmountChange: (Int) -> Unit,
     onNext: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var activeSheet by remember { mutableStateOf(GoalSheet.NONE) }
+    var activeOverlay by remember { mutableStateOf(GoalOverlay.NONE) }
     var targetAmountText by remember(state.targetAmount) {
         mutableStateOf(state.targetAmount?.toString().orEmpty())
     }
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
+    var periodCustomText by remember { mutableStateOf("") }
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
+    val daySuffix = stringResource(R.string.onboarding_day_suffix)
 
-    fun closeSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { activeSheet = GoalSheet.NONE }
+    val periodLabels = OnboardingMockData.periodPresets.map { stringResource(it.labelResId) } +
+        stringResource(R.string.onboarding_direct_input)
+    val periodSelectedIndex = OnboardingMockData.periodPresets
+        .indexOfFirst { it.days == state.challengePeriodDays }
+        .let { if (it == -1) periodLabels.lastIndex else it }
+
+    val salaryDateText = state.salaryDay?.let { day ->
+        val yearMonth = YearMonth.now()
+        val safeDay = day.coerceAtMost(yearMonth.lengthOfMonth())
+        stringResource(
+            R.string.onboarding_salary_date_format,
+            yearMonth.year,
+            yearMonth.monthValue,
+            safeDay
+        )
+    } ?: stringResource(R.string.onboarding_direct_input)
+
+    val dailyBudget = state.targetAmount?.let { amount ->
+        if (state.challengePeriodDays > 0) amount / state.challengePeriodDays else null
     }
 
-    val progressFilled = 1 +
-        (if (state.salaryDay != null) 1 else 0) +
-        (if (state.targetAmount != null) 1 else 0)
-
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = { OnboardingBottomNavBar() }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            OnboardingProgressBar(currentStep = progressFilled, totalSteps = 3)
+            OnboardingTopBar(onBack = onBack)
+
+            OnboardingProgressBar(currentStep = 2, totalSteps = 3)
 
             OnboardingHeaderCard(
-                title = stringResource(R.string.onboarding_step4_title),
-                subtitle = stringResource(R.string.onboarding_step4_subtitle)
+                stepNumber = 2,
+                stepLabel = stringResource(R.string.onboarding_step2_badge),
+                title = stringResource(R.string.onboarding_step4_title)
             )
+
+            OnboardingCaptionText(text = stringResource(R.string.onboarding_step4_caption))
 
             SectionCard {
                 Text(
@@ -99,19 +126,16 @@ fun ChallengeGoalStep(
                     color = HPSub1
                 )
                 SegmentedSelector(
-                    options = OnboardingMockData.periodPresets.map { stringResource(it.labelResId) },
-                    selectedIndex = OnboardingMockData.periodPresets.indexOfFirst { it.days == state.challengePeriodDays }.coerceAtLeast(0),
-                    onSelect = { index -> onPeriodChange(OnboardingMockData.periodPresets[index].days) },
+                    options = periodLabels,
+                    selectedIndex = periodSelectedIndex,
+                    onSelect = { index ->
+                        if (index == periodLabels.lastIndex) {
+                            activeOverlay = GoalOverlay.PERIOD_CUSTOM
+                        } else {
+                            onPeriodChange(OnboardingMockData.periodPresets[index].days)
+                        }
+                    },
                     modifier = Modifier.padding(top = 12.dp)
-                )
-            }
-
-            SectionCard {
-                LabeledInputRow(
-                    label = stringResource(R.string.onboarding_salary_day_label),
-                    valueText = state.salaryDay?.let { stringResource(R.string.onboarding_salary_day_value, it) }
-                        ?: stringResource(R.string.onboarding_direct_input),
-                    onClick = { activeSheet = GoalSheet.SALARY_DAY }
                 )
             }
 
@@ -120,91 +144,115 @@ fun ChallengeGoalStep(
                     label = stringResource(R.string.onboarding_target_amount_label),
                     valueText = state.targetAmount?.let { "${it.toWonText()}$wonSuffix" }
                         ?: stringResource(R.string.onboarding_direct_input),
-                    onClick = { activeSheet = GoalSheet.TARGET_AMOUNT }
+                    onClick = { activeOverlay = GoalOverlay.TARGET_AMOUNT }
                 )
             }
 
-            val dailyBudget = state.targetAmount?.let { amount ->
-                if (state.challengePeriodDays > 0) amount / state.challengePeriodDays else null
+            SectionCard {
+                LabeledInputRow(
+                    label = stringResource(R.string.onboarding_salary_day_label),
+                    valueText = salaryDateText,
+                    icon = Icons.Filled.CalendarToday,
+                    onClick = { activeOverlay = GoalOverlay.SALARY_CALENDAR }
+                )
             }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(HPWhite, RoundedCornerShape(19.5.dp))
-                    .border(1.dp, HPGray5, RoundedCornerShape(19.5.dp))
+                    .background(HPWhite, RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(R.string.onboarding_daily_budget_label),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = HPSub1
-                )
-                Box(
-                    modifier = Modifier
-                        .height(39.dp)
-                        .background(HPMain, RoundedCornerShape(19.5.dp))
-                        .padding(horizontal = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = dailyBudget?.let {
-                            stringResource(R.string.onboarding_daily_budget_value, it.toWonText())
-                        } ?: "-",
+                        text = stringResource(R.string.onboarding_salary_reset_label),
                         style = MaterialTheme.typography.labelLarge,
-                        color = HPWhite
+                        color = HPBlack
+                    )
+                    Text(
+                        text = stringResource(R.string.onboarding_salary_reset_description),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = HPText
                     )
                 }
+                Switch(
+                    checked = state.resetOnSalaryDay,
+                    onCheckedChange = onResetOnSalaryDayChange,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = HPWhite,
+                        checkedTrackColor = HPMain,
+                        uncheckedThumbColor = HPWhite,
+                        uncheckedTrackColor = HPGray5
+                    )
+                )
             }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(HPSub3, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.onboarding_current_daily_limit_label),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = HPText
+                )
+                Text(
+                    text = dailyBudget?.let { "${it.toWonText()}$wonSuffix" } ?: "-",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = HPBlack
+                )
+            }
+
+            SkipText(text = stringResource(R.string.onboarding_skip_goal), onClick = onNext)
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
                 enabled = state.salaryDay != null && state.targetAmount != null,
                 onClick = onNext
             )
-
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                FloatingNextButton(onClick = onNext)
-            }
         }
     }
 
-    when (activeSheet) {
-        GoalSheet.SALARY_DAY -> SalaryDaySheet(
-            initialSelectedDay = state.salaryDay,
-            onSalaryDaySelected = {
-                onSalaryDayChange(it)
-                closeSheet()
+    when (activeOverlay) {
+        GoalOverlay.TARGET_AMOUNT -> DirectInputOverlay(
+            valueText = targetAmountText,
+            onValueChange = { newValue ->
+                targetAmountText = newValue
+                newValue.toIntOrNull()?.let(onTargetAmountChange)
             },
-            onOpenCalendar = { activeSheet = GoalSheet.SALARY_CALENDAR },
-            onDismiss = { closeSheet() },
-            sheetState = sheetState
+            placeholder = stringResource(R.string.onboarding_step6_field_placeholder),
+            suffix = wonSuffix,
+            onDismiss = { activeOverlay = GoalOverlay.NONE }
         )
 
-        GoalSheet.SALARY_CALENDAR -> SalaryCalendarSheet(
+        GoalOverlay.PERIOD_CUSTOM -> DirectInputOverlay(
+            valueText = periodCustomText,
+            onValueChange = { newValue ->
+                periodCustomText = newValue
+                newValue.toIntOrNull()?.let(onPeriodChange)
+            },
+            placeholder = stringResource(R.string.onboarding_period_custom_placeholder),
+            suffix = daySuffix,
+            showMascot = false,
+            onDismiss = { activeOverlay = GoalOverlay.NONE }
+        )
+
+        GoalOverlay.SALARY_CALENDAR -> SalaryCalendarSheet(
             initialSelectedDay = state.salaryDay,
             onDaySelected = {
                 onSalaryDayChange(it)
-                closeSheet()
+                activeOverlay = GoalOverlay.NONE
             },
-            onDismiss = { closeSheet() },
-            sheetState = sheetState
+            onDismiss = { activeOverlay = GoalOverlay.NONE }
         )
 
-        GoalSheet.TARGET_AMOUNT -> AmountInputSheet(
-            title = stringResource(R.string.onboarding_step6_title),
-            amountText = targetAmountText,
-            onAmountTextChange = { targetAmountText = it },
-            onConfirm = {
-                targetAmountText.toIntOrNull()?.let(onTargetAmountChange)
-                closeSheet()
-            },
-            onDismiss = { closeSheet() },
-            sheetState = sheetState
-        )
-
-        GoalSheet.NONE -> Unit
+        GoalOverlay.NONE -> Unit
     }
 }
 
@@ -216,8 +264,10 @@ private fun ChallengeGoalStepPreview() {
             state = OnboardingUiState(salaryDay = 25, targetAmount = 300000),
             onPeriodChange = {},
             onSalaryDayChange = {},
+            onResetOnSalaryDayChange = {},
             onTargetAmountChange = {},
-            onNext = {}
+            onNext = {},
+            onBack = {}
         )
     }
 }

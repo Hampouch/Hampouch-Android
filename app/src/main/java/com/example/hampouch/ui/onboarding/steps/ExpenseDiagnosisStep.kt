@@ -4,66 +4,69 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.onboarding.OnboardingUiState
-import com.example.hampouch.ui.onboarding.components.AmountInputSheet
-import com.example.hampouch.ui.onboarding.components.FloatingNextButton
+import com.example.hampouch.ui.onboarding.components.DirectInputOverlay
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
+import com.example.hampouch.ui.onboarding.components.OnboardingBottomNavBar
+import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
+import com.example.hampouch.ui.onboarding.components.OnboardingFootnoteText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
 import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
+import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
+import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
+import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseDiagnosisStep(
     state: OnboardingUiState,
     onExpenseChange: (Int) -> Unit,
     onNext: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sheetVisible by remember { mutableStateOf(false) }
     var amountText by remember(state.lastMonthFoodExpense) {
         mutableStateOf(state.lastMonthFoodExpense?.toString().orEmpty())
     }
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
-    fun closeSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { sheetVisible = false }
-    }
-
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = { OnboardingBottomNavBar() }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            OnboardingTopBar(onBack = onBack)
+
+            OnboardingProgressBar(currentStep = 1, totalSteps = 3)
+
             OnboardingHeaderCard(
-                title = stringResource(R.string.onboarding_step2_title),
-                subtitle = stringResource(R.string.onboarding_step2_subtitle)
+                stepNumber = 1,
+                stepLabel = stringResource(R.string.onboarding_step1_badge),
+                title = stringResource(R.string.onboarding_step2_title)
             )
+
+            OnboardingCaptionText(text = stringResource(R.string.onboarding_step2_caption))
 
             SectionCard {
                 LabeledInputRow(
@@ -74,36 +77,30 @@ fun ExpenseDiagnosisStep(
                 )
             }
 
+            OnboardingFootnoteText(text = stringResource(R.string.onboarding_step2_footnote))
+
             Box(modifier = Modifier.weight(1f))
 
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
+
             OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_next),
+                text = stringResource(R.string.onboarding_button_next),
                 enabled = state.lastMonthFoodExpense != null,
                 onClick = onNext
             )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                FloatingNextButton(onClick = onNext)
-            }
         }
     }
 
     if (sheetVisible) {
-        AmountInputSheet(
-            title = stringResource(R.string.onboarding_step3_title),
-            amountText = amountText,
-            onAmountTextChange = { amountText = it },
-            onConfirm = {
-                amountText.toIntOrNull()?.let(onExpenseChange)
-                closeSheet()
+        DirectInputOverlay(
+            valueText = amountText,
+            onValueChange = { newValue ->
+                amountText = newValue
+                newValue.toIntOrNull()?.let(onExpenseChange)
             },
-            onDismiss = { closeSheet() },
-            sheetState = sheetState
+            placeholder = stringResource(R.string.onboarding_step3_field_placeholder),
+            suffix = wonSuffix,
+            onDismiss = { sheetVisible = false }
         )
     }
 }
@@ -115,7 +112,8 @@ private fun ExpenseDiagnosisStepPreview() {
         ExpenseDiagnosisStep(
             state = OnboardingUiState(lastMonthFoodExpense = 452000),
             onExpenseChange = {},
-            onNext = {}
+            onNext = {},
+            onBack = {}
         )
     }
 }

@@ -42,15 +42,18 @@ fun OnboardingRoute(
             OnboardingStep.EXPENSE_DIAGNOSIS -> ExpenseDiagnosisStep(
                 state = uiState,
                 onExpenseChange = { uiState = uiState.copy(lastMonthFoodExpense = it) },
-                onNext = { step = OnboardingStep.CHALLENGE_GOAL }
+                onNext = { step = OnboardingStep.CHALLENGE_GOAL },
+                onBack = {}
             )
 
             OnboardingStep.CHALLENGE_GOAL -> ChallengeGoalStep(
                 state = uiState,
                 onPeriodChange = { uiState = uiState.copy(challengePeriodDays = it) },
                 onSalaryDayChange = { uiState = uiState.copy(salaryDay = it) },
+                onResetOnSalaryDayChange = { uiState = uiState.copy(resetOnSalaryDay = it) },
                 onTargetAmountChange = { uiState = uiState.copy(targetAmount = it) },
-                onNext = { step = OnboardingStep.CATEGORY_SELECT }
+                onNext = { step = OnboardingStep.CATEGORY_SELECT },
+                onBack = { step = OnboardingStep.EXPENSE_DIAGNOSIS }
             )
 
             OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(
@@ -64,7 +67,8 @@ fun OnboardingRoute(
                         }
                     )
                 },
-                onStart = { step = OnboardingStep.LOADING }
+                onStart = { step = OnboardingStep.LOADING },
+                onBack = { step = OnboardingStep.CHALLENGE_GOAL }
             )
 
             OnboardingStep.LOADING -> LoadingStep(

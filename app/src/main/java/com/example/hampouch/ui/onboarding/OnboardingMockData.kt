@@ -3,29 +3,23 @@ package com.example.hampouch.ui.onboarding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.DeliveryDining
-import androidx.compose.material.icons.filled.LocalBar
+import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.LocalCafe
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.ShoppingBasket
+import androidx.compose.material.icons.filled.SportsBar
 import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPText
 
 data class CategoryOption(
     val id: String,
     val labelResId: Int,
-    val icon: ImageVector,
+    val icon: ImageVector?,
     val accentColor: Color
-)
-
-data class SalaryDayPreset(
-    val day: Int,
-    val labelResId: Int
 )
 
 data class PeriodPreset(
@@ -35,26 +29,21 @@ data class PeriodPreset(
 
 object OnboardingMockData {
     val periodPresets = listOf(
-        PeriodPreset(days = 7, labelResId = R.string.onboarding_period_1week),
-        PeriodPreset(days = 14, labelResId = R.string.onboarding_period_2weeks),
-        PeriodPreset(days = 30, labelResId = R.string.onboarding_period_1month)
-    )
-
-    val salaryDayPresets = listOf(
-        SalaryDayPreset(day = 1, labelResId = R.string.onboarding_salary_preset_1),
-        SalaryDayPreset(day = 10, labelResId = R.string.onboarding_salary_preset_10),
-        SalaryDayPreset(day = 25, labelResId = R.string.onboarding_salary_preset_25)
+        PeriodPreset(days = 3, labelResId = R.string.onboarding_period_3days),
+        PeriodPreset(days = 7, labelResId = R.string.onboarding_period_7days),
+        PeriodPreset(days = 14, labelResId = R.string.onboarding_period_14days),
+        PeriodPreset(days = 31, labelResId = R.string.onboarding_period_31days)
     )
 
     val categoryOptions = listOf(
-        CategoryOption("food", R.string.category_food, Icons.Filled.Restaurant, Color(0xFFED6C30)),
-        CategoryOption("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain),
         CategoryOption("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5)),
-        CategoryOption("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFFFCC21B)),
-        CategoryOption("mart", R.string.category_mart, Icons.Filled.ShoppingCart, Color(0xFF178BFD)),
-        CategoryOption("dining_out", R.string.category_dining_out, Icons.Filled.LocalBar, HPSub),
+        CategoryOption("dining_out", R.string.category_dining_out, Icons.Filled.House, HPSub2),
+        CategoryOption("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD)),
+        CategoryOption("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain),
         CategoryOption("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30)),
-        CategoryOption("subscription", R.string.category_subscription, Icons.Filled.Subscriptions, Color(0xFF2859C5)),
-        CategoryOption("etc", R.string.category_etc, Icons.Filled.MoreHoriz, HPSub)
+        CategoryOption("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A)),
+        CategoryOption("dining_out_home", R.string.category_dining_out, Icons.Filled.House, HPSub2),
+        CategoryOption("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E)),
+        CategoryOption("add_custom", R.string.category_add_custom, null, HPText)
     )
 }

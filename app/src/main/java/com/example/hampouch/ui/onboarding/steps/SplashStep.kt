@@ -28,7 +28,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
 
 private const val SplashFadeInDurationMillis = 900
-private const val SplashHoldAfterFadeMillis = 1100
+private const val SplashHoldAfterFadeMillis = 2000
 
 @Composable
 fun SplashStep(

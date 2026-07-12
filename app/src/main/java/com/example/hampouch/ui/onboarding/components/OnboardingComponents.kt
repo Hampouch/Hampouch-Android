@@ -4,43 +4,60 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
@@ -49,6 +66,33 @@ import java.text.NumberFormat
 import java.util.Locale
 
 fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).format(this)
+
+@Composable
+fun OnboardingTopBar(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back),
+                tint = HPSub1
+            )
+        }
+        IconButton(onClick = {}) {
+            Icon(
+                imageVector = Icons.Filled.Notifications,
+                contentDescription = stringResource(R.string.cd_notification),
+                tint = HPSub1
+            )
+        }
+    }
+}
 
 @Composable
 fun OnboardingProgressBar(
@@ -67,7 +111,7 @@ fun OnboardingProgressBar(
                     .height(5.dp)
                     .weight(1f)
                     .background(
-                        color = if (isFilled) HPMain else HPText,
+                        color = if (isFilled) HPMain else HPGray5,
                         shape = RoundedCornerShape(2.5.dp)
                     )
             )
@@ -77,8 +121,9 @@ fun OnboardingProgressBar(
 
 @Composable
 fun OnboardingHeaderCard(
+    stepNumber: Int,
+    stepLabel: String,
     title: String,
-    subtitle: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -87,16 +132,68 @@ fun OnboardingHeaderCard(
             .height(139.dp)
             .background(HPSub3, RoundedCornerShape(30.dp))
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, color = HPSub1)
         Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText,
+            text = stringResource(R.string.onboarding_step_format, stepNumber) + " $stepLabel",
+            style = MaterialTheme.typography.labelLarge,
+            color = HPSub,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = HPBlack,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 6.dp)
         )
     }
+}
+
+@Composable
+fun OnboardingCaptionText(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = HPText,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun OnboardingFootnoteText(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = HPText,
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun SkipText(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = HPText,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp)
+    )
 }
 
 @Composable
@@ -118,7 +215,8 @@ fun LabeledInputRow(
     label: String,
     valueText: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Filled.Edit
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(text = label, style = MaterialTheme.typography.labelLarge, color = HPSub1)
@@ -132,17 +230,13 @@ fun LabeledInputRow(
                 .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
             Text(
                 text = valueText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (valueText.isEmpty()) HPText else HPSub1
-            )
-            Icon(
-                imageVector = Icons.Filled.ChevronRight,
-                contentDescription = null,
-                tint = HPText
             )
         }
     }
@@ -175,25 +269,6 @@ fun OnboardingPrimaryButton(
 }
 
 @Composable
-fun FloatingNextButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = modifier
-            .size(50.dp)
-            .background(HPMain, CircleShape)
-    ) {
-        Icon(
-            imageVector = Icons.Filled.ArrowForward,
-            contentDescription = stringResource(R.string.cd_next),
-            tint = HPWhite
-        )
-    }
-}
-
-@Composable
 fun SegmentedSelector(
     options: List<String>,
     selectedIndex: Int,
@@ -202,7 +277,7 @@ fun SegmentedSelector(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         options.forEachIndexed { index, label ->
             val selected = index == selectedIndex
@@ -236,92 +311,164 @@ fun SegmentedSelector(
 @Composable
 fun RowScope.CategoryChip(
     label: String,
+    icon: ImageVector?,
+    accentColor: Color,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Row(
         modifier = modifier
             .weight(1f)
-            .height(39.dp)
+            .height(44.dp)
             .background(
                 color = if (selected) HPMain else HPWhite,
-                shape = RoundedCornerShape(19.5.dp)
+                shape = RoundedCornerShape(22.dp)
             )
             .border(
                 width = 1.dp,
                 color = if (selected) HPMain else HPGray5,
-                shape = RoundedCornerShape(19.5.dp)
+                shape = RoundedCornerShape(22.dp)
             )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(
+                        color = if (selected) HPWhite else accentColor.copy(alpha = 0.15f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) HPWhite else HPSub1
+            color = if (selected) HPWhite else HPSub1,
+            maxLines = 1
         )
+    }
+}
+
+@Composable
+fun OnboardingBottomNavBar(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(HPWhite)
+            .padding(vertical = 10.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BottomNavItem(icon = Icons.Outlined.Home, label = stringResource(R.string.nav_home))
+        BottomNavItem(icon = Icons.Outlined.LocalFireDepartment, label = stringResource(R.string.nav_hambattle))
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .background(HPMain, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.nav_add),
+                tint = HPWhite
+            )
+        }
+        BottomNavItem(icon = Icons.Outlined.ChatBubbleOutline, label = stringResource(R.string.nav_community))
+        BottomNavItem(icon = Icons.Outlined.Person, label = stringResource(R.string.nav_mypage))
+    }
+}
+
+@Composable
+private fun BottomNavItem(icon: ImageVector, label: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = label, tint = HPText, modifier = Modifier.size(24.dp))
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = HPText)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AmountInputSheet(
-    title: String,
-    amountText: String,
-    onAmountTextChange: (String) -> Unit,
-    onConfirm: () -> Unit,
+fun DirectInputOverlay(
+    valueText: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    suffix: String?,
     onDismiss: () -> Unit,
-    sheetState: SheetState,
     modifier: Modifier = Modifier,
-    confirmEnabled: Boolean = amountText.isNotBlank()
+    showMascot: Boolean = true
 ) {
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = HPWhite,
-        modifier = modifier
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(HPBlack.copy(alpha = 0.5f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = onDismiss
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            Text(text = title, style = MaterialTheme.typography.titleSmall, color = HPSub1)
-
-            Image(
-                painter = painterResource(R.drawable.img_hamster_mascot),
-                contentDescription = stringResource(R.string.cd_hamster_mascot),
-                modifier = Modifier
-                    .padding(top = 12.dp)
-                    .size(118.dp)
-            )
-
-            OutlinedTextField(
-                value = amountText,
-                onValueChange = { newValue -> onAmountTextChange(newValue.filter(Char::isDigit)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                placeholder = { Text(stringResource(R.string.onboarding_amount_placeholder)) },
-                suffix = { Text(stringResource(R.string.onboarding_won_suffix)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(9.5.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = HPMain,
-                    unfocusedBorderColor = HPGray5
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier
+                    .padding(horizontal = 56.dp)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = {}
+                    )
+            ) {
+                if (showMascot) {
+                    Image(
+                        painter = painterResource(R.drawable.img_hamster_mascot),
+                        contentDescription = stringResource(R.string.cd_hamster_mascot),
+                        modifier = Modifier.size(110.dp)
+                    )
+                }
+                OutlinedTextField(
+                    value = valueText,
+                    onValueChange = { onValueChange(it.filter(Char::isDigit)) },
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth(),
+                    placeholder = { Text(placeholder) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Edit, contentDescription = null, tint = HPMain)
+                    },
+                    suffix = suffix?.let { { Text(it) } },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onDismiss() }),
+                    shape = RoundedCornerShape(50),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = HPWhite,
+                        unfocusedContainerColor = HPWhite,
+                        focusedBorderColor = HPMain,
+                        unfocusedBorderColor = HPGray5
+                    )
                 )
-            )
-
-            OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_confirm),
-                onClick = onConfirm,
-                enabled = confirmEnabled,
-                modifier = Modifier.padding(top = 20.dp)
-            )
+            }
         }
     }
 }
