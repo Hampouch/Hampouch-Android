@@ -52,7 +52,11 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
+fun LoginScreen(
+    onLoginSuccess: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {},
+    onNavigateToResetPassword: () -> Unit = {}
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
@@ -163,13 +167,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
             FooterLinkRow(
                 text = "계정이 없으신가요?",
                 linkText = "회원가입",
-                onClick = {}
+                onClick = onNavigateToSignUp
             )
             Spacer(modifier = Modifier.size(10.dp))
             FooterLinkRow(
                 text = "비밀번호를 잊으셨나요?",
                 linkText = "비밀번호 재설정",
-                onClick = {}
+                onClick = onNavigateToResetPassword
             )
         }
     }

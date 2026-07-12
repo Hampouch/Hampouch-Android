@@ -61,7 +61,11 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun ResetPasswordScreen() {
+fun ResetPasswordScreen(
+    onResetSuccess: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {},
+    onNavigateToLogin: () -> Unit = {}
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var emailCode by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -180,9 +184,12 @@ fun ResetPasswordScreen() {
 
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 다시 로직 작성
+                    // TODO: 서버 연결 후 실제 비밀번호 재설정 API 호출로 교체
                     showPasswordError = !isPasswordValid
                     showTermsError = !areRequiredTermsChecked
+                    if (isPasswordValid) {
+                        onResetSuccess()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -197,12 +204,12 @@ fun ResetPasswordScreen() {
             FooterLinkRow(
                 text = "계정이 없으신가요?",
                 linkText = "회원가입",
-                onClick = {}
+                onClick = onNavigateToSignUp
             )
             FooterLinkRow(
                 text = "",
                 linkText = "로그인 하러가기",
-                onClick = {}
+                onClick = onNavigateToLogin
             )
         }
     }

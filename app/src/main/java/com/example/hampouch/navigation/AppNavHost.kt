@@ -14,6 +14,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
+import com.example.hampouch.ui.signup.ResetPasswordScreen
+import com.example.hampouch.ui.signup.SignUpScreen
 
 private const val TAG = "AppNavHost"
 
@@ -31,9 +33,7 @@ fun AppNavHost(
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
+                    navController.navigate(Screen.Login.route)
                 }
             )
         }
@@ -44,7 +44,32 @@ fun AppNavHost(
                     navController.navigate(Screen.Loading.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                }
+                },
+                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                onNavigateToResetPassword = { navController.navigate(Screen.ResetPassword.route) }
+            )
+        }
+
+        composable(Screen.SignUp.route) {
+            SignUpScreen(
+                onSignUpSuccess = {
+                    navController.navigate(Screen.Loading.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+            )
+        }
+
+        composable(Screen.ResetPassword.route) {
+            ResetPasswordScreen(
+                onResetSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ResetPassword.route) { inclusive = true }
+                    }
+                },
+                onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
             )
         }
 
@@ -52,7 +77,7 @@ fun AppNavHost(
             LoadingStep(
                 onTimeout = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Loading.route) { inclusive = true }
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 }
             )

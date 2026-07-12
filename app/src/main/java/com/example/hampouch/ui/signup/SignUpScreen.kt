@@ -61,7 +61,10 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(
+    onSignUpSuccess: () -> Unit = {},
+    onNavigateToLogin: () -> Unit = {}
+) {
     var email by rememberSaveable { mutableStateOf("") }
     var emailCode by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -214,9 +217,12 @@ fun SignUpScreen() {
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 다시 로직 작성
+                    // TODO: 서버 연결 후 실제 회원가입 API 호출로 교체
                     showPasswordError = !isPasswordValid
                     showTermsError = !areRequiredTermsChecked
+                    if (isPasswordValid && areRequiredTermsChecked) {
+                        onSignUpSuccess()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -231,7 +237,7 @@ fun SignUpScreen() {
             FooterLinkRow(
                 text = "이미 계정이 있으신가요?",
                 linkText = "로그인",
-                onClick = {}
+                onClick = onNavigateToLogin
             )
         }
     }
