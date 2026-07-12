@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ import com.example.hampouch.R
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
+import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
@@ -47,6 +49,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen(
+    completeDialogMessage: String? = null,
     onLoginSuccess: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
     onNavigateToResetPassword: () -> Unit = {}
@@ -55,6 +58,14 @@ fun LoginScreen(
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     var showLoginError by rememberSaveable { mutableStateOf(false) }
+    var visibleCompleteDialogMessage by remember { mutableStateOf(completeDialogMessage) }
+
+    visibleCompleteDialogMessage?.let { message ->
+        CompleteDialog(
+            message = message,
+            onDismiss = { visibleCompleteDialogMessage = null }
+        )
+    }
 
     Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
         Column(

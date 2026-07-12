@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,18 +23,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
+import kotlinx.coroutines.delay
+
+private const val CompleteDialogDurationMillis = 2000L
 
 @Composable
-fun CompleteDialog(onDismiss: () -> Unit) {
-    // TODO: completeDialogCard를 alertDialog에 띄워야함.
+fun CompleteDialog(
+    message: String = "회원가입이 완료되었습니다.",
+    onDismiss: () -> Unit
+) {
+    LaunchedEffect(Unit) {
+        delay(CompleteDialogDurationMillis)
+        onDismiss()
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+    ) {
+        CompleteDialogCard(message = message)
+    }
 }
 
 @Composable
-private fun CompleteDialogCard() {
+private fun CompleteDialogCard(message: String) {
     Column(
         modifier = Modifier
             .width(372.dp)
@@ -72,13 +90,11 @@ private fun CompleteDialogCard() {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "회원가입이 완료되었습니다.",
+                text = message,
                 textAlign = TextAlign.Center,
                 color = HPText,
                 style = MaterialTheme.typography.bodySmall
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            TextButton(onClick = {}) { Text("닫기") }
         }
     }
 }
@@ -86,5 +102,5 @@ private fun CompleteDialogCard() {
 @Preview
 @Composable
 private fun CompleteDialogCardPreview() {
-    CompleteDialogCard()
+    CompleteDialogCard(message = "회원가입이 완료되었습니다.")
 }
