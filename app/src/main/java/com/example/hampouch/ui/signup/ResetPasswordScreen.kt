@@ -1,9 +1,11 @@
-package com.example.hampouch.ui.login
+package com.example.hampouch.ui.signup
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,13 +14,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,10 +32,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
@@ -46,23 +54,38 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub3
+import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun LoginScreen() {
+fun ResetPasswordScreen() {
     var email by rememberSaveable { mutableStateOf("") }
+    var emailCode by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var nickname by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var showLoginError by rememberSaveable { mutableStateOf(false) }
+    var isEmailAvailable by remember { mutableStateOf<Boolean?>(null) }
+    var isEmailCodeVerified by remember { mutableStateOf<Boolean?>(null) }
+    var isNicknameAvailable by remember { mutableStateOf<Boolean?>(null) }
+    var showPasswordError by rememberSaveable { mutableStateOf(false) }
+    var isTermsChecked by rememberSaveable { mutableStateOf(false) }
+    var isPrivacyChecked by rememberSaveable { mutableStateOf(false) }
+    var isMarketingChecked by rememberSaveable { mutableStateOf(false) }
+    var showTermsError by rememberSaveable { mutableStateOf(false) }
+    val isPasswordValid = password.length >= 8 &&
+            password.any { it.isLetter() } &&
+            password.any { it.isDigit() }
+    val areRequiredTermsChecked = isTermsChecked && isPrivacyChecked
 
     Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(start = 20.dp, end = 20.dp, top = 60.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 20.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -74,42 +97,55 @@ fun LoginScreen() {
             Text(text = "식비 절약 챌린지", style = MaterialTheme.typography.bodyMedium, color = HPText)
 
             Spacer(modifier = Modifier.size(30.dp))
-
-            SocialLoginButton(
-                iconRes = R.drawable.login_kakao,
-                iconDescription = "kakao_login",
-                label = "카카오로 계속하기",
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.size(10.dp))
-            SocialLoginButton(
-                iconRes = R.drawable.login_google,
-                iconDescription = "google_login",
-                label = "구글로 계속하기",
-                onClick = {}
-            )
-
-            Spacer(modifier = Modifier.size(30.dp))
-            OrDivider(text = "또는 이메일로 계속하기")
+            OrDivider(text = "비밀번호 재설정")
             Spacer(modifier = Modifier.size(30.dp))
 
             Column(horizontalAlignment = Alignment.Start) {
                 LoginTextField(
-                    label = "이메일",
+                    label = "가입한 이메일",
                     value = email,
                     onValueChange = { email = it },
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
-                    )
+                    ),
+                    onCheckClick = {
+                        // TODO: 서버 연결 후 실제 이메일 중복확인 로직 작성
+                        isEmailAvailable = isEmailAvailable != true
+                    }
                 )
+                if (isEmailAvailable != null) {
+                    FieldMessage(
+                        if (isEmailAvailable == true) "인증번호가 발송되었습니다." else "이메일을 다시 확인해주세요."
+                    )
+                }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
-                    label = "비밀번호",
+                    label = "인증번호",
+                    value = emailCode,
+                    onValueChange = { emailCode = it },
+                    placeholder = "인증번호를 입력해주세요.",
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    onCheckClick = {
+                        // TODO: 서버 연결 후 실제 인증번호 확인 로직 작성
+                        isEmailCodeVerified = isEmailCodeVerified != true
+                    }
+                )
+                if (isEmailCodeVerified != null) {
+                    FieldMessage(
+                        if (isEmailCodeVerified == true) "확인되었습니다." else "인증번호를 다시 확인해주세요."
+                    )
+                }
+                Spacer(modifier = Modifier.size(20.dp))
+                LoginTextField(
+                    label = "비밀번호 재설정",
                     value = password,
                     onValueChange = { password = it },
-                    placeholder = "비밀번호를 입력해주세요.",
+                    placeholder = "8자 이상, 영문 + 숫자 조합",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
@@ -135,20 +171,18 @@ fun LoginScreen() {
                         }
                     }
                 )
+                if (showPasswordError) {
+                    FieldMessage("비밀번호를 다시 입력해주세요.")
+                }
             }
-            if (showLoginError) {
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    "이메일 및 비밀번호를 다시 확인해주세요.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPSub
-                )
-            }
+
             Spacer(modifier = Modifier.size(30.dp))
+
             Button(
                 onClick = {
                     // TODO: 서버 연결 후 다시 로직 작성
-                    showLoginError = true
+                    showPasswordError = !isPasswordValid
+                    showTermsError = !areRequiredTermsChecked
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -156,7 +190,7 @@ fun LoginScreen() {
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain),
             ) {
-                Text("로그인", style = MaterialTheme.typography.bodyLarge)
+                Text("비밀번호 재설정", style = MaterialTheme.typography.bodyLarge)
             }
 
             Spacer(modifier = Modifier.size(10.dp))
@@ -165,40 +199,11 @@ fun LoginScreen() {
                 linkText = "회원가입",
                 onClick = {}
             )
-            Spacer(modifier = Modifier.size(10.dp))
             FooterLinkRow(
-                text = "비밀번호를 잊으셨나요?",
-                linkText = "비밀번호 재설정",
+                text = "",
+                linkText = "로그인 하러가기",
                 onClick = {}
             )
-        }
-    }
-}
-
-@Composable
-private fun SocialLoginButton(
-    iconRes: Int,
-    iconDescription: String,
-    label: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = HPWhite)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(iconRes),
-                contentDescription = iconDescription,
-                modifier = Modifier.size(35.dp)
-            )
-            Spacer(modifier = Modifier.size(13.dp))
-            Text(label, color = HPBlack, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -234,6 +239,7 @@ private fun OrDivider(text: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoginTextField(
     label: String,
@@ -242,29 +248,88 @@ private fun LoginTextField(
     placeholder: String,
     keyboardOptions: KeyboardOptions,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    onCheckClick: (() -> Unit)? = null
 ) {
-    Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        shape = RoundedCornerShape(10.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = HPGray5,
-            unfocusedContainerColor = HPWhite,
-            focusedContainerColor = HPWhite,
-        ),
-        placeholder = {
-            Text(text = placeholder, color = HPGray5, style = MaterialTheme.typography.bodyMedium)
-        },
-        visualTransformation = visualTransformation,
-        keyboardOptions = keyboardOptions,
-        trailingIcon = trailingIcon,
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
+    val interactionSource = remember { MutableInteractionSource() }
+    val colors = OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = HPGray5,
+        unfocusedContainerColor = HPWhite,
+        focusedContainerColor = HPWhite,
     )
+
+    Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPBlack),
+            visualTransformation = visualTransformation,
+            keyboardOptions = keyboardOptions,
+            singleLine = true,
+            interactionSource = interactionSource,
+            decorationBox = { innerTextField ->
+                OutlinedTextFieldDefaults.DecorationBox(
+                    value = value,
+                    innerTextField = innerTextField,
+                    enabled = true,
+                    singleLine = true,
+                    visualTransformation = visualTransformation,
+                    interactionSource = interactionSource,
+                    placeholder = {
+                        Text(
+                            text = placeholder,
+                            color = HPGray5,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    trailingIcon = trailingIcon,
+                    colors = colors,
+                    contentPadding = OutlinedTextFieldDefaults.contentPadding(
+                        start = 12.dp,
+                        top = 8.dp,
+                        end = 12.dp,
+                        bottom = 8.dp
+                    ),
+                    container = {
+                        OutlinedTextFieldDefaults.Container(
+                            enabled = true,
+                            isError = false,
+                            interactionSource = interactionSource,
+                            colors = colors,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                    }
+                )
+            }
+        )
+        if (onCheckClick != null) {
+            Spacer(modifier = Modifier.size(8.dp))
+            CheckButton(onClick = onCheckClick)
+        }
+    }
+}
+
+@Composable
+private fun FieldMessage(text: String) {
+    Spacer(modifier = Modifier.size(8.dp))
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = HPSub)
+}
+
+@Composable
+private fun CheckButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.height(48.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = HPWhite),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        Text("확인", style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+    }
 }
 
 @Composable
@@ -290,8 +355,8 @@ private fun FooterLinkRow(
 
 @Preview
 @Composable
-fun LoginScreenPreview() {
+fun ResetPasswordScreenPreview() {
     HampouchTheme {
-        LoginScreen()
+        ResetPasswordScreen()
     }
 }

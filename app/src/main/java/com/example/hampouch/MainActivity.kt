@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.ui.login.LoginScreen
+import com.example.hampouch.ui.signup.ResetPasswordScreen
+import com.example.hampouch.ui.signup.SignUpScreen
 import com.example.hampouch.ui.theme.HampouchTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HampouchTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LoginScreen()
+                    SignUpScreen()
                 }
             }
         }
