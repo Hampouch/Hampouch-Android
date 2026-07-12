@@ -1,3 +1,64 @@
 <resources>
     <string name="app_name">Hampouch</string>
+
+    <string name="cd_hampouch_logo">햄파우치 로고</string>
+    <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
+    <string name="cd_back">뒤로 가기</string>
+    <string name="cd_next">다음</string>
+    <string name="cd_notification">알림</string>
+    <string name="cd_loading_text">로딩 중</string>
+
+    <string name="onboarding_won_suffix">원</string>
+    <string name="onboarding_direct_input">직접 입력</string>
+    <string name="onboarding_confirm">확인</string>
+    <string name="onboarding_next">다음</string>
+    <string name="onboarding_button_next">다음으로</string>
+    <string name="onboarding_step_format">STEP %1$d</string>
+
+    <string name="onboarding_step1_badge">식비 현실 진단</string>
+    <string name="onboarding_step2_title">지난달 식비가 얼마였나요?</string>
+    <string name="onboarding_step2_caption">솔직하게 입력할수록\n더 정확한 진단이 돼요.</string>
+    <string name="onboarding_last_month_expense_label">지난달 식비</string>
+    <string name="onboarding_step2_footnote">배달,카페, 외식 모두 포함해서\n입력값은 분석에만 쓰이고 저장되지 않아요</string>
+    <string name="onboarding_amount_placeholder">금액을 입력해주세요</string>
+    <string name="onboarding_skip">건너뛰기</string>
+
+    <string name="onboarding_step3_field_placeholder">식비 입력</string>
+
+    <string name="onboarding_step2_badge">챌린지 목표 설정</string>
+    <string name="onboarding_step4_title">챌린지 기간을 선택해주세요</string>
+    <string name="onboarding_step4_caption">짧게 시작할수록 성공률이 높아요.</string>
+    <string name="onboarding_period_label">기간</string>
+    <string name="onboarding_period_3days">3일</string>
+    <string name="onboarding_period_7days">7일</string>
+    <string name="onboarding_period_14days">14일</string>
+    <string name="onboarding_period_31days">31일</string>
+    <string name="onboarding_period_custom_placeholder">기간 입력</string>
+    <string name="onboarding_day_suffix">일</string>
+    <string name="onboarding_target_amount_label">기간 내 식비 목표</string>
+    <string name="onboarding_step6_field_placeholder">목표 입력</string>
+    <string name="onboarding_salary_day_label">월급날</string>
+    <string name="onboarding_salary_day_recurring_format">매월 %1$d일</string>
+    <string name="onboarding_salary_reset_label">월급날 기준으로 리셋</string>
+    <string name="onboarding_salary_reset_description">월급날 기준으로 목표를 다시 설정해요</string>
+    <string name="onboarding_current_daily_limit_label">현재 하루 한도</string>
+    <string name="onboarding_skip_goal">건너뛰기 (기록만 할게요)</string>
+
+    <string name="onboarding_step7_title">월급날 선택</string>
+
+    <string name="onboarding_step3_badge">나의 약간 카테고리</string>
+    <string name="onboarding_step8_title">어디서 가장 많이\n새나가나요?</string>
+    <string name="onboarding_step8_caption">선택한 카테고리 소비 시 개입이 강해져요</string>
+    <string name="onboarding_category_section_label">카테고리</string>
+    <string name="onboarding_category_footnote">중복 선택 가능\n나중에 언제든 수정할 수 있어요</string>
+    <string name="onboarding_start_bytecut">바이트컷 시작하기</string>
+
+    <string name="category_delivery">배달</string>
+    <string name="category_dining_out">외식</string>
+    <string name="category_convenience">편의점</string>
+    <string name="category_cafe">카페</string>
+    <string name="category_snack">간식</string>
+    <string name="category_mart">장보기</string>
+    <string name="category_drink">술자리</string>
+    <string name="category_add_custom">직접추가</string>
 </resources>

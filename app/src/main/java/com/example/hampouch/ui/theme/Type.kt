@@ -119,7 +119,6 @@ val Typography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     ),
-    // caption 글꼴
     labelSmall = TextStyle(
         fontFamily = PretendardFontFamily,
         fontWeight = FontWeight.Light,
