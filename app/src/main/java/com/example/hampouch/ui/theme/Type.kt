@@ -127,3 +127,12 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+// Material3 Typography 슬롯에 없는, 화면 전반에서 자주 쓰이는 커스텀 텍스트 스타일
+val Body16Bold = TextStyle(
+    fontFamily = PretendardFontFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize = 16.sp,
+    lineHeight = 24.sp,
+    letterSpacing = 0.5.sp
+)

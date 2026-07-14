@@ -61,7 +61,7 @@ fun SplashStep(
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(R.drawable.title_logo),
+                painter = painterResource(R.drawable.logo_title),
                 contentDescription = stringResource(R.string.cd_hampouch_logo),
                 modifier = Modifier
                     .fillMaxWidth(0.55f)

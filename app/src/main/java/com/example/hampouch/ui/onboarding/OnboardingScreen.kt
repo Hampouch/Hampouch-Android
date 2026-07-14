@@ -16,7 +16,6 @@ import com.example.hampouch.data.model.OnboardingRequest
 import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
-import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.theme.HampouchTheme
 
@@ -67,12 +66,7 @@ fun OnboardingRoute(
                         }
                     )
                 },
-                onStart = { step = OnboardingStep.LOADING },
-                onBack = { step = OnboardingStep.CHALLENGE_GOAL }
-            )
-
-            OnboardingStep.LOADING -> LoadingStep(
-                onTimeout = {
+                onStart = {
                     val periodType = when (uiState.challengePeriodDays) {
                         7 -> ChallengePeriodType.ONE_WEEK
                         14 -> ChallengePeriodType.TWO_WEEKS
@@ -89,7 +83,8 @@ fun OnboardingRoute(
                             topSpendingCategoryIds = uiState.selectedCategoryIds.toList()
                         )
                     )
-                }
+                },
+                onBack = { step = OnboardingStep.CHALLENGE_GOAL }
             )
         }
     }
