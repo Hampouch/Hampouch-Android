@@ -16,6 +16,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.hampouch.ui.hambattle.HamBattleAddScreen
+import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
@@ -105,6 +107,22 @@ fun AppNavHost(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("홈 화면 준비 중")
             }
+        }
+
+        composable(Screen.HamBattle.route) {
+            HamBattleScreen(
+                onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+            )
+        }
+
+        composable(Screen.HamBattleAdd.route) {
+            HamBattleAddScreen(
+                onBackClick = { navController.popBackStack() },
+                onStartClick = { request ->
+                    Log.d(TAG, "HamBattle challenge started: $request")
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

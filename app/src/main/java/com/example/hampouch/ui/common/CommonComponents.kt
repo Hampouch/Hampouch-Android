@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.ui.theme.Body16Bold
@@ -34,8 +35,9 @@ import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 
-// 로그인/회원가입/비밀번호 재설정 화면에서 공통으로 쓰는 컴포저블 모음.
+// 화면에서 공통으로 쓰는 컴포저블 모음.
 
+// 로그인 / 회원가입 화면에서 사용
 @Composable
 fun OrDivider(text: String) {
     Row(
@@ -141,6 +143,7 @@ fun LoginTextField(
     }
 }
 
+// 햄배틀 화면에서 사용
 @Composable
 fun CheckButton(onClick: () -> Unit) {
     Button(
@@ -150,7 +153,12 @@ fun CheckButton(onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = HPWhite),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        Text("확인", style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        Text(
+            "확인",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPBlack
+        )
     }
 }
 
