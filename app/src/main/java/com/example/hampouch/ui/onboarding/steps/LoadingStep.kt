@@ -54,7 +54,7 @@ fun LoadingStep(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Image(
-                    painter = painterResource(R.drawable.img_hamster_mascot),
+                    painter = painterResource(R.drawable.img_hamster_normal),
                     contentDescription = stringResource(R.string.cd_hamster_mascot),
                     modifier = Modifier.size(120.dp)
                 )

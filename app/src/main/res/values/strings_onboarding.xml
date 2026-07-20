@@ -1,13 +1,4 @@
 <resources>
-    <string name="app_name">Hampouch</string>
-
-    <string name="cd_hampouch_logo">햄파우치 로고</string>
-    <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
-    <string name="cd_back">뒤로 가기</string>
-    <string name="cd_next">다음</string>
-    <string name="cd_notification">알림</string>
-    <string name="cd_loading_text">로딩 중</string>
-
     <string name="onboarding_won_suffix">원</string>
     <string name="onboarding_direct_input">직접 입력</string>
     <string name="onboarding_confirm">확인</string>
@@ -51,7 +42,7 @@
     <string name="onboarding_step8_caption">선택한 카테고리 소비 시 개입이 강해져요</string>
     <string name="onboarding_category_section_label">카테고리</string>
     <string name="onboarding_category_footnote">중복 선택 가능\n나중에 언제든 수정할 수 있어요</string>
-    <string name="onboarding_start_bytecut">바이트컷 시작하기</string>
+    <string name="onboarding_start_bytecut">햄포치 시작하기</string>
 
     <string name="category_delivery">배달</string>
     <string name="category_dining_out">외식</string>
@@ -61,4 +52,5 @@
     <string name="category_mart">장보기</string>
     <string name="category_drink">술자리</string>
     <string name="category_add_custom">직접추가</string>
+    <string name="category_etc">기타</string>
 </resources>
