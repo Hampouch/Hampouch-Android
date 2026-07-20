@@ -37,6 +37,7 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
+import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -61,15 +62,17 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = HPGray2,
         bottomBar = {
-            BottomNavBar(
-                selectedItem = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = {}
-            )
+            if (selectedBottomTab != BottomNavItem.MY_PAGE) {
+                BottomNavBar(
+                    selectedItem = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = {}
+                )
+            }
         }
     ) { innerPadding ->
-        if (selectedBottomTab == BottomNavItem.HOME) {
-            HomeContent(
+        when (selectedBottomTab) {
+            BottomNavItem.HOME -> HomeContent(
                 uiState = uiState,
                 referenceToday = referenceToday,
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
@@ -84,8 +87,15 @@ fun HomeScreen(
                 onStartChallengeClick = onStartChallengeClick,
                 modifier = Modifier.padding(innerPadding)
             )
-        } else {
-            ComingSoonPlaceholder(
+
+            BottomNavItem.MY_PAGE -> MyPageScreen(
+                selectedBottomTab = selectedBottomTab,
+                onItemSelected = { selectedBottomTab = it },
+                onAddClick = {},
+                modifier = Modifier.padding(innerPadding)
+            )
+
+            else -> ComingSoonPlaceholder(
                 labelResId = selectedBottomTab.labelResId,
                 modifier = Modifier.padding(innerPadding)
             )

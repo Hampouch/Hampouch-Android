@@ -1,0 +1,87 @@
+<resources>
+    <!-- 마이페이지 / 전체 설정 / 기록 알림 / 비밀번호 변경 / 지난 챌린지 기록 -->
+
+    <string name="mypage_title">마이페이지</string>
+    <string name="mypage_name_change">이름 변경</string>
+    <string name="mypage_name_input_placeholder">이름 입력</string>
+    <string name="mypage_handle_format">@%1$s</string>
+    <string name="mypage_menu_challenge_history">지난 챌린지 기록</string>
+    <string name="mypage_menu_my_tips">내가 쓴 꿀팁</string>
+    <string name="mypage_menu_saved_tips">저장한 꿀팁</string>
+    <string name="mypage_menu_all_settings">전체 설정</string>
+    <string name="mypage_cd_profile_image">프로필 사진</string>
+    <string name="mypage_cd_more">더보기</string>
+    <string name="mypage_cd_confirm">확인</string>
+
+    <string name="settings_title">전체 설정</string>
+    <string name="settings_section_notification">알림 설정</string>
+    <string name="settings_record_alarm_title">기록 알림</string>
+    <string name="settings_record_alarm_subtitle">미입력 리마인더 한도 초과</string>
+    <string name="settings_challenge_alarm_title">챌린지 알림</string>
+    <string name="settings_challenge_alarm_subtitle">시작 응원 스트릭 종료</string>
+    <string name="settings_hambattle_alarm_title">햄배들 알림</string>
+    <string name="settings_hambattle_alarm_subtitle">참여 순위 변동 결과</string>
+    <string name="settings_community_alarm_title">커뮤니티 알림</string>
+    <string name="settings_community_alarm_subtitle">좋아요 댓글 인기글 선정</string>
+
+    <string name="settings_section_account">계정</string>
+    <string name="settings_edit_id">아이디 수정</string>
+    <string name="settings_change_password">비밀번호 변경</string>
+    <string name="settings_edit_id_placeholder">아이디를 입력해주세요.</string>
+
+    <string name="settings_section_data">데이터 관리</string>
+    <string name="settings_export_expense">내 지출 내보내기</string>
+    <string name="settings_reset_data">데이터 초기화</string>
+
+    <string name="settings_section_support">고객지원</string>
+    <string name="settings_customer_center">고객센터 문의</string>
+    <string name="settings_terms_privacy">약관 개인정보</string>
+
+    <string name="settings_logout">로그아웃</string>
+    <string name="settings_withdraw">회원 탈퇴</string>
+
+    <string name="record_alarm_title">기록 알림</string>
+    <string name="record_alarm_receive_title">알림 받기</string>
+    <string name="record_alarm_receive_subtitle">기록을 잊지 않게 챙겨드려요</string>
+    <string name="record_alarm_type_label">알림 종류</string>
+    <string name="record_alarm_missing_reminder_title">미입력 리마인더</string>
+    <string name="record_alarm_missing_reminder_subtitle">오늘 식비를 안 넘겼을 때</string>
+    <string name="record_alarm_limit_over_title">알림 받기</string>
+    <string name="record_alarm_limit_over_subtitle">하루 한도를 넘겼을 때</string>
+    <string name="record_alarm_days_label">미입력 리마인더 요일</string>
+    <string name="record_alarm_mode_daily">매일</string>
+    <string name="record_alarm_mode_weekend">주말만</string>
+    <string name="record_alarm_mode_custom">직접 선택</string>
+    <string name="record_alarm_time_label">시간</string>
+    <string name="record_alarm_time_value">오후 8:00</string>
+    <string name="record_alarm_summary_format">매일 %1$s에 미입력 리마인더를 받아요</string>
+
+    <string name="day_monday">월</string>
+    <string name="day_tuesday">화</string>
+    <string name="day_wednesday">수</string>
+    <string name="day_thursday">목</string>
+    <string name="day_friday">금</string>
+    <string name="day_saturday">토</string>
+    <string name="day_sunday">일</string>
+
+    <string name="change_password_title">비밀번호 변경</string>
+    <string name="change_password_current_label">현재 비밀번호</string>
+    <string name="change_password_current_placeholder">현재 비밀번호를 입력해주세요.</string>
+    <string name="change_password_new_label">새 비밀번호</string>
+    <string name="change_password_new_placeholder">8자 이상, 영문 + 숫자 조합</string>
+    <string name="change_password_error">비밀번호를 다시 확인해주세요.</string>
+    <string name="change_password_submit">변경하기</string>
+
+    <string name="challenge_history_title_empty">지난 챌린지</string>
+    <string name="challenge_history_title_filled">지난 챌린지 기록</string>
+    <string name="challenge_history_empty_message">아직 마무리 한 챌린지가 없어요.</string>
+    <string name="challenge_history_status_in_progress">진행중</string>
+    <string name="challenge_history_status_success">성공</string>
+    <string name="challenge_history_status_fail">실패</string>
+    <string name="challenge_history_status_ended">종료</string>
+    <string name="challenge_history_days_ongoing_format">%1$d일 챌린지 (%2$s~)</string>
+    <string name="challenge_history_days_ended_format">%1$d일 챌린지 (%2$s~%3$s)</string>
+    <string name="challenge_history_progress_format">%1$d/%2$d</string>
+    <string name="challenge_history_daily_limit_format">하루 한도 %1$s원</string>
+    <string name="challenge_history_total_saved_format">총 절약 +%1$s원</string>
+</resources>

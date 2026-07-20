@@ -29,3 +29,15 @@ val HPGray5 = Color(0xFFE2E2E2)
 val HPText = Color(0xFF828282)
 
 val HPBlack = Color(0xFF000000)
+
+val HPStatusInProgressBg = Color(0xFFECF2E0)
+
+val HPStatusInProgressText = Color(0xFF729739)
+
+val HPStatusSuccessBg = Color(0xFFFBF0EC)
+
+val HPStatusSuccessText = Color(0xFFE17866)
+
+val HPStatusFailBg = Color(0xFFF7EFD8)
+
+val HPStatusFailText = Color(0xFFB19347)
