@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Hampouch</string>
+
+    <string name="cd_hampouch_logo">햄파우치 로고</string>
+    <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
+    <string name="cd_back">뒤로 가기</string>
+    <string name="cd_next">다음</string>
+    <string name="cd_notification">알림</string>
+    <string name="cd_loading_text">로딩 중</string>
+</resources>
