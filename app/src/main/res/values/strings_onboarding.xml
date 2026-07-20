@@ -52,4 +52,5 @@
     <string name="category_mart">장보기</string>
     <string name="category_drink">술자리</string>
     <string name="category_add_custom">직접추가</string>
+    <string name="category_etc">기타</string>
 </resources>
