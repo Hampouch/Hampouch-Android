@@ -89,7 +89,7 @@ fun HamBattleEndedChallengeDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {

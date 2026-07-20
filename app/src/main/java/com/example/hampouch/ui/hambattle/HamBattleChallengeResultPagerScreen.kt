@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -32,29 +33,34 @@ fun HamBattleChallengeResultPagerScreen(
 ) {
     val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
 
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxSize()
-    ) { page ->
-        val indicator: @Composable () -> Unit = {
-            ResultPageIndicator(pageCount = PAGE_COUNT, currentPage = pagerState.currentPage)
+    Box(modifier = Modifier.fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                PAGE_PODIUM -> HamBattleChallengeResultScreen(
+                    challenge = challenge,
+                    onBackClick = onBackClick,
+                    onStartNewChallengeClick = onStartNewChallengeClick
+                )
+
+                else -> HamBattleOneVsOneResultScreen(
+                    challenge = challenge,
+                    onBackClick = onBackClick,
+                    onStartNewChallengeClick = onStartNewChallengeClick
+                )
+            }
         }
 
-        when (page) {
-            PAGE_PODIUM -> HamBattleChallengeResultScreen(
-                challenge = challenge,
-                onBackClick = onBackClick,
-                onStartNewChallengeClick = onStartNewChallengeClick,
-                pageIndicator = indicator
-            )
-
-            else -> HamBattleOneVsOneResultScreen(
-                challenge = challenge,
-                onBackClick = onBackClick,
-                onStartNewChallengeClick = onStartNewChallengeClick,
-                pageIndicator = indicator
-            )
-        }
+        // 스크롤과 무관하게 화면(하단 네비바 바로 위) 고정 위치에 표시.
+        ResultPageIndicator(
+            pageCount = PAGE_COUNT,
+            currentPage = pagerState.currentPage,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        )
     }
 }
 

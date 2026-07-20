@@ -60,8 +60,7 @@ private val StatusBadgeText = Color(0xFF729739)
 fun HamBattleOneVsOneResultScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {},
-    pageIndicator: (@Composable () -> Unit)? = null
+    onStartNewChallengeClick: () -> Unit = {}
 ) {
     val sorted = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val ranked = remember(sorted) {
@@ -79,7 +78,7 @@ fun HamBattleOneVsOneResultScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
@@ -104,16 +103,6 @@ fun HamBattleOneVsOneResultScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain)
             ) {
                 Text("새 챌린지 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
-            }
-
-            if (pageIndicator != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    pageIndicator()
-                }
             }
         }
     }

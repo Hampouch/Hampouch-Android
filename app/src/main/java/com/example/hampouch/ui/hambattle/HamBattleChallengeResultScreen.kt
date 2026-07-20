@@ -71,8 +71,7 @@ private val CrownColor = Color(0xFFFFC107)
 fun HamBattleChallengeResultScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {},
-    pageIndicator: (@Composable () -> Unit)? = null
+    onStartNewChallengeClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
@@ -83,7 +82,7 @@ fun HamBattleChallengeResultScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding())
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ResultTopBar(title = challenge.title, onBackClick = onBackClick)
@@ -129,7 +128,6 @@ fun HamBattleChallengeResultScreen(
                 lastPlaceName = lastPlaceName,
                 showPenaltyBox = challenge.participants.size < 4,
                 onStartNewChallengeClick = onStartNewChallengeClick,
-                pageIndicator = pageIndicator,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -274,7 +272,6 @@ private fun ResultBottomSheet(
     lastPlaceName: String,
     showPenaltyBox: Boolean,
     onStartNewChallengeClick: () -> Unit,
-    pageIndicator: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -312,16 +309,6 @@ private fun ResultBottomSheet(
                     onClick = onStartNewChallengeClick,
                     modifier = Modifier.align(Alignment.BottomCenter)
                 )
-            }
-        }
-
-        if (pageIndicator != null) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                pageIndicator()
             }
         }
     }
