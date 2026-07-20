@@ -12,6 +12,12 @@ import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
+import com.example.hampouch.data.model.ExpenseEntry
+import com.example.hampouch.data.model.HomeChallenge
+import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.data.model.HomeWarning
+import com.example.hampouch.data.model.MiniChallengeEntry
+import com.example.hampouch.data.model.WarningVariant
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText

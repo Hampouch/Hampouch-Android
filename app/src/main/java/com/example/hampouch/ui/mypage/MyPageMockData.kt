@@ -1,5 +1,9 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.data.model.ChallengeRecord
+import com.example.hampouch.data.model.ChallengeStatus
+import com.example.hampouch.data.model.MyPageProfile
+
 object MyPageMockData {
 
     fun defaultProfile(): MyPageProfile = MyPageProfile(

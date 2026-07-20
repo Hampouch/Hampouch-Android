@@ -49,10 +49,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.mypage.ChallengeRecord
-import com.example.hampouch.ui.mypage.ChallengeStatus
-import com.example.hampouch.ui.mypage.DayOfWeekLabel
-import com.example.hampouch.ui.mypage.ReminderDayMode
+import com.example.hampouch.data.model.ChallengeRecord
+import com.example.hampouch.data.model.ChallengeStatus
+import com.example.hampouch.data.model.DayOfWeekLabel
+import com.example.hampouch.data.model.ReminderDayMode
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4

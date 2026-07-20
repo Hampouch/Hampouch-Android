@@ -1,4 +1,4 @@
-package com.example.hampouch.ui.mypage
+package com.example.hampouch.data.model
 
 import com.example.hampouch.R
 

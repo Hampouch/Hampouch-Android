@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.ui.mypage.components.ChallengeRecordCard
 import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
 import com.example.hampouch.ui.theme.HPGray2
