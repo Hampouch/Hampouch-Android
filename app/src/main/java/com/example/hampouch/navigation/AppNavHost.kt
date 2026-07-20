@@ -1,16 +1,12 @@
 package com.example.hampouch.navigation
 
 import android.util.Log
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -25,6 +21,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
@@ -110,10 +107,13 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
-            // TODO: HomeScreen 구현되면 교체
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("홈 화면 준비 중")
-            }
+            HomeScreen(
+                onStartChallengeClick = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.HamBattle.route) {
@@ -126,7 +126,11 @@ fun AppNavHost(
                     navController.navigate(Screen.HamBattleEndedChallenges.route)
                 },
                 onWaitingChallengeClick = { challengeId ->
-                    navController.navigate(Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId))
+                    navController.navigate(
+                        Screen.HamBattleWaitingChallengeDetail.createRoute(
+                            challengeId
+                        )
+                    )
                 }
             )
         }
@@ -160,7 +164,11 @@ fun AppNavHost(
             HamBattleEndedChallengesScreen(
                 onBackClick = { navController.popBackStack() },
                 onChallengeClick = { challengeId ->
-                    navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(challengeId))
+                    navController.navigate(
+                        Screen.HamBattleEndedChallengeDetail.createRoute(
+                            challengeId
+                        )
+                    )
                 }
             )
         }
