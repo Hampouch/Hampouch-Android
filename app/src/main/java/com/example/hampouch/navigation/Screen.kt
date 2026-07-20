@@ -16,4 +16,7 @@ sealed class Screen(val route: String) {
     data object HamBattleEndedChallengeDetail : Screen("hambattle_ended_challenge_detail/{challengeId}") {
         fun createRoute(challengeId: String) = "hambattle_ended_challenge_detail/$challengeId"
     }
+    data object HamBattleWaitingChallengeDetail : Screen("hambattle_waiting_challenge_detail/{challengeId}") {
+        fun createRoute(challengeId: String) = "hambattle_waiting_challenge_detail/$challengeId"
+    }
 }

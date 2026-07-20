@@ -3,6 +3,7 @@ package com.example.hampouch.ui.hambattle
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleEndedChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
 
 object HamBattleMockData {
@@ -32,8 +33,16 @@ object HamBattleMockData {
                 HamBattleParticipantSpending("김수진", 61_000),
                 HamBattleParticipantSpending("나", 73_200),
                 HamBattleParticipantSpending("박민서", 87_500),
-                HamBattleParticipantSpending("이준혁", 113_000),
-                HamBattleParticipantSpending("최태양", 152_600)
+                HamBattleParticipantSpending(
+                    "이준혁",
+                    113_000,
+                    status = HamBattleParticipantStatus.DISQUALIFIED
+                ),
+                HamBattleParticipantSpending(
+                    "최태양",
+                    152_600,
+                    status = HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
+                )
             ),
             dDay = "D-11",
             statusMessage = "현재 2위",
@@ -64,7 +73,11 @@ object HamBattleMockData {
                 HamBattleParticipantSpending("김수진", 61_000),
                 HamBattleParticipantSpending("나", 73_200),
                 HamBattleParticipantSpending("박민서", 87_500),
-                HamBattleParticipantSpending("이준혁", 113_000),
+                HamBattleParticipantSpending(
+                    "이준혁",
+                    113_000,
+                    status = HamBattleParticipantStatus.DISQUALIFIED
+                ),
                 HamBattleParticipantSpending("최태양", 152_600)
             ),
             periodLabel = "26.05.01 - 26.05.14 (14일)"
@@ -77,10 +90,14 @@ object HamBattleMockData {
             type = "그룹",
             title = "식비 내기",
             penalty = "간식 사기",
+            participants = listOf(
+                HamBattleParticipantSpending("나", 0)
+            ),
             joinedCount = 1,
             totalCount = 5,
             startsInDay = "D-2",
-            startDateLabel = "5월 1일 시작"
+            startDateLabel = "5월 1일 시작",
+            startDateShortLabel = "05.01"
         )
     )
 }

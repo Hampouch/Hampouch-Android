@@ -38,13 +38,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -60,7 +63,13 @@ fun HamBattleOneVsOneResultScreen(
     onStartNewChallengeClick: () -> Unit = {},
     pageIndicator: (@Composable () -> Unit)? = null
 ) {
-    val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val sorted = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val ranked = remember(sorted) {
+        sorted.filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+    }
+    val disqualified = remember(sorted) {
+        sorted.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
+    }
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
 
     Scaffold(
@@ -78,7 +87,8 @@ fun HamBattleOneVsOneResultScreen(
                 type = challenge.type,
                 dDay = challenge.dDay,
                 periodLabel = challenge.periodLabel,
-                ranked = ranked
+                ranked = ranked,
+                disqualified = disqualified
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -134,7 +144,8 @@ private fun RankingCard(
     type: String,
     dDay: String,
     periodLabel: String,
-    ranked: List<HamBattleParticipantSpending>
+    ranked: List<HamBattleParticipantSpending>,
+    disqualified: List<HamBattleParticipantSpending>
 ) {
     Column(
         modifier = Modifier
@@ -170,6 +181,9 @@ private fun RankingCard(
                     highlighted = participant.name == "나"
                 )
             }
+            disqualified.forEach { participant ->
+                DisqualifiedRow(participant = participant)
+            }
         }
     }
 }
@@ -197,7 +211,7 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 .background(if (highlighted) HPWhite else HPGray4)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 participant.name,
                 style = MaterialTheme.typography.bodySmall,
@@ -210,6 +224,59 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 color = HPBlack
             )
         }
+        if (participant.status == HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS) {
+            MissedLogBadge()
+        }
+    }
+}
+
+@Composable
+private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(HPGray4)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "탈락",
+            style = Body16Bold,
+            color = HPText,
+            fontSize = 14.sp,
+            modifier = Modifier.width(28.dp)
+        )
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(HPWhite)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            participant.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPText
+        )
+    }
+}
+
+@Composable
+private fun MissedLogBadge() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(HPSub3)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(
+            "연속 지출 미기록",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = HPMain
+        )
     }
 }
 

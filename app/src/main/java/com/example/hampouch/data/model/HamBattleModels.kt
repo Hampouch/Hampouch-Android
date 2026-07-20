@@ -12,9 +12,16 @@ val HamBattleParticipantOptions = listOf("1 vs 1", "3인", "4인", "5인", "6인
 val HamBattleDurationOptions = listOf("3일", "7일", "14일", "31일")
 val HamBattleDefaultPenaltyOptions = listOf("커피 사기", "밥 사기", "영화 사기")
 
+enum class HamBattleParticipantStatus {
+    NORMAL,
+    MISSED_CONSECUTIVE_LOGS,
+    DISQUALIFIED
+}
+
 data class HamBattleParticipantSpending(
     val name: String,
-    val amount: Int
+    val amount: Int,
+    val status: HamBattleParticipantStatus = HamBattleParticipantStatus.NORMAL
 )
 
 data class HamBattleActiveChallenge(
@@ -44,8 +51,10 @@ data class HamBattleWaitingChallenge(
     val type: String,
     val title: String,
     val penalty: String,
+    val participants: List<HamBattleParticipantSpending> = emptyList(),
     val joinedCount: Int,
     val totalCount: Int,
     val startsInDay: String,
-    val startDateLabel: String
+    val startDateLabel: String,
+    val startDateShortLabel: String = ""
 )

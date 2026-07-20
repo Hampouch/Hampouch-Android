@@ -74,7 +74,8 @@ fun HamBattleScreen(
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onViewEndedChallengesClick: () -> Unit = {},
-    onChallengeClick: (String) -> Unit = {}
+    onChallengeClick: (String) -> Unit = {},
+    onWaitingChallengeClick: (String) -> Unit = {}
 ) {
     Scaffold(
         topBar = { HamBattleTopBar(onNotificationClick = onNotificationClick) },
@@ -92,7 +93,8 @@ fun HamBattleScreen(
                 waitingChallenges = waitingChallenges,
                 onStartNewChallengeClick = onStartNewChallengeClick,
                 onViewEndedChallengesClick = onViewEndedChallengesClick,
-                onChallengeClick = onChallengeClick
+                onChallengeClick = onChallengeClick,
+                onWaitingChallengeClick = onWaitingChallengeClick
             )
         }
     }
@@ -147,7 +149,8 @@ private fun HamBattleChallengeListContent(
     waitingChallenges: List<HamBattleWaitingChallenge>,
     onStartNewChallengeClick: () -> Unit,
     onViewEndedChallengesClick: () -> Unit,
-    onChallengeClick: (String) -> Unit = {}
+    onChallengeClick: (String) -> Unit = {},
+    onWaitingChallengeClick: (String) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -176,7 +179,10 @@ private fun HamBattleChallengeListContent(
             Spacer(modifier = Modifier.height(12.dp))
             waitingChallenges.forEachIndexed { index, challenge ->
                 if (index > 0) Spacer(modifier = Modifier.height(16.dp))
-                WaitingChallengeCard(challenge)
+                WaitingChallengeCard(
+                    challenge = challenge,
+                    onClick = { onWaitingChallengeClick(challenge.id) }
+                )
             }
         }
 
@@ -267,12 +273,13 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: ()
 }
 
 @Composable
-private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge) {
+private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPGray3)
+            .clickable(onClick = onClick)
             .drawBehind {
                 // 점선 박스 생성
                 val strokeWidthPx = 1.dp.toPx()

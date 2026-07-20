@@ -24,6 +24,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
+import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
@@ -123,6 +124,9 @@ fun AppNavHost(
                 },
                 onViewEndedChallengesClick = {
                     navController.navigate(Screen.HamBattleEndedChallenges.route)
+                },
+                onWaitingChallengeClick = { challengeId ->
+                    navController.navigate(Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId))
                 }
             )
         }
@@ -172,6 +176,20 @@ fun AppNavHost(
                     challenge = challenge,
                     onBackClick = { navController.popBackStack() },
                     onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.HamBattleWaitingChallengeDetail.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.waitingChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                HamBattleWaitingChallengeDetailScreen(
+                    challenge = challenge,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
         }

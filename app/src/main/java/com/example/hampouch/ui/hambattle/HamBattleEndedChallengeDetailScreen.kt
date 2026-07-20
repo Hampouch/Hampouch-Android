@@ -44,9 +44,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleEndedChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
@@ -70,7 +72,13 @@ fun HamBattleEndedChallengeDetailScreen(
     onShareResultClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
-    val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val sorted = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val ranked = remember(sorted) {
+        sorted.filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+    }
+    val disqualified = remember(sorted) {
+        sorted.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
+    }
     val winner = ranked.firstOrNull()
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
 
@@ -110,6 +118,9 @@ fun HamBattleEndedChallengeDetailScreen(
                             isMe = participant.name == "나",
                             isLastPlace = index == ranked.lastIndex
                         )
+                    }
+                    disqualified.forEach { participant ->
+                        EndedDisqualifiedRow(participant = participant)
                     }
                 }
 
@@ -324,6 +335,39 @@ private fun EndedRankRow(
             }
             Text(formatWon(participant.amount), style = Body16Bold, color = HPBlack)
         }
+    }
+}
+
+@Composable
+private fun EndedDisqualifiedRow(participant: HamBattleParticipantSpending) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(HPGray4)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "탈락",
+            style = Body16Bold,
+            color = HPText,
+            fontSize = 14.sp,
+            modifier = Modifier.width(28.dp)
+        )
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(HPWhite)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            participant.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPText
+        )
     }
 }
 
