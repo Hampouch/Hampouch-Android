@@ -42,21 +42,35 @@ fun HamBattleStartConfirmDialog(
         onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            ChallengeSummaryCard(request)
-            Spacer(modifier = Modifier.height(29.dp))
-            ConfirmActionCard(onCancel = onCancel, onConfirm = onConfirm)
-        }
+        HamBattleStartConfirmDialogCard(request = request, onCancel = onCancel, onConfirm = onConfirm)
     }
 }
 
 @Composable
-private fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
+private fun HamBattleStartConfirmDialogCard(
+    request: HamBattleChallengeRequest,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ChallengeSummaryCard(request)
+        Spacer(modifier = Modifier.height(29.dp))
+        ConfirmActionCard(
+            question = "해당 햄배틀 챌린지를 시작할까요?",
+            confirmLabel = "시작하기",
+            onCancel = onCancel,
+            onConfirm = onConfirm
+        )
+    }
+}
+
+@Composable
+fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -95,7 +109,12 @@ private fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
 }
 
 @Composable
-private fun ConfirmActionCard(onCancel: () -> Unit, onConfirm: () -> Unit) {
+fun ConfirmActionCard(
+    question: String,
+    confirmLabel: String,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,7 +123,7 @@ private fun ConfirmActionCard(onCancel: () -> Unit, onConfirm: () -> Unit) {
             .padding(horizontal = 25.dp, vertical = 30.dp)
     ) {
         Text(
-            "해당 햄배틀 챌린지를 시작할까요?",
+            question,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleSmall,
@@ -137,7 +156,7 @@ private fun ConfirmActionCard(onCancel: () -> Unit, onConfirm: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain)
             ) {
                 Text(
-                    "시작하기",
+                    confirmLabel,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = HPWhite
@@ -147,18 +166,20 @@ private fun ConfirmActionCard(onCancel: () -> Unit, onConfirm: () -> Unit) {
     }
 }
 
-@Preview
+private val PreviewChallengeRequest = HamBattleChallengeRequest(
+    challengeName = "5월 식비 절약왕 가리기",
+    participantCount = "5인",
+    durationDays = "7일",
+    startDateMillis = null,
+    penalty = "커피 쿠폰 쏘기"
+)
+
+@Preview(showBackground = true, backgroundColor = 0xFFB0B0B0)
 @Composable
 private fun HamBattleStartConfirmDialogPreview() {
     HampouchTheme {
-        HamBattleStartConfirmDialog(
-            request = HamBattleChallengeRequest(
-                challengeName = "5월 식비 절약왕 가리기",
-                participantCount = "5인",
-                durationDays = "7일",
-                startDateMillis = null,
-                penalty = "커피 쿠폰 쏘기"
-            ),
+        HamBattleStartConfirmDialogCard(
+            request = PreviewChallengeRequest,
             onCancel = {},
             onConfirm = {}
         )
