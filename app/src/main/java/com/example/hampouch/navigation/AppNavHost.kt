@@ -13,10 +13,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
+import com.example.hampouch.ui.hambattle.HamBattleChallengeResultPagerScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
@@ -111,7 +117,13 @@ fun AppNavHost(
 
         composable(Screen.HamBattle.route) {
             HamBattleScreen(
-                onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
+                onChallengeClick = { challengeId ->
+                    navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
+                },
+                onViewEndedChallengesClick = {
+                    navController.navigate(Screen.HamBattleEndedChallenges.route)
+                }
             )
         }
 
@@ -123,6 +135,45 @@ fun AppNavHost(
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(
+            route = Screen.ChallengeResult.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.activeChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                HamBattleChallengeResultPagerScreen(
+                    challenge = challenge,
+                    onBackClick = { navController.popBackStack() },
+                    onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                )
+            }
+        }
+
+        composable(Screen.HamBattleEndedChallenges.route) {
+            HamBattleEndedChallengesScreen(
+                onBackClick = { navController.popBackStack() },
+                onChallengeClick = { challengeId ->
+                    navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(challengeId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.HamBattleEndedChallengeDetail.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.endedChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                HamBattleEndedChallengeDetailScreen(
+                    challenge = challenge,
+                    onBackClick = { navController.popBackStack() },
+                    onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                )
+            }
         }
     }
 }

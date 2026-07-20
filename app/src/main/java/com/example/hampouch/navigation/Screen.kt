@@ -9,4 +9,11 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object HamBattle : Screen("hambattle")
     data object HamBattleAdd : Screen("hambattle_add")
+    data object ChallengeResult : Screen("challenge_result/{challengeId}") {
+        fun createRoute(challengeId: String) = "challenge_result/$challengeId"
+    }
+    data object HamBattleEndedChallenges : Screen("hambattle_ended_challenges")
+    data object HamBattleEndedChallengeDetail : Screen("hambattle_ended_challenge_detail/{challengeId}") {
+        fun createRoute(challengeId: String) = "hambattle_ended_challenge_detail/$challengeId"
+    }
 }

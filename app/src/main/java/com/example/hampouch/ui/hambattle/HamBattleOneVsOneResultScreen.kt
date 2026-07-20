@@ -1,0 +1,261 @@
+package com.example.hampouch.ui.hambattle
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.ui.theme.Body16Bold
+import com.example.hampouch.ui.theme.HPBlack
+import com.example.hampouch.ui.theme.HPGray4
+import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub4
+import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
+
+private val StatusBadgeBackground = Color(0xFFECF2E0)
+private val StatusBadgeText = Color(0xFF729739)
+
+@Composable
+fun HamBattleOneVsOneResultScreen(
+    challenge: HamBattleActiveChallenge,
+    onBackClick: () -> Unit = {},
+    onStartNewChallengeClick: () -> Unit = {},
+    pageIndicator: (@Composable () -> Unit)? = null
+) {
+    val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
+
+    Scaffold(
+        topBar = { OneVsOneTopBar(title = challenge.title, onBackClick = onBackClick) },
+        containerColor = HPWhite
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            RankingCard(
+                type = challenge.type,
+                dDay = challenge.dDay,
+                periodLabel = challenge.periodLabel,
+                ranked = ranked
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            OneVsOnePenaltyBox(penalty = challenge.penalty, lastPlaceName = lastPlaceName)
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onStartNewChallengeClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+            ) {
+                Text("새 챌린지 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+            }
+
+            if (pageIndicator != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    pageIndicator()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OneVsOneTopBar(title: String, onBackClick: () -> Unit) {
+    CenterAlignedTopAppBar(
+        title = {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = HPBlack, maxLines = 1)
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = HPBlack
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
+    )
+}
+
+@Composable
+private fun RankingCard(
+    type: String,
+    dDay: String,
+    periodLabel: String,
+    ranked: List<HamBattleParticipantSpending>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(HPSub4)
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("현재 순위", style = Body16Bold, color = HPBlack)
+            StatusBadge(text = "진행중")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("$type · $dDay", style = MaterialTheme.typography.bodyMedium, color = HPText)
+            Text(periodLabel, style = MaterialTheme.typography.bodyMedium, color = HPText)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ranked.forEachIndexed { index, participant ->
+                RankRow(
+                    rank = index + 1,
+                    participant = participant,
+                    highlighted = participant.name == "나"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highlighted: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (highlighted) HPSub2 else HPWhite)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "%02d".format(rank),
+            style = Body16Bold,
+            color = if (highlighted) HPMain else HPBlack,
+            modifier = Modifier.width(28.dp)
+        )
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(if (highlighted) HPWhite else HPGray4)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                participant.name,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = if (highlighted) HPMain else HPText
+            )
+            Text(
+                formatWon(participant.amount),
+                style = Body16Bold,
+                color = HPBlack
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatusBadge(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(StatusBadgeBackground)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = StatusBadgeText
+        )
+    }
+}
+
+@Composable
+private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .border(1.dp, HPText, RoundedCornerShape(20.dp))
+            .padding(horizontal = 20.dp, vertical = 15.dp)
+    ) {
+        Text("벌칙", style = Body16Bold, color = HPBlack)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(penalty, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            "현재 꼴찌 : $lastPlaceName",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = HPText
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HamBattleOneVsOneResultScreenPreview() {
+    HampouchTheme {
+        HamBattleOneVsOneResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+    }
+}

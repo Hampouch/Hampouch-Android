@@ -25,7 +25,18 @@ data class HamBattleActiveChallenge(
     val penalty: String,
     val participants: List<HamBattleParticipantSpending>,
     val dDay: String,
-    val statusMessage: String
+    val statusMessage: String,
+    val periodLabel: String = ""
+)
+
+data class HamBattleEndedChallenge(
+    val id: String,
+    val type: String,
+    val isOneVsOne: Boolean,
+    val title: String,
+    val penalty: String,
+    val participants: List<HamBattleParticipantSpending>,
+    val periodLabel: String
 )
 
 data class HamBattleWaitingChallenge(

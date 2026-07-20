@@ -5,7 +5,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,9 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.hampouch.data.model.HamBattleActiveChallenge
-import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -66,11 +63,9 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-import java.util.Locale
 
 private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
-private val StatusWhoWonText = Color(0xFF5572AB)
 
 @Composable
 fun HamBattleScreen(
@@ -78,7 +73,8 @@ fun HamBattleScreen(
     waitingChallenges: List<HamBattleWaitingChallenge> = HamBattleMockData.waitingChallenges,
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onViewEndedChallengesClick: () -> Unit = {}
+    onViewEndedChallengesClick: () -> Unit = {},
+    onChallengeClick: (String) -> Unit = {}
 ) {
     Scaffold(
         topBar = { HamBattleTopBar(onNotificationClick = onNotificationClick) },
@@ -95,7 +91,8 @@ fun HamBattleScreen(
                 activeChallenges = activeChallenges,
                 waitingChallenges = waitingChallenges,
                 onStartNewChallengeClick = onStartNewChallengeClick,
-                onViewEndedChallengesClick = onViewEndedChallengesClick
+                onViewEndedChallengesClick = onViewEndedChallengesClick,
+                onChallengeClick = onChallengeClick
             )
         }
     }
@@ -149,7 +146,8 @@ private fun HamBattleChallengeListContent(
     activeChallenges: List<HamBattleActiveChallenge>,
     waitingChallenges: List<HamBattleWaitingChallenge>,
     onStartNewChallengeClick: () -> Unit,
-    onViewEndedChallengesClick: () -> Unit
+    onViewEndedChallengesClick: () -> Unit,
+    onChallengeClick: (String) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -165,7 +163,10 @@ private fun HamBattleChallengeListContent(
             Spacer(modifier = Modifier.height(12.dp))
             activeChallenges.forEachIndexed { index, challenge ->
                 if (index > 0) Spacer(modifier = Modifier.height(10.dp))
-                ActiveChallengeCard(challenge)
+                ActiveChallengeCard(
+                    challenge = challenge,
+                    onClick = { onChallengeClick(challenge.id) }
+                )
             }
         }
 
@@ -214,17 +215,13 @@ private fun StartNewChallengeButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionLabel(text: String) {
-    Text(text, style = Body16Bold, color = HPText)
-}
-
-@Composable
-private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge) {
+private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPSub4)
+            .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
         Row(
@@ -265,102 +262,6 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge) {
         ) {
             Text(challenge.dDay, style = Body16Bold, color = HPMain)
             Text(challenge.statusMessage, style = Body16Bold, color = StatusWhoWonText)
-        }
-    }
-}
-
-@Composable
-private fun OneVsOneRow(first: HamBattleParticipantSpending, second: HamBattleParticipantSpending) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ParticipantAvatarLabel(participant = first, modifier = Modifier.weight(1f, fill = false))
-        Text(
-            "vs",
-            modifier = Modifier.padding(horizontal = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPText
-        )
-        ParticipantAvatarLabel(participant = second, modifier = Modifier.weight(1f, fill = false))
-    }
-}
-
-@Composable
-private fun ParticipantAvatarLabel(
-    participant: HamBattleParticipantSpending,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .height(32.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(HPWhite),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ParticipantAvatar(size = 22.dp)
-            Spacer(modifier = Modifier.width(5.dp))
-            Text(
-                "${participant.name}  ${formatWon(participant.amount)}",
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
-                color = HPBlack
-            )
-        }
-    }
-}
-
-@Composable
-private fun RankedParticipantList(participants: List<HamBattleParticipantSpending>) {
-    val maxAmount = participants.maxOf { it.amount }.toFloat()
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        participants.forEachIndexed { index, participant ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "%02d".format(index + 1),
-                    modifier = Modifier.width(24.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText
-                )
-                ParticipantAvatar(size = 24.dp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    participant.name,
-                    modifier = Modifier.width(56.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPBlack
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(HPGray4)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(participant.amount / maxAmount)
-                            .clip(RoundedCornerShape(50))
-                            .background(HPMain)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    formatWon(participant.amount),
-                    style = Body16Bold,
-                    color = HPBlack
-                )
-            }
         }
     }
 }
@@ -460,23 +361,6 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge) {
 }
 
 @Composable
-private fun TypeBadge(text: String, muted: Boolean = false) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(30))
-            .background(if (muted) HPGray4 else HPMain)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = if (muted) HPText else HPWhite
-        )
-    }
-}
-
-@Composable
 private fun StatusBadge(text: String) {
     Box(
         modifier = Modifier
@@ -494,16 +378,6 @@ private fun StatusBadge(text: String) {
 }
 
 @Composable
-private fun ParticipantAvatar(size: Dp) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(HPGray4)
-    )
-}
-
-@Composable
 private fun EmptyAvatarSlot(size: Dp) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(6f, 4f))
     Canvas(modifier = Modifier.size(size)) {
@@ -514,10 +388,6 @@ private fun EmptyAvatarSlot(size: Dp) {
             style = Stroke(width = strokeWidthPx, pathEffect = dash)
         )
     }
-}
-
-private fun formatWon(amount: Int): String {
-    return String.format(Locale.KOREA, "%,d원", amount)
 }
 
 @Preview
