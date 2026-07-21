@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -95,6 +99,7 @@ fun HamTipsScreen(
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             containerColor = HPGray2,
+            contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
             bottomBar = {
                 BottomNavBar(selectedItem = selectedBottomTab, onItemSelected = onItemSelected, onAddClick = onAddClick)
             },
@@ -163,12 +168,11 @@ fun HamTipsScreen(
             }
         }
 
-        if (showFabMenu) {
-            HamTipsFabMenu(
-                onOptionClick = { showFabMenu = false },
-                onDismiss = { showFabMenu = false }
-            )
-        }
+        HamTipsFabMenu(
+            visible = showFabMenu,
+            onOptionClick = { showFabMenu = false },
+            onDismiss = { showFabMenu = false }
+        )
     }
 }
 
@@ -220,7 +224,6 @@ private fun HamTipsMainContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
         HamTipsMainTopBar(onNotificationClick = onNotificationClick)
         Spacer(modifier = Modifier.height(12.dp))
         HamTipsSearchBar(query = query, onQueryChange = onQueryChange)
@@ -280,7 +283,6 @@ private fun HamTipsFeedRouteContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(modifier = Modifier.height(4.dp))
         HamTipsDetailTopBar(title = title, onBackClick = onBackClick, onNotificationClick = onNotificationClick)
         Spacer(modifier = Modifier.height(12.dp))
         HamTipsSearchBar(query = query, onQueryChange = onQueryChange)
@@ -302,6 +304,7 @@ private fun HamTipsScreenPreviewScaffold(content: @Composable (androidx.compose.
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = HPGray2,
+            contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
             bottomBar = {
                 BottomNavBar(selectedItem = BottomNavItem.COMMUNITY, onItemSelected = {}, onAddClick = {})
             },
@@ -408,7 +411,7 @@ private fun HamTipsFabMenuEffectPreview() {
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-            HamTipsFabMenu(onOptionClick = {}, onDismiss = {})
+            HamTipsFabMenu(visible = true, onOptionClick = {}, onDismiss = {})
         }
     }
 }
@@ -418,7 +421,7 @@ private fun HamTipsFabMenuEffectPreview() {
 private fun HamTipsFabMenuDetailPreview() {
     HampouchTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            HamTipsFabMenu(onOptionClick = {}, onDismiss = {})
+            HamTipsFabMenu(visible = true, onOptionClick = {}, onDismiss = {})
         }
     }
 }

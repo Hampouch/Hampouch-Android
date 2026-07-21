@@ -1,5 +1,13 @@
 package com.example.hampouch.ui.hamtips.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,7 +81,7 @@ fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modi
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Spacer(modifier = Modifier.width(48.dp))
@@ -103,7 +112,7 @@ fun HamTipsDetailTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {
@@ -197,7 +206,9 @@ fun HamTipsCategoryTabRow(
             val selected = tab == selectedTab
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { onTabSelected(tab) }
+                modifier = Modifier
+                    .clickable { onTabSelected(tab) }
+                    .padding(horizontal = 5.dp)
             ) {
                 Text(
                     text = stringResource(tab.labelResId),
@@ -418,37 +429,55 @@ fun HamTipsFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun HamTipsFabMenu(
+    visible: Boolean,
     onOptionClick: (HamTipsFabMenuOption) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(220)),
+        exit = fadeOut(animationSpec = tween(180)),
         modifier = modifier
-            .fillMaxSize()
-            .background(HPBlack.copy(alpha = 0.4f))
-            .clickable(onClick = onDismiss),
-        contentAlignment = Alignment.BottomEnd
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .padding(end = 20.dp, bottom = 96.dp)
-                .width(160.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(HPWhite)
+                .fillMaxSize()
+                .background(HPBlack.copy(alpha = 0.4f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            HamTipsFabMenuOption.entries.forEachIndexed { index, option ->
-                Text(
-                    text = stringResource(option.labelResId),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPBlack,
-                    textAlign = TextAlign.Center,
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(animationSpec = tween(220)) +
+                    scaleIn(animationSpec = tween(220), transformOrigin = TransformOrigin(1f, 1f)) +
+                    expandVertically(animationSpec = tween(220), expandFrom = Alignment.Bottom),
+                exit = fadeOut(animationSpec = tween(180)) +
+                    scaleOut(animationSpec = tween(180), transformOrigin = TransformOrigin(1f, 1f)) +
+                    shrinkVertically(animationSpec = tween(180), shrinkTowards = Alignment.Bottom),
+                modifier = Modifier.padding(end = 20.dp, bottom = 96.dp)
+            ) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOptionClick(option) }
-                        .padding(vertical = 16.dp)
-                )
-                if (index != HamTipsFabMenuOption.entries.lastIndex) {
-                    SettingsMenuDivider()
+                        .width(160.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(HPWhite)
+                ) {
+                    HamTipsFabMenuOption.entries.forEachIndexed { index, option ->
+                        Text(
+                            text = stringResource(option.labelResId),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = HPBlack,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOptionClick(option) }
+                                .padding(vertical = 16.dp)
+                        )
+                        if (index != HamTipsFabMenuOption.entries.lastIndex) {
+                            SettingsMenuDivider()
+                        }
+                    }
                 }
             }
         }
