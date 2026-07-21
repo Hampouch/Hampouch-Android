@@ -49,10 +49,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.DayOfWeekLabel
 import com.example.hampouch.data.model.ReminderDayMode
+import com.example.hampouch.data.model.TipCategory
+import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
@@ -66,6 +69,8 @@ import com.example.hampouch.ui.theme.HPStatusSuccessBg
 import com.example.hampouch.ui.theme.HPStatusSuccessText
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.ui.theme.HPTipDiscountBg
+import com.example.hampouch.ui.theme.HPTipDiscountText
 import com.example.hampouch.ui.theme.HPWhite
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
@@ -496,6 +501,57 @@ fun ReminderModeSegmentedRow(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
+    val (bg, textColor) = when (category) {
+        TipCategory.COOKING -> HPStatusInProgressBg to HPStatusInProgressText
+        TipCategory.SHOPPING -> HPStatusFailBg to HPStatusFailText
+        TipCategory.DISCOUNT -> HPTipDiscountBg to HPTipDiscountText
+    }
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text = stringResource(category.labelResId),
+            style = MaterialTheme.typography.labelMedium,
+            color = textColor,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(HPWhite)
+            .border(1.dp, HPGray4, RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        TipCategoryBadge(category = tip.category)
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = tip.title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = tip.subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = HPText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

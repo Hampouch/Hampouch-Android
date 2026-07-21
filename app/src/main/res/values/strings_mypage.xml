@@ -25,16 +25,12 @@
     <string name="settings_community_alarm_subtitle">좋아요 댓글 인기글 선정</string>
 
     <string name="settings_section_account">계정</string>
-    <string name="settings_edit_id">아이디 수정</string>
     <string name="settings_change_password">비밀번호 변경</string>
-    <string name="settings_edit_id_placeholder">아이디를 입력해주세요.</string>
 
     <string name="settings_section_data">데이터 관리</string>
     <string name="settings_export_expense">내 지출 내보내기</string>
-    <string name="settings_reset_data">데이터 초기화</string>
 
     <string name="settings_section_support">고객지원</string>
-    <string name="settings_customer_center">고객센터 문의</string>
     <string name="settings_terms_privacy">약관 개인정보</string>
 
     <string name="settings_logout">로그아웃</string>
@@ -65,12 +61,17 @@
     <string name="day_sunday">일</string>
 
     <string name="change_password_title">비밀번호 변경</string>
+    <string name="change_password_user_info_section">사용자 정보</string>
+    <string name="change_password_form_section">비밀번호 변경</string>
+    <string name="change_password_email_label">가입한 이메일</string>
     <string name="change_password_current_label">현재 비밀번호</string>
     <string name="change_password_current_placeholder">현재 비밀번호를 입력해주세요.</string>
     <string name="change_password_new_label">새 비밀번호</string>
     <string name="change_password_new_placeholder">8자 이상, 영문 + 숫자 조합</string>
+    <string name="change_password_new_confirm_label">새 비밀번호 확인</string>
     <string name="change_password_error">비밀번호를 다시 확인해주세요.</string>
     <string name="change_password_submit">변경하기</string>
+    <string name="change_password_success_message">비밀번호가 변경되었습니다.</string>
 
     <string name="challenge_history_title_empty">지난 챌린지</string>
     <string name="challenge_history_title_filled">지난 챌린지 기록</string>
@@ -84,4 +85,10 @@
     <string name="challenge_history_progress_format">%1$d/%2$d</string>
     <string name="challenge_history_daily_limit_format">하루 한도 %1$s원</string>
     <string name="challenge_history_total_saved_format">총 절약 +%1$s원</string>
+
+    <string name="my_tips_empty_message">아직 작성한 글이 없어요.</string>
+    <string name="saved_tips_empty_message">아직 저장한 글이 없어요.</string>
+    <string name="tip_category_cooking">요리</string>
+    <string name="tip_category_shopping">장보기</string>
+    <string name="tip_category_discount">할인</string>
 </resources>

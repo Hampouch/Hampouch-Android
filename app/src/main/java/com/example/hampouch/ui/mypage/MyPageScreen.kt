@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.mypage
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.MyPageMenuRow
 import com.example.hampouch.ui.mypage.components.ProfileCard
@@ -29,7 +31,7 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
 
 private enum class MyPageRoute {
-    MAIN, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY
+    MAIN, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY, MY_TIPS, SAVED_TIPS
 }
 
 @Composable
@@ -43,7 +45,10 @@ fun MyPageScreen(
     var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
     var isEditingName by remember { mutableStateOf(false) }
     var editingName by remember { mutableStateOf(profile.name) }
+    var showPasswordChangedDialog by remember { mutableStateOf(false) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
+    val myTips = remember { MyPageMockData.myTips() }
+    val savedTips = remember { MyPageMockData.savedTips() }
 
     when (route) {
         MyPageRoute.MAIN -> {
@@ -74,6 +79,8 @@ fun MyPageScreen(
                         isEditingName = false
                     },
                     onChallengeHistoryClick = { route = MyPageRoute.CHALLENGE_HISTORY },
+                    onMyTipsClick = { route = MyPageRoute.MY_TIPS },
+                    onSavedTipsClick = { route = MyPageRoute.SAVED_TIPS },
                     onAllSettingsClick = { route = MyPageRoute.ALL_SETTINGS },
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -81,12 +88,20 @@ fun MyPageScreen(
         }
 
         MyPageRoute.ALL_SETTINGS -> {
-            AllSettingsScreen(
-                onBackClick = { route = MyPageRoute.MAIN },
-                onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
-                onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
-                modifier = modifier.fillMaxSize()
-            )
+            Box(modifier = modifier.fillMaxSize()) {
+                AllSettingsScreen(
+                    onBackClick = { route = MyPageRoute.MAIN },
+                    onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
+                    onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
+                    modifier = Modifier.fillMaxSize()
+                )
+                if (showPasswordChangedDialog) {
+                    CompleteDialog(
+                        message = stringResource(R.string.change_password_success_message),
+                        onDismiss = { showPasswordChangedDialog = false }
+                    )
+                }
+            }
         }
 
         MyPageRoute.RECORD_ALARM -> {
@@ -98,8 +113,12 @@ fun MyPageScreen(
 
         MyPageRoute.CHANGE_PASSWORD -> {
             ChangePasswordScreen(
+                email = profile.email,
                 onBackClick = { route = MyPageRoute.ALL_SETTINGS },
-                onSubmitSuccess = { route = MyPageRoute.ALL_SETTINGS },
+                onSubmitSuccess = {
+                    showPasswordChangedDialog = true
+                    route = MyPageRoute.ALL_SETTINGS
+                },
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -107,6 +126,26 @@ fun MyPageScreen(
         MyPageRoute.CHALLENGE_HISTORY -> {
             ChallengeHistoryScreen(
                 records = challengeRecords,
+                onBackClick = { route = MyPageRoute.MAIN },
+                modifier = modifier.fillMaxSize()
+            )
+        }
+
+        MyPageRoute.MY_TIPS -> {
+            TipListScreen(
+                title = stringResource(R.string.mypage_menu_my_tips),
+                emptyMessage = stringResource(R.string.my_tips_empty_message),
+                tips = myTips,
+                onBackClick = { route = MyPageRoute.MAIN },
+                modifier = modifier.fillMaxSize()
+            )
+        }
+
+        MyPageRoute.SAVED_TIPS -> {
+            TipListScreen(
+                title = stringResource(R.string.mypage_menu_saved_tips),
+                emptyMessage = stringResource(R.string.saved_tips_empty_message),
+                tips = savedTips,
                 onBackClick = { route = MyPageRoute.MAIN },
                 modifier = modifier.fillMaxSize()
             )
@@ -123,6 +162,8 @@ private fun MyPageMainContent(
     onStartEditName: () -> Unit,
     onConfirmEditName: () -> Unit,
     onChallengeHistoryClick: () -> Unit,
+    onMyTipsClick: () -> Unit,
+    onSavedTipsClick: () -> Unit,
     onAllSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -156,11 +197,11 @@ private fun MyPageMainContent(
             )
             MyPageMenuRow(
                 label = stringResource(R.string.mypage_menu_my_tips),
-                onClick = {}
+                onClick = onMyTipsClick
             )
             MyPageMenuRow(
                 label = stringResource(R.string.mypage_menu_saved_tips),
-                onClick = {}
+                onClick = onSavedTipsClick
             )
             MyPageMenuRow(
                 label = stringResource(R.string.mypage_menu_all_settings),

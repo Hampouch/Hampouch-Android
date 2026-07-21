@@ -41,3 +41,7 @@ val HPStatusSuccessText = Color(0xFFE17866)
 val HPStatusFailBg = Color(0xFFF7EFD8)
 
 val HPStatusFailText = Color(0xFFB19347)
+
+val HPTipDiscountBg = Color(0xFFEDE3F5)
+
+val HPTipDiscountText = Color(0xFF8B5FBF)

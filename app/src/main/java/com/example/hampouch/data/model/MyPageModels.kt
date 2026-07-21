@@ -5,7 +5,7 @@ import com.example.hampouch.R
 data class MyPageProfile(
     val name: String,
     val handle: String,
-    val userId: String
+    val email: String
 )
 
 enum class ChallengeStatus(val labelResId: Int) {
@@ -44,6 +44,19 @@ data class NotificationSettingsState(
     val challengeAlarmEnabled: Boolean = true,
     val hamBattleAlarmEnabled: Boolean = true,
     val communityAlarmEnabled: Boolean = false
+)
+
+enum class TipCategory(val labelResId: Int) {
+    COOKING(R.string.tip_category_cooking),
+    SHOPPING(R.string.tip_category_shopping),
+    DISCOUNT(R.string.tip_category_discount)
+}
+
+data class TipPost(
+    val id: String,
+    val category: TipCategory,
+    val title: String,
+    val subtitle: String
 )
 
 data class RecordAlarmSettingsState(

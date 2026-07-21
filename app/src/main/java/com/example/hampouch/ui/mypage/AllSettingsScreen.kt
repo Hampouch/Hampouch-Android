@@ -2,11 +2,9 @@ package com.example.hampouch.ui.mypage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -22,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.NotificationSettingsState
-import com.example.hampouch.ui.mypage.components.EditableConfirmField
 import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
@@ -41,9 +38,6 @@ fun AllSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     var notificationState by remember { mutableStateOf(NotificationSettingsState()) }
-    var userId by remember { mutableStateOf(MyPageMockData.defaultProfile().userId) }
-    var isEditingId by remember { mutableStateOf(false) }
-    var editingId by remember { mutableStateOf(userId) }
 
     Column(
         modifier = modifier
@@ -95,27 +89,6 @@ fun AllSettingsScreen(
             SectionLabel(text = stringResource(R.string.settings_section_account))
             Spacer(modifier = Modifier.height(8.dp))
             SettingsMenuCard {
-                if (isEditingId) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        EditableConfirmField(
-                            value = editingId,
-                            onValueChange = { editingId = it },
-                            onConfirm = {
-                                if (editingId.isNotBlank()) userId = editingId
-                                isEditingId = false
-                            }
-                        )
-                    }
-                } else {
-                    SettingsMenuRow(
-                        label = stringResource(R.string.settings_edit_id),
-                        onClick = {
-                            editingId = userId
-                            isEditingId = true
-                        }
-                    )
-                }
-                SettingsMenuDivider()
                 SettingsMenuRow(
                     label = stringResource(R.string.settings_change_password),
                     onClick = onChangePasswordClick
@@ -127,20 +100,12 @@ fun AllSettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             SettingsMenuCard {
                 SettingsMenuRow(label = stringResource(R.string.settings_export_expense), onClick = {})
-                SettingsMenuDivider()
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_reset_data),
-                    onClick = {},
-                    labelColor = HPSub
-                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionLabel(text = stringResource(R.string.settings_section_support))
             Spacer(modifier = Modifier.height(8.dp))
             SettingsMenuCard {
-                SettingsMenuRow(label = stringResource(R.string.settings_customer_center), onClick = {})
-                SettingsMenuDivider()
                 SettingsMenuRow(label = stringResource(R.string.settings_terms_privacy), onClick = {})
             }
 
