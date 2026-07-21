@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +30,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
 import com.example.hampouch.ui.home.components.CharacterGaugeSection
 import com.example.hampouch.ui.home.components.DateSelectorRow
@@ -50,10 +52,14 @@ private const val MOCK_USER_NAME = "민준"
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onStartChallengeClick: () -> Unit = {}
+    onStartChallengeClick: () -> Unit = {},
+    onHamBattleStartNewChallengeClick: () -> Unit = {},
+    onHamBattleChallengeClick: (String) -> Unit = {},
+    onHamBattleViewEndedChallengesClick: () -> Unit = {},
+    onHamBattleWaitingChallengeClick: (String) -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
-    var selectedBottomTab by remember { mutableStateOf(BottomNavItem.HOME) }
+    var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
     var uiState by remember(selectedDate) {
         mutableStateOf(mockStateForDate(selectedDate, referenceToday))
@@ -88,6 +94,19 @@ fun HomeScreen(
                 onStartChallengeClick = onStartChallengeClick,
                 modifier = Modifier.padding(innerPadding)
             )
+
+            BottomNavItem.HAM_BATTLE -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = innerPadding.calculateBottomPadding())
+            ) {
+                HamBattleScreen(
+                    onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
+                    onChallengeClick = onHamBattleChallengeClick,
+                    onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
+                    onWaitingChallengeClick = onHamBattleWaitingChallengeClick
+                )
+            }
 
             BottomNavItem.MY_PAGE -> MyPageScreen(
                 selectedBottomTab = selectedBottomTab,
