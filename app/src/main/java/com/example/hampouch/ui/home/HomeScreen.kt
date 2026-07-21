@@ -107,14 +107,16 @@ fun HomeScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = {},
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
             )
 
             BottomNavItem.COMMUNITY -> HamTipsScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = {},
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
             )
         }
     }

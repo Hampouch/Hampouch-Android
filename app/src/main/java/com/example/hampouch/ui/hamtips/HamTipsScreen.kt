@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hamtips
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,9 +33,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.HamTipsCategoryTab
+import com.example.hampouch.data.model.HamTipsFabMenuOption
 import com.example.hampouch.data.model.HamTipsSortOrder
 import com.example.hampouch.data.model.TipCategory
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryTabRow
@@ -51,7 +54,11 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
 
-private enum class HamTipsRoute { MAIN, CATEGORY, POPULAR_ALL, POCHIPICK_ALL }
+private enum class HamTipsRoute {
+    MAIN, CATEGORY, POPULAR_ALL, POCHIPICK_ALL,
+    WRITE_TIP, WRITE_MENU, WRITE_BATTLE, EDIT_TIP,
+    DETAIL, BATTLE_DETAIL
+}
 
 private fun filteredSortedPosts(
     posts: List<TipPost>,
@@ -75,17 +82,20 @@ fun HamTipsScreen(
     selectedBottomTab: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToHamBattleLink: (String) -> Unit = {}
 ) {
     var route by remember { mutableStateOf(HamTipsRoute.MAIN) }
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
     var showFabMenu by remember { mutableStateOf(false) }
+    var selectedPostId by remember { mutableStateOf<String?>(null) }
+    var editingPostId by remember { mutableStateOf<String?>(null) }
 
-    val allPosts = remember { HamTipsMockData.allPosts() }
-    val popularPosts = remember { HamTipsMockData.popularPosts() }
-    val pochipickPosts = remember { HamTipsMockData.pochipickPosts() }
+    val allPosts = HamTipsRepository.allPosts
+    val popularPosts = allPosts.sortedByDescending { it.likeCount }
+    val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
     val onCategoryTabSelected: (HamTipsCategoryTab) -> Unit = { tab ->
         selectedCategoryTab = tab
@@ -95,84 +105,174 @@ fun HamTipsScreen(
         route = HamTipsRoute.MAIN
         selectedCategoryTab = HamTipsCategoryTab.ALL
     }
+    val onPostClick: (TipPost) -> Unit = { post ->
+        selectedPostId = post.id
+        route = if (post.type == TipPostType.BATTLE) HamTipsRoute.BATTLE_DETAIL else HamTipsRoute.DETAIL
+    }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        Scaffold(
-            containerColor = HPGray2,
-            contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
-            bottomBar = {
-                BottomNavBar(selectedItem = selectedBottomTab, onItemSelected = onItemSelected, onAddClick = onAddClick)
-            },
-            floatingActionButton = {
-                HamTipsFab(onClick = { showFabMenu = true })
-            }
-        ) { innerPadding ->
-            when (route) {
-                HamTipsRoute.MAIN -> HamTipsMainContent(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    selectedCategoryTab = selectedCategoryTab,
-                    onCategoryTabSelected = onCategoryTabSelected,
-                    popularPosts = popularPosts,
-                    pochipickPosts = pochipickPosts,
-                    allPosts = filteredSortedPosts(allPosts, null, searchQuery, sortOrder),
-                    sortOrder = sortOrder,
-                    onSortOrderChange = { sortOrder = it },
-                    onNotificationClick = {},
-                    onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
-                    onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
-                    modifier = Modifier.padding(innerPadding)
-                )
+    when (route) {
+        HamTipsRoute.WRITE_TIP -> {
+            BackHandler(onBack = onBackToMain)
+            HamTipsWriteTipScreen(
+                onBackClick = onBackToMain,
+                onSubmitted = onBackToMain
+            )
+        }
 
-                HamTipsRoute.CATEGORY -> HamTipsFeedRouteContent(
-                    title = stringResource(R.string.hamtips_title),
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    selectedCategoryTab = selectedCategoryTab,
-                    onCategoryTabSelected = onCategoryTabSelected,
-                    posts = filteredSortedPosts(allPosts, selectedCategoryTab.category, searchQuery, sortOrder),
-                    sortOrder = sortOrder,
-                    onSortOrderChange = { sortOrder = it },
-                    onBackClick = onBackToMain,
-                    onNotificationClick = {},
-                    modifier = Modifier.padding(innerPadding)
-                )
+        HamTipsRoute.WRITE_MENU -> {
+            BackHandler(onBack = onBackToMain)
+            HamTipsWriteMenuScreen(
+                onBackClick = onBackToMain,
+                onSubmitted = onBackToMain
+            )
+        }
 
-                HamTipsRoute.POPULAR_ALL -> HamTipsFeedRouteContent(
-                    title = stringResource(R.string.hamtips_popular_title),
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    selectedCategoryTab = selectedCategoryTab,
-                    onCategoryTabSelected = onCategoryTabSelected,
-                    posts = filteredSortedPosts(popularPosts, selectedCategoryTab.category, searchQuery, sortOrder),
-                    sortOrder = sortOrder,
-                    onSortOrderChange = { sortOrder = it },
-                    onBackClick = onBackToMain,
-                    onNotificationClick = {},
-                    modifier = Modifier.padding(innerPadding)
-                )
+        HamTipsRoute.WRITE_BATTLE -> {
+            BackHandler(onBack = onBackToMain)
+            HamTipsWriteBattleScreen(
+                onBackClick = onBackToMain,
+                onSubmitted = onBackToMain
+            )
+        }
 
-                HamTipsRoute.POCHIPICK_ALL -> HamTipsFeedRouteContent(
-                    title = stringResource(R.string.hamtips_pochipick_title),
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    selectedCategoryTab = selectedCategoryTab,
-                    onCategoryTabSelected = onCategoryTabSelected,
-                    posts = filteredSortedPosts(pochipickPosts, selectedCategoryTab.category, searchQuery, sortOrder),
-                    sortOrder = sortOrder,
-                    onSortOrderChange = { sortOrder = it },
-                    onBackClick = onBackToMain,
-                    onNotificationClick = {},
-                    modifier = Modifier.padding(innerPadding)
+        HamTipsRoute.EDIT_TIP -> {
+            val editingPost = allPosts.find { it.id == editingPostId }
+            if (editingPost != null) {
+                BackHandler { route = HamTipsRoute.DETAIL }
+                HamTipsWriteTipScreen(
+                    editingPost = editingPost,
+                    onBackClick = { route = HamTipsRoute.DETAIL },
+                    onSubmitted = { route = HamTipsRoute.DETAIL }
                 )
             }
         }
 
-        HamTipsFabMenu(
-            visible = showFabMenu,
-            onOptionClick = { showFabMenu = false },
-            onDismiss = { showFabMenu = false }
-        )
+        HamTipsRoute.DETAIL -> {
+            val post = allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler(onBack = onBackToMain)
+                HamTipsDetailScreen(
+                    post = post,
+                    onBackClick = onBackToMain,
+                    onEditClick = { editingPostId = it.id; route = HamTipsRoute.EDIT_TIP },
+                    onDeleted = onBackToMain
+                )
+            }
+        }
+
+        HamTipsRoute.BATTLE_DETAIL -> {
+            val post = allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler(onBack = onBackToMain)
+                HamTipsBattleDetailScreen(
+                    post = post,
+                    onBackClick = onBackToMain,
+                    onDeleted = onBackToMain,
+                    onNavigateToBattleLink = onNavigateToHamBattleLink
+                )
+            }
+        }
+
+        else -> Box(modifier = modifier.fillMaxSize()) {
+            Scaffold(
+                containerColor = HPGray2,
+                contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
+                bottomBar = {
+                    BottomNavBar(selectedItem = selectedBottomTab, onItemSelected = onItemSelected, onAddClick = onAddClick)
+                },
+                floatingActionButton = {
+                    HamTipsFab(onClick = { showFabMenu = true })
+                }
+            ) { innerPadding ->
+                when (route) {
+                    HamTipsRoute.MAIN -> HamTipsMainContent(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        selectedCategoryTab = selectedCategoryTab,
+                        onCategoryTabSelected = onCategoryTabSelected,
+                        popularPosts = popularPosts,
+                        pochipickPosts = pochipickPosts,
+                        allPosts = filteredSortedPosts(allPosts, null, searchQuery, sortOrder),
+                        sortOrder = sortOrder,
+                        onSortOrderChange = { sortOrder = it },
+                        onNotificationClick = {},
+                        onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
+                        onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
+                        onPostClick = onPostClick,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+
+                    HamTipsRoute.CATEGORY -> {
+                        BackHandler(onBack = onBackToMain)
+                        HamTipsFeedRouteContent(
+                            title = stringResource(R.string.hamtips_title),
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            selectedCategoryTab = selectedCategoryTab,
+                            onCategoryTabSelected = onCategoryTabSelected,
+                            posts = filteredSortedPosts(allPosts, selectedCategoryTab.category, searchQuery, sortOrder),
+                            sortOrder = sortOrder,
+                            onSortOrderChange = { sortOrder = it },
+                            onBackClick = onBackToMain,
+                            onNotificationClick = {},
+                            onPostClick = onPostClick,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+
+                    HamTipsRoute.POPULAR_ALL -> {
+                        BackHandler(onBack = onBackToMain)
+                        HamTipsFeedRouteContent(
+                            title = stringResource(R.string.hamtips_popular_title),
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            selectedCategoryTab = selectedCategoryTab,
+                            onCategoryTabSelected = onCategoryTabSelected,
+                            posts = filteredSortedPosts(popularPosts, selectedCategoryTab.category, searchQuery, sortOrder),
+                            sortOrder = sortOrder,
+                            onSortOrderChange = { sortOrder = it },
+                            onBackClick = onBackToMain,
+                            onNotificationClick = {},
+                            onPostClick = onPostClick,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+
+                    HamTipsRoute.POCHIPICK_ALL -> {
+                        BackHandler(onBack = onBackToMain)
+                        HamTipsFeedRouteContent(
+                            title = stringResource(R.string.hamtips_pochipick_title),
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            selectedCategoryTab = selectedCategoryTab,
+                            onCategoryTabSelected = onCategoryTabSelected,
+                            posts = filteredSortedPosts(pochipickPosts, selectedCategoryTab.category, searchQuery, sortOrder),
+                            sortOrder = sortOrder,
+                            onSortOrderChange = { sortOrder = it },
+                            onBackClick = onBackToMain,
+                            onNotificationClick = {},
+                            onPostClick = onPostClick,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+
+                    else -> Unit
+                }
+            }
+
+            HamTipsFabMenu(
+                visible = showFabMenu,
+                onOptionClick = { option ->
+                    showFabMenu = false
+                    route = when (option) {
+                        HamTipsFabMenuOption.SHARE_TIP -> HamTipsRoute.WRITE_TIP
+                        HamTipsFabMenuOption.RECRUIT_BATTLE -> HamTipsRoute.WRITE_BATTLE
+                        HamTipsFabMenuOption.RECOMMEND_MENU -> HamTipsRoute.WRITE_MENU
+                    }
+                },
+                onDismiss = { showFabMenu = false }
+            )
+        }
     }
 }
 
@@ -182,7 +282,8 @@ private fun HamTipsFeedSection(
     sortOrder: HamTipsSortOrder,
     onSortOrderChange: (HamTipsSortOrder) -> Unit,
     modifier: Modifier = Modifier,
-    initialSortExpanded: Boolean = false
+    initialSortExpanded: Boolean = false,
+    onPostClick: (TipPost) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -197,7 +298,7 @@ private fun HamTipsFeedSection(
         }
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            posts.forEach { post -> HamTipsFeedPostCard(post = post) }
+            posts.forEach { post -> HamTipsFeedPostCard(post = post, onClick = { onPostClick(post) }) }
         }
     }
 }
@@ -216,7 +317,8 @@ private fun HamTipsMainContent(
     onNotificationClick: () -> Unit,
     onPopularViewAllClick: () -> Unit,
     onPochipickViewAllClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPostClick: (TipPost) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -240,7 +342,7 @@ private fun HamTipsMainContent(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            popularPosts.take(4).forEach { post -> HamTipsCompactPostCard(post = post) }
+            popularPosts.take(4).forEach { post -> HamTipsCompactPostCard(post = post, onClick = { onPostClick(post) }) }
         }
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -253,11 +355,11 @@ private fun HamTipsMainContent(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            pochipickPosts.take(4).forEach { post -> HamTipsCompactPostCard(post = post) }
+            pochipickPosts.take(4).forEach { post -> HamTipsCompactPostCard(post = post, onClick = { onPostClick(post) }) }
         }
         Spacer(modifier = Modifier.height(24.dp))
 
-        HamTipsFeedSection(posts = allPosts, sortOrder = sortOrder, onSortOrderChange = onSortOrderChange)
+        HamTipsFeedSection(posts = allPosts, sortOrder = sortOrder, onSortOrderChange = onSortOrderChange, onPostClick = onPostClick)
         Spacer(modifier = Modifier.height(96.dp))
     }
 }
@@ -275,7 +377,8 @@ private fun HamTipsFeedRouteContent(
     onBackClick: () -> Unit,
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
-    initialSortExpanded: Boolean = false
+    initialSortExpanded: Boolean = false,
+    onPostClick: (TipPost) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -293,7 +396,8 @@ private fun HamTipsFeedRouteContent(
             posts = posts,
             sortOrder = sortOrder,
             onSortOrderChange = onSortOrderChange,
-            initialSortExpanded = initialSortExpanded
+            initialSortExpanded = initialSortExpanded,
+            onPostClick = onPostClick
         )
         Spacer(modifier = Modifier.height(96.dp))
     }
@@ -335,6 +439,28 @@ private fun HamTipsCategoryScreenPreview() {
                 selectedCategoryTab = HamTipsCategoryTab.COOKING,
                 onCategoryTabSelected = {},
                 posts = HamTipsMockData.allPosts().filter { it.category == TipCategory.COOKING },
+                sortOrder = HamTipsSortOrder.LATEST,
+                onSortOrderChange = {},
+                onBackClick = {},
+                onNotificationClick = {},
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "13. 뭐먹지 카테고리 - 메뉴 추천 리스트")
+@Composable
+private fun HamTipsWhatToEatCategoryScreenPreview() {
+    HampouchTheme {
+        HamTipsScreenPreviewScaffold { innerPadding ->
+            HamTipsFeedRouteContent(
+                title = stringResource(R.string.hamtips_title),
+                query = "",
+                onQueryChange = {},
+                selectedCategoryTab = HamTipsCategoryTab.WHAT_TO_EAT,
+                onCategoryTabSelected = {},
+                posts = HamTipsMockData.allPosts().filter { it.category == TipCategory.WHAT_TO_EAT },
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},

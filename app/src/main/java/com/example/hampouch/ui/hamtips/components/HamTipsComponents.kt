@@ -291,14 +291,15 @@ private fun HamTipsStatRow(post: TipPost, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier) {
+fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Column(
         modifier = modifier
             .width(168.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
             .border(1.dp, HPGray4, RoundedCornerShape(20.dp))
-            .padding(16.dp)
+            .clickable(onClick = onClick)
+            .padding(12.dp)
     ) {
         TipCategoryBadge(category = post.category)
         Spacer(modifier = Modifier.height(10.dp))
@@ -316,13 +317,14 @@ fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier) {
+fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
             .border(1.dp, HPGray4, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -350,13 +352,11 @@ fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier) {
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            if (post.hasImage) {
+            if (post.imageUris.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(12.dp))
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(HPGray5)
+                HamTipsFeedThumbnail(
+                    uriString = post.imageUris.first(),
+                    modifier = Modifier.size(64.dp)
                 )
             }
         }

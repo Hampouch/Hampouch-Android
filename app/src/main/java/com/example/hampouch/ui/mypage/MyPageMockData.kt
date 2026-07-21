@@ -3,8 +3,8 @@ package com.example.hampouch.ui.mypage
 import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.model.TipCategory
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.ui.hamtips.HamTipsRepository
 
 object MyPageMockData {
 
@@ -49,40 +49,9 @@ object MyPageMockData {
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 
-    fun myTips(): List<TipPost> = listOf(
-        TipPost(
-            id = "tip_1",
-            category = TipCategory.COOKING,
-            title = "배달 끊고 한 달 8만원 아낀 밀프렙 루틴",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요"
-        ),
-        TipPost(
-            id = "tip_2",
-            category = TipCategory.SHOPPING,
-            title = "마트 마감 세일 시간표 완벽 정리",
-            subtitle = "저녁 7시 이후 정육, 채소 코너를 먼저 가세요 마감세일은 매장마다 다르니 꼭 확인하고 가시길 추천드려요"
-        ),
-        TipPost(
-            id = "tip_3",
-            category = TipCategory.DISCOUNT,
-            title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요"
-        ),
-        TipPost(
-            id = "tip_4",
-            category = TipCategory.COOKING,
-            title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요"
-        ),
-        TipPost(
-            id = "tip_5",
-            category = TipCategory.COOKING,
-            title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요"
-        )
-    )
+    fun myTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.authorId == HamTipsRepository.CURRENT_USER_ID }
 
-    fun savedTips(): List<TipPost> = myTips()
+    fun savedTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.isSaved }
 
     fun emptyTips(): List<TipPost> = emptyList()
 }

@@ -49,3 +49,15 @@ val HPTipDiscountText = Color(0xFF8B5FBF)
 val HPTipRecruitBg = Color(0xFFE3EDF7)
 
 val HPTipRecruitText = Color(0xFF4A79A8)
+
+val HPTipRecordBg = Color(0xFFDCF0EC)
+
+val HPTipRecordText = Color(0xFF2E8F7A)
+
+val HPTipEtcBg = Color(0xFFECECEC)
+
+val HPTipEtcText = Color(0xFF6B6B6B)
+
+val HPStar = Color(0xFFFFC53D)
+
+val HPReplyTag = Color(0xFF3B82F6)

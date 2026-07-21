@@ -46,28 +46,6 @@ data class NotificationSettingsState(
     val communityAlarmEnabled: Boolean = false
 )
 
-enum class TipCategory(val labelResId: Int) {
-    WHAT_TO_EAT(R.string.tip_category_what_to_eat),
-    SHOPPING(R.string.tip_category_shopping),
-    COOKING(R.string.tip_category_cooking),
-    DISCOUNT(R.string.tip_category_discount),
-    RECRUIT(R.string.tip_category_recruit)
-}
-
-data class TipPost(
-    val id: String,
-    val category: TipCategory,
-    val title: String,
-    val subtitle: String,
-    val authorName: String = "",
-    val isEditorAuthor: Boolean = false,
-    val postedMinutesAgo: Int = 0,
-    val viewCount: Int = 0,
-    val commentCount: Int = 0,
-    val likeCount: Int = 0,
-    val hasImage: Boolean = false
-)
-
 data class RecordAlarmSettingsState(
     val receiveEnabled: Boolean = true,
     val missingReminderEnabled: Boolean = true,
