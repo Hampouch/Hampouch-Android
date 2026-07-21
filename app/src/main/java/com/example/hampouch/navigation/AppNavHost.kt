@@ -9,9 +9,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.hampouch.ui.hambattle.HamBattleAddScreen
+import com.example.hampouch.ui.hambattle.HamBattleChallengeResultPagerScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
+import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleScreen
+import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
@@ -28,6 +37,17 @@ fun AppNavHost(
 ) {
     // 회원가입/비밀번호 재설정 완료 후 Login 화면에서 한 번 보여줄 완료 메시지.
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
+
+    // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
+    val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
+        if (item == BottomNavItem.HAM_BATTLE) {
+            navController.popBackStack(Screen.Home.route, false)
+        } else {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Home.route) { inclusive = true }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -103,8 +123,124 @@ fun AppNavHost(
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
+                onHamBattleChallengeClick = { challengeId ->
+                    navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
+                },
+                onHamBattleViewEndedChallengesClick = {
+                    navController.navigate(Screen.HamBattleEndedChallenges.route)
+                },
+                onHamBattleWaitingChallengeClick = { challengeId ->
+                    navController.navigate(
+                        Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
+                    )
                 }
             )
+        }
+
+        composable(Screen.HamBattle.route) {
+            HamBattleScreen(
+                onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
+                onChallengeClick = { challengeId ->
+                    navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
+                },
+                onViewEndedChallengesClick = {
+                    navController.navigate(Screen.HamBattleEndedChallenges.route)
+                },
+                onWaitingChallengeClick = { challengeId ->
+                    navController.navigate(
+                        Screen.HamBattleWaitingChallengeDetail.createRoute(
+                            challengeId
+                        )
+                    )
+                }
+            )
+        }
+
+        composable(Screen.HamBattleAdd.route) {
+            HamBattleAddScreen(
+                onBackClick = { navController.popBackStack() },
+                onStartClick = { request ->
+                    Log.d(TAG, "HamBattle challenge started: $request")
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ChallengeResult.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.activeChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                BottomNavScaffold(
+                    selectedItem = BottomNavItem.HAM_BATTLE,
+                    onItemSelected = onBottomNavItemSelected
+                ) {
+                    HamBattleChallengeResultPagerScreen(
+                        challenge = challenge,
+                        onBackClick = { navController.popBackStack() },
+                        onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                    )
+                }
+            }
+        }
+
+        composable(Screen.HamBattleEndedChallenges.route) {
+            BottomNavScaffold(
+                selectedItem = BottomNavItem.HAM_BATTLE,
+                onItemSelected = onBottomNavItemSelected
+            ) {
+                HamBattleEndedChallengesScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onChallengeClick = { challengeId ->
+                        navController.navigate(
+                            Screen.HamBattleEndedChallengeDetail.createRoute(challengeId)
+                        )
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.HamBattleEndedChallengeDetail.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.endedChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                BottomNavScaffold(
+                    selectedItem = BottomNavItem.HAM_BATTLE,
+                    onItemSelected = onBottomNavItemSelected
+                ) {
+                    HamBattleEndedChallengeDetailScreen(
+                        challenge = challenge,
+                        onBackClick = { navController.popBackStack() },
+                        onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
+                    )
+                }
+            }
+        }
+
+        composable(
+            route = Screen.HamBattleWaitingChallengeDetail.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId")
+            val challenge = HamBattleMockData.waitingChallenges.find { it.id == challengeId }
+            if (challenge != null) {
+                BottomNavScaffold(
+                    selectedItem = BottomNavItem.HAM_BATTLE,
+                    onItemSelected = onBottomNavItemSelected
+                ) {
+                    HamBattleWaitingChallengeDetailScreen(
+                        challenge = challenge,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+            }
         }
     }
 }
