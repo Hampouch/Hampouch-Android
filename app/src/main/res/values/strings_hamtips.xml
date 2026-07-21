@@ -1,3 +1,34 @@
 <resources>
-    <!-- 햄팁 -->
+    <!-- 햄꿀팁 (커뮤니티) -->
+
+    <string name="hamtips_title">햄꿀팁</string>
+    <string name="hamtips_search_placeholder">식비 줄이는 꿀팁 검색</string>
+    <string name="hamtips_cd_search">검색</string>
+    <string name="hamtips_cd_clear_search">검색어 지우기</string>
+
+    <string name="hamtips_tab_all">전체</string>
+
+    <string name="hamtips_section_popular">인기글</string>
+    <string name="hamtips_section_pochipick">포치픽</string>
+    <string name="hamtips_section_all_posts">전체글</string>
+    <string name="hamtips_view_all">전체 보기</string>
+    <string name="hamtips_popular_title">인기 꿀팁</string>
+    <string name="hamtips_pochipick_title">포치픽</string>
+
+    <string name="hamtips_sort_latest">최신순</string>
+    <string name="hamtips_sort_popular">인기순</string>
+    <string name="hamtips_sort_views">조회순</string>
+    <string name="hamtips_cd_sort">정렬</string>
+
+    <string name="hamtips_fab_share_tip">꿀팁 공유</string>
+    <string name="hamtips_fab_recruit_battle">햄배틀 모집</string>
+    <string name="hamtips_fab_recommend_menu">메뉴 추천</string>
+    <string name="hamtips_cd_fab">글쓰기</string>
+    <string name="hamtips_cd_post_image">게시글 이미지</string>
+    <string name="hamtips_cd_view_count">조회수</string>
+    <string name="hamtips_cd_comment_count">댓글수</string>
+    <string name="hamtips_cd_like_count">좋아요수</string>
+
+    <string name="hamtips_time_minutes_ago_format">%1$d분전</string>
+    <string name="hamtips_time_hours_ago_format">%1$d시간전</string>
 </resources>

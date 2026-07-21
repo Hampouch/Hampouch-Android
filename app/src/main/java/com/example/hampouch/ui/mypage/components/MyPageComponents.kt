@@ -71,6 +71,8 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPTipDiscountBg
 import com.example.hampouch.ui.theme.HPTipDiscountText
+import com.example.hampouch.ui.theme.HPTipRecruitBg
+import com.example.hampouch.ui.theme.HPTipRecruitText
 import com.example.hampouch.ui.theme.HPWhite
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
@@ -507,9 +509,11 @@ fun ReminderModeSegmentedRow(
 @Composable
 fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
     val (bg, textColor) = when (category) {
+        TipCategory.WHAT_TO_EAT -> HPStatusSuccessBg to HPStatusSuccessText
         TipCategory.COOKING -> HPStatusInProgressBg to HPStatusInProgressText
         TipCategory.SHOPPING -> HPStatusFailBg to HPStatusFailText
         TipCategory.DISCOUNT -> HPTipDiscountBg to HPTipDiscountText
+        TipCategory.RECRUIT -> HPTipRecruitBg to HPTipRecruitText
     }
     Box(
         modifier = modifier
