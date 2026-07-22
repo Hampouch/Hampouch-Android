@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.hambattle.HamBattleScreen
@@ -39,6 +40,7 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
+import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -67,11 +69,13 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = HPGray2,
         bottomBar = {
-            BottomNavBar(
-                selectedItem = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = {}
-            )
+            if (selectedBottomTab != BottomNavItem.MY_PAGE) {
+                BottomNavBar(
+                    selectedItem = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = {}
+                )
+            }
         }
     ) { innerPadding ->
         when (selectedBottomTab) {
@@ -103,6 +107,13 @@ fun HomeScreen(
                     onWaitingChallengeClick = onHamBattleWaitingChallengeClick
                 )
             }
+
+            BottomNavItem.MY_PAGE -> MyPageScreen(
+                selectedBottomTab = selectedBottomTab,
+                onItemSelected = { selectedBottomTab = it },
+                onAddClick = {},
+                modifier = Modifier.padding(innerPadding)
+            )
 
             else -> ComingSoonPlaceholder(
                 labelResId = selectedBottomTab.labelResId,
