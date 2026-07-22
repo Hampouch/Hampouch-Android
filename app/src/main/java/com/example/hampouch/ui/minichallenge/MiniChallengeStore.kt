@@ -53,4 +53,8 @@ object MiniChallengeStore {
         addChallenge(date, recommended.name, recommended.totalDays)
         recommendedChallenges = recommendedChallenges.filterNot { it.id == recommended.id }
     }
+
+    fun removeChallenge(date: LocalDate, id: String) {
+        challengesByDate = challengesByDate + (date to challengesFor(date).filterNot { it.id == id })
+    }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -84,6 +85,7 @@ fun MiniChallengeScreen(
             todayChallenges = MiniChallengeStore.challengesFor(selectedDate),
             recommendedChallenges = MiniChallengeStore.recommendedChallenges,
             onToggleChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+            onDeleteChallenge = { id -> MiniChallengeStore.removeChallenge(selectedDate, id) },
             onAddRecommendedChallenge = { recommended ->
                 MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)
             },
@@ -104,6 +106,7 @@ private fun MiniChallengeDashboardScreen(
     todayChallenges: List<MiniChallengeEntry>,
     recommendedChallenges: List<RecommendedMiniChallenge>,
     onToggleChallenge: (String) -> Unit,
+    onDeleteChallenge: (String) -> Unit,
     onAddRecommendedChallenge: (RecommendedMiniChallenge) -> Unit,
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
@@ -159,10 +162,13 @@ private fun MiniChallengeDashboardScreen(
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         todayChallenges.forEach { item ->
-                            MiniChallengeItemRow(
-                                item = item,
-                                onToggle = { onToggleChallenge(item.id) }
-                            )
+                            key(item.id) {
+                                MiniChallengeItemRow(
+                                    item = item,
+                                    onToggle = { onToggleChallenge(item.id) },
+                                    onDelete = { onDeleteChallenge(item.id) }
+                                )
+                            }
                         }
                     }
                 }

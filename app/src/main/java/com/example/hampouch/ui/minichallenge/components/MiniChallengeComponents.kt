@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -7,6 +8,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,6 +44,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +54,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
@@ -70,6 +80,8 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -278,26 +290,77 @@ private fun StreakRing(streakDays: Int, progress: Float, modifier: Modifier = Mo
     }
 }
 
+private val MiniChallengeDeleteRevealWidth = 72.dp
+
 @Composable
 fun MiniChallengeItemRow(
     item: MiniChallengeEntry,
     onToggle: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (item.isChecked) HPSub2 else HPWhite)
-            .clickable(onClick = onToggle)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MiniChallengeCheckbox(checked = item.isChecked)
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = item.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(text = item.periodLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+    val density = LocalDensity.current
+    val revealPx = remember(density) { with(density) { -MiniChallengeDeleteRevealWidth.toPx() } }
+    val offsetX = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(20.dp))
+                .background(HPWhite),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            IconButton(
+                onClick = {
+                    onDelete()
+                    scope.launch { offsetX.animateTo(0f) }
+                },
+                modifier = Modifier.padding(end = 12.dp)
+                    .background(color = Color.Red, shape = RoundedCornerShape(10.dp))
+
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = stringResource(R.string.minichallenge_delete),
+                    tint = HPWhite
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state = rememberDraggableState { delta ->
+                        scope.launch {
+                            offsetX.snapTo((offsetX.value + delta).coerceIn(revealPx, 0f))
+                        }
+                    },
+                    onDragStopped = {
+                        val target = if (offsetX.value < revealPx / 2f) revealPx else 0f
+                        scope.launch { offsetX.animateTo(target, animationSpec = tween(200)) }
+                    }
+                )
+                .clip(RoundedCornerShape(20.dp))
+                .background(if (item.isChecked) HPSub2 else HPWhite)
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MiniChallengeCheckbox(checked = item.isChecked)
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(text = item.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = item.periodLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = HPText
+            )
+        }
     }
 }
 
@@ -470,17 +533,17 @@ private fun MiniChallengeDurationChip(
     modifier: Modifier = Modifier
 ) {
     Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(RoundedCornerShape(50))
             .border(
                 width = 2.dp,
-                color = HPGray5,
+                color = if(selected) HPMain else HPGray5,
                 shape = RoundedCornerShape(50)
             )
             .background(if (selected) HPMain else HPWhite)
             .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 15.dp, vertical = 10.dp)
     ) {
         Text(
             text = label,

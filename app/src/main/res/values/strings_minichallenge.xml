@@ -11,6 +11,7 @@
     <string name="minichallenge_recommended_title">추천 미니 챌린지</string>
     <string name="minichallenge_recommended_empty">추천할 미니 챌린지가 없어요.</string>
     <string name="minichallenge_add_button">추가하기</string>
+    <string name="minichallenge_delete">삭제</string>
     <string name="minichallenge_start_button">새 미니 챌린지 시작하기</string>
 
     <string name="minichallenge_create_headline">어떤 챌린지를 만들어볼까요?</string>
