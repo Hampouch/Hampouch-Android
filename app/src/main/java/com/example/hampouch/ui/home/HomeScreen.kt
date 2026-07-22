@@ -64,7 +64,7 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = HPGray2,
         bottomBar = {
-            if (selectedBottomTab != BottomNavItem.MY_PAGE && selectedBottomTab != BottomNavItem.COMMUNITY) {
+            if (selectedBottomTab != BottomNavItem.MY_PAGE && selectedBottomTab != BottomNavItem.COMMUNITY && selectedBottomTab != BottomNavItem.HAM_BATTLE) {
                 BottomNavBar(
                     selectedItem = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
@@ -90,18 +90,16 @@ fun HomeScreen(
                 modifier = Modifier.padding(innerPadding)
             )
 
-            BottomNavItem.HAM_BATTLE -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = innerPadding.calculateBottomPadding())
-            ) {
-                HamBattleScreen(
-                    onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
-                    onChallengeClick = onHamBattleChallengeClick,
-                    onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
-                    onWaitingChallengeClick = onHamBattleWaitingChallengeClick
-                )
-            }
+            BottomNavItem.HAM_BATTLE -> HamBattleScreen(
+                selectedBottomTab = selectedBottomTab,
+                onItemSelected = { selectedBottomTab = it },
+                onAddClick = {},
+                modifier = Modifier.padding(innerPadding),
+                onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
+                onChallengeClick = onHamBattleChallengeClick,
+                onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
+                onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
+            )
 
             BottomNavItem.MY_PAGE -> MyPageScreen(
                 selectedBottomTab = selectedBottomTab,

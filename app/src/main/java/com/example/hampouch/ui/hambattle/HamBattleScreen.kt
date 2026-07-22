@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -49,6 +53,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
+import com.example.hampouch.navigation.BottomNavBar
+import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
@@ -64,17 +70,30 @@ private val StatusBadgeText = Color(0xFF729739)
 
 @Composable
 fun HamBattleScreen(
+    selectedBottomTab: BottomNavItem,
+    onItemSelected: (BottomNavItem) -> Unit,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier,
     activeChallenges: List<HamBattleActiveChallenge> = HamBattleMockData.activeChallenges,
     waitingChallenges: List<HamBattleWaitingChallenge> = HamBattleMockData.waitingChallenges,
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onViewEndedChallengesClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {},
-    onWaitingChallengeClick: (String) -> Unit = {}
+    onWaitingChallengeClick: (String) -> Unit = {},
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = { HamBattleTopBar(onNotificationClick = onNotificationClick) },
-        containerColor = HPWhite
+        containerColor = HPWhite,
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
+        bottomBar = {
+            BottomNavBar(
+                selectedItem = selectedBottomTab,
+                onItemSelected = onItemSelected,
+                onAddClick = onAddClick
+            )
+        }
     ) { innerPadding ->
         if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
             HamBattleEmptyContent(
@@ -392,18 +411,18 @@ private fun EmptyAvatarSlot(size: Dp) {
     }
 }
 
-@Preview
-@Composable
-private fun HamBattleScreenPreview() {
-    HampouchTheme {
-        HamBattleScreen()
-    }
-}
-
-@Preview
-@Composable
-private fun HamBattleScreenEmptyPreview() {
-    HampouchTheme {
-        HamBattleScreen(activeChallenges = emptyList(), waitingChallenges = emptyList())
-    }
-}
+//@Preview
+//@Composable
+//private fun HamBattleScreenPreview() {
+//    HampouchTheme {
+//        HamBattleScreen()
+//    }
+//}
+//
+//@Preview
+//@Composable
+//private fun HamBattleScreenEmptyPreview() {
+//    HampouchTheme {
+//        HamBattleScreen(activeChallenges = emptyList(), waitingChallenges = emptyList())
+//    }
+//}

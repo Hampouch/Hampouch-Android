@@ -141,6 +141,9 @@ fun AppNavHost(
 
         composable(Screen.HamBattle.route) {
             HamBattleScreen(
+                selectedBottomTab = BottomNavItem.HAM_BATTLE,
+                onItemSelected = onBottomNavItemSelected,
+                onAddClick = {},
                 onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
