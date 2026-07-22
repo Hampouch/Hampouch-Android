@@ -46,7 +46,8 @@ fun MiniChallengeRecommendedListScreen(
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
 
     val filteredChallenges = remember(selectedDurationIndex, recommendedChallenges) {
-        recommendedChallenges.filter { it.periodLabel.removeSuffix("간") == durationOptions[selectedDurationIndex] }
+        val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
+        recommendedChallenges.filter { it.totalDays == selectedTotalDays }
     }
 
     Scaffold(

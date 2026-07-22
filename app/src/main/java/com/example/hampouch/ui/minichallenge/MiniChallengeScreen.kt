@@ -41,65 +41,52 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
-import java.util.UUID
 
 private enum class MiniChallengeStep { DASHBOARD, CREATE, RECOMMENDED_LIST }
 
 @Composable
 fun MiniChallengeScreen(
     modifier: Modifier = Modifier,
+    initialDate: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
 ) {
     var step by remember { mutableStateOf(MiniChallengeStep.DASHBOARD) }
-    var todayChallenges by remember { mutableStateOf(MiniChallengeMockData.todayChallenges()) }
-    var recommendedChallenges by remember { mutableStateOf(MiniChallengeMockData.recommendedChallenges()) }
-
-    fun addChallenge(name: String, periodLabel: String) {
-        todayChallenges = todayChallenges + MiniChallengeEntry(
-            id = UUID.randomUUID().toString(),
-            name = name.ifBlank { "이름 없는 챌린지" },
-            periodLabel = periodLabel,
-            isChecked = false
-        )
-    }
-
-    fun addRecommendedChallenge(recommended: RecommendedMiniChallenge) {
-        addChallenge(recommended.name, recommended.periodLabel)
-        recommendedChallenges = recommendedChallenges.filterNot { it.id == recommended.id }
-    }
+    val anchorDate = remember(initialDate) { initialDate }
+    var selectedDate by remember(initialDate) { mutableStateOf(initialDate) }
 
     when (step) {
         MiniChallengeStep.CREATE -> MiniChallengeCreateScreen(
             modifier = modifier,
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
-            onAddChallengeClick = { name, periodLabel ->
-                addChallenge(name, periodLabel)
+            onAddChallengeClick = { name, totalDays ->
+                MiniChallengeStore.addChallenge(selectedDate, name, totalDays)
                 step = MiniChallengeStep.DASHBOARD
             }
         )
 
         MiniChallengeStep.RECOMMENDED_LIST -> MiniChallengeRecommendedListScreen(
             modifier = modifier,
-            recommendedChallenges = recommendedChallenges,
+            recommendedChallenges = MiniChallengeStore.recommendedChallenges,
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onNotificationClick = onNotificationClick,
             onAddChallenge = { recommended: RecommendedMiniChallenge ->
-                addRecommendedChallenge(recommended)
+                MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)
                 step = MiniChallengeStep.DASHBOARD
             }
         )
 
         MiniChallengeStep.DASHBOARD -> MiniChallengeDashboardScreen(
             modifier = modifier,
-            todayChallenges = todayChallenges,
-            recommendedChallenges = recommendedChallenges,
-            onToggleChallenge = { id ->
-                todayChallenges = todayChallenges.map {
-                    if (it.id == id) it.copy(isChecked = !it.isChecked) else it
-                }
+            anchorDate = anchorDate,
+            selectedDate = selectedDate,
+            onDateSelected = { selectedDate = it },
+            todayChallenges = MiniChallengeStore.challengesFor(selectedDate),
+            recommendedChallenges = MiniChallengeStore.recommendedChallenges,
+            onToggleChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+            onAddRecommendedChallenge = { recommended ->
+                MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)
             },
-            onAddRecommendedChallenge = ::addRecommendedChallenge,
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
             onStartNewChallengeClick = { step = MiniChallengeStep.CREATE },
@@ -111,6 +98,9 @@ fun MiniChallengeScreen(
 @Composable
 private fun MiniChallengeDashboardScreen(
     modifier: Modifier = Modifier,
+    anchorDate: LocalDate,
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
     todayChallenges: List<MiniChallengeEntry>,
     recommendedChallenges: List<RecommendedMiniChallenge>,
     onToggleChallenge: (String) -> Unit,
@@ -120,8 +110,6 @@ private fun MiniChallengeDashboardScreen(
     onStartNewChallengeClick: () -> Unit = {},
     onViewAllRecommendedClick: () -> Unit = {}
 ) {
-    val referenceToday = remember { LocalDate.now() }
-    var selectedDate by remember { mutableStateOf(referenceToday) }
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
 
     Scaffold(
@@ -144,18 +132,18 @@ private fun MiniChallengeDashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
             MiniChallengeDateRow(
                 dates = listOf(
-                    referenceToday.minusDays(1),
-                    referenceToday,
-                    referenceToday.plusDays(1)
+                    anchorDate.minusDays(1),
+                    anchorDate,
+                    anchorDate.plusDays(1)
                 ),
                 selectedDate = selectedDate,
-                onDateSelected = { selectedDate = it }
+                onDateSelected = onDateSelected
             )
             Spacer(modifier = Modifier.height(20.dp))
             MiniChallengeSummaryCard(
                 completedCount = todayChallenges.count { it.isChecked },
                 totalCount = todayChallenges.size,
-                streakDays = MiniChallengeMockData.streakDays
+                streakDays = todayChallenges.maxOfOrNull { it.achievedDays } ?: 0
             )
             Spacer(modifier = Modifier.height(28.dp))
 

@@ -45,7 +45,7 @@ private const val DEFAULT_DURATION_INDEX = 2
 fun MiniChallengeCreateScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onAddChallengeClick: (name: String, periodLabel: String) -> Unit = { _, _ -> }
+    onAddChallengeClick: (name: String, totalDays: Int?) -> Unit = { _, _ -> }
 ) {
     var name by remember { mutableStateOf("") }
     val durationOptions = listOf(
@@ -57,6 +57,7 @@ fun MiniChallengeCreateScreen(
     )
     var selectedDurationIndex by remember { mutableStateOf(DEFAULT_DURATION_INDEX) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
 
     Scaffold(
         modifier = modifier,
@@ -148,11 +149,11 @@ fun MiniChallengeCreateScreen(
     if (showConfirmDialog) {
         MiniChallengeAddConfirmDialog(
             name = name,
-            periodLabel = durationOptions[selectedDurationIndex],
+            periodLabel = if (selectedTotalDays == null) "오늘만" else "${selectedTotalDays}일간",
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                onAddChallengeClick(name, durationOptions[selectedDurationIndex])
+                onAddChallengeClick(name, selectedTotalDays)
             }
         )
     }

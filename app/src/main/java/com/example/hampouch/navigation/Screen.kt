@@ -1,5 +1,7 @@
 package com.example.hampouch.navigation
 
+import java.time.LocalDate
+
 sealed class Screen(val route: String) {
     data object Onboarding : Screen("onboarding")
     data object Login : Screen("login")
@@ -7,6 +9,9 @@ sealed class Screen(val route: String) {
     data object ResetPassword : Screen("reset_password")
     data object Loading : Screen("loading")
     data object Home : Screen("home")
+    data object MiniChallenge : Screen("mini_challenge/{initialDateEpochDay}") {
+        fun createRoute(initialDate: LocalDate) = "mini_challenge/${initialDate.toEpochDay()}"
+    }
     data object HamBattle : Screen("hambattle")
     data object HamBattleAdd : Screen("hambattle_add")
     data object ChallengeResult : Screen("challenge_result/{challengeId}") {
