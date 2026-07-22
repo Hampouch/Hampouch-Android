@@ -71,6 +71,12 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPTipDiscountBg
 import com.example.hampouch.ui.theme.HPTipDiscountText
+import com.example.hampouch.ui.theme.HPTipEtcBg
+import com.example.hampouch.ui.theme.HPTipEtcText
+import com.example.hampouch.ui.theme.HPTipRecordBg
+import com.example.hampouch.ui.theme.HPTipRecordText
+import com.example.hampouch.ui.theme.HPTipRecruitBg
+import com.example.hampouch.ui.theme.HPTipRecruitText
 import com.example.hampouch.ui.theme.HPWhite
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
@@ -83,7 +89,9 @@ fun MyPageMainTopBar(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
@@ -507,9 +515,13 @@ fun ReminderModeSegmentedRow(
 @Composable
 fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
     val (bg, textColor) = when (category) {
+        TipCategory.WHAT_TO_EAT -> HPStatusSuccessBg to HPStatusSuccessText
         TipCategory.COOKING -> HPStatusInProgressBg to HPStatusInProgressText
         TipCategory.SHOPPING -> HPStatusFailBg to HPStatusFailText
         TipCategory.DISCOUNT -> HPTipDiscountBg to HPTipDiscountText
+        TipCategory.RECRUIT -> HPTipRecruitBg to HPTipRecruitText
+        TipCategory.RECORD -> HPTipRecordBg to HPTipRecordText
+        TipCategory.ETC -> HPTipEtcBg to HPTipEtcText
     }
     Box(
         modifier = modifier
@@ -527,13 +539,14 @@ fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier) {
+fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
             .border(1.dp, HPGray4, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         TipCategoryBadge(category = tip.category)

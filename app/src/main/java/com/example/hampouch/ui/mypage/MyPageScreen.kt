@@ -1,15 +1,20 @@
 package com.example.hampouch.ui.mypage
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,9 +26,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
+import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.CompleteDialog
+import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
+import com.example.hampouch.ui.hamtips.HamTipsDetailScreen
+import com.example.hampouch.ui.hamtips.HamTipsRepository
+import com.example.hampouch.ui.hamtips.HamTipsWriteTipScreen
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.MyPageMenuRow
 import com.example.hampouch.ui.mypage.components.ProfileCard
@@ -31,7 +42,8 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
 
 private enum class MyPageRoute {
-    MAIN, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY, MY_TIPS, SAVED_TIPS
+    MAIN, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY, MY_TIPS, SAVED_TIPS,
+    TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
 }
 
 @Composable
@@ -39,22 +51,32 @@ fun MyPageScreen(
     selectedBottomTab: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToHamBattleLink: (String) -> Unit = {}
 ) {
     var route by remember { mutableStateOf(MyPageRoute.MAIN) }
+    var previousListRoute by remember { mutableStateOf(MyPageRoute.MY_TIPS) }
     var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
     var isEditingName by remember { mutableStateOf(false) }
     var editingName by remember { mutableStateOf(profile.name) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
+    var selectedPostId by remember { mutableStateOf<String?>(null) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
-    val myTips = remember { MyPageMockData.myTips() }
-    val savedTips = remember { MyPageMockData.savedTips() }
+    val myTips = MyPageMockData.myTips()
+    val savedTips = MyPageMockData.savedTips()
+
+    val onTipClick: (TipPost) -> Unit = { tip ->
+        selectedPostId = tip.id
+        previousListRoute = route
+        route = if (tip.type == TipPostType.BATTLE) MyPageRoute.BATTLE_DETAIL else MyPageRoute.TIP_DETAIL
+    }
 
     when (route) {
         MyPageRoute.MAIN -> {
             Scaffold(
                 modifier = modifier,
                 containerColor = HPGray2,
+                contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
                 bottomBar = {
                     BottomNavBar(
                         selectedItem = selectedBottomTab,
@@ -88,6 +110,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.ALL_SETTINGS -> {
+            BackHandler { route = MyPageRoute.MAIN }
             Box(modifier = modifier.fillMaxSize()) {
                 AllSettingsScreen(
                     onBackClick = { route = MyPageRoute.MAIN },
@@ -105,6 +128,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.RECORD_ALARM -> {
+            BackHandler { route = MyPageRoute.ALL_SETTINGS }
             RecordAlarmScreen(
                 onBackClick = { route = MyPageRoute.ALL_SETTINGS },
                 modifier = modifier.fillMaxSize()
@@ -112,6 +136,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.CHANGE_PASSWORD -> {
+            BackHandler { route = MyPageRoute.ALL_SETTINGS }
             ChangePasswordScreen(
                 email = profile.email,
                 onBackClick = { route = MyPageRoute.ALL_SETTINGS },
@@ -124,6 +149,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.CHALLENGE_HISTORY -> {
+            BackHandler { route = MyPageRoute.MAIN }
             ChallengeHistoryScreen(
                 records = challengeRecords,
                 onBackClick = { route = MyPageRoute.MAIN },
@@ -132,23 +158,67 @@ fun MyPageScreen(
         }
 
         MyPageRoute.MY_TIPS -> {
+            BackHandler { route = MyPageRoute.MAIN }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_my_tips),
                 emptyMessage = stringResource(R.string.my_tips_empty_message),
                 tips = myTips,
                 onBackClick = { route = MyPageRoute.MAIN },
+                onTipClick = onTipClick,
                 modifier = modifier.fillMaxSize()
             )
         }
 
         MyPageRoute.SAVED_TIPS -> {
+            BackHandler { route = MyPageRoute.MAIN }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_saved_tips),
                 emptyMessage = stringResource(R.string.saved_tips_empty_message),
                 tips = savedTips,
                 onBackClick = { route = MyPageRoute.MAIN },
+                onTipClick = onTipClick,
                 modifier = modifier.fillMaxSize()
             )
+        }
+
+        MyPageRoute.TIP_DETAIL -> {
+            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler { route = previousListRoute }
+                HamTipsDetailScreen(
+                    post = post,
+                    onBackClick = { route = previousListRoute },
+                    onEditClick = { route = MyPageRoute.EDIT_TIP },
+                    onDeleted = { route = previousListRoute },
+                    modifier = modifier.fillMaxSize()
+                )
+            }
+        }
+
+        MyPageRoute.BATTLE_DETAIL -> {
+            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler { route = previousListRoute }
+                HamTipsBattleDetailScreen(
+                    post = post,
+                    onBackClick = { route = previousListRoute },
+                    onDeleted = { route = previousListRoute },
+                    onNavigateToBattleLink = onNavigateToHamBattleLink,
+                    modifier = modifier.fillMaxSize()
+                )
+            }
+        }
+
+        MyPageRoute.EDIT_TIP -> {
+            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler { route = MyPageRoute.TIP_DETAIL }
+                HamTipsWriteTipScreen(
+                    editingPost = post,
+                    onBackClick = { route = MyPageRoute.TIP_DETAIL },
+                    onSubmitted = { route = MyPageRoute.TIP_DETAIL }
+                )
+            }
         }
     }
 }
@@ -173,7 +243,6 @@ private fun MyPageMainContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onCalendarClick = {},

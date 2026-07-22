@@ -30,7 +30,8 @@ fun TipListScreen(
     emptyMessage: String,
     tips: List<TipPost>,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTipClick: (TipPost) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -59,7 +60,7 @@ fun TipListScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                tips.forEach { tip -> TipPostCard(tip = tip) }
+                tips.forEach { tip -> TipPostCard(tip = tip, onClick = { onTipClick(tip) }) }
             }
         }
     }

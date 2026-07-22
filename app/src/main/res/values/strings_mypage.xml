@@ -85,10 +85,4 @@
     <string name="challenge_history_progress_format">%1$d/%2$d</string>
     <string name="challenge_history_daily_limit_format">하루 한도 %1$s원</string>
     <string name="challenge_history_total_saved_format">총 절약 +%1$s원</string>
-
-    <string name="my_tips_empty_message">아직 작성한 글이 없어요.</string>
-    <string name="saved_tips_empty_message">아직 저장한 글이 없어요.</string>
-    <string name="tip_category_cooking">요리</string>
-    <string name="tip_category_shopping">장보기</string>
-    <string name="tip_category_discount">할인</string>
 </resources>
