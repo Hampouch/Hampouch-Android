@@ -3,15 +3,19 @@ package com.example.hampouch.ui.challengeresult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,6 +47,7 @@ import com.example.hampouch.data.model.ChallengeResultUiState
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPSub1
+import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -53,7 +58,7 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.inProgress,
+    state: ChallengeResultUiState = ChallengeResultMockData.fail,
     onBackClick: () -> Unit = {},
     onExpenseAnalysisClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
@@ -62,6 +67,7 @@ fun ChallengeResultScreen(
 ) {
     val isFinished = state.status != ChallengeResultStatus.IN_PROGRESS
     var showGoalAdjustmentDialog by remember { mutableStateOf(false) }
+    var showShareOptionsDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { ChallengeResultTopBar(onBackClick = onBackClick) },
@@ -117,7 +123,7 @@ fun ChallengeResultScreen(
 
                 if (isFinished) {
                     ChallengeResultBottomActions(
-                        onShareClick = onShareClick,
+                        onShareClick = { showShareOptionsDialog = true },
                         onStartNewChallengeClick = {
                             if (state.status == ChallengeResultStatus.FAIL) {
                                 showGoalAdjustmentDialog = true
@@ -141,6 +147,16 @@ fun ChallengeResultScreen(
             onStartNewChallengeClick = {
                 showGoalAdjustmentDialog = false
                 onStartNewChallengeClick()
+            }
+        )
+    }
+
+    if (showShareOptionsDialog) {
+        ShareOptionsDialog(
+            onDismissRequest = { showShareOptionsDialog = false },
+            onOptionSelected = {
+                showShareOptionsDialog = false
+                onShareClick()
             }
         )
     }
@@ -193,61 +209,83 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
         ChallengeResultStatus.IN_PROGRESS -> "${state.totalDays}일 챌린지 진행중이에요!"
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(30.dp))
             .background(HPSub4)
-            .padding(horizontal = 15.dp, vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            badgeText,
-            style = MaterialTheme.typography.labelLarge,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = HPSub1
-        )
-        Spacer(modifier = Modifier.height(30.dp))
-        Image(
-            painter = painterResource(hamsterRes),
-            contentDescription = hamsterDescription,
+        Box(
             modifier = Modifier
-                .width(160.dp)
-                .height(174.dp)
+                .size(170.dp)
+                .align(Alignment.TopStart)
+                .offset(x = (-60).dp, y = (-40).dp)
+                .clip(CircleShape)
+                .background(HPSub2.copy(alpha = 0.10f))
         )
-        Spacer(modifier = Modifier.height(15.dp))
-        Text(subtitle, style = MaterialTheme.typography.titleSmall, color = HPBlack)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            "${formatPeriodDate(state.periodStart)} ~ ${formatPeriodDate(state.periodEnd)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
+        Box(
+            modifier = Modifier
+                .size(170.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 50.dp, y = 40.dp)
+                .clip(CircleShape)
+                .background(HPSub2.copy(alpha = 0.10f))
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 15.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StatBox(
-                label = "성공한 날",
-                value = "${state.successDays}/${state.totalDays}",
-                highlighted = false,
-                modifier = Modifier.weight(1f)
+            Text(
+                badgeText,
+                style = MaterialTheme.typography.labelLarge,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = HPSub1
             )
-            StatBox(
-                label = state.amountLabel,
-                value = formatWon(state.amountValue),
-                highlighted = true,
-                modifier = Modifier.weight(1f)
+            Spacer(modifier = Modifier.height(30.dp))
+            Image(
+                painter = painterResource(hamsterRes),
+                contentDescription = hamsterDescription,
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(174.dp)
             )
-            StatBox(
-                label = "연속 달성",
-                value = "${state.streakDays}일",
-                highlighted = false,
-                modifier = Modifier.weight(1f)
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(subtitle, style = MaterialTheme.typography.titleSmall, color = HPBlack)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "${formatPeriodDate(state.periodStart)} ~ ${formatPeriodDate(state.periodEnd)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = HPText
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                StatBox(
+                    label = "성공한 날",
+                    value = "${state.successDays}/${state.totalDays}",
+                    highlighted = false,
+                    modifier = Modifier.weight(1f)
+                )
+                StatBox(
+                    label = state.amountLabel,
+                    value = formatWon(state.amountValue),
+                    highlighted = true,
+                    modifier = Modifier.weight(1f)
+                )
+                StatBox(
+                    label = "연속 달성",
+                    value = "${state.streakDays}일",
+                    highlighted = false,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
