@@ -48,6 +48,7 @@ private const val MOCK_USER_NAME = "민준"
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onStartChallengeClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
@@ -87,6 +88,7 @@ fun HomeScreen(
                 },
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
+                onCalendarClick = onCalendarClick,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -135,6 +137,7 @@ private fun HomeContent(
     onToggleMiniChallenge: (String) -> Unit,
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
+    onCalendarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -147,7 +150,7 @@ private fun HomeContent(
         HomeHeader(
             userName = uiState.userName,
             hasUnreadNotification = true,
-            onCalendarClick = {},
+            onCalendarClick = onCalendarClick,
             onNotificationClick = {}
         )
         Spacer(modifier = Modifier.height(16.dp))
