@@ -34,11 +34,11 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-enum class ShareOption(val label: String, val iconRes: Int) {
-    KAKAO_TALK("카카오톡", R.drawable.login_kakao),
-    INSTAGRAM("인스타그램", R.drawable.icon_instagram),
-    MESSAGE("메세지", R.drawable.icon_message),
-    SAVE_IMAGE("이미지로 저장", R.drawable.icon_gallery)
+enum class ShareOption(val label: String, val iconRes: Int, val packageName: String?) {
+    KAKAO_TALK("카카오톡", R.drawable.login_kakao, "com.kakao.talk"),
+    INSTAGRAM("인스타그램", R.drawable.icon_instagram, "com.instagram.android"),
+    MESSAGE("메세지", R.drawable.icon_message, null),
+    SAVE_IMAGE("이미지로 저장", R.drawable.icon_gallery, null)
 }
 
 @Composable

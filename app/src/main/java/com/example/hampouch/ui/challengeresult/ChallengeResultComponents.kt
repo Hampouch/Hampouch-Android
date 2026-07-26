@@ -399,7 +399,7 @@ private fun CalendarDayCell(
     }
     val textColor = when {
         status != null -> HPBlack
-        !inCurrentMonth -> HPMain
+        !inCurrentMonth -> HPSub2
         inPeriod -> HPBlack
         else -> HPText
     }

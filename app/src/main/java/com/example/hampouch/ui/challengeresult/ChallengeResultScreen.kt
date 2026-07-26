@@ -1,5 +1,10 @@
 package com.example.hampouch.ui.challengeresult
 
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,10 +37,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,12 +64,13 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 ${date.dayOfMonth}일"
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.fail,
+    state: ChallengeResultUiState = ChallengeResultMockData.complete,
     onBackClick: () -> Unit = {},
     onExpenseAnalysisClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
@@ -68,6 +80,19 @@ fun ChallengeResultScreen(
     val isFinished = state.status != ChallengeResultStatus.IN_PROGRESS
     var showGoalAdjustmentDialog by remember { mutableStateOf(false) }
     var showShareOptionsDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val screenGraphicsLayer = rememberGraphicsLayer()
+
+    // 공유하러 간 이미지의 Uri. 공유 대상 앱에서 돌아오면(shareLauncher 콜백)
+    var pendingShareUri by remember { mutableStateOf<Uri?>(null) }
+    val shareLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        pendingShareUri?.let { uri -> deleteImage(context, uri) }
+        pendingShareUri = null
+    }
 
     Scaffold(
         topBar = { ChallengeResultTopBar(onBackClick = onBackClick) },
@@ -79,49 +104,80 @@ fun ChallengeResultScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
+            // 캡처 대상: 여기서부터 아래 Box가 끝나는 지점까지만 스크린샷에 담김.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawWithContent {
+                        screenGraphicsLayer.record { this@drawWithContent.drawContent() }
+                        drawLayer(screenGraphicsLayer)
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(HPWhite)
+                )
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    ) {
+                        ChallengeStatusHeroCard(state = state)
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        if (isFinished) {
+                            GoalSummaryCard(
+                                label = if (state.status == ChallengeResultStatus.COMPLETE) "목표 대비 총 절약" else state.amountLabel,
+                                amount = state.amountValue,
+                                goalAmount = state.goalAmount,
+                                actualAmount = state.actualAmount
+                            )
+                        }
+
+                        ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
+                        SpendingEmotionAnalysis(stats = state.emotionStats)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
             ) {
-                ChallengeStatusHeroCard(state = state)
+                Text(
+                    "하루하루 기록",
+                    style = Body16Bold,
+                    fontSize = 18.sp,
+                    color = HPBlack
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                DailyRecordCalendar(
+                    periodStart = state.periodStart,
+                    periodEnd = state.periodEnd,
+                    records = state.dailyRecords
+                )
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (isFinished) {
-                    GoalSummaryCard(
-                        label = if (state.status == ChallengeResultStatus.COMPLETE) "목표 대비 총 절약" else state.amountLabel,
-                        amount = state.amountValue,
-                        goalAmount = state.goalAmount,
-                        actualAmount = state.actualAmount
-                    )
-                }
-
-                ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
-                SpendingEmotionAnalysis(stats = state.emotionStats)
-                Column {
-                    Text(
-                        "하루하루 기록",
-                        style = Body16Bold,
-                        fontSize = 18.sp,
-                        color = HPBlack
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    DailyRecordCalendar(
-                        periodStart = state.periodStart,
-                        periodEnd = state.periodEnd,
-                        records = state.dailyRecords
-                    )
-                }
-
-                if (isFinished) {
+            if (isFinished) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                ) {
                     ChallengeResultBottomActions(
                         onShareClick = { showShareOptionsDialog = true },
                         onStartNewChallengeClick = {
@@ -134,9 +190,9 @@ fun ChallengeResultScreen(
                         onTakeABreakClick = onTakeABreakClick
                     )
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 
@@ -154,8 +210,29 @@ fun ChallengeResultScreen(
     if (showShareOptionsDialog) {
         ShareOptionsDialog(
             onDismissRequest = { showShareOptionsDialog = false },
-            onOptionSelected = {
+            onOptionSelected = { option ->
                 showShareOptionsDialog = false
+                coroutineScope.launch {
+                    val bitmap = screenGraphicsLayer.toImageBitmap().asAndroidBitmap()
+                    val savedUri = saveBitmapToGallery(context, bitmap)
+                    if (savedUri == null) {
+                        Toast.makeText(context, "이미지 저장에 실패했어요.", Toast.LENGTH_SHORT).show()
+                    } else if (option == ShareOption.SAVE_IMAGE) {
+                        Toast.makeText(context, "이미지를 저장했어요.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val targetPackage = option.packageName ?: defaultSmsPackage(context)
+                        if (targetPackage != null) {
+                            grantShareUriPermission(context, targetPackage, savedUri)
+                        }
+                        pendingShareUri = savedUri
+                        try {
+                            shareLauncher.launch(buildShareImageIntent(savedUri, targetPackage))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, "설치된 앱을 찾을 수 없어요.", Toast.LENGTH_SHORT).show()
+                            pendingShareUri = null
+                        }
+                    }
+                }
                 onShareClick()
             }
         )
