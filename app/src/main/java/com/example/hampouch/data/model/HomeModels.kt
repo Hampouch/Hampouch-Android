@@ -42,13 +42,6 @@ data class ExpenseEntry(
     val amount: Int
 )
 
-data class MiniChallengeEntry(
-    val id: String,
-    val name: String,
-    val periodLabel: String,
-    val isChecked: Boolean
-)
-
 enum class WarningVariant {
     SUGGESTION,
     ALERT

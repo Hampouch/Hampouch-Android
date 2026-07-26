@@ -24,10 +24,12 @@ import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
+import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
+import java.time.LocalDate
 import com.example.hampouch.ui.takeabreak.TakeABreakScreen
 
 private const val TAG = "AppNavHost"
@@ -126,6 +128,9 @@ fun AppNavHost(
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
+                onNavigateToMiniChallenge = { date ->
+                    navController.navigate(Screen.MiniChallenge.createRoute(date))
+                },
                 onCalendarClick = { navController.navigate(Screen.ChallengeSummary.route) },
                 onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onHamBattleChallengeClick = { challengeId ->
@@ -139,6 +144,17 @@ fun AppNavHost(
                         Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
                     )
                 }
+            )
+        }
+
+        composable(
+            route = Screen.MiniChallenge.route,
+            arguments = listOf(navArgument("initialDateEpochDay") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
+            MiniChallengeScreen(
+                initialDate = LocalDate.ofEpochDay(epochDay),
+                onBackClick = { navController.popBackStack() }
             )
         }
 
