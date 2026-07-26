@@ -54,7 +54,8 @@ fun HomeScreen(
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
-    onHamBattleWaitingChallengeClick: (String) -> Unit = {}
+    onHamBattleWaitingChallengeClick: (String) -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }

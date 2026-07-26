@@ -1,6 +1,9 @@
 package com.example.hampouch.navigation
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,12 +11,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengeResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
@@ -27,6 +32,8 @@ import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
+import com.example.hampouch.ui.theme.HPGray2
+import kotlinx.coroutines.flow.first
 
 private const val TAG = "AppNavHost"
 
@@ -37,6 +44,21 @@ fun AppNavHost(
 ) {
     // 회원가입/비밀번호 재설정 완료 후 Login 화면에서 한 번 보여줄 완료 메시지.
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val authRepository = remember { AuthRepository.getInstance(context) }
+    var startDestination by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val session = authRepository.userSession.first()
+        startDestination = if (session != null) Screen.Home.route else Screen.Onboarding.route
+    }
+
+    val resolvedStartDestination = startDestination
+    if (resolvedStartDestination == null) {
+        Box(modifier = modifier.fillMaxSize().background(HPGray2))
+        return
+    }
 
     // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
@@ -51,7 +73,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route,
+        startDestination = resolvedStartDestination,
         modifier = modifier
     ) {
         composable(Screen.Onboarding.route) {
@@ -135,6 +157,11 @@ fun AppNavHost(
                     navController.navigate(
                         Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
                     )
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 }
             )
         }

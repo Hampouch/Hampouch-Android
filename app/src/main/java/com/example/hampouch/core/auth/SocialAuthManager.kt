@@ -44,7 +44,7 @@ object SocialAuthManager {
                         provider = AuthProvider.GOOGLE,
                         token = googleCredential.idToken,
                         nickname = googleCredential.displayName,
-                        email = googleCredential.id,
+                        email = googleCredential.email,
                         profileImageUrl = googleCredential.profilePictureUri?.toString()
                     )
                 )
