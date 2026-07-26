@@ -36,6 +36,7 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
+import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
@@ -48,6 +49,7 @@ private const val MOCK_USER_NAME = "민준"
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onStartChallengeClick: () -> Unit = {},
+    onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
@@ -56,9 +58,8 @@ fun HomeScreen(
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
-    var uiState by remember(selectedDate) {
-        mutableStateOf(mockStateForDate(selectedDate, referenceToday))
-    }
+    val uiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
 
     Scaffold(
         modifier = modifier,
@@ -75,16 +76,11 @@ fun HomeScreen(
     ) { innerPadding ->
         when (selectedBottomTab) {
             BottomNavItem.HOME -> HomeContent(
-                uiState = uiState,
+                uiState = displayedUiState,
                 referenceToday = referenceToday,
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
-                onToggleMiniChallenge = { id ->
-                    uiState = uiState.copy(
-                        miniChallenges = uiState.miniChallenges.map {
-                            if (it.id == id) it.copy(isChecked = !it.isChecked) else it
-                        }
-                    )
-                },
+                onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+                onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
                 modifier = Modifier.padding(innerPadding)
@@ -133,6 +129,7 @@ private fun HomeContent(
     referenceToday: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
+    onViewAllMiniChallengesClick: () -> Unit = {},
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -191,7 +188,7 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
         MiniChallengeSection(
             items = uiState.miniChallenges,
-            onViewAllClick = {},
+            onViewAllClick = onViewAllMiniChallengesClick,
             onToggle = onToggleMiniChallenge
         )
         Spacer(modifier = Modifier.height(24.dp))

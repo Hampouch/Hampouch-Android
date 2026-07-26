@@ -318,7 +318,7 @@ private fun TermsCheckItem(
 private fun TermsCheckIcon(checked: Boolean) {
     Image(
         painter = painterResource(
-            id = if (checked) R.drawable.login_checked else R.drawable.login_unchecked
+            id = if (checked) R.drawable.icon_checked else R.drawable.icon_unchecked
         ),
         contentDescription = null,
         modifier = Modifier.size(24.dp)
