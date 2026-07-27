@@ -1,7 +1,6 @@
 package com.example.hampouch.ui.expensedetail
 
 import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.ExpenseDaySummary
 import com.example.hampouch.data.model.ExpenseRecord
 import java.time.LocalDate
 
@@ -56,6 +55,34 @@ object ExpenseDetailMockData {
                 amount = 0,
                 expenseName = "지출내역",
                 customReason = "감정태깅"
+            ),
+            ExpenseRecord(
+                id = "e7",
+                date = referenceToday.minusDays(6),
+                amount = 163_000,
+                categoryId = "mart",
+                expenseName = "장보기"
+            ),
+            ExpenseRecord(
+                id = "e8",
+                date = referenceToday.minusDays(5),
+                amount = 14_000,
+                categoryId = "convenience",
+                expenseName = "편의점"
+            ),
+            ExpenseRecord(
+                id = "e9",
+                date = referenceToday.minusDays(4),
+                amount = 12_000,
+                categoryId = "delivery",
+                expenseName = "배달음식"
+            ),
+            ExpenseRecord(
+                id = "e10",
+                date = referenceToday.minusDays(3),
+                amount = 124_000,
+                categoryId = "dining_out",
+                expenseName = "외식"
             )
         )
         return records.associateBy { it.id }
@@ -82,13 +109,4 @@ object ExpenseDetailMockData {
     fun monthlyDailyAverage(): Int = MONTHLY_DAILY_AVERAGE
     fun weeklyTotal(): Int = WEEKLY_TOTAL
     fun weeklyDailyAverage(): Int = WEEKLY_DAILY_AVERAGE
-
-    fun calendarDaySummaries(referenceToday: LocalDate = LocalDate.now()): List<ExpenseDaySummary> = listOf(
-        ExpenseDaySummary(referenceToday.minusDays(6), 163_000),
-        ExpenseDaySummary(referenceToday.minusDays(5), 14_000),
-        ExpenseDaySummary(referenceToday.minusDays(4), 12_000),
-        ExpenseDaySummary(referenceToday.minusDays(3), 124_000),
-        ExpenseDaySummary(referenceToday.minusDays(1), 21_200),
-        ExpenseDaySummary(referenceToday, 12_500)
-    )
 }

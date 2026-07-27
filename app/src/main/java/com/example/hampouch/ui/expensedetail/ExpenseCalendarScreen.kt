@@ -51,12 +51,12 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ExpenseCalendarViewMode
 import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.ExpenseDaySummary
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -97,7 +97,6 @@ fun ExpenseCalendarRoute(
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
     challengePeriod: ExpenseChallengePeriod? = ExpenseDetailMockData.activeChallengePeriod(),
-    daySummaries: List<ExpenseDaySummary> = ExpenseDetailMockData.calendarDaySummaries(),
     monthlyTotal: Int = ExpenseDetailMockData.monthlyTotal(),
     monthlyDailyAverage: Int = ExpenseDetailMockData.monthlyDailyAverage(),
     weeklyTotal: Int = ExpenseDetailMockData.weeklyTotal(),
@@ -107,8 +106,11 @@ fun ExpenseCalendarRoute(
 ) {
     var viewMode by remember { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
+    var displayedMonth by remember { mutableStateOf(referenceToday.withDayOfMonth(1)) }
     var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
-    val summaryByDate = remember(daySummaries) { daySummaries.associateBy { it.date } }
+    val summaryByDate = ExpenseDetailStore.recordsById.values
+        .groupBy { it.date }
+        .mapValues { (_, records) -> records.sumOf { it.amount } }
     val dayRecords = ExpenseDetailStore.recordsForDate(selectedDate)
     val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate)
     val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
@@ -119,11 +121,13 @@ fun ExpenseCalendarRoute(
             ExpenseCalendarTopBar(
                 title = stringResource(
                     R.string.expensedetail_calendar_year_month_format,
-                    selectedDate.year,
-                    selectedDate.monthValue
+                    displayedMonth.year,
+                    displayedMonth.monthValue
                 ),
                 onBackClick = onBackClick,
-                onAnalysisClick = onExpenseAnalysisClick
+                onAnalysisClick = onExpenseAnalysisClick,
+                onPreviousMonth = { displayedMonth = displayedMonth.minusMonths(1) },
+                onNextMonth = { displayedMonth = displayedMonth.plusMonths(1) }
             )
         },
         containerColor = HPGray2
@@ -152,14 +156,14 @@ fun ExpenseCalendarRoute(
                     CalendarStatCard(
                         totalLabel = stringResource(
                             R.string.expensedetail_calendar_monthly_total_format,
-                            selectedDate.monthValue
+                            displayedMonth.monthValue
                         ),
                         totalAmount = monthlyTotal,
                         dailyAverage = monthlyDailyAverage
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     MonthCalendarGrid(
-                        month = selectedDate,
+                        month = displayedMonth,
                         referenceToday = referenceToday,
                         selectedDate = selectedDate,
                         summaryByDate = summaryByDate,
@@ -244,14 +248,30 @@ private fun ExpenseCalendarTopBar(
     title: String,
     onBackClick: () -> Unit,
     onAnalysisClick: () -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onPreviousMonth) {
+                    Icon(
+                        Icons.Filled.ChevronLeft,
+                        contentDescription = stringResource(R.string.cd_calendar_month_prev),
+                        tint = HPBlack
+                    )
+                }
                 Text(title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = HPBlack)
+                IconButton(onClick = onNextMonth) {
+                    Icon(
+                        Icons.Filled.ChevronRight,
+                        contentDescription = stringResource(R.string.cd_calendar_month_next),
+                        tint = HPBlack
+                    )
+                }
             }
         },
         navigationIcon = {
@@ -384,7 +404,7 @@ private fun MonthCalendarGrid(
     month: LocalDate,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    summaryByDate: Map<LocalDate, ExpenseDaySummary>,
+    summaryByDate: Map<LocalDate, Int>,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -402,7 +422,7 @@ private fun MonthCalendarGrid(
                         isCurrentMonth = date.monthValue == monthValue,
                         referenceToday = referenceToday,
                         selected = date == selectedDate,
-                        amount = summaryByDate[date]?.totalAmount,
+                        amount = summaryByDate[date],
                         onClick = { if (!date.isAfter(referenceToday)) onDateSelected(date) },
                         modifier = Modifier.weight(1f)
                     )
@@ -417,7 +437,7 @@ private fun WeekCalendarRow(
     weekStart: LocalDate,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    summaryByDate: Map<LocalDate, ExpenseDaySummary>,
+    summaryByDate: Map<LocalDate, Int>,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -432,7 +452,7 @@ private fun WeekCalendarRow(
                     isCurrentMonth = true,
                     referenceToday = referenceToday,
                     selected = date == selectedDate,
-                    amount = summaryByDate[date]?.totalAmount,
+                    amount = summaryByDate[date],
                     onClick = { if (!date.isAfter(referenceToday)) onDateSelected(date) },
                     modifier = Modifier.weight(1f)
                 )
@@ -453,8 +473,8 @@ private fun CalendarDayCell(
 ) {
     val isFuture = date.isAfter(referenceToday)
     val numberColor = when {
-        !isCurrentMonth -> HPSub3
         isFuture -> HPText
+        !isCurrentMonth -> HPSub2
         else -> HPBlack
     }
     Column(

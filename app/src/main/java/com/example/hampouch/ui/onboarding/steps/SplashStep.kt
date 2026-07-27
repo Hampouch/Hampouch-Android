@@ -64,7 +64,7 @@ fun SplashStep(
                 painter = painterResource(R.drawable.logo_title),
                 contentDescription = stringResource(R.string.cd_hampouch_logo),
                 modifier = Modifier
-                    .fillMaxWidth(0.55f)
+                    .fillMaxWidth(0.65f)
                     .alpha(logoAlpha)
             )
         }

@@ -45,7 +45,7 @@
     <string name="expensedetail_calendar_week_label_format">%1$d월 %2$s주</string>
     <string name="expensedetail_calendar_week_range_format">%1$d월 %2$d일 ~ %3$d월 %4$d일</string>
     <string name="expensedetail_calendar_today_badge">Today</string>
-    <string name="expensedetail_calendar_selected_day_format">%1$d월 %2$d일 %3$s요일</string>
+    <string name="expensedetail_calendar_selected_day_format">%1$d월 %2$d일 %3$s</string>
     <string name="expensedetail_calendar_day_empty_message">지출 내역이 없어요.</string>
     <string name="expensedetail_calendar_input_disabled_message">식비 절약 챌린지가 종료되어 지출 입력이 불가합니다.</string>
 
@@ -65,4 +65,6 @@
     <string name="cd_expense_analysis">지출 분석</string>
     <string name="cd_calendar_week_prev">이전 주</string>
     <string name="cd_calendar_week_next">다음 주</string>
+    <string name="cd_calendar_month_prev">이전 달</string>
+    <string name="cd_calendar_month_next">다음 달</string>
 </resources>

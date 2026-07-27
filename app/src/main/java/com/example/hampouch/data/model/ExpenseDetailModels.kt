@@ -29,11 +29,6 @@ enum class ExpenseCalendarViewMode {
     WEEKLY
 }
 
-data class ExpenseDaySummary(
-    val date: LocalDate,
-    val totalAmount: Int
-)
-
 data class ExpenseChallengePeriod(
     val startDate: LocalDate,
     val endDate: LocalDate

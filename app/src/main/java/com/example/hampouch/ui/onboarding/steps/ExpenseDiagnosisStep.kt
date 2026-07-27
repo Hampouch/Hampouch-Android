@@ -1,32 +1,27 @@
 package com.example.hampouch.ui.onboarding.steps
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.onboarding.OnboardingUiState
-import com.example.hampouch.ui.onboarding.components.DirectInputOverlay
-import com.example.hampouch.ui.onboarding.components.LabeledInputRow
+import com.example.hampouch.ui.onboarding.components.EditableAmountRow
+import com.example.hampouch.ui.onboarding.components.OnboardingBulletList
 import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
-import com.example.hampouch.ui.onboarding.components.OnboardingFootnoteText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
 import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
 import com.example.hampouch.ui.onboarding.components.SkipText
-import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
@@ -37,10 +32,6 @@ fun ExpenseDiagnosisStep(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var sheetVisible by remember { mutableStateOf(false) }
-    var amountText by remember(state.lastMonthFoodExpense) {
-        mutableStateOf(state.lastMonthFoodExpense?.toString().orEmpty())
-    }
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
     Scaffold(
@@ -55,26 +46,34 @@ fun ExpenseDiagnosisStep(
         ) {
             OnboardingTopBar(onBack = onBack)
 
-            OnboardingProgressBar(currentStep = 1, totalSteps = 3)
+            OnboardingProgressBar(currentStep = 1, totalSteps = 4)
 
             OnboardingHeaderCard(
                 stepNumber = 1,
                 stepLabel = stringResource(R.string.onboarding_step1_badge),
-                title = stringResource(R.string.onboarding_step2_title)
+                title = stringResource(R.string.onboarding_step1_title)
             )
 
-            OnboardingCaptionText(text = stringResource(R.string.onboarding_step2_caption))
+            OnboardingCaptionText(text = stringResource(R.string.onboarding_step1_caption))
 
             SectionCard {
-                LabeledInputRow(
+                EditableAmountRow(
                     label = stringResource(R.string.onboarding_last_month_expense_label),
-                    valueText = state.lastMonthFoodExpense?.let { "${it.toWonText()}$wonSuffix" }
-                        ?: stringResource(R.string.onboarding_direct_input),
-                    onClick = { sheetVisible = true }
+                    value = state.lastMonthFoodExpense,
+                    onValueChange = onExpenseChange,
+                    placeholder = stringResource(R.string.onboarding_direct_input),
+                    suffix = wonSuffix
                 )
             }
 
-            OnboardingFootnoteText(text = stringResource(R.string.onboarding_step2_footnote))
+            OnboardingBulletList(
+                lines = listOf(
+                    stringResource(R.string.onboarding_step1_bullet1),
+                    stringResource(R.string.onboarding_step1_bullet2)
+                )
+            )
+
+            Box(modifier = Modifier.weight(1f))
 
             SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
 
@@ -84,19 +83,6 @@ fun ExpenseDiagnosisStep(
                 onClick = onNext
             )
         }
-    }
-
-    if (sheetVisible) {
-        DirectInputOverlay(
-            valueText = amountText,
-            onValueChange = { newValue ->
-                amountText = newValue
-                newValue.toIntOrNull()?.let(onExpenseChange)
-            },
-            placeholder = stringResource(R.string.onboarding_step3_field_placeholder),
-            suffix = wonSuffix,
-            onDismiss = { sheetVisible = false }
-        )
     }
 }
 
