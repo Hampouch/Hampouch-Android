@@ -1,0 +1,29 @@
+<resources>
+    <!-- 미니 챌린지 -->
+    <string name="minichallenge_title">미니 챌린지</string>
+    <string name="minichallenge_label">MINI CHALLENGE</string>
+    <string name="minichallenge_today_progress_title">오늘의 달성 현황</string>
+    <string name="minichallenge_progress_total_format"> /%1$d 완료</string>
+    <string name="minichallenge_streak_label">연속 달성</string>
+    <string name="minichallenge_streak_unit">일째</string>
+    <string name="minichallenge_today_title">오늘 나의 미니 챌린지</string>
+    <string name="minichallenge_today_empty">등록된 오늘의 미니 챌린지가 없어요.</string>
+    <string name="minichallenge_recommended_title">추천 미니 챌린지</string>
+    <string name="minichallenge_recommended_empty">추천할 미니 챌린지가 없어요.</string>
+    <string name="minichallenge_add_button">추가하기</string>
+    <string name="minichallenge_delete">삭제</string>
+    <string name="minichallenge_start_button">새 미니 챌린지 시작하기</string>
+
+    <string name="minichallenge_create_headline">어떤 챌린지를 만들어볼까요?</string>
+    <string name="minichallenge_create_subtitle_line1">무슨 내용이든 괜찮아요 !</string>
+    <string name="minichallenge_create_subtitle_line2">매일 체크하면서 습관을 만들어요.</string>
+    <string name="minichallenge_name_label">미니 챌린지 이름</string>
+    <string name="minichallenge_name_placeholder">ex) 오늘 편의점 안 가기</string>
+    <string name="minichallenge_period_label">기간</string>
+    <string name="minichallenge_duration_today">오늘만</string>
+    <string name="minichallenge_duration_3days">3일</string>
+    <string name="minichallenge_duration_7days">7일</string>
+    <string name="minichallenge_duration_14days">14일</string>
+    <string name="minichallenge_duration_31days">31일</string>
+    <string name="minichallenge_add_challenge_button">미니 챌린지 추가하기</string>
+</resources>

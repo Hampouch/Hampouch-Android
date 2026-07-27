@@ -1,0 +1,122 @@
+<resources>
+    <!-- 햄꿀팁 (커뮤니티) -->
+
+    <string name="hamtips_title">햄꿀팁</string>
+    <string name="hamtips_search_placeholder">식비 줄이는 꿀팁 검색</string>
+    <string name="hamtips_cd_search">검색</string>
+    <string name="hamtips_cd_clear_search">검색어 지우기</string>
+
+    <string name="hamtips_tab_all">전체</string>
+
+    <string name="hamtips_section_popular">인기글</string>
+    <string name="hamtips_section_pochipick">포치픽</string>
+    <string name="hamtips_section_all_posts">전체글</string>
+    <string name="hamtips_view_all">전체 보기</string>
+    <string name="hamtips_popular_title">인기 꿀팁</string>
+    <string name="hamtips_pochipick_title">포치픽</string>
+
+    <string name="hamtips_sort_latest">최신순</string>
+    <string name="hamtips_sort_popular">인기순</string>
+    <string name="hamtips_sort_views">조회순</string>
+    <string name="hamtips_cd_sort">정렬</string>
+
+    <string name="hamtips_fab_share_tip">꿀팁 공유</string>
+    <string name="hamtips_fab_recruit_battle">햄배틀 모집</string>
+    <string name="hamtips_fab_recommend_menu">메뉴 추천</string>
+    <string name="hamtips_cd_fab">글쓰기</string>
+    <string name="hamtips_cd_post_image">게시글 이미지</string>
+    <string name="hamtips_cd_view_count">조회수</string>
+    <string name="hamtips_cd_comment_count">댓글수</string>
+    <string name="hamtips_cd_like_count">좋아요수</string>
+
+    <string name="hamtips_time_minutes_ago_format">%1$d분전</string>
+    <string name="hamtips_time_hours_ago_format">%1$d시간전</string>
+
+    <string name="my_tips_empty_message">아직 작성한 글이 없어요.</string>
+    <string name="saved_tips_empty_message">아직 저장한 글이 없어요.</string>
+    <string name="tip_category_what_to_eat">뭐먹지</string>
+    <string name="tip_category_cooking">요리</string>
+    <string name="tip_category_shopping">장보기</string>
+    <string name="tip_category_discount">할인</string>
+    <string name="tip_category_recruit">모집</string>
+    <string name="tip_category_record">기록</string>
+    <string name="tip_category_etc">기타</string>
+
+    <!-- 글쓰기 공용 -->
+    <string name="hamtips_write_overline">SHARE YOUR TIPS</string>
+    <string name="hamtips_write_submit">게시하기</string>
+    <string name="hamtips_write_section_photo">사진</string>
+    <string name="hamtips_cd_add_photo">사진 추가</string>
+    <string name="hamtips_cd_remove_photo">사진 삭제</string>
+    <string name="hamtips_cd_photo_fullscreen">사진 원본 보기</string>
+    <string name="hamtips_post_confirm_question">해당 게시글을 등록할까요?</string>
+
+    <!-- 꿀팁 공유 -->
+    <string name="hamtips_write_tip_heading">무슨 꿀팁을 공유할까요?</string>
+    <string name="hamtips_write_tip_subheading">식비를 줄인 나만의 방법을 공유해주세요 !</string>
+    <string name="hamtips_write_section_board">게시판</string>
+    <string name="hamtips_write_section_title">제목</string>
+    <string name="hamtips_write_title_placeholder">핵심을 한 줄로 요약해주세요</string>
+    <string name="hamtips_write_section_content">내용</string>
+    <string name="hamtips_write_content_placeholder">구체적일 수록 공감을 많이 받아요</string>
+
+    <!-- 메뉴 추천 -->
+    <string name="hamtips_write_menu_heading">무슨 메뉴를 공유할까요?</string>
+    <string name="hamtips_write_menu_subheading">추천하고 싶은 가게의 메뉴를 공유해주세요 !</string>
+    <string name="hamtips_write_menu_title_preview_label">제목 미리보기</string>
+    <string name="hamtips_write_menu_title_preview_placeholder">내용을 입력하면 자동 생성됩니다.</string>
+    <string name="hamtips_write_menu_name_label">메뉴 이름</string>
+    <string name="hamtips_write_menu_name_placeholder">메뉴 이름을 입력해주세요</string>
+    <string name="hamtips_write_menu_place_label">장소 (가게)</string>
+    <string name="hamtips_write_menu_place_placeholder">장소를 입력해주세요</string>
+    <string name="hamtips_write_menu_price_label">가격</string>
+    <string name="hamtips_write_menu_price_won_suffix">원</string>
+    <string name="hamtips_write_menu_rating_label">만족도</string>
+    <string name="hamtips_write_menu_comment_label">추가 코멘트</string>
+    <string name="hamtips_write_menu_comment_placeholder">자유롭게 남겨주세요</string>
+    <string name="hamtips_rating_taste">맛</string>
+    <string name="hamtips_rating_cost_effectiveness">가성비</string>
+    <string name="hamtips_rating_mood">분위기</string>
+    <string name="hamtips_cd_star_rating_format">%1$s %2$d점</string>
+
+    <!-- 햄배틀 모집 -->
+    <string name="hamtips_write_battle_heading">함께 식비를 줄여요!</string>
+    <string name="hamtips_write_battle_subheading">같이하고 싶은 햄배틀 챌린지를 공유해주세요.</string>
+    <string name="hamtips_write_battle_title_placeholder">제목을 입력해주세요</string>
+    <string name="hamtips_write_battle_content_placeholder">챌린지 내용을 설명해주세요</string>
+    <string name="hamtips_write_battle_link_label">햄배틀 링크</string>
+    <string name="hamtips_write_battle_link_placeholder">초대 링크를 입력해주세요</string>
+    <string name="hamtips_battle_join">참가하기</string>
+    <string name="hamtips_battle_recruit_done">모집 완료</string>
+    <string name="hamtips_battle_penalty_label">"벌칙: "</string>
+    <string name="hamtips_battle_join_confirm_question">해당 햄배틀 챌린지에 참가할까요?</string>
+    <string name="hamtips_battle_days_format">%1$d일</string>
+    <string name="hamtips_battle_capacity_format">%1$d인</string>
+
+    <!-- 게시글 상세 -->
+    <string name="hamtips_cd_more">더보기</string>
+    <string name="hamtips_more_menu_delete">삭제하기</string>
+    <string name="hamtips_more_menu_edit">수정하기</string>
+    <string name="hamtips_more_menu_close">닫기</string>
+    <string name="hamtips_cd_like">좋아요</string>
+    <string name="hamtips_cd_scrap">저장</string>
+    <string name="hamtips_cd_scrap_done">완료</string>
+
+    <!-- 댓글 -->
+    <string name="hamtips_comment_input_placeholder">댓글을 입력해주세요.</string>
+    <string name="hamtips_reply_input_placeholder">답글을 입력해주세요.</string>
+    <string name="hamtips_comment_submit">등록</string>
+    <string name="hamtips_comment_author_tag">작성자</string>
+    <string name="hamtips_comment_reply_action">답글</string>
+    <string name="hamtips_comment_deleted">삭제된 댓글입니다.</string>
+    <string name="hamtips_comment_deleted_author">삭제</string>
+    <string name="hamtips_cd_comment_more">댓글 더보기</string>
+    <string name="hamtips_reply_target_tag_format">@%1$s</string>
+    <string name="hamtips_detail_meta_suffix_format"> · %1$s · 조회 %2$s</string>
+    <string name="hamtips_detail_menu_name_row">메뉴</string>
+    <string name="hamtips_detail_menu_place_row">장소</string>
+    <string name="hamtips_detail_menu_price_row">가격</string>
+    <string name="hamtips_detail_menu_price_value_format">%1$s 원</string>
+    <string name="hamtips_detail_menu_rating_section">만족도</string>
+    <string name="hamtips_rating_value_format">%.1f</string>
+</resources>

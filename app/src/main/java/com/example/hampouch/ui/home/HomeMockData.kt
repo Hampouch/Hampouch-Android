@@ -12,6 +12,13 @@ import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
+import com.example.hampouch.data.model.ExpenseEntry
+import com.example.hampouch.data.model.HomeChallenge
+import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.data.model.HomeWarning
+import com.example.hampouch.data.model.MiniChallengeEntry
+import com.example.hampouch.data.model.WarningVariant
+import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
@@ -85,7 +92,7 @@ object HomeMockData {
             streakDays = 4
         ),
         expenses = emptyList(),
-        miniChallenges = emptyList(),
+        miniChallenges = MiniChallengeMockData.todayChallenges(),
         warnings = emptyList()
     )
 
@@ -110,11 +117,7 @@ object HomeMockData {
                 amount = 15_800
             )
         ),
-        miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", periodLabel = "4/7일", isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", periodLabel = "3/7일", isChecked = true),
-            MiniChallengeEntry(id = "m3", name = "저녁 집밥 먹기", periodLabel = "오늘만", isChecked = false)
-        ),
+        miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
         warnings = listOf(
             HomeWarning(
                 id = "w1",
@@ -141,8 +144,8 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", periodLabel = "2/7일", isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", periodLabel = "오늘만", isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true)
         )
     )
 
@@ -161,8 +164,8 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", periodLabel = "4/7일", isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", periodLabel = "3/7일", isChecked = false)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 4, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = 7, achievedDays = 3, isChecked = false)
         ),
         warnings = emptyList()
     )
@@ -182,10 +185,10 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 1_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", periodLabel = "2/7일", isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", periodLabel = "오늘만", isChecked = true),
-            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", periodLabel = "3/7일", isChecked = true),
-            MiniChallengeEntry(id = "m4", name = "계단 이용하기", periodLabel = "7일간", isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true),
+            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", totalDays = 7, achievedDays = 3, isChecked = true),
+            MiniChallengeEntry(id = "m4", name = "계단 이용하기", totalDays = 7, achievedDays = 0, isChecked = true)
         ),
         warnings = emptyList()
     )

@@ -11,25 +11,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.R
+import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.hambattle.HamBattleScreen
+import com.example.hampouch.ui.hamtips.HamTipsScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
 import com.example.hampouch.ui.home.components.CharacterGaugeSection
 import com.example.hampouch.ui.home.components.DateSelectorRow
@@ -39,9 +36,10 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
+import com.example.hampouch.ui.minichallenge.MiniChallengeStore
+import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
-import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 
@@ -51,6 +49,7 @@ private const val MOCK_USER_NAME = "민준"
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onStartChallengeClick: () -> Unit = {},
+    onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
@@ -60,33 +59,29 @@ fun HomeScreen(
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
-    var uiState by remember(selectedDate) {
-        mutableStateOf(mockStateForDate(selectedDate, referenceToday))
-    }
+    val uiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
 
     Scaffold(
         modifier = modifier,
         containerColor = HPGray2,
         bottomBar = {
-            BottomNavBar(
-                selectedItem = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = {}
-            )
+            if (selectedBottomTab != BottomNavItem.MY_PAGE && selectedBottomTab != BottomNavItem.COMMUNITY) {
+                BottomNavBar(
+                    selectedItem = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = {}
+                )
+            }
         }
     ) { innerPadding ->
         when (selectedBottomTab) {
             BottomNavItem.HOME -> HomeContent(
-                uiState = uiState,
+                uiState = displayedUiState,
                 referenceToday = referenceToday,
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
-                onToggleMiniChallenge = { id ->
-                    uiState = uiState.copy(
-                        miniChallenges = uiState.miniChallenges.map {
-                            if (it.id == id) it.copy(isChecked = !it.isChecked) else it
-                        }
-                    )
-                },
+                onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+                onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
                 modifier = Modifier.padding(innerPadding)
@@ -105,9 +100,20 @@ fun HomeScreen(
                 )
             }
 
-            else -> ComingSoonPlaceholder(
-                labelResId = selectedBottomTab.labelResId,
-                modifier = Modifier.padding(innerPadding)
+            BottomNavItem.MY_PAGE -> MyPageScreen(
+                selectedBottomTab = selectedBottomTab,
+                onItemSelected = { selectedBottomTab = it },
+                onAddClick = {},
+                modifier = Modifier.padding(innerPadding),
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
+            )
+
+            BottomNavItem.COMMUNITY -> HamTipsScreen(
+                selectedBottomTab = selectedBottomTab,
+                onItemSelected = { selectedBottomTab = it },
+                onAddClick = {},
+                modifier = Modifier.padding(innerPadding),
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
             )
         }
     }
@@ -124,6 +130,7 @@ private fun HomeContent(
     referenceToday: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
+    onViewAllMiniChallengesClick: () -> Unit = {},
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -182,21 +189,10 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
         MiniChallengeSection(
             items = uiState.miniChallenges,
-            onViewAllClick = {},
+            onViewAllClick = onViewAllMiniChallengesClick,
             onToggle = onToggleMiniChallenge
         )
         Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-private fun ComingSoonPlaceholder(labelResId: Int, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            text = stringResource(R.string.common_coming_soon_format, stringResource(labelResId)),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPText
-        )
     }
 }
 

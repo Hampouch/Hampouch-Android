@@ -1,4 +1,4 @@
-package com.example.hampouch.ui.home
+package com.example.hampouch.data.model
 
 import java.time.LocalDate
 
@@ -40,13 +40,6 @@ data class ExpenseEntry(
     val name: String? = null,
     val reasonTag: String? = null,
     val amount: Int
-)
-
-data class MiniChallengeEntry(
-    val id: String,
-    val name: String,
-    val periodLabel: String,
-    val isChecked: Boolean
 )
 
 enum class WarningVariant {
