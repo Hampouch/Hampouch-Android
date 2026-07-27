@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.takeabreak
 
+import android.R.attr.text
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,9 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -30,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,92 +43,97 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPBlack
+import com.example.hampouch.ui.theme.HPGray1
+import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.ui.theme.HPSub1
+import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
+import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
 enum class BreakDuration(val label: String) {
-    THREE_DAYS("3일 푹 쉬기"),
-    ONE_WEEK("1주일 쉬기"),
-    TWO_WEEKS("2주일 쉬기"),
-    CUSTOM("직접 선택")
+    THREE_DAYS("3일 쉬기"),
+    ONE_WEEK("1주 쉬기"),
+    TWO_WEEKS("2주 쉬기"),
+    CONTINUOUS("계속 쉬기")
 }
 
 @Composable
 fun TakeABreakScreen(
-    onClose: () -> Unit = {},
+    onBack: () -> Unit = {},
     onKeepChallenge: () -> Unit = {},
-    onStartBreak: (BreakDuration, customDays: Int?) -> Unit = { _, _ -> }
+    onStartBreak: (BreakDuration?, customDays: Int?) -> Unit = { _, _ -> }
 ) {
-    var selectedDuration by rememberSaveable { mutableStateOf(BreakDuration.ONE_WEEK) }
-    var customBreakDays by rememberSaveable { mutableStateOf<Int?>(null) }
-    var showCustomDurationDialog by remember { mutableStateOf(false) }
+    var selectedDuration by rememberSaveable { mutableStateOf<BreakDuration?>(BreakDuration.ONE_WEEK) }
+    var customDaysInput by rememberSaveable { mutableStateOf("") }
 
-    val customDurationLabel = customBreakDays?.let { "${it}일 푹 쉬기" } ?: BreakDuration.CUSTOM.label
-
-    if (showCustomDurationDialog) {
-        CustomDurationDialog(
-            initialDays = customBreakDays,
-            onDismiss = { showCustomDurationDialog = false },
-            onConfirm = { days ->
-                customBreakDays = days
-                showCustomDurationDialog = false
-            }
-        )
-    }
-
-    Scaffold(containerColor = HPWhite) { innerPadding ->
+    Scaffold(containerColor = HPSub3) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .padding(horizontal = 20.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "닫기",
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "뒤로가기",
                 tint = HPBlack,
                 modifier = Modifier
                     .size(28.dp)
-                    .noRippleClickable(onClose)
+                    .noRippleClickable(onBack)
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             BreakIntro()
 
             Spacer(modifier = Modifier.height(20.dp))
             SavedProgressNotice()
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             BreakDurationPicker(
                 selected = selectedDuration,
-                customDurationLabel = customDurationLabel,
+                customDaysInput = customDaysInput,
                 onSelect = { duration ->
                     selectedDuration = duration
-                    if (duration == BreakDuration.CUSTOM) {
-                        showCustomDurationDialog = true
-                    }
+                    customDaysInput = ""
+                },
+                onCustomDaysChange = { value ->
+                    customDaysInput = value
+                    selectedDuration = null
                 }
             )
 
+            Spacer(modifier = Modifier.height(10.dp))
             BreakChangesNotice()
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(30.dp))
             BreakPrimaryButton(
-                text = "쉬기 시작하기",
+                text = "쉬어가기",
                 onClick = {
-                    val days = if (selectedDuration == BreakDuration.CUSTOM) customBreakDays else null
-                    onStartBreak(selectedDuration, days)
+                    val customDays = customDaysInput.toIntOrNull()
+                    onStartBreak(selectedDuration, customDays)
                 }
             )
 
@@ -132,9 +142,10 @@ fun TakeABreakScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    "취소하고 챌린지 계속할래요",
+                    "취소하고 챌린지 계속하기",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
                     color = HPText
                 )
             }
@@ -144,33 +155,39 @@ fun TakeABreakScreen(
 
 @Composable
 private fun BreakIntro(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(HPSub4, RoundedCornerShape(20.dp))
+            .dashedBorder(color = HPMain, cornerRadius = 20.dp)
+            .padding(vertical = 30.dp, horizontal = 15.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             painter = painterResource(R.drawable.img_hamster_take_a_break),
             contentDescription = "잠자는 포치",
             modifier = Modifier
                 .width(159.dp)
-                .height(174.dp)
+                .height(172.dp)
         )
-        Spacer(modifier = Modifier.height(11.dp))
-        Text(
-            text = "잠깐 쉬어갈까요?",
-            style = MaterialTheme.typography.titleMedium,
-            color = HPBlack,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Spacer(modifier = Modifier.height(11.dp))
-        Text(
-            text = "챌린지만 멈출 뿐, 그 외의 기능은 그대로 쓸 수 있어요!",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPText,
-            textAlign = TextAlign.Center
-        )
+        Column() {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "잠깐 쉬어갈까요?",
+                style = MaterialTheme.typography.titleMedium,
+                color = HPBlack,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "챌린지만 멈출 뿐,\n그 외의 기능은\n그대로 쓸 수 있어요!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPText,
+                textAlign = TextAlign.Center
+            )
+        }
+
     }
 }
 
@@ -179,8 +196,8 @@ private fun SavedProgressNotice(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(HPSub3, RoundedCornerShape(20.dp))
-            .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp),
+            .background(HPSub2, RoundedCornerShape(20.dp))
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -199,32 +216,30 @@ private fun SavedProgressNotice(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.width(10.dp))
-        Column {
-            Text(
-                text = "지금까지 모은 절약 금액과 연속 기록은",
-                style = MaterialTheme.typography.bodySmall,
-                color = HPBlack
-            )
-            Text(
-                text = "안전하게 보관되니 걱정 마세요.",
-                style = MaterialTheme.typography.bodySmall,
-                color = HPBlack
-            )
-        }
+        Text(
+            text = "진행했던 챌린지의 기록은 안전하게 보관돼요.",
+            style = MaterialTheme.typography.bodySmall,
+            color = HPBlack
+        )
     }
 }
 
 @Composable
 private fun BreakDurationPicker(
-    selected: BreakDuration,
-    customDurationLabel: String,
+    selected: BreakDuration?,
+    customDaysInput: String,
     onSelect: (BreakDuration) -> Unit,
+    onCustomDaysChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(HPSub4, RoundedCornerShape(20.dp))
+            .padding(horizontal = 15.dp, vertical = 20.dp)
+    ) {
         Text(
-            modifier = Modifier.padding(start = 20.dp),
-            text = "언제 다시 시작할까요?",
+            text = "얼만큼 쉬어갈까요?",
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack
         )
@@ -233,12 +248,12 @@ private fun BreakDurationPicker(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(bottom = 15.dp),
+                horizontalArrangement = Arrangement.spacedBy(15.dp)
             ) {
                 row.forEach { duration ->
                     DurationOptionButton(
-                        label = if (duration == BreakDuration.CUSTOM) customDurationLabel else duration.label,
+                        label = duration.label,
                         selected = duration == selected,
                         onClick = { onSelect(duration) },
                         modifier = Modifier.weight(1f)
@@ -246,6 +261,13 @@ private fun BreakDurationPicker(
                 }
             }
         }
+
+        CustomDaysInputField(
+            value = customDaysInput,
+            onValueChange = onCustomDaysChange
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        BreakDurationNotice()
     }
 }
 
@@ -264,8 +286,8 @@ private fun DurationOptionButton(
                 shape = RoundedCornerShape(10.dp)
             )
             .border(
-                width = if (selected) 0.dp else 1.dp,
-                color = HPMain,
+                width = if (selected) 0.dp else 2.dp,
+                color = HPGray5,
                 shape = RoundedCornerShape(10.dp)
             )
             .clickable(onClick = onClick),
@@ -276,8 +298,105 @@ private fun DurationOptionButton(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = if (selected) HPWhite else HPMain
+            color = if (selected) HPWhite else HPText
         )
+    }
+}
+
+@Composable
+private fun CustomDaysInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+    var confirmed by remember { mutableStateOf(false) }
+    var wasFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(value) {
+        if (value.isEmpty()) confirmed = false
+    }
+
+    if (confirmed && value.isNotEmpty()) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(HPMain, RoundedCornerShape(10.dp))
+                .clickable { confirmed = false },
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${value}일 쉬기",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = HPWhite
+            )
+        }
+        return
+    }
+
+    val isActive = value.isNotEmpty()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .background(HPWhite, RoundedCornerShape(10.dp))
+            .border(
+                width = 1.dp,
+                color = if (isActive) HPMain else HPSub2.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(10.dp)
+            )
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(
+                    text = "직접 입력",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = HPGray5
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = { input -> onValueChange(input.filter { it.isDigit() }.take(3)) },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPBlack),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        if (value.isNotEmpty()) confirmed = true
+                        focusManager.clearFocus()
+                    }
+                ),
+                modifier = Modifier.onFocusChanged { focusState ->
+                    if (wasFocused && !focusState.isFocused && value.isNotEmpty()) {
+                        confirmed = true
+                    }
+                    wasFocused = focusState.isFocused
+                }
+            )
+        }
+        Text(
+            text = "일",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = HPBlack
+        )
+    }
+}
+
+@Composable
+private fun BreakDurationNotice(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        BreakChangeBullet("언제든 챌린지를 다시 시작할 수 있어요.", color = HPText)
+        BreakChangeBullet("지정된 기간이 지나면 포치가 알림을 보내드려요.", color = HPText)
     }
 }
 
@@ -285,26 +404,25 @@ private fun DurationOptionButton(
 private fun BreakChangesNotice(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            modifier = Modifier.padding(start = 20.dp),
             text = "쉬는 동안 달라지는 점",
             style = MaterialTheme.typography.labelLarge,
-            color = HPText
+            fontSize = 16.sp,
+            color = HPSub
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        BreakChangeBullet("하루 한도 체크와 미입력 알림이 멈춰요.")
-        BreakChangeBullet("새로운 햄배틀 매칭이 잠시 중단돼요.")
+        Spacer(modifier = Modifier.height(2.dp))
+        BreakChangeBullet("하루 한도 체크와 미입력 알림이 멈춰요.", color = HPText)
+        BreakChangeBullet("홈화면이 휴식기로 변경돼요.", color = HPText)
     }
 }
 
 @Composable
-private fun BreakChangeBullet(text: String, modifier: Modifier = Modifier) {
+private fun BreakChangeBullet(text: String, color: Color, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp)
     ) {
-        Text(text = "•  ", style = MaterialTheme.typography.bodySmall, color = HPText)
-        Text(text = text, style = MaterialTheme.typography.bodySmall, color = HPText)
+        Text(text = "•  ", style = MaterialTheme.typography.bodySmall, color = color)
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
     }
 }
 
@@ -334,6 +452,28 @@ internal fun Modifier.noRippleClickable(onClick: () -> Unit): Modifier = compose
         interactionSource = remember { MutableInteractionSource() },
         indication = null,
         onClick = onClick
+    )
+}
+
+private fun Modifier.dashedBorder(
+    color: Color,
+    cornerRadius: Dp,
+    strokeWidth: Dp = 1.5.dp,
+    dashLength: Dp = 6.dp,
+    gapLength: Dp = 4.dp
+): Modifier = drawWithContent {
+    drawContent()
+    val stroke = Stroke(
+        width = strokeWidth.toPx(),
+        pathEffect = PathEffect.dashPathEffect(
+            floatArrayOf(dashLength.toPx(), gapLength.toPx()),
+            0f
+        )
+    )
+    drawRoundRect(
+        color = color,
+        style = stroke,
+        cornerRadius = CornerRadius(cornerRadius.toPx())
     )
 }
 
