@@ -55,7 +55,9 @@ fun HomeScreen(
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
-    onHamBattleWaitingChallengeClick: (String) -> Unit = {}
+    onHamBattleWaitingChallengeClick: (String) -> Unit = {},
+    onNavigateToExpenseDetail: (String) -> Unit = {},
+    onNavigateToExpenseCalendar: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
@@ -87,6 +89,8 @@ fun HomeScreen(
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
+                onExpenseClick = onNavigateToExpenseDetail,
+                onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -137,6 +141,8 @@ private fun HomeContent(
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
+    onExpenseClick: (String) -> Unit = {},
+    onViewAllExpensesClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -187,8 +193,9 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
         TodayExpenseSection(
             expenses = uiState.expenses,
-            onViewAllClick = {},
-            onAddExpenseClick = {}
+            onViewAllClick = onViewAllExpensesClick,
+            onAddExpenseClick = {},
+            onExpenseClick = onExpenseClick
         )
         Spacer(modifier = Modifier.height(24.dp))
         MiniChallengeSection(

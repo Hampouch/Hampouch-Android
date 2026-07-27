@@ -386,7 +386,8 @@ fun TodayExpenseSection(
     expenses: List<ExpenseEntry>,
     onViewAllClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onExpenseClick: (String) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(title = stringResource(R.string.home_today_expense_title), onViewAllClick = onViewAllClick)
@@ -408,14 +409,14 @@ fun TodayExpenseSection(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                expenses.forEach { entry -> ExpenseItemCard(entry) }
+                expenses.forEach { entry -> ExpenseItemCard(entry, onClick = { onExpenseClick(entry.id) }) }
             }
         }
     }
 }
 
 @Composable
-fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier) {
+fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val category = HomeCategoryCatalog.byId(entry.categoryId)
     val icon = category?.icon ?: HomeCategoryCatalog.defaultIcon
     val accentColor = category?.accentColor ?: HomeCategoryCatalog.defaultColor
@@ -428,6 +429,7 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(HPWhite)
+            .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

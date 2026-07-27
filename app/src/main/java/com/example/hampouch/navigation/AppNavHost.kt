@@ -22,6 +22,10 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
+import com.example.hampouch.ui.expensedetail.ExpenseCalendarRoute
+import com.example.hampouch.ui.expensedetail.ExpenseDetailRoute
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.ui.expensedetail.ExpenseEditRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
@@ -143,6 +147,58 @@ fun AppNavHost(
                     navController.navigate(
                         Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
                     )
+                },
+                onNavigateToExpenseDetail = { expenseId ->
+                    navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
+                },
+                onNavigateToExpenseCalendar = {
+                    navController.navigate(Screen.ExpenseCalendar.route)
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ExpenseDetail.route,
+            arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
+            val record = ExpenseDetailStore.byId(expenseId)
+            if (record != null) {
+                ExpenseDetailRoute(
+                    record = record,
+                    onBackClick = { navController.popBackStack() },
+                    onEditClick = { navController.navigate(Screen.ExpenseEdit.createRoute(expenseId)) },
+                    onDeleted = {
+                        ExpenseDetailStore.delete(expenseId)
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.ExpenseEdit.route,
+            arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
+            val record = ExpenseDetailStore.byId(expenseId)
+            if (record != null) {
+                ExpenseEditRoute(
+                    record = record,
+                    onBackClick = { navController.popBackStack() },
+                    onSaved = { updated ->
+                        ExpenseDetailStore.upsert(updated)
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(Screen.ExpenseCalendar.route) {
+            ExpenseCalendarRoute(
+                onBackClick = { navController.popBackStack() },
+                onExpenseClick = { expenseId ->
+                    navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
                 }
             )
         }

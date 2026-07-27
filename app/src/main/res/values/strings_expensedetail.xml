@@ -1,3 +1,68 @@
 <resources>
     <!-- 지출 상세 -->
+    <string name="expensedetail_title">지출 상세</string>
+
+    <string name="expensedetail_field_expense_name">지출명</string>
+    <string name="expensedetail_field_category">카테고리</string>
+    <string name="expensedetail_field_reason">지출 이유</string>
+    <string name="expensedetail_field_memo">메모</string>
+    <string name="expensedetail_field_photo">사진</string>
+    <string name="expensedetail_field_date">날짜</string>
+    <string name="expensedetail_field_amount">금액</string>
+
+    <string name="expensedetail_no_detail_message">지출에 대한 상세 정보가 없습니다.</string>
+
+    <string name="expensedetail_edit_button">수정하기</string>
+    <string name="expensedetail_complete_button">완료</string>
+    <string name="expensedetail_delete_button">삭제하기</string>
+    <string name="expensedetail_delete_question">해당 지출 내역을 삭제할까요?</string>
+    <string name="expensedetail_edit_question">지출 내역을 수정할까요?</string>
+
+    <string name="expensedetail_amount_won_format">%1$s원</string>
+
+    <string name="expensedetail_option_custom_input">직접입력</string>
+    <string name="expensedetail_reason_stress">스트레스</string>
+    <string name="expensedetail_reason_reward">보상</string>
+    <string name="expensedetail_reason_craving">그냥 먹고 싶어서</string>
+    <string name="expensedetail_reason_lazy">귀찮아서</string>
+
+    <string name="expensedetail_expense_name_placeholder">지출명을 입력해주세요</string>
+    <string name="expensedetail_custom_category_placeholder">카테고리를 입력해주세요</string>
+    <string name="expensedetail_custom_reason_placeholder">지출 이유를 입력해주세요</string>
+    <string name="expensedetail_memo_placeholder">ex) 식후 커피 어떻게 참아요..</string>
+
+    <string name="expensedetail_photo_change">변경하기</string>
+    <string name="expensedetail_photo_select_mode">사진 선택</string>
+    <string name="expensedetail_photo_delete_mode">삭제</string>
+    <string name="expensedetail_photo_add">추가하기</string>
+
+    <string name="expensedetail_calendar_monthly_tab">월간</string>
+    <string name="expensedetail_calendar_weekly_tab">주간</string>
+    <string name="expensedetail_calendar_monthly_total_format">%1$d월 총 지출</string>
+    <string name="expensedetail_calendar_weekly_total">이번주 총 지출</string>
+    <string name="expensedetail_calendar_daily_average_format">하루 평균 %1$s원</string>
+    <string name="expensedetail_calendar_year_month_format">%1$d년 %2$d월</string>
+    <string name="expensedetail_calendar_week_label_format">%1$d월 %2$s주</string>
+    <string name="expensedetail_calendar_week_range_format">%1$d월 %2$d일 ~ %3$d월 %4$d일</string>
+    <string name="expensedetail_calendar_today_badge">Today</string>
+    <string name="expensedetail_calendar_selected_day_format">%1$d월 %2$d일 %3$s요일</string>
+    <string name="expensedetail_calendar_day_empty_message">지출 내역이 없어요.</string>
+    <string name="expensedetail_calendar_input_disabled_message">식비 절약 챌린지가 종료되어 지출 입력이 불가합니다.</string>
+
+    <string-array name="expensedetail_week_ordinals">
+        <item>첫째</item>
+        <item>둘째</item>
+        <item>셋째</item>
+        <item>넷째</item>
+        <item>다섯째</item>
+    </string-array>
+
+    <string name="cd_delete_expense">삭제</string>
+    <string name="cd_expense_photo">첨부 사진</string>
+    <string name="cd_add_photo">사진 추가하기</string>
+    <string name="cd_change_photo">사진 변경하기</string>
+    <string name="cd_remove_photo">사진 삭제</string>
+    <string name="cd_expense_analysis">지출 분석</string>
+    <string name="cd_calendar_week_prev">이전 주</string>
+    <string name="cd_calendar_week_next">다음 주</string>
 </resources>
