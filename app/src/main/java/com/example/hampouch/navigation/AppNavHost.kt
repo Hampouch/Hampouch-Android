@@ -21,6 +21,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
@@ -29,6 +30,7 @@ import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
+import com.example.hampouch.ui.takeabreak.TakeABreakScreen
 
 private const val TAG = "AppNavHost"
 
@@ -129,6 +131,7 @@ fun AppNavHost(
                 onNavigateToMiniChallenge = { date ->
                     navController.navigate(Screen.MiniChallenge.createRoute(date))
                 },
+                onCalendarClick = { navController.navigate(Screen.ChallengeSummary.route) },
                 onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onHamBattleChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
@@ -257,6 +260,30 @@ fun AppNavHost(
                     )
                 }
             }
+        }
+
+        composable(Screen.ChallengeSummary.route) {
+            ChallengeResultScreen(
+                onBackClick = { navController.popBackStack() },
+                onStartNewChallengeClick = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
+            )
+        }
+
+        composable(Screen.TakeABreak.route) {
+            TakeABreakScreen(
+                onClose = { navController.popBackStack() },
+                onKeepChallenge = { navController.popBackStack() },
+                onStartBreak = { _, _ ->
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
