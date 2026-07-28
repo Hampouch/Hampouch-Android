@@ -65,7 +65,7 @@ fun LoginScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var showLoginError by rememberSaveable { mutableStateOf(false) }
+    var loginErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var visibleCompleteDialogMessage by remember { mutableStateOf(completeDialogMessage) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -101,15 +101,21 @@ fun LoginScreen(
                 label = "카카오로 계속하기",
                 onClick = {
                     SocialAuthManager.signInWithKakao(context) { result ->
-                        result.onSuccess { session ->
+                        result.onSuccess { credential ->
                             coroutineScope.launch {
-                                // TODO: 서버 연결 후 실제 로그인 검증으로 교체
-                                authRepository.saveSession(session)
-                                onLoginSuccess()
+                                authRepository.loginWithSocial(credential)
+                                    .onSuccess {
+                                        loginErrorMessage = null
+                                        onLoginSuccess()
+                                    }
+                                    .onFailure { error ->
+                                        Log.e(TAG, "카카오 로그인 실패", error)
+                                        loginErrorMessage = error.message ?: "카카오 로그인에 실패했습니다."
+                                    }
                             }
                         }.onFailure { error ->
                             Log.e(TAG, "카카오 로그인 실패", error)
-                            showLoginError = true
+                            loginErrorMessage = "카카오 로그인에 실패했습니다."
                         }
                     }
                 }
@@ -121,14 +127,22 @@ fun LoginScreen(
                 label = "구글로 계속하기",
                 onClick = {
                     coroutineScope.launch {
-                        SocialAuthManager.signInWithGoogle(context).onSuccess { session ->
-                            // TODO: 서버 연결 후 실제 로그인 검증으로 교체
-                            authRepository.saveSession(session)
-                            onLoginSuccess()
-                        }.onFailure { error ->
-                            Log.e(TAG, "구글 로그인 실패", error)
-                            showLoginError = true
-                        }
+                        SocialAuthManager.signInWithGoogle(context)
+                            .onSuccess { credential ->
+                                authRepository.loginWithSocial(credential)
+                                    .onSuccess {
+                                        loginErrorMessage = null
+                                        onLoginSuccess()
+                                    }
+                                    .onFailure { error ->
+                                        Log.e(TAG, "구글 로그인 실패", error)
+                                        loginErrorMessage = error.message ?: "구글 로그인에 실패했습니다."
+                                    }
+                            }
+                            .onFailure { error ->
+                                Log.e(TAG, "구글 로그인 실패", error)
+                                loginErrorMessage = "구글 로그인에 실패했습니다."
+                            }
                     }
                 }
             )
@@ -180,10 +194,10 @@ fun LoginScreen(
                     }
                 )
             }
-            if (showLoginError) {
+            loginErrorMessage?.let { message ->
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    "이메일 및 비밀번호를 다시 확인해주세요.",
+                    message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = HPSub
                 )
@@ -191,8 +205,17 @@ fun LoginScreen(
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 실제 로그인 검증으로 교체 (성공 시 onLoginSuccess, 실패 시 showLoginError = true)
-                    onLoginSuccess()
+                    coroutineScope.launch {
+                        authRepository.login(email, password)
+                            .onSuccess {
+                                loginErrorMessage = null
+                                onLoginSuccess()
+                            }
+                            .onFailure { error ->
+                                Log.e(TAG, "이메일 로그인 실패", error)
+                                loginErrorMessage = error.message ?: "로그인에 실패했습니다."
+                            }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

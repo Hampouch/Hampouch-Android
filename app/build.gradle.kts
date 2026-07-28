@@ -13,6 +13,7 @@ val localProperties = Properties().apply {
 }
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY", "")
 val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
+val baseUrl: String = localProperties.getProperty("BASE_URL", "")
 
 android {
     namespace = "com.example.hampouch"
@@ -33,6 +34,7 @@ android {
 
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
         manifestPlaceholders["kakaoNativeAppKey"] = kakaoNativeAppKey
     }
 

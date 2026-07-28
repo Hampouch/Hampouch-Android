@@ -22,10 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,14 +36,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
+import com.example.hampouch.ui.common.formatRemainingTime
+import com.example.hampouch.ui.common.rememberCountdownSeconds
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -55,13 +62,22 @@ fun ResetPasswordScreen(
     var password by rememberSaveable { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var isEmailAvailable by remember { mutableStateOf<Boolean?>(null) }
-    var isEmailCodeVerified by remember { mutableStateOf<Boolean?>(null) }
+    var emailSendMessage by remember { mutableStateOf<String?>(null) }
+    var emailVerifyMessage by remember { mutableStateOf<String?>(null) }
+    var isEmailVerified by remember { mutableStateOf(false) }
+    var emailCodeExpiresAtMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     var isNicknameAvailable by remember { mutableStateOf<Boolean?>(null) }
-    var showPasswordError by rememberSaveable { mutableStateOf(false) }
+    var resetErrorMessage by remember { mutableStateOf<String?>(null) }
     val isPasswordValid = password.length >= 8 &&
-            password.any { it.isLetter() } &&
+            password.any { it in 'a'..'z' || it in 'A'..'Z' } &&
             password.any { it.isDigit() }
+    val showPasswordError = password.isNotEmpty() && !isPasswordValid
+    val isResetEnabled = isEmailVerified && isPasswordValid
+    val emailCodeRemainingSeconds = rememberCountdownSeconds(emailCodeExpiresAtMillis)
+    val isEmailCodeExpired = emailCodeRemainingSeconds == 0
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val authRepository = remember { AuthRepository.getInstance(context) }
 
     Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
         Column(
@@ -87,41 +103,67 @@ fun ResetPasswordScreen(
                 LoginTextField(
                     label = "가입한 이메일",
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        isEmailVerified = false
+                    },
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
-                        // TODO: 서버 연결 후 실제 이메일 중복확인 로직 작성
-                        isEmailAvailable = isEmailAvailable != true
+                        coroutineScope.launch {
+                            authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.PASSWORD_RESET)
+                                .onSuccess { data ->
+                                    emailSendMessage = "인증번호가 발송되었습니다."
+                                    emailCodeExpiresAtMillis =
+                                        System.currentTimeMillis() + data.expiresInSeconds * 1000L
+                                }
+                                .onFailure { error ->
+                                    emailSendMessage = error.message ?: "인증번호 발송에 실패했습니다."
+                                }
+                        }
                     }
                 )
-                if (isEmailAvailable != null) {
-                    FieldMessage(
-                        if (isEmailAvailable == true) "인증번호가 발송되었습니다." else "이메일을 다시 확인해주세요."
-                    )
-                }
+                emailSendMessage?.let { FieldMessage(it) }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
-                    label = "인증번호",
+                    label = if (emailCodeRemainingSeconds != null && !isEmailCodeExpired) {
+                        "인증번호 (${formatRemainingTime(emailCodeRemainingSeconds)})"
+                    } else {
+                        "인증번호"
+                    },
                     value = emailCode,
-                    onValueChange = { emailCode = it },
+                    onValueChange = {
+                        emailCode = it
+                        isEmailVerified = false
+                    },
                     placeholder = "인증번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
-                        // TODO: 서버 연결 후 실제 인증번호 확인 로직 작성
-                        isEmailCodeVerified = isEmailCodeVerified != true
-                    }
+                        coroutineScope.launch {
+                            authRepository.verifyEmailCode(email, emailCode, EmailVerificationPurpose.PASSWORD_RESET)
+                                .onSuccess {
+                                    isEmailVerified = true
+                                    emailCodeExpiresAtMillis = null
+                                    emailVerifyMessage = "이메일 인증이 완료되었습니다."
+                                }
+                                .onFailure { error ->
+                                    isEmailVerified = false
+                                    emailVerifyMessage = error.message ?: "인증번호를 다시 확인해주세요."
+                                }
+                        }
+                    },
+                    isCheckEnabled = !isEmailCodeExpired
                 )
-                if (isEmailCodeVerified != null) {
-                    FieldMessage(
-                        if (isEmailCodeVerified == true) "확인되었습니다." else "인증번호를 다시 확인해주세요."
-                    )
+                if (isEmailCodeExpired) {
+                    FieldMessage("인증번호가 만료되었습니다.")
+                } else {
+                    emailVerifyMessage?.let { FieldMessage(it) }
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
@@ -133,6 +175,7 @@ fun ResetPasswordScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
+                    isValid = isPasswordValid,
                     visualTransformation = if (isPasswordVisible) {
                         VisualTransformation.None
                     } else {
@@ -159,16 +202,24 @@ fun ResetPasswordScreen(
                 }
             }
 
+            resetErrorMessage?.let { FieldMessage(it) }
+
             Spacer(modifier = Modifier.size(30.dp))
 
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 실제 비밀번호 재설정 API 호출로 교체
-                    showPasswordError = !isPasswordValid
-                    if (isPasswordValid) {
-                        onResetSuccess()
+                    coroutineScope.launch {
+                        authRepository.resetPassword(email, password)
+                            .onSuccess {
+                                resetErrorMessage = null
+                                onResetSuccess()
+                            }
+                            .onFailure { error ->
+                                resetErrorMessage = error.message ?: "비밀번호 재설정에 실패했습니다."
+                            }
                     }
                 },
+                enabled = isResetEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

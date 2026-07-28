@@ -8,7 +8,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.example.hampouch.BuildConfig
 import com.example.hampouch.data.model.AuthProvider
-import com.example.hampouch.data.model.UserSession
+import com.example.hampouch.data.model.SocialCredential
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.kakao.sdk.auth.model.OAuthToken
@@ -20,7 +20,7 @@ private const val TAG = "SocialAuthManager"
 
 object SocialAuthManager {
 
-    suspend fun signInWithGoogle(context: Context): Result<UserSession> {
+    suspend fun signInWithGoogle(context: Context): Result<SocialCredential> {
         return try {
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
@@ -38,11 +38,10 @@ object SocialAuthManager {
                 credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
             ) {
                 val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                // TODO: 서버 연결 후 idToken을 백엔드로 전달해 로그인 검증으로 교체
                 Result.success(
-                    UserSession(
+                    SocialCredential(
                         provider = AuthProvider.GOOGLE,
-                        token = googleCredential.idToken,
+                        providerToken = googleCredential.idToken,
                         nickname = googleCredential.displayName,
                         email = googleCredential.email,
                         profileImageUrl = googleCredential.profilePictureUri?.toString()
@@ -57,7 +56,7 @@ object SocialAuthManager {
         }
     }
 
-    fun signInWithKakao(context: Context, onResult: (Result<UserSession>) -> Unit) {
+    fun signInWithKakao(context: Context, onResult: (Result<SocialCredential>) -> Unit) {
         val onKakaoAccountLogin: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             when {
                 token != null -> fetchKakaoUserSession(token.accessToken, onResult)
@@ -82,7 +81,7 @@ object SocialAuthManager {
         }
     }
 
-    private fun fetchKakaoUserSession(accessToken: String, onResult: (Result<UserSession>) -> Unit) {
+    private fun fetchKakaoUserSession(accessToken: String, onResult: (Result<SocialCredential>) -> Unit) {
         UserApiClient.instance.me { user, error ->
             if (error != null || user == null) {
                 Log.e(TAG, "카카오 사용자 정보 조회 실패", error)
@@ -90,12 +89,11 @@ object SocialAuthManager {
                 return@me
             }
             val account = user.kakaoAccount
-            // TODO: 서버 연결 후 accessToken을 백엔드로 전달해 로그인 검증으로 교체
             onResult(
                 Result.success(
-                    UserSession(
+                    SocialCredential(
                         provider = AuthProvider.KAKAO,
-                        token = accessToken,
+                        providerToken = accessToken,
                         nickname = account?.profile?.nickname,
                         email = account?.email,
                         profileImageUrl = account?.profile?.profileImageUrl
