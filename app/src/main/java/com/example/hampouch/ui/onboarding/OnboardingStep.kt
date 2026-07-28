@@ -3,6 +3,7 @@ package com.example.hampouch.ui.onboarding
 enum class OnboardingStep {
     SPLASH,
     EXPENSE_DIAGNOSIS,
-    CHALLENGE_GOAL,
+    PERIOD_SETTING,
+    GOAL_SETTING,
     CATEGORY_SELECT
 }

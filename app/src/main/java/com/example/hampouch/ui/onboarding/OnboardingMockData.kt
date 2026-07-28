@@ -29,7 +29,6 @@ data class PeriodPreset(
 
 object OnboardingMockData {
     val periodPresets = listOf(
-        PeriodPreset(days = 3, labelResId = R.string.onboarding_period_3days),
         PeriodPreset(days = 7, labelResId = R.string.onboarding_period_7days),
         PeriodPreset(days = 14, labelResId = R.string.onboarding_period_14days),
         PeriodPreset(days = 31, labelResId = R.string.onboarding_period_31days)
@@ -44,6 +43,6 @@ object OnboardingMockData {
         CategoryOption("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A)),
         CategoryOption("dining_out_home", R.string.category_dining_out, Icons.Filled.House, HPSub2),
         CategoryOption("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E)),
-        CategoryOption("add_custom", R.string.category_add_custom, null, HPText)
+        CategoryOption("other", R.string.category_other, null, HPText)
     )
 }

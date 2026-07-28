@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,7 +55,9 @@ fun HomeScreen(
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
-    onHamBattleWaitingChallengeClick: (String) -> Unit = {}
+    onHamBattleWaitingChallengeClick: (String) -> Unit = {},
+    onNavigateToExpenseDetail: (String) -> Unit = {},
+    onNavigateToExpenseCalendar: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
@@ -70,7 +73,8 @@ fun HomeScreen(
                 BottomNavBar(
                     selectedItem = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
-                    onAddClick = {}
+                    onAddClick = {},
+                    modifier = Modifier.navigationBarsPadding()
                 )
             }
         }
@@ -85,6 +89,8 @@ fun HomeScreen(
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
+                onExpenseClick = onNavigateToExpenseDetail,
+                onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -135,6 +141,8 @@ private fun HomeContent(
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
+    onExpenseClick: (String) -> Unit = {},
+    onViewAllExpensesClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -185,8 +193,9 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
         TodayExpenseSection(
             expenses = uiState.expenses,
-            onViewAllClick = {},
-            onAddExpenseClick = {}
+            onViewAllClick = onViewAllExpensesClick,
+            onAddExpenseClick = {},
+            onExpenseClick = onExpenseClick
         )
         Spacer(modifier = Modifier.height(24.dp))
         MiniChallengeSection(
