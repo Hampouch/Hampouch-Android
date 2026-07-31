@@ -57,7 +57,8 @@ fun HomeScreen(
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
-    onNavigateToExpenseCalendar: () -> Unit = {}
+    onNavigateToExpenseCalendar: () -> Unit = {},
+    onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
@@ -112,7 +113,8 @@ fun HomeScreen(
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = {},
                 modifier = Modifier.padding(innerPadding),
-                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                onLoggedOut = onLoggedOut
             )
 
             BottomNavItem.COMMUNITY -> HamTipsScreen(

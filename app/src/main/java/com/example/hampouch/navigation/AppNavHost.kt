@@ -161,6 +161,11 @@ fun AppNavHost(
                 },
                 onNavigateToExpenseCalendar = {
                     navController.navigate(Screen.ExpenseCalendar.route)
+                },
+                onLoggedOut = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

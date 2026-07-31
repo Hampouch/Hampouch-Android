@@ -41,4 +41,19 @@ object UserSession {
         isLoggedInState.value = true
         return true
     }
+
+    fun logout(context: Context) {
+        isLoggedInState.value = false
+        currentUserState.value = LoginMockData.normalUser
+        context.applicationContext
+            .getSharedPreferences(SESSION_PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_LOGGED_IN_USER_ID)
+            .apply()
+    }
+
+    // TODO: 서버팀 회원 탈퇴 API 연동 시 실제 계정 삭제 요청으로 교체. 현재는 로그아웃과 동일하게 로컬 세션만 정리한다.
+    fun withdraw(context: Context) {
+        logout(context)
+    }
 }

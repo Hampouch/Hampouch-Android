@@ -52,7 +52,8 @@ fun MyPageScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToHamBattleLink: (String) -> Unit = {}
+    onNavigateToHamBattleLink: (String) -> Unit = {},
+    onLoggedOut: () -> Unit = {}
 ) {
     var route by remember { mutableStateOf(MyPageRoute.MAIN) }
     var previousListRoute by remember { mutableStateOf(MyPageRoute.MY_TIPS) }
@@ -116,6 +117,7 @@ fun MyPageScreen(
                     onBackClick = { route = MyPageRoute.MAIN },
                     onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
                     onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
+                    onLoggedOut = onLoggedOut,
                     modifier = Modifier.fillMaxSize()
                 )
                 if (showPasswordChangedDialog) {

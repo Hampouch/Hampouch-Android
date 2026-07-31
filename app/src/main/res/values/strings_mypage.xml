@@ -35,6 +35,8 @@
 
     <string name="settings_logout">로그아웃</string>
     <string name="settings_withdraw">회원 탈퇴</string>
+    <string name="settings_logout_confirm_question">로그아웃 하시겠어요?</string>
+    <string name="settings_withdraw_confirm_question">탈퇴 시 모든 데이터가 삭제되며\n복구할 수 없어요. 탈퇴하시겠어요?</string>
 
     <string name="record_alarm_title">기록 알림</string>
     <string name="record_alarm_receive_title">알림 받기</string>

@@ -3,6 +3,7 @@
     <string name="cd_hampouch_logo">햄파우치 로고</string>
     <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
     <string name="cd_loading_text">로딩 중</string>
+    <string name="onboarding_loading_label">LOADING</string>
 
     <string name="onboarding_won_suffix">원</string>
     <string name="onboarding_day_suffix">일</string>
