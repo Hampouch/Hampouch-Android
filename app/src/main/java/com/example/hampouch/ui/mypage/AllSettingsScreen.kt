@@ -15,38 +15,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.NotificationSettingsState
-import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
+import com.example.hampouch.ui.mypage.components.SettingsNavigateCard
 import com.example.hampouch.ui.mypage.components.SettingsToggleCard
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
-import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun AllSettingsScreen(
     onBackClick: () -> Unit,
     onRecordAlarmClick: () -> Unit,
-    onChangePasswordClick: () -> Unit,
-    onLoggedOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     var notificationState by remember { mutableStateOf(NotificationSettingsState()) }
-    var showLogoutConfirm by remember { mutableStateOf(false) }
-    var showWithdrawConfirm by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -56,6 +46,7 @@ fun AllSettingsScreen(
         MyPageDetailTopBar(
             title = stringResource(R.string.settings_title),
             onBackClick = onBackClick,
+            showMoreMenu = false,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         Column(
@@ -67,12 +58,10 @@ fun AllSettingsScreen(
             SectionLabel(text = stringResource(R.string.settings_section_notification))
             Spacer(modifier = Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SettingsToggleCard(
+                SettingsNavigateCard(
                     title = stringResource(R.string.settings_record_alarm_title),
                     subtitle = stringResource(R.string.settings_record_alarm_subtitle),
-                    checked = notificationState.recordAlarmEnabled,
-                    onCheckedChange = { notificationState = notificationState.copy(recordAlarmEnabled = it) },
-                    onRowClick = onRecordAlarmClick
+                    onClick = onRecordAlarmClick
                 )
                 SettingsToggleCard(
                     title = stringResource(R.string.settings_challenge_alarm_title),
@@ -95,92 +84,44 @@ fun AllSettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            SectionLabel(text = stringResource(R.string.settings_section_account))
-            Spacer(modifier = Modifier.height(8.dp))
-            SettingsMenuCard {
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_change_password),
-                    onClick = onChangePasswordClick
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
             SectionLabel(text = stringResource(R.string.settings_section_data))
             Spacer(modifier = Modifier.height(8.dp))
             SettingsMenuCard {
-                SettingsMenuRow(label = stringResource(R.string.settings_export_expense), onClick = {})
+                SettingsMenuRow(
+                    label = stringResource(R.string.settings_export_expense),
+                    onClick = {},
+                    showChevron = false
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionLabel(text = stringResource(R.string.settings_section_support))
             Spacer(modifier = Modifier.height(8.dp))
             SettingsMenuCard {
-                SettingsMenuRow(label = stringResource(R.string.settings_terms_privacy), onClick = {})
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            SettingsMenuCard {
                 SettingsMenuRow(
-                    label = stringResource(R.string.settings_logout),
-                    onClick = { showLogoutConfirm = true }
+                    label = stringResource(R.string.settings_customer_center),
+                    onClick = {},
+                    showChevron = false
                 )
                 SettingsMenuDivider()
                 SettingsMenuRow(
-                    label = stringResource(R.string.settings_withdraw),
-                    onClick = { showWithdrawConfirm = true },
-                    labelColor = HPSub
+                    label = stringResource(R.string.settings_terms),
+                    onClick = {},
+                    showChevron = false
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-
-    if (showLogoutConfirm) {
-        Dialog(
-            onDismissRequest = { showLogoutConfirm = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            ConfirmActionCard(
-                question = stringResource(R.string.settings_logout_confirm_question),
-                confirmLabel = stringResource(R.string.settings_logout),
-                onCancel = { showLogoutConfirm = false },
-                onConfirm = {
-                    showLogoutConfirm = false
-                    UserSession.logout(context)
-                    onLoggedOut()
-                }
-            )
-        }
-    }
-
-    if (showWithdrawConfirm) {
-        Dialog(
-            onDismissRequest = { showWithdrawConfirm = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            ConfirmActionCard(
-                question = stringResource(R.string.settings_withdraw_confirm_question),
-                confirmLabel = stringResource(R.string.settings_withdraw),
-                onCancel = { showWithdrawConfirm = false },
-                onConfirm = {
-                    showWithdrawConfirm = false
-                    UserSession.withdraw(context)
-                    onLoggedOut()
-                }
-            )
         }
     }
 }
 
-@Preview(showBackground = true, name = "2. 전체 설정")
+@Preview(showBackground = true, name = "3. 전체 설정")
 @Composable
 private fun AllSettingsScreenPreview() {
     HampouchTheme {
         AllSettingsScreen(
             onBackClick = {},
-            onRecordAlarmClick = {},
-            onChangePasswordClick = {},
-            onLoggedOut = {}
+            onRecordAlarmClick = {}
         )
     }
 }

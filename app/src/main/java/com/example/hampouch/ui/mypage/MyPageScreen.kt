@@ -21,9 +21,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
@@ -31,6 +34,7 @@ import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.CompleteDialog
+import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
 import com.example.hampouch.ui.hamtips.HamTipsDetailScreen
 import com.example.hampouch.ui.hamtips.HamTipsRepository
@@ -38,12 +42,15 @@ import com.example.hampouch.ui.hamtips.HamTipsWriteTipScreen
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.MyPageMenuRow
 import com.example.hampouch.ui.mypage.components.ProfileCard
+import com.example.hampouch.ui.mypage.components.SettingsMenuCard
+import com.example.hampouch.ui.mypage.components.SettingsMenuRow
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
 
 private enum class MyPageRoute {
-    MAIN, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY, MY_TIPS, SAVED_TIPS,
-    TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
+    MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY,
+    MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
 }
 
 @Composable
@@ -55,11 +62,11 @@ fun MyPageScreen(
     onNavigateToHamBattleLink: (String) -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var route by remember { mutableStateOf(MyPageRoute.MAIN) }
     var previousListRoute by remember { mutableStateOf(MyPageRoute.MY_TIPS) }
     var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
-    var isEditingName by remember { mutableStateOf(false) }
-    var editingName by remember { mutableStateOf(profile.name) }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by remember { mutableStateOf<String?>(null) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
@@ -74,48 +81,58 @@ fun MyPageScreen(
 
     when (route) {
         MyPageRoute.MAIN -> {
-            Scaffold(
-                modifier = modifier,
-                containerColor = HPGray2,
-                contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
-                bottomBar = {
-                    BottomNavBar(
-                        selectedItem = selectedBottomTab,
-                        onItemSelected = onItemSelected,
-                        onAddClick = onAddClick
+            Box(modifier = modifier.fillMaxSize()) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = HPGray2,
+                    contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
+                    bottomBar = {
+                        BottomNavBar(
+                            selectedItem = selectedBottomTab,
+                            onItemSelected = onItemSelected,
+                            onAddClick = onAddClick
+                        )
+                    }
+                ) { innerPadding ->
+                    MyPageMainContent(
+                        profile = profile,
+                        onBackClick = { onItemSelected(BottomNavItem.HOME) },
+                        onProfileCardClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
+                        onChallengeHistoryClick = { route = MyPageRoute.CHALLENGE_HISTORY },
+                        onMyTipsClick = { route = MyPageRoute.MY_TIPS },
+                        onSavedTipsClick = { route = MyPageRoute.SAVED_TIPS },
+                        onAllSettingsClick = { route = MyPageRoute.ALL_SETTINGS },
+                        onLogoutClick = { showLogoutConfirm = true },
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
-            ) { innerPadding ->
-                MyPageMainContent(
-                    profile = profile,
-                    isEditingName = isEditingName,
-                    editingName = editingName,
-                    onEditingNameChange = { editingName = it },
-                    onStartEditName = {
-                        editingName = profile.name
-                        isEditingName = true
-                    },
-                    onConfirmEditName = {
-                        if (editingName.isNotBlank()) {
-                            profile = profile.copy(name = editingName)
-                        }
-                        isEditingName = false
-                    },
-                    onChallengeHistoryClick = { route = MyPageRoute.CHALLENGE_HISTORY },
-                    onMyTipsClick = { route = MyPageRoute.MY_TIPS },
-                    onSavedTipsClick = { route = MyPageRoute.SAVED_TIPS },
-                    onAllSettingsClick = { route = MyPageRoute.ALL_SETTINGS },
-                    modifier = Modifier.padding(innerPadding)
-                )
+                if (showLogoutConfirm) {
+                    Dialog(
+                        onDismissRequest = { showLogoutConfirm = false },
+                        properties = DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        ConfirmActionCard(
+                            question = stringResource(R.string.settings_logout_confirm_question),
+                            confirmLabel = stringResource(R.string.settings_logout),
+                            onCancel = { showLogoutConfirm = false },
+                            onConfirm = {
+                                showLogoutConfirm = false
+                                UserSession.logout(context)
+                                onLoggedOut()
+                            }
+                        )
+                    }
+                }
             }
         }
 
-        MyPageRoute.ALL_SETTINGS -> {
+        MyPageRoute.ACCOUNT_SETTINGS -> {
             BackHandler { route = MyPageRoute.MAIN }
             Box(modifier = modifier.fillMaxSize()) {
-                AllSettingsScreen(
+                AccountSettingsScreen(
+                    profile = profile,
                     onBackClick = { route = MyPageRoute.MAIN },
-                    onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
+                    onProfileEditClick = { route = MyPageRoute.PROFILE_EDIT },
                     onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
                     onLoggedOut = onLoggedOut,
                     modifier = Modifier.fillMaxSize()
@@ -123,10 +140,37 @@ fun MyPageScreen(
                 if (showPasswordChangedDialog) {
                     CompleteDialog(
                         message = stringResource(R.string.change_password_success_message),
-                        onDismiss = { showPasswordChangedDialog = false }
+                        onDismiss = {
+                            showPasswordChangedDialog = false
+                            route = MyPageRoute.MAIN
+                        }
                     )
                 }
             }
+        }
+
+        MyPageRoute.PROFILE_EDIT -> {
+            BackHandler { route = MyPageRoute.ACCOUNT_SETTINGS }
+            ProfileEditScreen(
+                currentName = profile.name,
+                currentAvatarUri = profile.avatarUri,
+                isNicknameTaken = MyPageMockData::isNicknameTaken,
+                onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
+                onSubmit = { newName, newAvatarUri ->
+                    profile = profile.copy(name = newName, avatarUri = newAvatarUri)
+                    route = MyPageRoute.MAIN
+                },
+                modifier = modifier.fillMaxSize()
+            )
+        }
+
+        MyPageRoute.ALL_SETTINGS -> {
+            BackHandler { route = MyPageRoute.MAIN }
+            AllSettingsScreen(
+                onBackClick = { route = MyPageRoute.MAIN },
+                onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
+                modifier = modifier.fillMaxSize()
+            )
         }
 
         MyPageRoute.RECORD_ALARM -> {
@@ -138,13 +182,13 @@ fun MyPageScreen(
         }
 
         MyPageRoute.CHANGE_PASSWORD -> {
-            BackHandler { route = MyPageRoute.ALL_SETTINGS }
+            BackHandler { route = MyPageRoute.ACCOUNT_SETTINGS }
             ChangePasswordScreen(
                 email = profile.email,
-                onBackClick = { route = MyPageRoute.ALL_SETTINGS },
+                onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmitSuccess = {
                     showPasswordChangedDialog = true
-                    route = MyPageRoute.ALL_SETTINGS
+                    route = MyPageRoute.ACCOUNT_SETTINGS
                 },
                 modifier = modifier.fillMaxSize()
             )
@@ -228,15 +272,13 @@ fun MyPageScreen(
 @Composable
 private fun MyPageMainContent(
     profile: MyPageProfile,
-    isEditingName: Boolean,
-    editingName: String,
-    onEditingNameChange: (String) -> Unit,
-    onStartEditName: () -> Unit,
-    onConfirmEditName: () -> Unit,
+    onBackClick: () -> Unit,
+    onProfileCardClick: () -> Unit,
     onChallengeHistoryClick: () -> Unit,
     onMyTipsClick: () -> Unit,
     onSavedTipsClick: () -> Unit,
     onAllSettingsClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -247,18 +289,15 @@ private fun MyPageMainContent(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
-            onCalendarClick = {},
+            onBackClick = onBackClick,
             onNotificationClick = {}
         )
         Spacer(modifier = Modifier.height(16.dp))
         ProfileCard(
             name = profile.name,
             handle = profile.handle,
-            isEditingName = isEditingName,
-            editingName = editingName,
-            onEditingNameChange = onEditingNameChange,
-            onStartEditName = onStartEditName,
-            onConfirmEditName = onConfirmEditName
+            avatarUri = profile.avatarUri,
+            onClick = onProfileCardClick
         )
         Spacer(modifier = Modifier.height(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -277,6 +316,14 @@ private fun MyPageMainContent(
             MyPageMenuRow(
                 label = stringResource(R.string.mypage_menu_all_settings),
                 onClick = onAllSettingsClick
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        SettingsMenuCard {
+            SettingsMenuRow(
+                label = stringResource(R.string.settings_logout),
+                onClick = onLogoutClick,
+                showChevron = false
             )
         }
         Spacer(modifier = Modifier.height(24.dp))

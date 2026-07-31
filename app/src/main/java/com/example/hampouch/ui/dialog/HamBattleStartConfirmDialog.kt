@@ -28,6 +28,7 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -113,7 +114,8 @@ fun ConfirmActionCard(
     question: String,
     confirmLabel: String,
     onCancel: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    subtext: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -129,6 +131,16 @@ fun ConfirmActionCard(
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack
         )
+        if (subtext != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                subtext,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall,
+                color = HPSub
+            )
+        }
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             Button(
@@ -142,7 +154,6 @@ fun ConfirmActionCard(
                 Text(
                     "취소",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
                     color = HPText
                 )
             }
