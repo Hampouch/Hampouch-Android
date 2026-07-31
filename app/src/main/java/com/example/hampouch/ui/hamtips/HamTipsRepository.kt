@@ -8,6 +8,7 @@ import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.ui.session.UserSession
 
 object HamTipsRepository {
 
@@ -16,6 +17,9 @@ object HamTipsRepository {
     private const val DEFAULT_BATTLE_DURATION_DAYS = 7
     private const val DEFAULT_BATTLE_CAPACITY = 5
     private const val JUST_NOW_LABEL = "방금"
+
+    private val activeUserId: String get() = UserSession.currentUser.id
+    private val activeUserName: String get() = UserSession.currentUser.name
 
     private val posts = mutableStateListOf<TipPost>().apply { addAll(HamTipsMockData.allPosts()) }
     private var nextId = 1000
@@ -39,8 +43,8 @@ object HamTipsRepository {
             title = title,
             subtitle = content,
             content = content,
-            authorId = CURRENT_USER_ID,
-            authorName = CURRENT_USER_NAME,
+            authorId = activeUserId,
+            authorName = activeUserName,
             hasImage = imageUris.isNotEmpty(),
             imageUris = imageUris
         )
@@ -77,8 +81,8 @@ object HamTipsRepository {
             title = title,
             subtitle = comment,
             content = comment,
-            authorId = CURRENT_USER_ID,
-            authorName = CURRENT_USER_NAME,
+            authorId = activeUserId,
+            authorName = activeUserName,
             hasImage = imageUris.isNotEmpty(),
             imageUris = imageUris,
             menuName = menuName,
@@ -98,8 +102,8 @@ object HamTipsRepository {
             title = title,
             subtitle = content,
             content = content,
-            authorId = CURRENT_USER_ID,
-            authorName = CURRENT_USER_NAME,
+            authorId = activeUserId,
+            authorName = activeUserName,
             battleInfo = BattleRecruitInfo(
                 link = link,
                 durationDays = DEFAULT_BATTLE_DURATION_DAYS,
@@ -130,8 +134,8 @@ object HamTipsRepository {
         mutate(postId) { post ->
             val comment = TipComment(
                 id = newId("comment"),
-                authorId = CURRENT_USER_ID,
-                authorName = CURRENT_USER_NAME,
+                authorId = activeUserId,
+                authorName = activeUserName,
                 content = content,
                 timeLabel = JUST_NOW_LABEL
             )
@@ -143,8 +147,8 @@ object HamTipsRepository {
         mutate(postId) { post ->
             val reply = TipReply(
                 id = newId("reply"),
-                authorId = CURRENT_USER_ID,
-                authorName = CURRENT_USER_NAME,
+                authorId = activeUserId,
+                authorName = activeUserName,
                 content = content,
                 timeLabel = JUST_NOW_LABEL
             )
@@ -166,14 +170,33 @@ object HamTipsRepository {
         }
     }
 
+    fun deleteReply(postId: String, commentId: String, replyId: String) {
+        mutate(postId) { post ->
+            val comments = post.comments.map { comment ->
+                if (comment.id != commentId) return@map comment
+                val replies = comment.replies.map { reply ->
+                    if (reply.id == replyId) reply.copy(isDeleted = true) else reply
+                }
+                comment.copy(replies = replies)
+            }
+            post.copy(comments = comments, commentCount = (post.commentCount - 1).coerceAtLeast(0))
+        }
+    }
+
+    fun canDeletePost(post: TipPost): Boolean =
+        post.authorId == activeUserId || UserSession.isEditor
+
     fun canDeleteComment(post: TipPost, comment: TipComment): Boolean =
-        post.authorId == CURRENT_USER_ID || comment.authorId == CURRENT_USER_ID
+        post.authorId == activeUserId || comment.authorId == activeUserId || UserSession.isEditor
+
+    fun canDeleteReply(post: TipPost, reply: TipReply): Boolean =
+        post.authorId == activeUserId || reply.authorId == activeUserId || UserSession.isEditor
 
     fun joinBattle(postId: String) {
         mutate(postId) { post ->
             val info = post.battleInfo ?: return@mutate post
-            if (info.isFull || CURRENT_USER_ID in info.participantIds) return@mutate post
-            post.copy(battleInfo = info.copy(participantIds = info.participantIds + CURRENT_USER_ID))
+            if (info.isFull || activeUserId in info.participantIds) return@mutate post
+            post.copy(battleInfo = info.copy(participantIds = info.participantIds + activeUserId))
         }
     }
 }

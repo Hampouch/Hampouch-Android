@@ -38,6 +38,7 @@ import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
@@ -156,7 +157,9 @@ fun LoginScreen(
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 실제 로그인 검증으로 교체 (성공 시 onLoginSuccess, 실패 시 showLoginError = true)
+                    // TODO: 서버 연결 후 실제 로그인 검증으로 교체
+                    val matchedAccount = LoginMockData.findAccount(email, password)
+                    UserSession.login(matchedAccount ?: LoginMockData.normalUser)
                     onLoginSuccess()
                 },
                 modifier = Modifier

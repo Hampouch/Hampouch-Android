@@ -32,11 +32,13 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleChallengeRequest
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.data.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -121,10 +123,12 @@ fun HamTipsBattleDetailScreen(
     var showPostMenu by remember { mutableStateOf(false) }
     var showJoinConfirm by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
+    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
 
-    val isAuthor = post.authorId == HamTipsRepository.CURRENT_USER_ID
+    val isAuthor = post.authorId == UserSession.currentUser.id
+    val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleInfo = post.battleInfo
 
@@ -138,7 +142,7 @@ fun HamTipsBattleDetailScreen(
         topBar = {
             HamTipsPostDetailTopBar(
                 title = stringResource(titleRes),
-                showMoreButton = isAuthor,
+                showMoreButton = canDeletePost,
                 onBackClick = onBackClick,
                 onMoreClick = { showPostMenu = true }
             )
@@ -189,7 +193,8 @@ fun HamTipsBattleDetailScreen(
             HamTipsCommentListColumn(
                 post = post,
                 onReplyClick = { replyTarget = it },
-                onMoreClick = { commentMenuTarget = it }
+                onMoreClick = { commentMenuTarget = it },
+                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -201,23 +206,38 @@ fun HamTipsBattleDetailScreen(
         onDismiss = { commentMenuTarget = null }
     )
 
+    HamTipsReplyMoreMenuHost(
+        post = post,
+        target = replyMenuTarget,
+        onDismiss = { replyMenuTarget = null }
+    )
+
     if (showPostMenu) {
         HamTipsMoreMenuSheet(
-            items = listOf(
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_delete),
-                    isDestructive = true,
-                    onClick = {
-                        showPostMenu = false
-                        HamTipsRepository.deletePost(post.id)
-                        onDeleted()
-                    }
-                ),
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_close),
-                    onClick = { showPostMenu = false }
+            items = if (canDeletePost) {
+                listOf(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_delete),
+                        isDestructive = true,
+                        onClick = {
+                            showPostMenu = false
+                            HamTipsRepository.deletePost(post.id)
+                            onDeleted()
+                        }
+                    ),
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_close),
+                        onClick = { showPostMenu = false }
+                    )
                 )
-            ),
+            } else {
+                listOf(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_close),
+                        onClick = { showPostMenu = false }
+                    )
+                )
+            },
             onDismiss = { showPostMenu = false }
         )
     }
