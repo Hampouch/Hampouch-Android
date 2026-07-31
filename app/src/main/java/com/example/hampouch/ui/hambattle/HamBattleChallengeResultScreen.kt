@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
@@ -65,7 +66,6 @@ private enum class ResultTab { TODAY, TOTAL }
 
 private val PodiumHeights = mapOf(1 to 180.dp, 2 to 120.dp, 3 to 90.dp)
 private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
-private val CrownColor = Color(0xFFFFC107)
 
 @Composable
 fun HamBattleChallengeResultScreen(
@@ -76,7 +76,7 @@ fun HamBattleChallengeResultScreen(
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
-    val extraRanked = if (ranked.size > 3) ranked.drop(3) else emptyList()
+    val extraRanked = if (ranked.size > 3) ranked.drop(3).take(3) else emptyList()
 
     Scaffold(containerColor = HPSub4) { innerPadding ->
         Box(
@@ -131,7 +131,7 @@ fun HamBattleChallengeResultScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .fillMaxHeight(2f / 5f)
+                    .fillMaxHeight(2f / 7f)
             )
         }
     }
@@ -151,7 +151,11 @@ private fun ResultTopBar(title: String, onBackClick: () -> Unit) {
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기", tint = HPBlack)
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = HPBlack
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPSub4)
@@ -212,10 +216,12 @@ private fun PodiumChart(ranked: List<HamBattleParticipantSpending>, modifier: Mo
 
 @Composable
 private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         if (rank == 1) {
             Image(
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(28.dp),
                 painter = painterResource(
                     R.drawable.icon_crown
                 ),
@@ -233,7 +239,20 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPGray4)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(participant.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = HPMain)
+        Column(
+            modifier = Modifier
+                .width(90.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                participant.name,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = HPMain
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Box(
             modifier = Modifier
@@ -241,7 +260,11 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPWhite)
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            Text(formatWon(participant.amount), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = HPBlack)
+            Text(
+                formatWon(participant.amount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPBlack
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
 

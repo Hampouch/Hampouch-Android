@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,12 +33,18 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
+import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import java.util.Locale
 
 val StatusWhoWonText = Color(0xFF5572AB)
+
+// 닉네임 3자까지는 온전히 표시하고 4자 이상이면 말줄임표 처리되는 너비
+private val ParticipantNameWidth = 56.dp
+
+private val MyParticipantCardWidth = 130.dp
 
 fun formatWon(amount: Int): String {
     return String.format(Locale.KOREA, "%,d원", amount)
@@ -52,7 +60,7 @@ fun TypeBadge(text: String, muted: Boolean = false) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(30))
-            .background(if (muted) HPText else HPMain)
+            .background(if (muted) HPGray5 else HPMain)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
@@ -70,7 +78,7 @@ fun ParticipantAvatar(size: Dp) {
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(HPGray2)
+            .background(HPGray4)
     )
 }
 
@@ -81,22 +89,74 @@ fun ParticipantAvatarLabel(
 ) {
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .height(32.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ParticipantAvatar(size = 22.dp)
-            Spacer(modifier = Modifier.width(5.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ParticipantAvatar(size = 22.dp)
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    participant.name,
+                    modifier = Modifier.width(ParticipantNameWidth),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = HPBlack
+                )
+            }
             Text(
-                "${participant.name}  ${formatWon(participant.amount)}",
+                formatWon(participant.amount),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
-                fontWeight = FontWeight.Bold,
+                color = HPBlack
+            )
+        }
+    }
+}
+
+@Composable
+private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending) {
+    Box(
+        modifier = Modifier
+            .width(MyParticipantCardWidth)
+            .height(32.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(HPWhite),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ParticipantAvatar(size = 22.dp)
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    participant.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    color = HPBlack
+                )
+            }
+            Text(
+                formatWon(participant.amount),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
                 color = HPBlack
             )
         }
@@ -105,30 +165,44 @@ fun ParticipantAvatarLabel(
 
 @Composable
 fun OneVsOneRow(first: HamBattleParticipantSpending, second: HamBattleParticipantSpending) {
+    val isFirstMe = first.name == "나"
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ParticipantAvatarLabel(participant = first, modifier = Modifier.weight(1f, fill = false))
+        if (isFirstMe) {
+            MyParticipantAvatarLabel(participant = first)
+        } else {
+            ParticipantAvatarLabel(participant = first)
+        }
         Text(
             "vs",
             modifier = Modifier.padding(horizontal = 8.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = HPText
         )
-        ParticipantAvatarLabel(participant = second, modifier = Modifier.weight(1f, fill = false))
+        if (isFirstMe) {
+            ParticipantAvatarLabel(participant = second)
+        } else {
+            MyParticipantAvatarLabel(participant = second)
+        }
     }
 }
 
 @Composable
-fun RankedParticipantList(participants: List<HamBattleParticipantSpending>) {
-    val maxAmount = participants.maxOf { it.amount }.toFloat()
+fun RankedParticipantList(
+    participants: List<HamBattleParticipantSpending>,
+    maxAmount: Float? = null
+) {
+    val ranked = participants.sortedBy { it.amount }
+    val effectiveMaxAmount = maxAmount ?: ranked.maxOf { it.amount }.toFloat()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        participants.forEachIndexed { index, participant ->
+        ranked.forEachIndexed { index, participant ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     "%02d".format(index + 1),
@@ -140,9 +214,10 @@ fun RankedParticipantList(participants: List<HamBattleParticipantSpending>) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     participant.name,
-                    modifier = Modifier.width(56.dp),
+                    modifier = Modifier.width(ParticipantNameWidth),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = HPBlack
                 )
                 Box(
@@ -155,7 +230,7 @@ fun RankedParticipantList(participants: List<HamBattleParticipantSpending>) {
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth(participant.amount / maxAmount)
+                            .fillMaxWidth(participant.amount / effectiveMaxAmount)
                             .clip(RoundedCornerShape(50))
                             .background(HPMain)
                     )
@@ -163,7 +238,10 @@ fun RankedParticipantList(participants: List<HamBattleParticipantSpending>) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     formatWon(participant.amount),
-                    style = Body16Bold,
+                    modifier = Modifier.width(80.dp),
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    textAlign = TextAlign.End,
                     color = HPBlack
                 )
             }

@@ -51,10 +51,12 @@ import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
+import com.example.hampouch.ui.theme.HPGray1
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -84,7 +86,7 @@ fun HamBattleEndedChallengeDetailScreen(
 
     Scaffold(
         topBar = { EndedDetailTopBar(title = challenge.title, onBackClick = onBackClick) },
-        containerColor = HPWhite
+        containerColor = HPGray2
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -263,7 +265,6 @@ private fun SummaryCard(
             Text(
                 "${participantCount}명 중 가장 적게 썼어요!",
                 style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
                 color = HPText
             )
         }
@@ -280,8 +281,8 @@ private fun EndedRankRow(
 ) {
     val backgroundColor = when {
         isWinner -> HPSub3
-        isMe -> HPSub2
-        else -> HPGray3
+        isMe -> HPSub2.copy(alpha = 0.4f)
+        else -> HPWhite
     }
     val nameColor = when {
         isWinner -> HPMain
@@ -292,7 +293,12 @@ private fun EndedRankRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .border(
+                width = if (isMe || isWinner) 1.dp else 0.dp,
+                color = if (isMe || isWinner) HPSub else Color.Transparent,
+                shape = RoundedCornerShape(20.dp)
+            )
             .background(backgroundColor)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically

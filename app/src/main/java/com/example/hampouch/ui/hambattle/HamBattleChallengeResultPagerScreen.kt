@@ -3,8 +3,10 @@ package com.example.hampouch.ui.hambattle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -33,10 +35,15 @@ fun HamBattleChallengeResultPagerScreen(
 ) {
     val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) { page ->
             when (page) {
                 PAGE_PODIUM -> HamBattleChallengeResultScreen(
@@ -53,13 +60,11 @@ fun HamBattleChallengeResultPagerScreen(
             }
         }
 
-        // 스크롤과 무관하게 화면(하단 네비바 바로 위) 고정 위치에 표시.
+        // 페이지 콘텐츠와 별도 영역이라 버튼과 겹치지 않음.
         ResultPageIndicator(
             pageCount = PAGE_COUNT,
             currentPage = pagerState.currentPage,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
+            modifier = Modifier.padding(vertical = 16.dp)
         )
     }
 }

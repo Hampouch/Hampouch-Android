@@ -34,8 +34,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,9 +53,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.navigation.BottomNavBar
@@ -63,7 +68,6 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
-import com.example.hampouch.ui.theme.HampouchTheme
 
 private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
@@ -234,8 +238,25 @@ private fun StartNewChallengeButton(onClick: () -> Unit) {
     }
 }
 
+private fun battleStatusMessage(challenge: HamBattleActiveChallenge): String {
+    if (challenge.isOneVsOne && challenge.participants.size == 2) {
+        val (first, second) = challenge.participants
+        val winner = if (first.amount <= second.amount) first else second
+        val subject = if (winner.name == "나") "내가" else "${winner.name}님이"
+        return "현재 $subject 이기는 중"
+    }
+
+    val myRank = challenge.participants
+        .sortedBy { it.amount }
+        .indexOfFirst { it.name == "나" } + 1
+    return if (myRank > 0) "현재 ${myRank}위" else ""
+}
+
+private const val CollapsedRankCount = 3
+
 @Composable
 private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: () -> Unit = {}) {
+    var showAllRanks by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,7 +280,6 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: ()
         Text(
             challenge.penalty,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
             color = HPMain
         )
 
@@ -270,7 +290,20 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: ()
                 second = challenge.participants[1]
             )
         } else {
-            RankedParticipantList(participants = challenge.participants)
+            val ranked = challenge.participants.sortedBy { it.amount }
+            val visibleRanks = if (showAllRanks) ranked else ranked.take(CollapsedRankCount)
+            RankedParticipantList(
+                participants = visibleRanks,
+                maxAmount = ranked.maxOf { it.amount }.toFloat()
+            )
+
+            if (ranked.size > CollapsedRankCount) {
+                Spacer(modifier = Modifier.height(12.dp))
+                RankingToggleButton(
+                    expanded = showAllRanks,
+                    onClick = { showAllRanks = !showAllRanks }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -281,8 +314,27 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: ()
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(challenge.dDay, style = Body16Bold, color = HPMain)
-            Text(challenge.statusMessage, style = Body16Bold, color = StatusWhoWonText)
+            Text(battleStatusMessage(challenge), style = Body16Bold, color = StatusWhoWonText)
         }
+    }
+}
+
+@Composable
+private fun RankingToggleButton(expanded: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            if (expanded) "접기" else "순위 전체보기",
+            style = MaterialTheme.typography.bodySmall,
+            color = HPText
+        )
     }
 }
 
@@ -314,7 +366,7 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
                     )
                 )
             }
-            .padding(20.dp)
+            .padding(horizontal = 25.dp, vertical = 15.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -336,34 +388,46 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
         Text(
             challenge.penalty,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
             color = HPMain
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            repeat(challenge.totalCount) { index ->
-                if (index > 0) Spacer(modifier = Modifier.width(8.dp))
-                if (index < challenge.joinedCount) {
-                    ParticipantAvatar(size = 28.dp)
-                } else {
-                    EmptyAvatarSlot(size = 28.dp)
+        val avatarsPerRow = 7
+        val avatarRows = (0 until challenge.totalCount).chunked(avatarsPerRow)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            avatarRows.forEachIndexed { rowIndex, indices ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    indices.forEachIndexed { i, index ->
+                        if (i > 0) Spacer(modifier = Modifier.width(8.dp))
+                        if (index < challenge.joinedCount) {
+                            ParticipantAvatar(size = 32.dp)
+                        } else {
+                            EmptyAvatarSlot(size = 32.dp)
+                        }
+                    }
+                    if (rowIndex == avatarRows.lastIndex) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "${challenge.totalCount}명 중 ${challenge.joinedCount}명",
+                            style = if (challenge.totalCount == avatarsPerRow) {
+                                MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp)
+                            } else {
+                                MaterialTheme.typography.bodySmall
+                            },
+                            color = HPText
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                "${challenge.totalCount}명 중 ${challenge.joinedCount}명",
-                style = MaterialTheme.typography.bodySmall,
-                color = HPText
-            )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         HorizontalDivider(color = HPText, thickness = 1.dp)
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 challenge.startDateLabel,
@@ -371,12 +435,14 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
                 fontWeight = FontWeight.Bold,
                 color = HPMain
             )
-            Text(
-                "링크 다시 복사",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = StatusWhoWonText
-            )
+            TextButton(onClick = {}) {
+                Text(
+                    "링크 다시 복사",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = StatusWhoWonText
+                )
+            }
         }
     }
 }
@@ -415,7 +481,11 @@ private fun EmptyAvatarSlot(size: Dp) {
 //@Composable
 //private fun HamBattleScreenPreview() {
 //    HampouchTheme {
-//        HamBattleScreen()
+//        HamBattleScreen(
+//            selectedBottomTab = BottomNavItem.HAM_BATTLE,
+//            onItemSelected = { },
+//            onAddClick = { }
+//        )
 //    }
 //}
 //
@@ -423,6 +493,12 @@ private fun EmptyAvatarSlot(size: Dp) {
 //@Composable
 //private fun HamBattleScreenEmptyPreview() {
 //    HampouchTheme {
-//        HamBattleScreen(activeChallenges = emptyList(), waitingChallenges = emptyList())
+//        HamBattleScreen(
+//            activeChallenges = emptyList(),
+//            waitingChallenges = emptyList(),
+//            selectedBottomTab = TODO(),
+//            onItemSelected = TODO(),
+//            onAddClick = TODO()
+//        )
 //    }
 //}
