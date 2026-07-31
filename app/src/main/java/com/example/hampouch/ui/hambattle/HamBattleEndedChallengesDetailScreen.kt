@@ -51,9 +51,7 @@ import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
-import com.example.hampouch.ui.theme.HPGray1
 import com.example.hampouch.ui.theme.HPGray2
-import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
@@ -68,7 +66,7 @@ private val LastPlaceBadgeBackground = Color(0xFFFBF0EC)
 private val LastPlaceBadgeText = Color(0xFFE17866)
 
 @Composable
-fun HamBattleEndedChallengeDetailScreen(
+fun HamBattleEndedChallengesDetailScreen(
     challenge: HamBattleEndedChallenge,
     onBackClick: () -> Unit = {},
     onShareResultClick: () -> Unit = {},
@@ -432,8 +430,8 @@ private fun EndedPenaltyBox(penalty: String, penaltyTargetName: String) {
 
 @Preview
 @Composable
-private fun HamBattleEndedChallengeDetailScreenPreview() {
+private fun HamBattleEndedChallengesDetailScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengeDetailScreen(challenge = HamBattleMockData.endedChallenges[1])
+        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.endedChallenges[1])
     }
 }

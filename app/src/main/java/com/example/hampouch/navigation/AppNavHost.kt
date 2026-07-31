@@ -15,8 +15,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
-import com.example.hampouch.ui.hambattle.HamBattleChallengeResultPagerScreen
-import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
+import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
@@ -182,7 +182,7 @@ fun AppNavHost(
                     selectedItem = BottomNavItem.HAM_BATTLE,
                     onItemSelected = onBottomNavItemSelected
                 ) {
-                    HamBattleChallengeResultPagerScreen(
+                    HamBattleChallengesResultPagerScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
@@ -218,7 +218,7 @@ fun AppNavHost(
                     selectedItem = BottomNavItem.HAM_BATTLE,
                     onItemSelected = onBottomNavItemSelected
                 ) {
-                    HamBattleEndedChallengeDetailScreen(
+                    HamBattleEndedChallengesDetailScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }

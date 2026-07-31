@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -68,7 +67,7 @@ private val PodiumHeights = mapOf(1 to 180.dp, 2 to 120.dp, 3 to 90.dp)
 private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
 
 @Composable
-fun HamBattleChallengeResultScreen(
+fun HamBattleChallengesPodiumResultScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
@@ -394,16 +393,16 @@ private fun StartNewChallengeButton(onClick: () -> Unit, modifier: Modifier = Mo
 
 @Preview
 @Composable
-private fun HambattleChallengeResultScreenOneVsOnePreview() {
+private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengeResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges[0])
     }
 }
 
 @Preview
 @Composable
-private fun HambattleChallengeResultScreenGroupPreview() {
+private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengeResultScreen(challenge = HamBattleMockData.activeChallenges[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges[1])
     }
 }

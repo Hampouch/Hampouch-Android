@@ -1,6 +1,5 @@
 package com.example.hampouch.ui.hambattle
 
-import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +47,6 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
-import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -60,7 +58,7 @@ private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
 
 @Composable
-fun HamBattleOneVsOneResultScreen(
+fun HamBattleChallengesResultScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
@@ -318,8 +316,8 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
 
 @Preview
 @Composable
-private fun HamBattleOneVsOneResultScreenPreview() {
+private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleOneVsOneResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges[0])
     }
 }

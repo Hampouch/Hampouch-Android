@@ -28,7 +28,7 @@ private const val PAGE_RANKING_LIST = 1
 private const val PAGE_COUNT = 2
 
 @Composable
-fun HamBattleChallengeResultPagerScreen(
+fun HamBattleChallengesResultPagerScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
@@ -46,13 +46,13 @@ fun HamBattleChallengeResultPagerScreen(
                 .fillMaxWidth()
         ) { page ->
             when (page) {
-                PAGE_PODIUM -> HamBattleChallengeResultScreen(
+                PAGE_PODIUM -> HamBattleChallengesPodiumResultScreen(
                     challenge = challenge,
                     onBackClick = onBackClick,
                     onStartNewChallengeClick = onStartNewChallengeClick
                 )
 
-                else -> HamBattleOneVsOneResultScreen(
+                else -> HamBattleChallengesResultScreen(
                     challenge = challenge,
                     onBackClick = onBackClick,
                     onStartNewChallengeClick = onStartNewChallengeClick
@@ -94,9 +94,9 @@ private fun ResultPageIndicator(
 
 @Preview
 @Composable
-private fun HamBattleChallengeResultPagerScreenPreview() {
+private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
-        HamBattleChallengeResultPagerScreen(
+        HamBattleChallengesResultPagerScreen(
             challenge = HamBattleMockData.activeChallenges.first()
         )
     }
