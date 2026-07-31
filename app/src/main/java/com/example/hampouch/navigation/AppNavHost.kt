@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -31,6 +32,7 @@ import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
@@ -46,6 +48,12 @@ fun AppNavHost(
     // 회원가입/비밀번호 재설정 완료 후 Login 화면에서 한 번 보여줄 완료 메시지.
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
+    // 앱 재실행 시 저장된 목데이터 로그인 상태를 복원해 홈 화면부터 시작한다.
+    val context = LocalContext.current
+    val startDestination = remember {
+        if (UserSession.restore(context)) Screen.Home.route else Screen.Onboarding.route
+    }
+
     // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         if (item == BottomNavItem.HAM_BATTLE) {
@@ -59,7 +67,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Onboarding.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable(Screen.Onboarding.route) {

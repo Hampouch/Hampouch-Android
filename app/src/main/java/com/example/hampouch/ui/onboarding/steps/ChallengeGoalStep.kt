@@ -46,11 +46,17 @@ fun ChallengeGoalStep(
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
+    val impliedPeriodDays = when {
+        state.periodEnabled -> state.challengePeriodDays
+        state.dateFixed -> 30
+        else -> null
+    }
+
     val recommendedTotalTarget = state.lastMonthFoodExpense?.let { expense ->
-        state.challengePeriodDays?.let { period -> (expense.toDouble() / 30 * period).roundToInt() }
+        impliedPeriodDays?.let { period -> (expense.toDouble() / 30 * period).roundToInt() }
     }
     val effectiveTotalTarget = state.totalTargetAmount ?: recommendedTotalTarget
-    val dailyTarget = state.challengePeriodDays?.takeIf { it > 0 }?.let { period ->
+    val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
         effectiveTotalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
     } ?: 0
 
@@ -78,6 +84,7 @@ fun ChallengeGoalStep(
                 EditableAmountRow(
                     label = stringResource(R.string.onboarding_total_target_label),
                     value = effectiveTotalTarget,
+                    editSeedValue = state.totalTargetAmount,
                     onValueChange = onTotalTargetChange,
                     placeholder = stringResource(R.string.onboarding_direct_input),
                     suffix = wonSuffix,
@@ -125,13 +132,31 @@ fun ChallengeGoalStep(
     }
 }
 
-@Preview(showBackground = true, name = "Recommended default")
+@Preview(showBackground = true, name = "Recommended default (기간 선택)")
 @Composable
 private fun ChallengeGoalStepPreview() {
     HampouchTheme {
         ChallengeGoalStep(
             state = OnboardingUiState(
-                lastMonthFoodExpense = 400000
+                lastMonthFoodExpense = 400000,
+                periodEnabled = true,
+                challengePeriodDays = 30
+            ),
+            onTotalTargetChange = {},
+            onNext = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Recommended default (날짜 고정)")
+@Composable
+private fun ChallengeGoalStepDateFixedPreview() {
+    HampouchTheme {
+        ChallengeGoalStep(
+            state = OnboardingUiState(
+                lastMonthFoodExpense = 400000,
+                dateFixed = true
             ),
             onTotalTargetChange = {},
             onNext = {},
@@ -148,6 +173,7 @@ private fun ChallengeGoalStepEditedPreview() {
             state = OnboardingUiState(
                 lastMonthFoodExpense = 400000,
                 totalTargetAmount = 300000,
+                periodEnabled = true,
                 challengePeriodDays = 30
             ),
             onTotalTargetChange = {},

@@ -26,6 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +56,7 @@ fun LoginScreen(
     onNavigateToSignUp: () -> Unit = {},
     onNavigateToResetPassword: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
@@ -159,7 +161,7 @@ fun LoginScreen(
                 onClick = {
                     // TODO: 서버 연결 후 실제 로그인 검증으로 교체
                     val matchedAccount = LoginMockData.findAccount(email, password)
-                    UserSession.login(matchedAccount ?: LoginMockData.normalUser)
+                    UserSession.login(context, matchedAccount ?: LoginMockData.normalUser)
                     onLoginSuccess()
                 },
                 modifier = Modifier
