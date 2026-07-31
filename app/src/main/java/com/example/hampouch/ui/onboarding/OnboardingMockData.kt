@@ -31,7 +31,7 @@ object OnboardingMockData {
     val periodPresets = listOf(
         PeriodPreset(days = 7, labelResId = R.string.onboarding_period_7days),
         PeriodPreset(days = 14, labelResId = R.string.onboarding_period_14days),
-        PeriodPreset(days = 31, labelResId = R.string.onboarding_period_31days)
+        PeriodPreset(days = 30, labelResId = R.string.onboarding_period_30days)
     )
 
     val categoryOptions = listOf(

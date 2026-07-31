@@ -44,13 +44,11 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.PeriodPresetRow
-import com.example.hampouch.ui.onboarding.components.SectionCard
 import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -65,6 +63,7 @@ private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone
 @Composable
 fun PeriodStep(
     state: OnboardingUiState,
+    onPeriodEnabledChange: (Boolean) -> Unit,
     onPeriodChange: (Int) -> Unit,
     onDateFixedChange: (Boolean) -> Unit,
     onStartDateChange: (LocalDate) -> Unit,
@@ -102,26 +101,49 @@ fun PeriodStep(
 
             OnboardingCaptionText(text = stringResource(R.string.onboarding_step2_caption))
 
-            SectionCard {
-                Text(
-                    text = stringResource(R.string.onboarding_period_label),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = HPSub1
-                )
-                PeriodPresetRow(
-                    options = OnboardingMockData.periodPresets.map { it.days to stringResource(it.labelResId) },
-                    selectedDays = state.challengePeriodDays,
-                    onSelect = onPeriodChange,
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                EditableAmountRow(
-                    label = null,
-                    value = state.challengePeriodDays,
-                    onValueChange = onPeriodChange,
-                    placeholder = stringResource(R.string.onboarding_direct_input),
-                    suffix = daySuffix,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (state.periodEnabled) HPSub3 else HPGray3, RoundedCornerShape(20.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.onboarding_period_label),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = HPBlack
+                    )
+                    Switch(
+                        checked = state.periodEnabled,
+                        onCheckedChange = onPeriodEnabledChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = HPWhite,
+                            checkedTrackColor = HPMain,
+                            uncheckedThumbColor = HPWhite,
+                            uncheckedTrackColor = HPGray5
+                        )
+                    )
+                }
+
+                if (state.periodEnabled) {
+                    PeriodPresetRow(
+                        options = OnboardingMockData.periodPresets.map { it.days to stringResource(it.labelResId) },
+                        selectedDays = state.challengePeriodDays,
+                        onSelect = onPeriodChange
+                    )
+                    EditableAmountRow(
+                        label = null,
+                        value = state.challengePeriodDays,
+                        onValueChange = onPeriodChange,
+                        placeholder = stringResource(R.string.onboarding_direct_input),
+                        suffix = daySuffix
+                    )
+                }
             }
 
             Column(
@@ -181,7 +203,8 @@ fun PeriodStep(
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
-                enabled = state.challengePeriodDays != null,
+                enabled = (state.periodEnabled && state.challengePeriodDays != null) ||
+                    (state.dateFixed && state.startDate != null),
                 onClick = onNext
             )
         }
@@ -226,12 +249,29 @@ private fun StartDatePickerDialog(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "DateFixed enabled")
 @Composable
-private fun PeriodStepPreview() {
+private fun PeriodStepDateFixedPreview() {
     HampouchTheme {
         PeriodStep(
-            state = OnboardingUiState(challengePeriodDays = 31, dateFixed = true),
+            state = OnboardingUiState(periodEnabled = false, dateFixed = true),
+            onPeriodEnabledChange = {},
+            onPeriodChange = {},
+            onDateFixedChange = {},
+            onStartDateChange = {},
+            onNext = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Period enabled")
+@Composable
+private fun PeriodStepPeriodPreview() {
+    HampouchTheme {
+        PeriodStep(
+            state = OnboardingUiState(periodEnabled = true, challengePeriodDays = 30, dateFixed = false),
+            onPeriodEnabledChange = {},
             onPeriodChange = {},
             onDateFixedChange = {},
             onStartDateChange = {},
