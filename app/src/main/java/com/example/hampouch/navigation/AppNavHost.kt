@@ -1,6 +1,11 @@
 package com.example.hampouch.navigation
 
 import android.util.Log
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -8,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -72,10 +78,28 @@ fun AppNavHost(
         }
     }
 
+    val transitionSpec = tween<IntOffset>(durationMillis = 300)
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = {
+            slideInHorizontally(animationSpec = transitionSpec, initialOffsetX = { it / 4 }) +
+                fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutHorizontally(animationSpec = transitionSpec, targetOffsetX = { -it / 4 }) +
+                fadeOut(animationSpec = tween(300))
+        },
+        popEnterTransition = {
+            slideInHorizontally(animationSpec = transitionSpec, initialOffsetX = { -it / 4 }) +
+                fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutHorizontally(animationSpec = transitionSpec, targetOffsetX = { it / 4 }) +
+                fadeOut(animationSpec = tween(300))
+        }
     ) {
         composable(Screen.Onboarding.route) {
             OnboardingRoute(
