@@ -22,7 +22,13 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
+import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
+import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisHeaderMode
+import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisRoute
+import com.example.hampouch.ui.expenseanalysis.MonthlyExpenseRoute
+import com.example.hampouch.ui.expenseanalysis.ReasonDetailRoute
 import com.example.hampouch.ui.expensedetail.ExpenseCalendarRoute
 import com.example.hampouch.ui.expensedetail.ExpenseDetailRoute
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
@@ -36,6 +42,7 @@ import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
+import java.time.YearMonth
 import com.example.hampouch.ui.takeabreak.TakeABreakScreen
 
 private const val TAG = "AppNavHost"
@@ -212,7 +219,98 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onExpenseClick = { expenseId ->
                     navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
+                },
+                onExpenseAnalysisClick = {
+                    navController.navigate(Screen.ExpenseAnalysis.createRoute(YearMonth.now()))
                 }
+            )
+        }
+
+        composable(
+            route = Screen.ExpenseAnalysis.route,
+            arguments = listOf(navArgument("monthEpochDay") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val epochDay = backStackEntry.arguments?.getLong("monthEpochDay") ?: LocalDate.now().toEpochDay()
+            val month = YearMonth.from(LocalDate.ofEpochDay(epochDay))
+            ExpenseAnalysisRoute(
+                headerMode = ExpenseAnalysisHeaderMode.Month(month),
+                onBackClick = { navController.popBackStack() },
+                onMonthlyViewClick = { navController.navigate(Screen.ExpenseAnalysisMonthly.route) },
+                onCategoryDetailClick = { start, end ->
+                    navController.navigate(Screen.ExpenseAnalysisCategoryDetail.createRoute(start, end, "delivery"))
+                },
+                onReasonDetailClick = { start, end ->
+                    navController.navigate(Screen.ExpenseAnalysisReasonDetail.createRoute(start, end, "stress"))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ExpenseAnalysisChallenge.route,
+            arguments = listOf(
+                navArgument("totalDays") { type = NavType.IntType },
+                navArgument("startEpochDay") { type = NavType.LongType },
+                navArgument("endEpochDay") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val totalDays = backStackEntry.arguments?.getInt("totalDays") ?: 0
+            val startEpochDay = backStackEntry.arguments?.getLong("startEpochDay") ?: LocalDate.now().toEpochDay()
+            val endEpochDay = backStackEntry.arguments?.getLong("endEpochDay") ?: LocalDate.now().toEpochDay()
+            ExpenseAnalysisRoute(
+                headerMode = ExpenseAnalysisHeaderMode.Challenge(
+                    totalDays = totalDays,
+                    periodStart = LocalDate.ofEpochDay(startEpochDay),
+                    periodEnd = LocalDate.ofEpochDay(endEpochDay)
+                ),
+                onBackClick = { navController.popBackStack() },
+                onCategoryDetailClick = { start, end ->
+                    navController.navigate(Screen.ExpenseAnalysisCategoryDetail.createRoute(start, end, "delivery"))
+                },
+                onReasonDetailClick = { start, end ->
+                    navController.navigate(Screen.ExpenseAnalysisReasonDetail.createRoute(start, end, "stress"))
+                }
+            )
+        }
+
+        composable(Screen.ExpenseAnalysisMonthly.route) {
+            MonthlyExpenseRoute(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Screen.ExpenseAnalysisCategoryDetail.route,
+            arguments = listOf(
+                navArgument("startEpochDay") { type = NavType.LongType },
+                navArgument("endEpochDay") { type = NavType.LongType },
+                navArgument("initialCategoryId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val startEpochDay = backStackEntry.arguments?.getLong("startEpochDay") ?: LocalDate.now().toEpochDay()
+            val endEpochDay = backStackEntry.arguments?.getLong("endEpochDay") ?: LocalDate.now().toEpochDay()
+            val initialCategoryId = backStackEntry.arguments?.getString("initialCategoryId") ?: "delivery"
+            CategoryDetailRoute(
+                periodStart = LocalDate.ofEpochDay(startEpochDay),
+                periodEnd = LocalDate.ofEpochDay(endEpochDay),
+                initialCategoryId = initialCategoryId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ExpenseAnalysisReasonDetail.route,
+            arguments = listOf(
+                navArgument("startEpochDay") { type = NavType.LongType },
+                navArgument("endEpochDay") { type = NavType.LongType },
+                navArgument("initialReasonId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val startEpochDay = backStackEntry.arguments?.getLong("startEpochDay") ?: LocalDate.now().toEpochDay()
+            val endEpochDay = backStackEntry.arguments?.getLong("endEpochDay") ?: LocalDate.now().toEpochDay()
+            val initialReasonId = backStackEntry.arguments?.getString("initialReasonId") ?: "stress"
+            ReasonDetailRoute(
+                periodStart = LocalDate.ofEpochDay(startEpochDay),
+                periodEnd = LocalDate.ofEpochDay(endEpochDay),
+                initialReasonId = initialReasonId,
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -332,8 +430,15 @@ fun AppNavHost(
         }
 
         composable(Screen.ChallengeSummary.route) {
+            val state = ChallengeResultMockData.inProgress
             ChallengeResultScreen(
+                state = state,
                 onBackClick = { navController.popBackStack() },
+                onExpenseAnalysisClick = {
+                    navController.navigate(
+                        Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
+                    )
+                },
                 onStartNewChallengeClick = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
