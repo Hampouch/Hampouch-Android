@@ -38,6 +38,9 @@ fun AppNavHost(
     // 회원가입/비밀번호 재설정 완료 후 Login 화면에서 한 번 보여줄 완료 메시지.
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
+    // 햄배틀 모집 상세에서 "커뮤니티에 공유하기"를 누르면 Home을 커뮤니티 탭 + 모집 글쓰기 화면으로 새로 연다.
+    var openCommunityWriteBattle by remember { mutableStateOf(false) }
+
     // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         if (item == BottomNavItem.HAM_BATTLE) {
@@ -118,7 +121,12 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
+            val startTab = if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
+            val openWriteBattle = openCommunityWriteBattle
+            LaunchedEffect(Unit) { openCommunityWriteBattle = false }
             HomeScreen(
+                initialBottomTab = startTab,
+                openHamTipsWriteBattleOnStart = openWriteBattle,
                 onStartChallengeClick = {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -240,7 +248,13 @@ fun AppNavHost(
                 ) {
                     HamBattleWaitingChallengeDetailScreen(
                         challenge = challenge,
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        onShareToCommunityClick = {
+                            openCommunityWriteBattle = true
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,8 @@ private const val MOCK_USER_NAME = "민준"
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    initialBottomTab: BottomNavItem = BottomNavItem.HOME,
+    openHamTipsWriteBattleOnStart: Boolean = false,
     onStartChallengeClick: () -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
@@ -54,7 +57,8 @@ fun HomeScreen(
     onHamBattleWaitingChallengeClick: (String) -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
-    var selectedBottomTab by rememberSaveable { mutableStateOf(BottomNavItem.HOME) }
+    var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
+    var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
     var uiState by remember(selectedDate) {
         mutableStateOf(mockStateForDate(selectedDate, referenceToday))
@@ -109,13 +113,17 @@ fun HomeScreen(
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
             )
 
-            BottomNavItem.COMMUNITY -> HamTipsScreen(
-                selectedBottomTab = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = {},
-                modifier = Modifier.padding(innerPadding),
-                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
-            )
+            BottomNavItem.COMMUNITY -> {
+                HamTipsScreen(
+                    selectedBottomTab = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = {},
+                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
+                )
+                LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
+            }
         }
     }
 }

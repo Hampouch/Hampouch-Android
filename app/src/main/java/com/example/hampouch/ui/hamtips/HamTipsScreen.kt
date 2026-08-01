@@ -83,9 +83,12 @@ fun HamTipsScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToHamBattleLink: (String) -> Unit = {}
+    onNavigateToHamBattleLink: (String) -> Unit = {},
+    openWriteBattleOnStart: Boolean = false
 ) {
-    var route by remember { mutableStateOf(HamTipsRoute.MAIN) }
+    var route by remember {
+        mutableStateOf(if (openWriteBattleOnStart) HamTipsRoute.WRITE_BATTLE else HamTipsRoute.MAIN)
+    }
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
