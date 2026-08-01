@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -54,6 +55,7 @@ fun HomeScreen(
     openHamTipsWriteBattleOnStart: Boolean = false,
     onStartChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
+    onChallengeSummaryClick: () -> Unit = {},
     onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
@@ -94,6 +96,7 @@ fun HomeScreen(
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
+                onChallengeSummaryClick = onChallengeSummaryClick,
                 onExpenseClick = onNavigateToExpenseDetail,
                 onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 modifier = Modifier.padding(innerPadding)
@@ -149,6 +152,7 @@ private fun HomeContent(
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
+    onChallengeSummaryClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -183,6 +187,7 @@ private fun HomeContent(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPSub4)
+                    .clickable(onClick = onChallengeSummaryClick)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 ChallengeBanner(challenge = challenge)

@@ -182,7 +182,8 @@ fun AppNavHost(
                 onNavigateToMiniChallenge = { date ->
                     navController.navigate(Screen.MiniChallenge.createRoute(date))
                 },
-                onCalendarClick = { navController.navigate(Screen.ChallengeSummary.route) },
+                onCalendarClick = {},
+                onChallengeSummaryClick = { navController.navigate(Screen.ChallengeSummary.route) },
                 onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onHamBattleChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
