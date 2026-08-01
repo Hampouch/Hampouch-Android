@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.TipPostCard
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPText
@@ -38,10 +38,10 @@ fun TipListScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = title,
             onBackClick = onBackClick,
-            showMoreMenu = false,
+            onNotificationClick = {},
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         if (tips.isEmpty()) {
@@ -66,7 +66,7 @@ fun TipListScreen(
     }
 }
 
-@Preview(showBackground = true, name = "내가 쓴 꿀팁 - 목록")
+@Preview(showBackground = true, name = "21. 내가 쓴 꿀팁 - 목록")
 @Composable
 private fun MyTipsScreenFilledPreview() {
     HampouchTheme {
@@ -79,7 +79,7 @@ private fun MyTipsScreenFilledPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "내가 쓴 꿀팁 - 비어있음")
+@Preview(showBackground = true, name = "20. 내가 쓴 꿀팁 - 비어있음")
 @Composable
 private fun MyTipsScreenEmptyPreview() {
     HampouchTheme {
@@ -92,7 +92,7 @@ private fun MyTipsScreenEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "저장한 꿀팁 - 목록")
+@Preview(showBackground = true, name = "22. 저장한 꿀팁 - 목록")
 @Composable
 private fun SavedTipsScreenFilledPreview() {
     HampouchTheme {
@@ -105,7 +105,7 @@ private fun SavedTipsScreenFilledPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "저장한 꿀팁 - 비어있음")
+@Preview(showBackground = true, name = "23. 저장한 꿀팁 - 비어있음")
 @Composable
 private fun SavedTipsScreenEmptyPreview() {
     HampouchTheme {

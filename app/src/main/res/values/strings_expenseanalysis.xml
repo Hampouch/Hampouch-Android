@@ -1,3 +1,62 @@
 <resources>
     <!-- 지출 분석 -->
+    <string name="expenseanalysis_title">식비 지출 분석</string>
+
+    <string name="expenseanalysis_challenge_title_format">%1$d일 챌린지</string>
+    <string name="expenseanalysis_period_range_format">%1$02d.%2$02d ~ %3$02d.%4$02d</string>
+    <string name="expenseanalysis_monthly_view_link">월별 지출 보기 &gt;</string>
+
+    <string name="expenseanalysis_total_spent_label">총 지출</string>
+
+    <string name="expenseanalysis_category_section_title">카테고리별 지출</string>
+    <string name="expenseanalysis_reason_section_title">지출 이유</string>
+    <string name="expenseanalysis_weekday_section_title">요일별 지출</string>
+    <string name="expenseanalysis_detail_view_link">자세히 보기</string>
+
+    <string name="expenseanalysis_percent_format">%1$d%%</string>
+    <string name="expenseanalysis_count_format">%1$d건</string>
+
+    <string name="expenseanalysis_reason_craving_short">먹고싶어서</string>
+    <string name="expenseanalysis_reason_stress_short">스트레스</string>
+    <string name="expenseanalysis_reason_lazy_short">귀찮아서</string>
+    <string name="expenseanalysis_reason_reward_short">보상</string>
+    <string name="expenseanalysis_reason_etc_short">기타</string>
+
+    <string name="expenseanalysis_weekday_peak_two_format">%1$s, %2$s 지출이 가장 많아요</string>
+    <string name="expenseanalysis_weekday_peak_one_format">%1$s 지출이 가장 많아요</string>
+
+    <string name="expenseanalysis_ai_section_title">포치의 식비 분석</string>
+    <string name="expenseanalysis_ai_placeholder_message">챌린지가 끝나면 포치가 이번 지출 내역을 꼼꼼히 분석해줄 거예요. 지출을 기록하면서 조금만 기다려주세요!</string>
+
+    <string name="expenseanalysis_ai_intro_prefix_format">%1$s 식비는 </string>
+    <string name="expenseanalysis_ai_intro_suffix">이에요.\n그 중 </string>
+    <string name="expenseanalysis_ai_category_middle">카테고리 소비가 </string>
+    <string name="expenseanalysis_ai_category_suffix">를 차지했고, </string>
+    <string name="expenseanalysis_ai_reason_middle">의 지출 이유가 </string>
+    <string name="expenseanalysis_ai_reason_suffix">로 가장 컸어요. </string>
+    <string name="expenseanalysis_ai_weekday_suffix">에 지출이 가장 많았어요. </string>
+    <string name="expenseanalysis_ai_closing">다음 챌린지에서 식비를 살짝만 줄여보는 것도 추천해요.</string>
+
+    <string name="expenseanalysis_custom_category_label">직접입력한 카테고리</string>
+
+    <string name="expenseanalysis_monthly_title">월별 지출</string>
+    <string name="expenseanalysis_monthly_subtitle">최근 6개월 지출을 반영한 결과예요.</string>
+    <string name="expenseanalysis_monthly_stat_this_month_format">%1$d월 식비</string>
+    <string name="expenseanalysis_monthly_stat_average_label">월 평균</string>
+    <string name="expenseanalysis_monthly_stat_change_label">지난달 대비</string>
+    <string name="expenseanalysis_monthly_change_increase_format">%1$d%% 증가</string>
+    <string name="expenseanalysis_monthly_change_decrease_format">%1$d%% 감소</string>
+    <string name="expenseanalysis_monthly_change_none">변동 없음</string>
+    <string name="expenseanalysis_monthly_list_title">월별 식비</string>
+    <string name="expenseanalysis_monthly_badge_highest">최고</string>
+    <string name="expenseanalysis_monthly_badge_current">이번 달</string>
+    <string name="expenseanalysis_monthly_month_format">%1$d월</string>
+    <string name="expenseanalysis_monthly_month_axis_format">%1$d월</string>
+
+    <string name="expenseanalysis_category_detail_spent_format">%1$s로 쓴 식비</string>
+    <string name="expenseanalysis_reason_detail_spent_format">%1$s로 쓴 식비</string>
+    <string name="expenseanalysis_date_short_format">%1$02d.%2$02d</string>
+
+    <string name="cd_expense_analysis_monthly_link">월별 지출 보기</string>
+    <string name="cd_expense_analysis_back">뒤로 가기</string>
 </resources>

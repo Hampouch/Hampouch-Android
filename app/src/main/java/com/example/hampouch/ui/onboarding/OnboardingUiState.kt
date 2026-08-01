@@ -4,9 +4,10 @@ import java.time.LocalDate
 
 data class OnboardingUiState(
     val lastMonthFoodExpense: Int? = null,
+    val periodEnabled: Boolean = false,
     val challengePeriodDays: Int? = null,
-    val dateFixed: Boolean = true,
+    val dateFixed: Boolean = false,
     val startDate: LocalDate? = null,
-    val dailyTargetAmount: Int? = null,
+    val totalTargetAmount: Int? = null,
     val selectedCategoryIds: Set<String> = emptySet()
 )

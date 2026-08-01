@@ -255,7 +255,8 @@ fun EditableAmountRow(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     suffix: String? = null,
-    valueColor: Color? = null
+    valueColor: Color? = null,
+    editSeedValue: Int? = value
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
@@ -265,7 +266,7 @@ fun EditableAmountRow(
 
     LaunchedEffect(isEditing) {
         if (isEditing) {
-            val seedText = value?.toString().orEmpty()
+            val seedText = editSeedValue?.toString().orEmpty()
             textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
             hasFocusedOnce = false
             focusRequester.requestFocus()

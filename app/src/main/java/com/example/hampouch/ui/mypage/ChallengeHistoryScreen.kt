@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.ui.mypage.components.ChallengeRecordCard
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -30,21 +30,15 @@ fun ChallengeHistoryScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val title = if (records.isEmpty()) {
-        stringResource(R.string.challenge_history_title_empty)
-    } else {
-        stringResource(R.string.challenge_history_title_filled)
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
-            title = title,
+        MyPageMainTopBar(
+            title = stringResource(R.string.challenge_history_title),
             onBackClick = onBackClick,
-            showMoreMenu = records.isNotEmpty(),
+            onNotificationClick = {},
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         if (records.isEmpty()) {
@@ -69,7 +63,7 @@ fun ChallengeHistoryScreen(
     }
 }
 
-@Preview(showBackground = true, name = "9. 지난 챌린지 기록 - 목록")
+@Preview(showBackground = true, name = "19. 지난 챌린지 - 목록")
 @Composable
 private fun ChallengeHistoryScreenFilledPreview() {
     HampouchTheme {
@@ -77,7 +71,7 @@ private fun ChallengeHistoryScreenFilledPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "8. 지난 챌린지 기록 - 비어있음")
+@Preview(showBackground = true, name = "18. 지난 챌린지 - 비어있음")
 @Composable
 private fun ChallengeHistoryScreenEmptyPreview() {
     HampouchTheme {

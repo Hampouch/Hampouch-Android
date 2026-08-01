@@ -105,7 +105,6 @@ fun CategorySelectStep(
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_start_bytecut),
-                enabled = selectedCategoryIds.isNotEmpty(),
                 onClick = onStart
             )
         }

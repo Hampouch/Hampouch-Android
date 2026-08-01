@@ -39,7 +39,8 @@ data class TipReply(
     val authorId: String,
     val authorName: String,
     val content: String,
-    val timeLabel: String
+    val timeLabel: String,
+    val isDeleted: Boolean = false
 )
 
 data class TipComment(

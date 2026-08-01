@@ -27,6 +27,7 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
+import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
@@ -38,22 +39,26 @@ import kotlin.math.roundToInt
 @Composable
 fun ChallengeGoalStep(
     state: OnboardingUiState,
-    onDailyTargetChange: (Int) -> Unit,
+    onTotalTargetChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
-    val computedDailyDefaultExact = state.lastMonthFoodExpense?.let { expense ->
-        state.challengePeriodDays?.takeIf { it > 0 }?.let { period -> expense.toDouble() / period }
+    val impliedPeriodDays = when {
+        state.periodEnabled -> state.challengePeriodDays
+        state.dateFixed -> 30
+        else -> null
     }
-    val effectiveDailyTargetExact = state.dailyTargetAmount?.toDouble() ?: computedDailyDefaultExact
-    val totalTargetExact = effectiveDailyTargetExact?.let { daily ->
-        (state.challengePeriodDays ?: 0) * daily
+
+    val recommendedTotalTarget = state.lastMonthFoodExpense?.let { expense ->
+        impliedPeriodDays?.let { period -> (expense.toDouble() / 30 * period).roundToInt() }
     }
-    val effectiveDailyTarget = effectiveDailyTargetExact?.roundToInt()
-    val totalTarget = totalTargetExact?.roundToInt()
+    val effectiveTotalTarget = state.totalTargetAmount ?: recommendedTotalTarget
+    val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
+        effectiveTotalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
+    } ?: 0
 
     Scaffold(
         modifier = modifier.fillMaxSize()
@@ -77,22 +82,23 @@ fun ChallengeGoalStep(
 
             SectionCard {
                 EditableAmountRow(
-                    label = stringResource(R.string.onboarding_daily_target_label),
-                    value = effectiveDailyTarget,
-                    onValueChange = onDailyTargetChange,
+                    label = stringResource(R.string.onboarding_total_target_label),
+                    value = effectiveTotalTarget,
+                    editSeedValue = state.totalTargetAmount,
+                    onValueChange = onTotalTargetChange,
                     placeholder = stringResource(R.string.onboarding_direct_input),
                     suffix = wonSuffix,
                     valueColor = HPText
                 )
                 OnboardingBulletList(
-                    lines = listOf(stringResource(R.string.onboarding_daily_target_bullet)),
+                    lines = listOf(stringResource(R.string.onboarding_total_target_bullet)),
                     modifier = Modifier.padding(top = 10.dp)
                 )
             }
 
             Column {
                 Text(
-                    text = stringResource(R.string.onboarding_total_target_label),
+                    text = stringResource(R.string.onboarding_daily_target_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = HPSub1
                 )
@@ -101,11 +107,12 @@ fun ChallengeGoalStep(
                         .padding(top = 8.dp)
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(HPMain, RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
+                        .background(HPMain, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterEnd
                 ) {
                     Text(
-                        text = totalTarget?.let { "${it.toWonText()}$wonSuffix" } ?: "-",
+                        text = "${dailyTarget.toWonText()}$wonSuffix",
                         style = MaterialTheme.typography.titleSmall,
                         color = HPWhite
                     )
@@ -114,30 +121,62 @@ fun ChallengeGoalStep(
 
             Box(modifier = Modifier.weight(1f))
 
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
+
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
-                enabled = effectiveDailyTarget != null,
-                onClick = {
-                    if (state.dailyTargetAmount == null) {
-                        computedDailyDefaultExact?.roundToInt()?.let(onDailyTargetChange)
-                    }
-                    onNext()
-                }
+                enabled = state.totalTargetAmount != null,
+                onClick = onNext
             )
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Recommended default (기간 선택)")
 @Composable
 private fun ChallengeGoalStepPreview() {
     HampouchTheme {
         ChallengeGoalStep(
             state = OnboardingUiState(
                 lastMonthFoodExpense = 400000,
-                challengePeriodDays = 31
+                periodEnabled = true,
+                challengePeriodDays = 30
             ),
-            onDailyTargetChange = {},
+            onTotalTargetChange = {},
+            onNext = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Recommended default (날짜 고정)")
+@Composable
+private fun ChallengeGoalStepDateFixedPreview() {
+    HampouchTheme {
+        ChallengeGoalStep(
+            state = OnboardingUiState(
+                lastMonthFoodExpense = 400000,
+                dateFixed = true
+            ),
+            onTotalTargetChange = {},
+            onNext = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Edited target")
+@Composable
+private fun ChallengeGoalStepEditedPreview() {
+    HampouchTheme {
+        ChallengeGoalStep(
+            state = OnboardingUiState(
+                lastMonthFoodExpense = 400000,
+                totalTargetAmount = 300000,
+                periodEnabled = true,
+                challengePeriodDays = 30
+            ),
+            onTotalTargetChange = {},
             onNext = {},
             onBack = {}
         )

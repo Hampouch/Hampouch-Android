@@ -6,4 +6,8 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent</item>
     </style>
 
+    <style name="Theme.Hampouch.SpinnerTimePicker" parent="android:Theme.Holo.Light.Dialog">
+        <item name="android:timePickerMode">spinner</item>
+    </style>
+
 </resources>

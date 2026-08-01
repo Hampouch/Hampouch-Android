@@ -180,10 +180,10 @@ fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DashedDivider(modifier: Modifier = Modifier) {
+fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
     Canvas(modifier = modifier.fillMaxWidth().height(1.dp)) {
-        drawLine(HPGray4, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
+        drawLine(color, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
     }
 }
 
