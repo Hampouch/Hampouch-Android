@@ -1,10 +1,8 @@
 package com.example.hampouch.ui.onboarding.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,34 +17,38 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
@@ -69,20 +70,13 @@ fun OnboardingTopBar(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.cd_back),
-                tint = HPSub1
-            )
-        }
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
                 tint = HPSub1
             )
         }
@@ -100,13 +94,13 @@ fun OnboardingProgressBar(
         horizontalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         repeat(totalSteps) { index ->
-            val isFilled = index < currentStep
+            val isActive = index == currentStep - 1
             Box(
                 modifier = Modifier
                     .height(5.dp)
                     .weight(1f)
                     .background(
-                        color = if (isFilled) HPMain else HPGray5,
+                        color = if (isActive) HPMain else HPGray5,
                         shape = RoundedCornerShape(2.5.dp)
                     )
             )
@@ -160,17 +154,22 @@ fun OnboardingCaptionText(
 }
 
 @Composable
-fun OnboardingFootnoteText(
-    text: String,
-    modifier: Modifier = Modifier
+fun OnboardingBulletList(
+    lines: List<String>,
+    modifier: Modifier = Modifier,
+    color: Color = HPText
 ) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        color = HPText,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth()
-    )
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        lines.forEach { line ->
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(text = "•", style = MaterialTheme.typography.labelSmall, color = color)
+                Text(text = line, style = MaterialTheme.typography.labelSmall, color = color)
+            }
+        }
+    }
 }
 
 @Composable
@@ -207,17 +206,21 @@ fun SectionCard(
 
 @Composable
 fun LabeledInputRow(
-    label: String,
+    label: String?,
     valueText: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Filled.Edit
+    icon: ImageVector? = null,
+    suffix: String? = null,
+    valueColor: Color? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = HPSub1)
+        if (label != null) {
+            Text(text = label, style = MaterialTheme.typography.labelLarge, color = HPSub1)
+        }
         Row(
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = if (label != null) 8.dp else 0.dp)
                 .fillMaxWidth()
                 .height(43.dp)
                 .background(HPWhite, RoundedCornerShape(9.5.dp))
@@ -227,12 +230,118 @@ fun LabeledInputRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
+            if (icon != null) {
+                Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
+            }
             Text(
                 text = valueText,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (valueText.isEmpty()) HPText else HPSub1
+                color = valueColor ?: if (valueText.isEmpty()) HPText else HPSub1,
+                modifier = Modifier.weight(1f)
             )
+            if (suffix != null) {
+                Text(text = suffix, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+            }
+        }
+    }
+}
+
+@Composable
+fun EditableAmountRow(
+    label: String?,
+    value: Int?,
+    onValueChange: (Int) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    suffix: String? = null,
+    valueColor: Color? = null,
+    editSeedValue: Int? = value
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
+    var hasFocusedOnce by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(isEditing) {
+        if (isEditing) {
+            val seedText = editSeedValue?.toString().orEmpty()
+            textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
+            hasFocusedOnce = false
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (label != null) {
+            Text(text = label, style = MaterialTheme.typography.labelLarge, color = HPSub1)
+        }
+        Row(
+            modifier = Modifier
+                .padding(top = if (label != null) 8.dp else 0.dp)
+                .fillMaxWidth()
+                .height(43.dp)
+                .background(HPWhite, RoundedCornerShape(9.5.dp))
+                .border(1.dp, if (isEditing) HPMain else HPGray5, RoundedCornerShape(9.5.dp))
+                .then(
+                    if (isEditing) Modifier else Modifier.clickable { isEditing = true }
+                )
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (icon != null) {
+                Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
+            }
+            if (isEditing) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (textFieldValue.text.isEmpty()) {
+                        Text(text = placeholder, style = MaterialTheme.typography.bodyMedium, color = HPText)
+                    }
+                    BasicTextField(
+                        value = textFieldValue,
+                        onValueChange = { newValue ->
+                            val digitsOnly = newValue.text.filter(Char::isDigit)
+                            textFieldValue = if (digitsOnly == newValue.text) {
+                                newValue
+                            } else {
+                                TextFieldValue(text = digitsOnly, selection = TextRange(digitsOnly.length))
+                            }
+                            digitsOnly.toIntOrNull()?.let(onValueChange)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    hasFocusedOnce = true
+                                } else if (hasFocusedOnce) {
+                                    isEditing = false
+                                }
+                            },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPSub1),
+                        singleLine = true,
+                        cursorBrush = SolidColor(HPMain),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = {
+                            keyboardController?.hide()
+                            isEditing = false
+                        })
+                    )
+                }
+            } else {
+                Text(
+                    text = value?.toWonText() ?: placeholder,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = valueColor ?: if (value == null) HPText else HPSub1,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            if (suffix != null) {
+                Text(text = suffix, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+            }
         }
     }
 }
@@ -264,32 +373,32 @@ fun OnboardingPrimaryButton(
 }
 
 @Composable
-fun SegmentedSelector(
-    options: List<String>,
-    selectedIndex: Int,
+fun PeriodPresetRow(
+    options: List<Pair<Int, String>>,
+    selectedDays: Int?,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        options.forEachIndexed { index, label ->
-            val selected = index == selectedIndex
+        options.forEach { (days, label) ->
+            val selected = days == selectedDays
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(43.dp)
+                    .height(48.dp)
                     .background(
                         color = if (selected) HPMain else HPWhite,
-                        shape = RoundedCornerShape(21.5.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                     .border(
                         width = if (selected) 0.dp else 1.dp,
                         color = HPGray5,
-                        shape = RoundedCornerShape(21.5.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
-                    .clickable { onSelect(index) },
+                    .clickable { onSelect(days) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -355,75 +464,5 @@ fun RowScope.CategoryChip(
             color = if (selected) HPWhite else HPSub1,
             maxLines = 1
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DirectInputOverlay(
-    valueText: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    suffix: String?,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-    showMascot: Boolean = true
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(HPBlack.copy(alpha = 0.5f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onDismiss
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = modifier
-                    .padding(horizontal = 56.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() },
-                        onClick = {}
-                    )
-            ) {
-                if (showMascot) {
-                    Image(
-                        painter = painterResource(R.drawable.img_hamster_normal),
-                        contentDescription = stringResource(R.string.cd_hamster_mascot),
-                        modifier = Modifier.size(110.dp)
-                    )
-                }
-                OutlinedTextField(
-                    value = valueText,
-                    onValueChange = { onValueChange(it.filter(Char::isDigit)) },
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth(),
-                    placeholder = { Text(placeholder) },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Filled.Edit, contentDescription = null, tint = HPMain)
-                    },
-                    suffix = suffix?.let { { Text(it) } },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { onDismiss() }),
-                    shape = RoundedCornerShape(50),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = HPWhite,
-                        unfocusedContainerColor = HPWhite,
-                        focusedBorderColor = HPMain,
-                        unfocusedBorderColor = HPGray5
-                    )
-                )
-            }
-        }
     }
 }

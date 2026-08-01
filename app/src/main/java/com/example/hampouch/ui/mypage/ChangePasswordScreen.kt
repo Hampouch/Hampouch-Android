@@ -3,6 +3,8 @@ package com.example.hampouch.ui.mypage
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -20,8 +23,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +45,7 @@ import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
@@ -56,6 +62,18 @@ fun ChangePasswordScreen(
     onSubmitSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var emailInput by rememberSaveable { mutableStateOf(email) }
+    var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
+    val emailInteractionSource = remember { MutableInteractionSource() }
+    val isEmailFieldFocused by emailInteractionSource.collectIsFocusedAsState()
+
+    LaunchedEffect(isEmailFieldFocused) {
+        if (isEmailFieldFocused && !isEmailFieldTouched) {
+            emailInput = ""
+            isEmailFieldTouched = true
+        }
+    }
+
     var currentPassword by rememberSaveable { mutableStateOf("") }
     var newPassword by rememberSaveable { mutableStateOf("") }
     var confirmPassword by rememberSaveable { mutableStateOf("") }
@@ -104,7 +122,17 @@ fun ChangePasswordScreen(
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                Text(text = email, style = MaterialTheme.typography.bodyMedium, color = HPText)
+                BasicTextField(
+                    value = emailInput,
+                    onValueChange = { emailInput = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = if (isEmailFieldTouched) HPBlack else HPText
+                    ),
+                    singleLine = true,
+                    interactionSource = emailInteractionSource,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -205,7 +233,7 @@ fun ChangePasswordScreen(
     }
 }
 
-@Preview(showBackground = true, name = "비밀번호 변경")
+@Preview(showBackground = true, name = "13. 비밀번호 변경")
 @Composable
 private fun ChangePasswordScreenPreview() {
     HampouchTheme {

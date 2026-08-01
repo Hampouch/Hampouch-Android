@@ -4,48 +4,49 @@ import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.HamTipsRepository
 
 object MyPageMockData {
 
+    private const val HAMBATTLE_CURRENT_USER_NAME = "나"
+    private val hamBattlePeriodRegex = Regex(
+        """(\d{2})\.(\d{2})\.(\d{2}) - (\d{2})\.(\d{2})\.(\d{2}) \((\d+)일\)"""
+    )
+
+    private val takenNicknames = listOf("햄포치")
+
     fun defaultProfile(): MyPageProfile = MyPageProfile(
-        name = "민준",
+        name = "절약왕 민준",
         handle = "hampochi_minjun",
         email = "hampouch@example.com"
     )
 
-    fun challengeHistory(): List<ChallengeRecord> = listOf(
+    fun isNicknameTaken(name: String): Boolean = name in takenNicknames
+
+    fun challengeHistory(): List<ChallengeRecord> = HamBattleMockData.endedChallenges.mapNotNull { challenge ->
+        val me = challenge.participants.find { it.name == HAMBATTLE_CURRENT_USER_NAME } ?: return@mapNotNull null
+        val period = hamBattlePeriodRegex.find(challenge.periodLabel) ?: return@mapNotNull null
+        val (startYY, startMM, startDD, endYY, endMM, endDD, totalDaysText) = period.destructured
+        val totalDays = totalDaysText.toInt()
+
+        val ranked = challenge.participants.sortedBy { it.amount }
+        val isWinner = ranked.firstOrNull()?.name == HAMBATTLE_CURRENT_USER_NAME
+        val otherAmounts = challenge.participants
+            .filter { it.name != HAMBATTLE_CURRENT_USER_NAME }
+            .map { it.amount }
+        val averageOthersAmount = if (otherAmounts.isNotEmpty()) otherAmounts.average() else me.amount.toDouble()
+
         ChallengeRecord(
-            id = "challenge_ongoing",
-            status = ChallengeStatus.IN_PROGRESS,
-            totalDays = 14,
-            achievedDays = 2,
-            startDateLabel = "2026.05.15.",
-            endDateLabel = null,
-            dailyLimit = 27_000,
-            totalSaved = 5_400
-        ),
-        ChallengeRecord(
-            id = "challenge_success",
-            status = ChallengeStatus.SUCCESS,
-            totalDays = 14,
-            achievedDays = 14,
-            startDateLabel = "2026.05.01.",
-            endDateLabel = "2026.05.14.",
-            dailyLimit = 25_000,
-            totalSaved = 21_400
-        ),
-        ChallengeRecord(
-            id = "challenge_fail",
-            status = ChallengeStatus.FAIL,
-            totalDays = 14,
-            achievedDays = 3,
-            startDateLabel = "2026.04.01.",
-            endDateLabel = "2026.04.14.",
-            dailyLimit = 30_000,
-            totalSaved = 2_400
+            id = challenge.id,
+            status = if (isWinner) ChallengeStatus.SUCCESS else ChallengeStatus.FAIL,
+            totalDays = totalDays,
+            startDateLabel = "20$startYY.$startMM.$startDD.",
+            endDateLabel = "20$endYY.$endMM.$endDD.",
+            targetAmount = averageOthersAmount.toInt(),
+            actualAmount = me.amount
         )
-    )
+    }
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 

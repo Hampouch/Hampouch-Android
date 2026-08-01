@@ -1,10 +1,13 @@
 package com.example.hampouch.ui.onboarding
 
+import java.time.LocalDate
+
 data class OnboardingUiState(
     val lastMonthFoodExpense: Int? = null,
-    val challengePeriodDays: Int = 7,
-    val salaryDay: Int? = null,
-    val resetOnSalaryDay: Boolean = true,
-    val targetAmount: Int? = null,
+    val periodEnabled: Boolean = false,
+    val challengePeriodDays: Int? = null,
+    val dateFixed: Boolean = false,
+    val startDate: LocalDate? = null,
+    val totalTargetAmount: Int? = null,
     val selectedCategoryIds: Set<String> = emptySet()
 )

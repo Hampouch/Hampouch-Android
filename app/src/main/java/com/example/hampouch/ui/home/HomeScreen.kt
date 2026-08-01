@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
+import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
@@ -51,18 +53,22 @@ fun HomeScreen(
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
     openHamTipsWriteBattleOnStart: Boolean = false,
     onStartChallengeClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {},
+    onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
-    onHamBattleWaitingChallengeClick: (String) -> Unit = {}
+    onHamBattleWaitingChallengeClick: (String) -> Unit = {},
+    onNavigateToExpenseDetail: (String) -> Unit = {},
+    onNavigateToExpenseCalendar: () -> Unit = {},
+    onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
-    var uiState by remember(selectedDate) {
-        mutableStateOf(mockStateForDate(selectedDate, referenceToday))
-    }
+    val uiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
 
     Scaffold(
         modifier = modifier,
@@ -72,25 +78,24 @@ fun HomeScreen(
                 BottomNavBar(
                     selectedItem = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
-                    onAddClick = {}
+                    onAddClick = {},
+                    modifier = Modifier.navigationBarsPadding()
                 )
             }
         }
     ) { innerPadding ->
         when (selectedBottomTab) {
             BottomNavItem.HOME -> HomeContent(
-                uiState = uiState,
+                uiState = displayedUiState,
                 referenceToday = referenceToday,
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
-                onToggleMiniChallenge = { id ->
-                    uiState = uiState.copy(
-                        miniChallenges = uiState.miniChallenges.map {
-                            if (it.id == id) it.copy(isChecked = !it.isChecked) else it
-                        }
-                    )
-                },
+                onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+                onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
                 onSuggestionClick = {},
                 onStartChallengeClick = onStartChallengeClick,
+                onCalendarClick = onCalendarClick,
+                onExpenseClick = onNavigateToExpenseDetail,
+                onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -110,7 +115,8 @@ fun HomeScreen(
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = {},
                 modifier = Modifier.padding(innerPadding),
-                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick
+                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                onLoggedOut = onLoggedOut
             )
 
             BottomNavItem.COMMUNITY -> {
@@ -139,8 +145,12 @@ private fun HomeContent(
     referenceToday: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
+    onViewAllMiniChallengesClick: () -> Unit = {},
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
+    onCalendarClick: () -> Unit = {},
+    onExpenseClick: (String) -> Unit = {},
+    onViewAllExpensesClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -153,7 +163,7 @@ private fun HomeContent(
         HomeHeader(
             userName = uiState.userName,
             hasUnreadNotification = true,
-            onCalendarClick = {},
+            onCalendarClick = onCalendarClick,
             onNotificationClick = {}
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -191,13 +201,14 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
         TodayExpenseSection(
             expenses = uiState.expenses,
-            onViewAllClick = {},
-            onAddExpenseClick = {}
+            onViewAllClick = onViewAllExpensesClick,
+            onAddExpenseClick = {},
+            onExpenseClick = onExpenseClick
         )
         Spacer(modifier = Modifier.height(24.dp))
         MiniChallengeSection(
             items = uiState.miniChallenges,
-            onViewAllClick = {},
+            onViewAllClick = onViewAllMiniChallengesClick,
             onToggle = onToggleMiniChallenge
         )
         Spacer(modifier = Modifier.height(24.dp))

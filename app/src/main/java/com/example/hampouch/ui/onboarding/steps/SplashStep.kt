@@ -5,8 +5,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPWhite
@@ -29,6 +31,8 @@ import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
 
 private const val SplashFadeInDurationMillis = 2000
+private val SplashLogoWidth = 250.dp
+private const val SplashLogoAspectRatio = 413f / 52f
 
 @Composable
 fun SplashStep(
@@ -64,7 +68,8 @@ fun SplashStep(
                 painter = painterResource(R.drawable.logo_title),
                 contentDescription = stringResource(R.string.cd_hampouch_logo),
                 modifier = Modifier
-                    .fillMaxWidth(0.55f)
+                    .width(SplashLogoWidth)
+                    .aspectRatio(SplashLogoAspectRatio)
                     .alpha(logoAlpha)
             )
         }
