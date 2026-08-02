@@ -213,7 +213,12 @@ fun ExpenseEditRoute(
                 ExpensePhotoEditSection(
                     photoUris = photoUris,
                     onPhotosAdded = { added -> photoUris = (photoUris + added).take(ExpensePhotoMaxCount) },
-                    onPhotosRemoved = { removed -> photoUris = photoUris.filterNot { it in removed } }
+                    onPhotosRemoved = { removed ->
+                        photoUris = photoUris.filterIndexed { index, _ -> index !in removed }
+                    },
+                    onPhotoReplaced = { index, newUri ->
+                        photoUris = photoUris.toMutableList().also { it[index] = newUri }
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
