@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.data.model.HamBattleChallengeRequest
@@ -82,13 +83,12 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
         Text(
             "${request.durationDays} · ${request.participantCount}",
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
             color = HPText
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             request.challengeName.ifBlank { "이름 없는 챌린지" },
-            style = Body16Bold,
+            fontSize = 16.sp,
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -96,14 +96,14 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
             Text(
                 "벌칙: ",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
                 color = HPText
             )
             Text(
                 request.penalty,
                 style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
                 color = HPMain,
-                fontWeight = FontWeight.Bold
             )
         }
     }

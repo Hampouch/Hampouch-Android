@@ -157,9 +157,8 @@ fun HamBattleAddScreen(
             Text(
                 "시작일까지 아무도 참여하지 않으면 챌린지는 자동으로 사라져요",
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
                 color = HPText
             )
 
@@ -223,7 +222,6 @@ private fun ChallengeIntroSection() {
     Text(
         "기간 내 식비 총액이 적은 사람이 우승해요.",
         style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Bold,
         color = HPText
     )
 }
@@ -235,7 +233,7 @@ private fun ChallengeNameField(value: String, onValueChange: (String) -> Unit) {
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
-            Text("챌린지 이름을 설정해주세요.", color = Color.Gray, fontWeight = FontWeight.Bold)
+            Text("챌린지 이름을 설정해주세요.", color = HPGray5)
         },
         singleLine = true,
         shape = RoundedCornerShape(10.dp),

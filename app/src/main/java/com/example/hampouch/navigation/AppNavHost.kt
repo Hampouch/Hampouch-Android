@@ -22,8 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
-import com.example.hampouch.ui.hambattle.HamBattleChallengeResultPagerScreen
-import com.example.hampouch.ui.hambattle.HamBattleEndedChallengeDetailScreen
+import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
+import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
@@ -66,6 +66,9 @@ fun AppNavHost(
     val startDestination = remember {
         if (UserSession.restore(context)) Screen.Home.route else Screen.Onboarding.route
     }
+
+    // 햄배틀 모집 상세에서 "커뮤니티에 공유하기"를 누르면 Home을 커뮤니티 탭 + 모집 글쓰기 화면으로 새로 연다.
+    var openCommunityWriteBattle by remember { mutableStateOf(false) }
 
     // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
@@ -165,7 +168,12 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
+            val startTab = if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
+            val openWriteBattle = openCommunityWriteBattle
+            LaunchedEffect(Unit) { openCommunityWriteBattle = false }
             HomeScreen(
+                initialBottomTab = startTab,
+                openHamTipsWriteBattleOnStart = openWriteBattle,
                 onStartChallengeClick = {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -174,7 +182,8 @@ fun AppNavHost(
                 onNavigateToMiniChallenge = { date ->
                     navController.navigate(Screen.MiniChallenge.createRoute(date))
                 },
-                onCalendarClick = { navController.navigate(Screen.ChallengeSummary.route) },
+                onCalendarClick = {},
+                onChallengeSummaryClick = { navController.navigate(Screen.ChallengeSummary.route) },
                 onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onHamBattleChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
@@ -351,6 +360,9 @@ fun AppNavHost(
 
         composable(Screen.HamBattle.route) {
             HamBattleScreen(
+                selectedBottomTab = BottomNavItem.HAM_BATTLE,
+                onItemSelected = onBottomNavItemSelected,
+                onAddClick = {},
                 onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
@@ -389,7 +401,7 @@ fun AppNavHost(
                     selectedItem = BottomNavItem.HAM_BATTLE,
                     onItemSelected = onBottomNavItemSelected
                 ) {
-                    HamBattleChallengeResultPagerScreen(
+                    HamBattleChallengesResultPagerScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
@@ -425,7 +437,7 @@ fun AppNavHost(
                     selectedItem = BottomNavItem.HAM_BATTLE,
                     onItemSelected = onBottomNavItemSelected
                 ) {
-                    HamBattleEndedChallengeDetailScreen(
+                    HamBattleEndedChallengesDetailScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
@@ -447,13 +459,22 @@ fun AppNavHost(
                 ) {
                     HamBattleWaitingChallengeDetailScreen(
                         challenge = challenge,
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        onShareToCommunityClick = {
+                            openCommunityWriteBattle = true
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }
         }
 
         composable(Screen.ChallengeSummary.route) {
+            // TODO: 챌린지 성공/실패 화면으로 넘어가려면
+            //  state: ChallengeResultUiState = ChallengeResultMockData.complete
+            //  state: ChallengeResultUiState = ChallengeResultMockData.fail
             val state = ChallengeResultMockData.inProgress
             ChallengeResultScreen(
                 state = state,

@@ -1,5 +1,10 @@
 package com.example.hampouch.ui.hambattle
 
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,11 +39,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,24 +63,32 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleEndedChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.ui.challengeresult.ShareOption
+import com.example.hampouch.ui.challengeresult.ShareOptionsDialog
+import com.example.hampouch.ui.challengeresult.buildShareImageIntent
+import com.example.hampouch.ui.challengeresult.defaultSmsPackage
+import com.example.hampouch.ui.challengeresult.deleteImage
+import com.example.hampouch.ui.challengeresult.grantShareUriPermission
+import com.example.hampouch.ui.challengeresult.saveBitmapToGallery
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
-import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 private val LastPlaceBadgeBackground = Color(0xFFFBF0EC)
 private val LastPlaceBadgeText = Color(0xFFE17866)
 
 @Composable
-fun HamBattleEndedChallengeDetailScreen(
+fun HamBattleEndedChallengesDetailScreen(
     challenge: HamBattleEndedChallenge,
     onBackClick: () -> Unit = {},
     onShareResultClick: () -> Unit = {},
@@ -82,9 +104,24 @@ fun HamBattleEndedChallengeDetailScreen(
     val winner = ranked.firstOrNull()
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
 
+    var showShareOptionsDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val captureGraphicsLayer = rememberGraphicsLayer()
+
+    // 공유하러 간 이미지의 Uri. 공유 대상 앱에서 돌아오면(shareLauncher 콜백)
+    var pendingShareUri by remember { mutableStateOf<Uri?>(null) }
+    val shareLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        pendingShareUri?.let { uri -> deleteImage(context, uri) }
+        pendingShareUri = null
+    }
+
     Scaffold(
         topBar = { EndedDetailTopBar(title = challenge.title, onBackClick = onBackClick) },
-        containerColor = HPWhite
+        containerColor = HPGray2
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -93,45 +130,63 @@ fun HamBattleEndedChallengeDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            Column(
+            // 캡처 대상: 여기서부터 벌칙박스까지만 스크린샷에 담김.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(15.dp)
+                    .drawWithContent {
+                        captureGraphicsLayer.record { this@drawWithContent.drawContent() }
+                        drawLayer(captureGraphicsLayer)
+                    }
             ) {
-                SummaryCard(
-                    title = challenge.title,
-                    type = challenge.type,
-                    periodLabel = challenge.periodLabel,
-                    winner = winner,
-                    participantCount = challenge.participants.size
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(HPGray2)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("최종 순위", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(12.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ranked.forEachIndexed { index, participant ->
-                        EndedRankRow(
-                            rank = index + 1,
-                            participant = participant,
-                            isWinner = index == 0,
-                            isMe = participant.name == "나",
-                            isLastPlace = index == ranked.lastIndex
+                Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(15.dp)
+                    ) {
+                        SummaryCard(
+                            title = challenge.title,
+                            type = challenge.type,
+                            periodLabel = challenge.periodLabel,
+                            winner = winner,
+                            participantCount = challenge.participants.size
                         )
-                    }
-                    disqualified.forEach { participant ->
-                        EndedDisqualifiedRow(participant = participant)
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("최종 순위", style = Body16Bold, color = HPBlack)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ranked.forEachIndexed { index, participant ->
+                                EndedRankRow(
+                                    rank = index + 1,
+                                    participant = participant,
+                                    isWinner = index == 0,
+                                    isMe = participant.name == "나",
+                                    isLastPlace = index == ranked.lastIndex
+                                )
+                            }
+                            disqualified.forEach { participant ->
+                                EndedDisqualifiedRow(participant = participant)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    EndedPenaltyBox(penalty = challenge.penalty, penaltyTargetName = lastPlaceName)
+                    Spacer(modifier = Modifier.height(28.dp))
+                }
             }
 
-            EndedPenaltyBox(penalty = challenge.penalty, penaltyTargetName = lastPlaceName)
-
-            Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
-                onClick = onShareResultClick,
+                onClick = { showShareOptionsDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -165,6 +220,37 @@ fun HamBattleEndedChallengeDetailScreen(
                 )
             }
         }
+    }
+
+    if (showShareOptionsDialog) {
+        ShareOptionsDialog(
+            onDismissRequest = { showShareOptionsDialog = false },
+            onOptionSelected = { option ->
+                showShareOptionsDialog = false
+                coroutineScope.launch {
+                    val bitmap = captureGraphicsLayer.toImageBitmap().asAndroidBitmap()
+                    val savedUri = saveBitmapToGallery(context, bitmap)
+                    if (savedUri == null) {
+                        Toast.makeText(context, "이미지 저장에 실패했어요.", Toast.LENGTH_SHORT).show()
+                    } else if (option == ShareOption.SAVE_IMAGE) {
+                        Toast.makeText(context, "이미지를 저장했어요.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val targetPackage = option.packageName ?: defaultSmsPackage(context)
+                        if (targetPackage != null) {
+                            grantShareUriPermission(context, targetPackage, savedUri)
+                        }
+                        pendingShareUri = savedUri
+                        try {
+                            shareLauncher.launch(buildShareImageIntent(savedUri, targetPackage))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, "설치된 앱을 찾을 수 없어요.", Toast.LENGTH_SHORT).show()
+                            pendingShareUri = null
+                        }
+                    }
+                }
+                onShareResultClick()
+            }
+        )
     }
 }
 
@@ -263,7 +349,6 @@ private fun SummaryCard(
             Text(
                 "${participantCount}명 중 가장 적게 썼어요!",
                 style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
                 color = HPText
             )
         }
@@ -280,8 +365,8 @@ private fun EndedRankRow(
 ) {
     val backgroundColor = when {
         isWinner -> HPSub3
-        isMe -> HPSub2
-        else -> HPGray3
+        isMe -> HPSub2.copy(alpha = 0.4f)
+        else -> HPWhite
     }
     val nameColor = when {
         isWinner -> HPMain
@@ -292,7 +377,12 @@ private fun EndedRankRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .border(
+                width = if (isMe || isWinner) 1.dp else 0.dp,
+                color = if (isMe || isWinner) HPSub else Color.Transparent,
+                shape = RoundedCornerShape(20.dp)
+            )
             .background(backgroundColor)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -426,8 +516,8 @@ private fun EndedPenaltyBox(penalty: String, penaltyTargetName: String) {
 
 @Preview
 @Composable
-private fun HamBattleEndedChallengeDetailScreenPreview() {
+private fun HamBattleEndedChallengesDetailScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengeDetailScreen(challenge = HamBattleMockData.endedChallenges[1])
+        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.endedChallenges[1])
     }
 }
