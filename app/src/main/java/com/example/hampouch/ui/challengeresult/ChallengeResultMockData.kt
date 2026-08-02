@@ -69,8 +69,6 @@ object ChallengeResultMockData {
         )
     )
 
-    // 현재 진행중인 챌린지: 홈과 동일하게 ChallengeRepository.computeProgress로 실제 지출 내역을
-    // 근거로 절약 금액/연속 달성/일별 성공 여부를 계산한다(별도 목데이터를 두지 않는다).
     fun inProgress(): ChallengeResultUiState {
         val active = ChallengeRepository.activeChallenge
         val referenceToday = LocalDate.now()

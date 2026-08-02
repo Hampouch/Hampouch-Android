@@ -56,4 +56,5 @@ sealed class Screen(val route: String) {
         fun createRoute(start: LocalDate, end: LocalDate, initialReasonId: String) =
             "expense_analysis_reason/${start.toEpochDay()}/${end.toEpochDay()}/$initialReasonId"
     }
+    data object Notification : Screen("notification")
 }

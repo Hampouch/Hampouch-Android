@@ -85,7 +85,6 @@ fun ChallengeResultScreen(
     val coroutineScope = rememberCoroutineScope()
     val screenGraphicsLayer = rememberGraphicsLayer()
 
-    // 공유하러 간 이미지의 Uri. 공유 대상 앱에서 돌아오면(shareLauncher 콜백)
     var pendingShareUri by remember { mutableStateOf<Uri?>(null) }
     val shareLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -104,7 +103,6 @@ fun ChallengeResultScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 캡처 대상: 여기서부터 아래 Box가 끝나는 지점까지만 스크린샷에 담김.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

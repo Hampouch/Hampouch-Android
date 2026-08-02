@@ -41,7 +41,6 @@ import java.util.Locale
 
 val StatusWhoWonText = Color(0xFF5572AB)
 
-// 닉네임 3자까지는 온전히 표시하고 4자 이상이면 말줄임표 처리되는 너비
 private val ParticipantNameWidth = 56.dp
 
 private val MyParticipantCardWidth = 130.dp

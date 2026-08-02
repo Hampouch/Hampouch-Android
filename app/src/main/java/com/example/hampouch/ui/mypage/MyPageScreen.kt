@@ -63,6 +63,7 @@ fun MyPageScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -107,6 +108,7 @@ fun MyPageScreen(
                         onSavedTipsClick = { route = MyPageRoute.SAVED_TIPS },
                         onAllSettingsClick = { route = MyPageRoute.ALL_SETTINGS },
                         onLogoutClick = { showLogoutConfirm = true },
+                        onNotificationClick = onNotificationClick,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -207,13 +209,13 @@ fun MyPageScreen(
                     selectedChallengeStatus = record.status
                     route = MyPageRoute.CHALLENGE_RESULT
                 },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
 
         MyPageRoute.CHALLENGE_RESULT -> {
             BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
-            // 진행중인 챌린지 항목은 홈 화면의 현황 카드를 눌렀을 때와 동일한 화면(진행중 상태)을 보여준다.
             ChallengeResultScreen(
                 state = when (selectedChallengeStatus) {
                     ChallengeStatus.IN_PROGRESS -> ChallengeResultMockData.inProgress()
@@ -300,6 +302,7 @@ private fun MyPageMainContent(
     onSavedTipsClick: () -> Unit,
     onAllSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
+    onNotificationClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -311,7 +314,7 @@ private fun MyPageMainContent(
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onBackClick = onBackClick,
-            onNotificationClick = {}
+            onNotificationClick = onNotificationClick
         )
         Spacer(modifier = Modifier.height(16.dp))
         ProfileCard(

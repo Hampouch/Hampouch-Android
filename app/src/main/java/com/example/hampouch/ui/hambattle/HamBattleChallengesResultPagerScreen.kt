@@ -60,7 +60,6 @@ fun HamBattleChallengesResultPagerScreen(
             }
         }
 
-        // 페이지 콘텐츠와 별도 영역이라 버튼과 겹치지 않음.
         ResultPageIndicator(
             pageCount = PAGE_COUNT,
             currentPage = pagerState.currentPage,

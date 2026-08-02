@@ -497,7 +497,6 @@ fun MiniChallengeNameField(
             focusedContainerColor = HPWhite,
             unfocusedContainerColor = HPWhite,
             focusedIndicatorColor = Color.Transparent,
-//            unfocusedIndicatorColor = Color.Transparent,
             focusedTextColor = HPBlack,
             unfocusedTextColor = HPBlack
         )

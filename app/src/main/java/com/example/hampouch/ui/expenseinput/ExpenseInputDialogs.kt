@@ -30,7 +30,6 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 
-// 화면 순서: 지출 건너뛰기 안내 -> 저장 확인
 @Composable
 fun ExpenseInputSkipPromptDialog(
     question: String,

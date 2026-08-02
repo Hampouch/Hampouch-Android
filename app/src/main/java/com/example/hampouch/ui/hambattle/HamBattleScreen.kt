@@ -365,7 +365,6 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
             .background(HPGray3)
             .clickable(onClick = onClick)
             .drawBehind {
-                // 점선 박스 생성
                 val strokeWidthPx = 1.dp.toPx()
                 val cornerRadiusPx = 20.dp.toPx()
                 val inset = strokeWidthPx / 2
@@ -494,29 +493,3 @@ private fun EmptyAvatarSlot(size: Dp) {
         )
     }
 }
-
-//@Preview
-//@Composable
-//private fun HamBattleScreenPreview() {
-//    HampouchTheme {
-//        HamBattleScreen(
-//            selectedBottomTab = BottomNavItem.HAM_BATTLE,
-//            onItemSelected = { },
-//            onAddClick = { }
-//        )
-//    }
-//}
-//
-//@Preview
-//@Composable
-//private fun HamBattleScreenEmptyPreview() {
-//    HampouchTheme {
-//        HamBattleScreen(
-//            activeChallenges = emptyList(),
-//            waitingChallenges = emptyList(),
-//            selectedBottomTab = TODO(),
-//            onItemSelected = TODO(),
-//            onAddClick = TODO()
-//        )
-//    }
-//}

@@ -23,7 +23,6 @@ object MiniChallengeStore {
 
     fun challengesFor(date: LocalDate): List<MiniChallengeEntry> = challengesByDate[date].orEmpty()
 
-    // 체크박스는 오늘 완료 여부만 표시한다. achievedDays(진행 현황 표시용)는 토글로 바뀌지 않는다.
     fun toggle(date: LocalDate, id: String) {
         val updated = challengesFor(date).map { entry ->
             if (entry.id != id) return@map entry

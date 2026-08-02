@@ -16,7 +16,6 @@ object MyPageMockData {
     private val takenNicknames = listOf("햄포치")
     private val challengeHistoryPeriodFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd.")
 
-    // 로그인 세션(UserSession)과 동일한 계정 정보를 표시해 화면 간 사용자 이름/이메일 불일치를 없앤다.
     fun defaultProfile(): MyPageProfile {
         val user = UserSession.currentUser
         return MyPageProfile(
@@ -28,8 +27,6 @@ object MyPageMockData {
 
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 
-    // 현재 챌린지(진행중, 홈 화면과 동일한 ChallengeRepository 기준) + 그 직전 한 번의 챌린지 기간을
-    // 실제 지출 내역(ExpenseDetailStore)으로 계산해 함께 보여준다.
     fun challengeHistory(): List<ChallengeRecord> {
         val active = ChallengeRepository.activeChallenge
         val referenceToday = LocalDate.now()

@@ -35,9 +35,6 @@ import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 
-// 화면에서 공통으로 쓰는 컴포저블 모음.
-
-// 로그인 / 회원가입 화면에서 사용
 @Composable
 fun OrDivider(text: String) {
     Row(
@@ -143,7 +140,6 @@ fun LoginTextField(
     }
 }
 
-// 햄배틀 화면에서 사용
 @Composable
 fun CheckButton(onClick: () -> Unit) {
     Button(

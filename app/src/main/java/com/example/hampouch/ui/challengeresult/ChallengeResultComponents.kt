@@ -218,7 +218,6 @@ private fun SpendingEmotion.toVisual(): EmotionVisual = when (this) {
         "보상"
     )
 
-    // 기타 항목은 별도 png가 없어 벡터 아이콘을 그대로 사용
     SpendingEmotion.ETC -> EmotionVisual(null, HPTipEtcBg, HPBlack, "기타")
 }
 

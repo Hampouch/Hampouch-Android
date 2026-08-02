@@ -71,8 +71,6 @@ fun CustomDurationDialog(
     }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // 아래쪽 확인 버튼이 없으니, 빈 공간(스크림)을 누르면 그게 곧 확인 버튼을
-    // 누르는 것과 같은 역할을 함. 날짜를 아직 안 골랐으면 그냥 닫기만 함.
     val confirmAndClose: () -> Unit = {
         selectedDate?.let { onConfirm(daysFromToday(today, it)) } ?: onDismiss()
     }

@@ -110,7 +110,6 @@ fun HamBattleEndedChallengesDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     val captureGraphicsLayer = rememberGraphicsLayer()
 
-    // 공유하러 간 이미지의 Uri. 공유 대상 앱에서 돌아오면(shareLauncher 콜백)
     var pendingShareUri by remember { mutableStateOf<Uri?>(null) }
     val shareLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -130,7 +129,6 @@ fun HamBattleEndedChallengesDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            // 캡처 대상: 여기서부터 벌칙박스까지만 스크린샷에 담김.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

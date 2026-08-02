@@ -73,8 +73,6 @@ object ExpenseDetailMockData {
                 expenseName = "지출내역",
                 customReason = "감정태깅"
             ),
-            // 이하 e7~e11: 챌린지 기간(하루 한도 20,000원) 중 2일은 한도 초과, 1일은 정확히
-            // 한도와 같음, 나머지는 한도 미만이 되도록 날짜별 합계를 맞춘 기록.
             ExpenseRecord(
                 id = "e7",
                 date = referenceToday.minusDays(6),
@@ -126,7 +124,6 @@ object ExpenseDetailMockData {
                 categoryId = "snack",
                 expenseName = "다이소 과자"
             ),
-            // 이하 p1~p7: 진행중인 챌린지 바로 이전, 7일짜리 지난 챌린지 기간의 지출 기록.
             ExpenseRecord(
                 id = "p1",
                 date = referenceToday.minusDays(13),
@@ -178,16 +175,12 @@ object ExpenseDetailMockData {
                 reasonId = "lazy"
             )
         )
-        // 지출 분석 화면(월별 추이, 카테고리/이유별 통계)이 참고할 6개월치 과거 이력.
-        // ExpenseDetailStore가 이 목록으로 시드되므로 지출입력으로 새로 추가한 기록과 함께 지출 분석에도 반영된다.
         val historyRecords = generateHistoryRecords(referenceToday)
         return (historyRecords + handcraftedRecords).associateBy { it.id }
     }
 
     private fun generateHistoryRecords(referenceToday: LocalDate): List<ExpenseRecord> {
         val startMonth = YearMonth.from(referenceToday).minusMonths(5)
-        // 진행중인 챌린지와 그 직전 챌린지 기간은 홈/마이페이지 화면의 손으로 맞춘 데이터가 대신하므로,
-        // 이력 생성은 그 이전까지만 채워 두 데이터가 겹쳐서 하루 잔액이 어긋나지 않게 한다.
         val handcraftedRangeStart = ChallengeRepository.previousChallenge.periodStart
         val result = mutableListOf<ExpenseRecord>()
         var counter = 0
@@ -233,7 +226,6 @@ object ExpenseDetailMockData {
         )
     }
 
-    // 홈/금액조정/지출입력과 동일한 ChallengeRepository를 참조해 챌린지 기간을 일치시킨다.
     fun activeChallengePeriod(): ExpenseChallengePeriod {
         val active = ChallengeRepository.activeChallenge
         return ExpenseChallengePeriod(startDate = active.periodStart, endDate = active.periodEnd)

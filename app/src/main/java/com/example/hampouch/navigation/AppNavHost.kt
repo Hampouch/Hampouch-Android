@@ -46,6 +46,8 @@ import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
+import com.example.hampouch.ui.notification.NotificationMockData
+import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.session.UserSession
@@ -62,19 +64,15 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
-    // 회원가입/비밀번호 재설정 완료 후 Login 화면에서 한 번 보여줄 완료 메시지.
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
-    // 앱 재실행 시 저장된 목데이터 로그인 상태를 복원해 홈 화면부터 시작한다.
     val context = LocalContext.current
     val startDestination = remember {
         if (UserSession.restore(context)) Screen.Home.route else Screen.Onboarding.route
     }
 
-    // 햄배틀 모집 상세에서 "커뮤니티에 공유하기"를 누르면 Home을 커뮤니티 탭 + 모집 글쓰기 화면으로 새로 연다.
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
 
-    // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         if (item == BottomNavItem.HAM_BATTLE) {
             navController.popBackStack(Screen.Home.route, false)
@@ -214,6 +212,7 @@ fun AppNavHost(
                 onNavigateToAmountAdjustment = {
                     navController.navigate(Screen.AmountAdjustment.route)
                 },
+                onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
@@ -390,7 +389,8 @@ fun AppNavHost(
             val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
             MiniChallengeScreen(
                 initialDate = LocalDate.ofEpochDay(epochDay),
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onNotificationClick = { navController.navigate(Screen.Notification.route) }
             )
         }
 
@@ -453,6 +453,7 @@ fun AppNavHost(
             ) {
                 HamBattleEndedChallengesScreen(
                     onBackClick = { navController.popBackStack() },
+                    onNotificationClick = { navController.navigate(Screen.Notification.route) },
                     onChallengeClick = { challengeId ->
                         navController.navigate(
                             Screen.HamBattleEndedChallengeDetail.createRoute(challengeId)
@@ -544,6 +545,13 @@ fun AppNavHost(
         composable(Screen.AmountAdjustment.route) {
             AmountAdjustmentRoute(
                 challenge = AmountAdjustmentMockData.challenge(),
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Notification.route) {
+            NotificationScreen(
+                notifications = NotificationMockData.populated(),
                 onBackClick = { navController.popBackStack() }
             )
         }

@@ -76,6 +76,7 @@ fun HomeScreen(
     onNavigateToExpenseCalendar: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -93,10 +94,7 @@ fun HomeScreen(
             amount = record.amount
         )
     }
-    // 지출 내역(ExpenseDetailStore: 목데이터 시드 + 지출입력으로 추가한 실제 기록)이
-    // '오늘 지출'의 유일한 기준이다. 홈 자체의 별도 지출 목데이터는 두지 않는다.
     val uiState = baseUiState.copy(expenses = storeExpenses)
-    // 선택된 날짜가 어느 챌린지(진행중 또는 그 직전 챌린지)에 속하는지에 맞춰 절약 금액/연속 달성을 계산한다.
     val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val todaySpent = uiState.expenses.sumOf { it.amount }
@@ -145,6 +143,7 @@ fun HomeScreen(
                 onExpenseClick = onNavigateToExpenseDetail,
                 onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 onAddExpenseClick = onAddExpenseClick,
+                onNotificationClick = onNotificationClick,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -154,6 +153,7 @@ fun HomeScreen(
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
+                onNotificationClick = onNotificationClick,
                 onChallengeClick = onHamBattleChallengeClick,
                 onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
                 onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
@@ -165,6 +165,7 @@ fun HomeScreen(
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                onNotificationClick = onNotificationClick,
                 onLoggedOut = onLoggedOut
             )
 
@@ -175,6 +176,7 @@ fun HomeScreen(
                     onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    onNotificationClick = onNotificationClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
                 )
                 LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
@@ -201,6 +203,7 @@ private fun HomeContent(
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -213,7 +216,7 @@ private fun HomeContent(
             userName = uiState.userName,
             hasUnreadNotification = true,
             onCalendarClick = onCalendarClick,
-            onNotificationClick = {}
+            onNotificationClick = onNotificationClick
         )
         Spacer(modifier = Modifier.height(16.dp))
         DateSelectorRow(
