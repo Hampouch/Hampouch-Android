@@ -16,6 +16,9 @@ object ChallengeRepository {
     private const val CHALLENGE_SAVED_AMOUNT = 21_400
     private const val CHALLENGE_STREAK_DAYS = 4
 
+    private const val PREVIOUS_CHALLENGE_TOTAL_DAYS = 7
+    private const val PREVIOUS_CHALLENGE_DAILY_LIMIT = 20_000
+
     private fun buildInitialChallenge(): ActiveChallenge {
         val today = LocalDate.now()
         val start = today.minusDays((CHALLENGE_DAY_OF_PROGRESS - 1).toLong())
@@ -38,6 +41,35 @@ object ChallengeRepository {
     val activeChallenge: ActiveChallenge
         get() = activeChallengeState.value
 
+    // 현재 챌린지 바로 직전에 끝난 7일짜리 챌린지. 홈 화면에서 그 기간의 날짜를 볼 때와
+    // 마이페이지 '지난 챌린지'가 이 하나의 정의를 공유한다.
+    val previousChallenge: ActiveChallenge
+        get() {
+            val active = activeChallenge
+            val end = active.periodStart.minusDays(1)
+            val start = end.minusDays((PREVIOUS_CHALLENGE_TOTAL_DAYS - 1).toLong())
+            return ActiveChallenge(
+                id = "challenge_previous",
+                totalDays = PREVIOUS_CHALLENGE_TOTAL_DAYS,
+                periodStart = start,
+                periodEnd = end,
+                dailyLimit = PREVIOUS_CHALLENGE_DAILY_LIMIT,
+                targetAmount = PREVIOUS_CHALLENGE_DAILY_LIMIT * PREVIOUS_CHALLENGE_TOTAL_DAYS,
+                savedAmount = 0,
+                streakDays = 0,
+                editCount = 0
+            )
+        }
+
+    // 해당 날짜가 속한 챌린지(진행중 또는 바로 이전 챌린지)를 반환한다. 둘 다 아니면 null(진행중인 챌린지 없음).
+    fun challengeFor(date: LocalDate): ActiveChallenge? {
+        val active = activeChallenge
+        if (!date.isBefore(active.periodStart)) return active
+        val previous = previousChallenge
+        if (!date.isBefore(previous.periodStart) && !date.isAfter(previous.periodEnd)) return previous
+        return null
+    }
+
     fun updateTargetAmount(newTargetAmount: Int) {
         val current = activeChallengeState.value
         activeChallengeState.value = current.copy(
@@ -48,19 +80,22 @@ object ChallengeRepository {
     }
 
     // 챌린지 시작일부터 기준일(또는 챌린지 종료일 중 이른 쪽)까지의 날짜 목록.
-    fun elapsedDays(referenceToday: LocalDate): List<LocalDate> {
-        val active = activeChallenge
-        val trackedEnd = if (referenceToday.isBefore(active.periodEnd)) referenceToday else active.periodEnd
-        return generateSequence(active.periodStart) { it.plusDays(1) }
+    fun elapsedDays(referenceToday: LocalDate, challenge: ActiveChallenge = activeChallenge): List<LocalDate> {
+        val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+        return generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
             .toList()
     }
 
     // spentOnDate: 해당 날짜의 실제 지출 합계를 반환하는 함수(호출부에서 ExpenseDetailStore를 주입).
     // 홈 화면과 챌린지 결과 화면이 동일한 로직으로 절약 금액/연속 달성/일별 성공 여부를 계산하도록 공유한다.
-    fun computeProgress(referenceToday: LocalDate, spentOnDate: (LocalDate) -> Int): ChallengeProgress {
-        val dailyLimit = activeChallenge.dailyLimit
-        val days = elapsedDays(referenceToday)
+    fun computeProgress(
+        referenceToday: LocalDate,
+        challenge: ActiveChallenge = activeChallenge,
+        spentOnDate: (LocalDate) -> Int
+    ): ChallengeProgress {
+        val dailyLimit = challenge.dailyLimit
+        val days = elapsedDays(referenceToday, challenge)
         fun balanceOn(date: LocalDate) = dailyLimit - spentOnDate(date)
 
         val savedAmount = days.sumOf { balanceOn(it) }

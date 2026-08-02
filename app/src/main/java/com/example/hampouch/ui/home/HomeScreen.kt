@@ -96,15 +96,19 @@ fun HomeScreen(
     // 지출 내역(ExpenseDetailStore: 목데이터 시드 + 지출입력으로 추가한 실제 기록)이
     // '오늘 지출'의 유일한 기준이다. 홈 자체의 별도 지출 목데이터는 두지 않는다.
     val uiState = baseUiState.copy(expenses = storeExpenses)
+    // 선택된 날짜가 어느 챌린지(진행중 또는 그 직전 챌린지)에 속하는지에 맞춰 절약 금액/연속 달성을 계산한다.
+    val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val todaySpent = uiState.expenses.sumOf { it.amount }
-        val progress = ChallengeRepository.computeProgress(referenceToday) { date ->
-            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        val progress = resolvedChallenge?.let { rc ->
+            ChallengeRepository.computeProgress(referenceToday, rc) { date ->
+                ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+            }
         }
         challenge.copy(
             todayBalance = challenge.dailyLimit - todaySpent,
-            savedAmount = progress.savedAmount,
-            streakDays = progress.streakDays
+            savedAmount = progress?.savedAmount ?: challenge.savedAmount,
+            streakDays = progress?.streakDays ?: challenge.streakDays
         )
     }
     val displayedUiState = uiState.copy(
@@ -147,7 +151,7 @@ fun HomeScreen(
             BottomNavItem.HAM_BATTLE -> HamBattleScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
-                onAddClick = {},
+                onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
                 onChallengeClick = onHamBattleChallengeClick,
@@ -158,7 +162,7 @@ fun HomeScreen(
             BottomNavItem.MY_PAGE -> MyPageScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
-                onAddClick = {},
+                onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                 onLoggedOut = onLoggedOut
@@ -168,7 +172,7 @@ fun HomeScreen(
                 HamTipsScreen(
                     selectedBottomTab = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
-                    onAddClick = {},
+                    onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
@@ -205,7 +209,6 @@ private fun HomeContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
         HomeHeader(
             userName = uiState.userName,
             hasUnreadNotification = true,

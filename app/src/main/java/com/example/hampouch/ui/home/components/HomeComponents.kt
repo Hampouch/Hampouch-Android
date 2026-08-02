@@ -83,7 +83,9 @@ fun HomeHeader(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -188,7 +190,11 @@ fun ChallengeBanner(
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.home_challenge_in_progress_format, challenge.totalDays),
+                text = if (challenge.isEnded) {
+                    stringResource(R.string.home_challenge_ended_format, challenge.totalDays)
+                } else {
+                    stringResource(R.string.home_challenge_in_progress_format, challenge.totalDays)
+                },
                 style = MaterialTheme.typography.titleSmall,
                 color = HPBlack,
                 modifier = Modifier.weight(1f)
@@ -229,7 +235,11 @@ fun ChallengeBanner(
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.home_challenge_dday_format, challenge.dDay),
+                    text = if (challenge.dDay == 0) {
+                        stringResource(R.string.home_challenge_dday_today)
+                    } else {
+                        stringResource(R.string.home_challenge_dday_format, challenge.dDay)
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = HPWhite
                 )

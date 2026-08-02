@@ -25,8 +25,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,11 +48,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.navigation.BottomNavBar
@@ -88,7 +87,6 @@ fun HamBattleScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HamBattleTopBar(onNotificationClick = onNotificationClick) },
         containerColor = HPWhite,
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
         bottomBar = {
@@ -99,39 +97,59 @@ fun HamBattleScreen(
             )
         }
     ) { innerPadding ->
-        if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
-            HamBattleEmptyContent(
-                modifier = Modifier.padding(innerPadding),
-                onStartNewChallengeClick = onStartNewChallengeClick
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            HamBattleMainTopBar(
+                onNotificationClick = onNotificationClick,
+                modifier = Modifier.padding(horizontal = 20.dp)
             )
-        } else {
-            HamBattleChallengeListContent(
-                modifier = Modifier.padding(innerPadding),
-                activeChallenges = activeChallenges,
-                waitingChallenges = waitingChallenges,
-                onStartNewChallengeClick = onStartNewChallengeClick,
-                onViewEndedChallengesClick = onViewEndedChallengesClick,
-                onChallengeClick = onChallengeClick,
-                onWaitingChallengeClick = onWaitingChallengeClick
-            )
+            if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
+                HamBattleEmptyContent(
+                    modifier = Modifier.weight(1f),
+                    onStartNewChallengeClick = onStartNewChallengeClick
+                )
+            } else {
+                HamBattleChallengeListContent(
+                    modifier = Modifier.weight(1f),
+                    activeChallenges = activeChallenges,
+                    waitingChallenges = waitingChallenges,
+                    onStartNewChallengeClick = onStartNewChallengeClick,
+                    onViewEndedChallengesClick = onViewEndedChallengesClick,
+                    onChallengeClick = onChallengeClick,
+                    onWaitingChallengeClick = onWaitingChallengeClick
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HamBattleTopBar(onNotificationClick: () -> Unit) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text("햄배틀", style = MaterialTheme.typography.titleSmall, color = HPBlack)
-        },
-        actions = {
-            IconButton(onClick = onNotificationClick) {
-                Icon(Icons.Filled.Notifications, contentDescription = "알림", tint = HPBlack)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
-    )
+private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(modifier = Modifier.width(48.dp))
+        Text(
+            text = "햄배틀",
+            style = MaterialTheme.typography.titleSmall,
+            color = HPBlack,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = onNotificationClick) {
+            Icon(
+                imageVector = Icons.Filled.Notifications,
+                contentDescription = stringResource(R.string.cd_notification),
+                tint = HPBlack
+            )
+        }
+    }
 }
 
 @Composable

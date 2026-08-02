@@ -28,11 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
@@ -50,7 +53,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 private enum class MyPageRoute {
     MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY,
-    MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
+    CHALLENGE_RESULT, MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
 }
 
 @Composable
@@ -69,6 +72,7 @@ fun MyPageScreen(
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by remember { mutableStateOf<String?>(null) }
+    var selectedChallengeStatus by remember { mutableStateOf(ChallengeStatus.SUCCESS) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
     val myTips = MyPageMockData.myTips()
     val savedTips = MyPageMockData.savedTips()
@@ -199,7 +203,24 @@ fun MyPageScreen(
             ChallengeHistoryScreen(
                 records = challengeRecords,
                 onBackClick = { route = MyPageRoute.MAIN },
+                onRecordClick = { record ->
+                    selectedChallengeStatus = record.status
+                    route = MyPageRoute.CHALLENGE_RESULT
+                },
                 modifier = modifier.fillMaxSize()
+            )
+        }
+
+        MyPageRoute.CHALLENGE_RESULT -> {
+            BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
+            // 진행중인 챌린지 항목은 홈 화면의 현황 카드를 눌렀을 때와 동일한 화면(진행중 상태)을 보여준다.
+            ChallengeResultScreen(
+                state = when (selectedChallengeStatus) {
+                    ChallengeStatus.IN_PROGRESS -> ChallengeResultMockData.inProgress()
+                    ChallengeStatus.SUCCESS -> ChallengeResultMockData.complete
+                    ChallengeStatus.FAIL -> ChallengeResultMockData.fail
+                },
+                onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY }
             )
         }
 

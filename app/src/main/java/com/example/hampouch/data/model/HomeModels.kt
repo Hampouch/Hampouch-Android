@@ -25,7 +25,8 @@ data class HomeChallenge(
     val dailyLimit: Int,
     val todayBalance: Int,
     val savedAmount: Int,
-    val streakDays: Int
+    val streakDays: Int,
+    val isEnded: Boolean = false
 ) {
     val isOverLimit: Boolean
         get() = todayBalance < 0

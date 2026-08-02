@@ -125,6 +125,57 @@ object ExpenseDetailMockData {
                 amount = 4_500,
                 categoryId = "snack",
                 expenseName = "다이소 과자"
+            ),
+            // 이하 p1~p7: 진행중인 챌린지 바로 이전, 7일짜리 지난 챌린지 기간의 지출 기록.
+            ExpenseRecord(
+                id = "p1",
+                date = referenceToday.minusDays(13),
+                amount = 12_000,
+                categoryId = "mart",
+                expenseName = "이마트24"
+            ),
+            ExpenseRecord(
+                id = "p2",
+                date = referenceToday.minusDays(12),
+                amount = 8_000,
+                categoryId = "convenience",
+                expenseName = "CU"
+            ),
+            ExpenseRecord(
+                id = "p3",
+                date = referenceToday.minusDays(11),
+                amount = 15_000,
+                categoryId = "delivery",
+                expenseName = "배달의민족"
+            ),
+            ExpenseRecord(
+                id = "p4",
+                date = referenceToday.minusDays(10),
+                amount = 10_000,
+                categoryId = "dining_out",
+                expenseName = "한신 포차"
+            ),
+            ExpenseRecord(
+                id = "p5",
+                date = referenceToday.minusDays(9),
+                amount = 6_000,
+                categoryId = "cafe",
+                expenseName = "이디야"
+            ),
+            ExpenseRecord(
+                id = "p6",
+                date = referenceToday.minusDays(8),
+                amount = 5_000,
+                categoryId = "snack",
+                expenseName = "다이소 과자"
+            ),
+            ExpenseRecord(
+                id = "p7",
+                date = referenceToday.minusDays(7),
+                amount = 9_000,
+                categoryId = "drink",
+                expenseName = "포장마차",
+                reasonId = "lazy"
             )
         )
         // 지출 분석 화면(월별 추이, 카테고리/이유별 통계)이 참고할 6개월치 과거 이력.
@@ -135,9 +186,9 @@ object ExpenseDetailMockData {
 
     private fun generateHistoryRecords(referenceToday: LocalDate): List<ExpenseRecord> {
         val startMonth = YearMonth.from(referenceToday).minusMonths(5)
-        // 진행중인 챌린지 기간은 홈/금액조정 화면의 손으로 맞춘 데이터가 대신하므로,
-        // 이력 생성은 챌린지 시작일 이전까지만 채워 두 데이터가 겹쳐서 하루 잔액이 어긋나지 않게 한다.
-        val activeChallengeStart = ChallengeRepository.activeChallenge.periodStart
+        // 진행중인 챌린지와 그 직전 챌린지 기간은 홈/마이페이지 화면의 손으로 맞춘 데이터가 대신하므로,
+        // 이력 생성은 그 이전까지만 채워 두 데이터가 겹쳐서 하루 잔액이 어긋나지 않게 한다.
+        val handcraftedRangeStart = ChallengeRepository.previousChallenge.periodStart
         val result = mutableListOf<ExpenseRecord>()
         var counter = 0
 
@@ -146,7 +197,7 @@ object ExpenseDetailMockData {
             var day = 1
             while (day <= month.lengthOfMonth()) {
                 val date = month.atDay(day)
-                if (!date.isAfter(referenceToday) && date.isBefore(activeChallengeStart)) {
+                if (!date.isAfter(referenceToday) && date.isBefore(handcraftedRangeStart)) {
                     counter++
                     result += buildHistoryRecord(counter, date)
                 }
