@@ -419,21 +419,40 @@ private fun rememberExpensePhotoPickerLauncher(
     return { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 }
 
+@Composable
+private fun rememberExpenseSinglePhotoPickerLauncher(
+    onPhotoPicked: (String) -> Unit
+): () -> Unit {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let { onPhotoPicked(it.toString()) } }
+    return { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+}
+
 const val ExpensePhotoMaxCount = 5
 
 @Composable
 fun ExpensePhotoEditSection(
     photoUris: List<String>,
     onPhotosAdded: (List<String>) -> Unit,
-    onPhotosRemoved: (Set<String>) -> Unit,
+    onPhotosRemoved: (Set<Int>) -> Unit,
+    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
     modifier: Modifier = Modifier,
     maxCount: Int = ExpensePhotoMaxCount
 ) {
     var selectMode by remember { mutableStateOf(false) }
-    var selectedUris by remember { mutableStateOf(setOf<String>()) }
-    val pickerLauncher = rememberExpensePhotoPickerLauncher(
+    var selectedIndices by remember { mutableStateOf(setOf<Int>()) }
+    var changeTargetIndex by remember { mutableStateOf(-1) }
+    val addLauncher = rememberExpensePhotoPickerLauncher(
         maxItems = (maxCount - photoUris.size).coerceAtLeast(1),
         onPhotosPicked = onPhotosAdded
+    )
+    val changeLauncher = rememberExpenseSinglePhotoPickerLauncher(
+        onPhotoPicked = { newUri ->
+            if (changeTargetIndex in photoUris.indices) {
+                onPhotoReplaced(changeTargetIndex, newUri)
+            }
+        }
     )
 
     ExpenseFormSection(
@@ -441,7 +460,7 @@ fun ExpensePhotoEditSection(
         modifier = modifier,
         trailingAction = {
             if (photoUris.isEmpty()) {
-                AddPhotoTextButton(onClick = { pickerLauncher() })
+                AddPhotoTextButton(onClick = { addLauncher() })
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -451,17 +470,17 @@ fun ExpensePhotoEditSection(
                         color = if (selectMode) HPMain else HPText,
                         modifier = Modifier.clickable {
                             selectMode = !selectMode
-                            if (!selectMode) selectedUris = emptySet()
+                            if (!selectMode) selectedIndices = emptySet()
                         }
                     )
                     Spacer(modifier = Modifier.width(14.dp))
                     Text(
                         stringResource(R.string.expensedetail_photo_delete_mode),
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (selectMode && selectedUris.isNotEmpty()) HPMain else HPGray5,
-                        modifier = Modifier.clickable(enabled = selectMode && selectedUris.isNotEmpty()) {
-                            onPhotosRemoved(selectedUris)
-                            selectedUris = emptySet()
+                        color = if (selectMode && selectedIndices.isNotEmpty()) HPMain else HPGray5,
+                        modifier = Modifier.clickable(enabled = selectMode && selectedIndices.isNotEmpty()) {
+                            onPhotosRemoved(selectedIndices)
+                            selectedIndices = emptySet()
                             selectMode = false
                         }
                     )
@@ -475,20 +494,23 @@ fun ExpensePhotoEditSection(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            photoUris.forEach { uri ->
+            photoUris.forEachIndexed { index, uri ->
                 EditablePhotoTile(
                     uri = uri,
                     selectMode = selectMode,
-                    selected = uri in selectedUris,
+                    selected = index in selectedIndices,
                     onToggleSelected = {
-                        selectedUris =
-                            if (uri in selectedUris) selectedUris - uri else selectedUris + uri
+                        selectedIndices =
+                            if (index in selectedIndices) selectedIndices - index else selectedIndices + index
                     },
-                    onChangeClick = { pickerLauncher() }
+                    onChangeClick = {
+                        changeTargetIndex = index
+                        changeLauncher()
+                    }
                 )
             }
             if (photoUris.isNotEmpty() && photoUris.size < maxCount) {
-                AddPhotoTile(onClick = { pickerLauncher() })
+                AddPhotoTile(onClick = { addLauncher() })
             }
         }
     }

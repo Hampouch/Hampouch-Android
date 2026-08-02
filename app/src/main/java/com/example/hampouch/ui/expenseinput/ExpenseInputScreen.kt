@@ -64,7 +64,7 @@ import java.util.UUID
 
 const val ExpenseInputTotalSteps = 4
 private const val MaxExpenseAmount = 999_999_999L
-private const val ExpenseInputPhotoMaxCount = 1
+private const val ExpenseInputPhotoMaxCount = 5
 
 private val inputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -255,7 +255,10 @@ fun ExpenseInputRoute(
                             photoUris = (photoUris + added).take(ExpenseInputPhotoMaxCount)
                         },
                         onPhotosRemoved = { removed ->
-                            photoUris = photoUris.filterNot { it in removed }
+                            photoUris = photoUris.filterIndexed { index, _ -> index !in removed }
+                        },
+                        onPhotoReplaced = { index, newUri ->
+                            photoUris = photoUris.toMutableList().also { it[index] = newUri }
                         }
                     )
                 }
@@ -757,12 +760,13 @@ private fun ExpenseInputMemoStep(
     onMemoChange: (String) -> Unit,
     photoUris: List<String>,
     onPhotosAdded: (List<String>) -> Unit,
-    onPhotosRemoved: (Set<String>) -> Unit,
+    onPhotosRemoved: (Set<Int>) -> Unit,
+    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let { onPhotosAdded(listOf(it.toString())) } }
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = ExpenseInputPhotoMaxCount)
+    ) { uris -> if (uris.isNotEmpty()) onPhotosAdded(uris.map { it.toString() }) }
 
     Column(
         modifier = modifier
@@ -795,7 +799,7 @@ private fun ExpenseInputMemoStep(
             singleLine = false,
             minLines = 5
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         if (photoUris.isEmpty()) {
             ExpenseInputPhotoAttachCard(
                 onClick = {
@@ -807,6 +811,7 @@ private fun ExpenseInputMemoStep(
                 photoUris = photoUris,
                 onPhotosAdded = onPhotosAdded,
                 onPhotosRemoved = onPhotosRemoved,
+                onPhotoReplaced = onPhotoReplaced,
                 maxCount = ExpenseInputPhotoMaxCount
             )
         }

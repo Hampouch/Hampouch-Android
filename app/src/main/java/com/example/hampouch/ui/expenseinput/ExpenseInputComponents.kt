@@ -380,6 +380,7 @@ fun ExpenseInputPhotoAttachCard(onClick: () -> Unit, modifier: Modifier = Modifi
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(HPSub4)
+            .border(width = 1.dp, shape = RoundedCornerShape(16.dp), color = HPMain)
             .clickable(
                 onClickLabel = stringResource(R.string.cd_expenseinput_photo_attach),
                 onClick = onClick
@@ -387,11 +388,12 @@ fun ExpenseInputPhotoAttachCard(onClick: () -> Unit, modifier: Modifier = Modifi
             .padding(18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            Icons.Filled.PhotoCamera,
+        Image(
+            painter = painterResource(R.drawable.icon_camera),
             contentDescription = null,
-            tint = HPMain,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier
+                .width(51.dp)
+                .height(40.dp)
         )
         Spacer(modifier = Modifier.padding(start = 12.dp))
         Column {
@@ -399,12 +401,13 @@ fun ExpenseInputPhotoAttachCard(onClick: () -> Unit, modifier: Modifier = Modifi
                 stringResource(R.string.expenseinput_photo_attach_title),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = HPBlack
+                color = HPMain
             )
             Text(
                 stringResource(R.string.expenseinput_photo_attach_subtitle),
                 style = MaterialTheme.typography.bodySmall,
-                color = HPText
+                fontWeight = FontWeight.Bold,
+                color = HPMain
             )
         }
     }
