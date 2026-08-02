@@ -127,7 +127,7 @@ fun ConfirmActionCard(
         Text(
             question,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack
         )

@@ -25,9 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hamtips.HamTipsScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
@@ -63,13 +66,25 @@ fun HomeScreen(
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
+    onAddExpenseClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var selectedDate by remember { mutableStateOf(referenceToday) }
-    val uiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
+        ExpenseEntry(
+            id = record.id,
+            categoryId = record.categoryId,
+            customCategoryName = record.customCategoryName,
+            name = record.expenseName,
+            reasonTag = resolveReasonLabel(record.reasonId, record.customReason),
+            amount = record.amount
+        )
+    }
+    val uiState = baseUiState.copy(expenses = baseUiState.expenses + storeExpenses)
     val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
 
     Scaffold(
@@ -80,7 +95,7 @@ fun HomeScreen(
                 BottomNavBar(
                     selectedItem = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
-                    onAddClick = {},
+                    onAddClick = onAddExpenseClick,
                     modifier = Modifier.navigationBarsPadding()
                 )
             }
@@ -99,6 +114,7 @@ fun HomeScreen(
                 onChallengeSummaryClick = onChallengeSummaryClick,
                 onExpenseClick = onNavigateToExpenseDetail,
                 onViewAllExpensesClick = onNavigateToExpenseCalendar,
+                onAddExpenseClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -155,6 +171,7 @@ private fun HomeContent(
     onChallengeSummaryClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
+    onAddExpenseClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -207,7 +224,7 @@ private fun HomeContent(
         TodayExpenseSection(
             expenses = uiState.expenses,
             onViewAllClick = onViewAllExpensesClick,
-            onAddExpenseClick = {},
+            onAddExpenseClick = onAddExpenseClick,
             onExpenseClick = onExpenseClick
         )
         Spacer(modifier = Modifier.height(24.dp))

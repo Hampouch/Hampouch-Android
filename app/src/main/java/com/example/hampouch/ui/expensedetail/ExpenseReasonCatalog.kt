@@ -8,8 +8,8 @@ object ExpenseReasonCatalog {
     val reasons = listOf(
         Reason("stress", R.string.expensedetail_reason_stress),
         Reason("reward", R.string.expensedetail_reason_reward),
-        Reason("craving", R.string.expensedetail_reason_craving),
-        Reason("lazy", R.string.expensedetail_reason_lazy)
+        Reason("lazy", R.string.expensedetail_reason_lazy),
+        Reason("craving", R.string.expensedetail_reason_craving)
     )
 
     fun byId(id: String?): Reason? = reasons.firstOrNull { it.id == id }
