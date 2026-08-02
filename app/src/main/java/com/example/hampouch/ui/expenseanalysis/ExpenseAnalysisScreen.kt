@@ -32,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -71,6 +74,11 @@ sealed class ExpenseAnalysisHeaderMode {
     data class Challenge(val totalDays: Int, val periodStart: LocalDate, val periodEnd: LocalDate) : ExpenseAnalysisHeaderMode()
 }
 
+private val YearMonthSaver: Saver<YearMonth, Long> = Saver(
+    save = { it.year * 100L + it.monthValue },
+    restore = { YearMonth.of((it / 100).toInt(), (it % 100).toInt()) }
+)
+
 @Composable
 fun ExpenseAnalysisRoute(
     headerMode: ExpenseAnalysisHeaderMode,
@@ -80,9 +88,9 @@ fun ExpenseAnalysisRoute(
     onCategoryDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     onReasonDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(referenceToday) { ExpenseAnalysisMockData.records(referenceToday) }
+    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
-    var displayedMonth by remember {
+    var displayedMonth by rememberSaveable(stateSaver = YearMonthSaver) {
         mutableStateOf((headerMode as? ExpenseAnalysisHeaderMode.Month)?.initialMonth ?: YearMonth.from(referenceToday))
     }
 
@@ -410,7 +418,7 @@ fun MonthlyExpenseRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(referenceToday) { ExpenseAnalysisMockData.records(referenceToday) }
+    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
     val totals = remember(allRecords, referenceToday) { allRecords.monthlyTotals(referenceToday) }
     val currentMonth = YearMonth.from(referenceToday)
@@ -574,7 +582,7 @@ fun CategoryDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(referenceToday) { ExpenseAnalysisMockData.records(referenceToday) }
+    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
     var selectedId by remember { mutableStateOf(initialCategoryId) }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
@@ -632,7 +640,7 @@ fun ReasonDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(referenceToday) { ExpenseAnalysisMockData.records(referenceToday) }
+    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
     var selectedId by remember { mutableStateOf(initialReasonId) }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }

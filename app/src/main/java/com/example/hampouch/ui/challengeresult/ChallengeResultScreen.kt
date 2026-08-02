@@ -70,7 +70,7 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.inProgress,
+    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
     onBackClick: () -> Unit = {},
     onExpenseAnalysisClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
@@ -371,7 +371,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
 @Composable
 private fun ChallengeResultScreenInProgressPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.inProgress)
+        ChallengeResultScreen(state = ChallengeResultMockData.inProgress())
     }
 }
 

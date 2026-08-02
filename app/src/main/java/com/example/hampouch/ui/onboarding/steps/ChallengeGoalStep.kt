@@ -53,7 +53,10 @@ fun ChallengeGoalStep(
     }
 
     val recommendedTotalTarget = state.lastMonthFoodExpense?.let { expense ->
-        impliedPeriodDays?.let { period -> (expense.toDouble() / 30 * period).roundToInt() }
+        impliedPeriodDays?.let { period ->
+            val rawRecommendation = expense.toDouble() / 30 * period * 0.9
+            (rawRecommendation / 1000.0).roundToInt() * 1000
+        }
     }
     val effectiveTotalTarget = state.totalTargetAmount ?: recommendedTotalTarget
     val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->

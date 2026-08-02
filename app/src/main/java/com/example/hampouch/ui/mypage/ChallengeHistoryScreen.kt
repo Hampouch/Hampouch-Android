@@ -28,7 +28,8 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun ChallengeHistoryScreen(
     records: List<ChallengeRecord>,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRecordClick: (ChallengeRecord) -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -57,7 +58,9 @@ fun ChallengeHistoryScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                records.forEach { record -> ChallengeRecordCard(record = record) }
+                records.forEach { record ->
+                    ChallengeRecordCard(record = record, onClick = { onRecordClick(record) })
+                }
             }
         }
     }

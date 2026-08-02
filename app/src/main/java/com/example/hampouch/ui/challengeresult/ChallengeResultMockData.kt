@@ -7,6 +7,8 @@ import com.example.hampouch.data.model.DailyRecordStatus.FAIL
 import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
 import com.example.hampouch.data.model.EmotionStat
 import com.example.hampouch.data.model.SpendingEmotion
+import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -67,22 +69,30 @@ object ChallengeResultMockData {
         )
     )
 
-    val inProgress = ChallengeResultUiState(
-        status = ChallengeResultStatus.IN_PROGRESS,
-        title = "14일 챌린지",
-        periodStart = LocalDate.of(2026,5,1),
-        periodEnd = LocalDate.of(2026,5,14),
-        totalDays = 14,
-        successDays = 6,
-        streakDays = 6,
-        amountLabel = "총 절약",
-        amountValue = 27_500,
-        goalAmount = 400_000,
-        actualAmount = 372_500,
-        dailyLimit = 25_000,
-        emotionStats = emotionStats,
-        dailyRecords = recordsOf(
-            *(1..6).map { it to SUCCESS }.toTypedArray()
+    // 현재 진행중인 챌린지: 홈과 동일하게 ChallengeRepository.computeProgress로 실제 지출 내역을
+    // 근거로 절약 금액/연속 달성/일별 성공 여부를 계산한다(별도 목데이터를 두지 않는다).
+    fun inProgress(): ChallengeResultUiState {
+        val active = ChallengeRepository.activeChallenge
+        val referenceToday = LocalDate.now()
+        val progress = ChallengeRepository.computeProgress(referenceToday) { date ->
+            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        }
+        val successDays = progress.dailyRecords.values.count { it == SUCCESS }
+        return ChallengeResultUiState(
+            status = ChallengeResultStatus.IN_PROGRESS,
+            title = "${active.totalDays}일 챌린지",
+            periodStart = active.periodStart,
+            periodEnd = active.periodEnd,
+            totalDays = active.totalDays,
+            successDays = successDays,
+            streakDays = progress.streakDays,
+            amountLabel = "총 절약",
+            amountValue = progress.savedAmount,
+            goalAmount = active.targetAmount,
+            actualAmount = (active.targetAmount - progress.savedAmount).coerceAtLeast(0),
+            dailyLimit = active.dailyLimit,
+            emotionStats = emotionStats,
+            dailyRecords = progress.dailyRecords
         )
-    )
+    }
 }

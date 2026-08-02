@@ -1,3 +1,29 @@
 <resources>
     <!-- 금액 조정 -->
+    <string name="amountadjustment_top_bar_title">챌린지 상세</string>
+    <string name="amountadjustment_headline">목표 금액을 조정할까요?</string>
+    <string name="amountadjustment_subtitle">무리하게 진행하기보다, 목표를 현실적으로 조정하는 편이 좋아요.\n지금까지의 기록은 그대로 유지돼요.</string>
+
+    <string name="amountadjustment_current_challenge_title">현재 챌린지</string>
+    <string name="amountadjustment_challenge_days_format">%1$d일 챌린지</string>
+    <string name="amountadjustment_dday_format">D-%1$d</string>
+    <string name="amountadjustment_period_format">%1$s ~ %2$s</string>
+    <string name="amountadjustment_target_amount_label">목표 금액</string>
+    <string name="amountadjustment_daily_limit_label">하루 한도</string>
+    <string name="amountadjustment_over_amount_prefix">현재 </string>
+    <string name="amountadjustment_over_amount_suffix"> 초과</string>
+
+    <string name="amountadjustment_goal_amount_note">이미 지난 기록은 그대로 유지되고, 남은 기간에만 적용돼요.</string>
+    <string name="amountadjustment_option_keep">현재 유지</string>
+    <string name="amountadjustment_option_relax_10">10% 여유</string>
+    <string name="amountadjustment_option_relax_20">20% 여유</string>
+    <string name="amountadjustment_custom_input_placeholder">직접 입력</string>
+    <string name="amountadjustment_won_suffix">원</string>
+
+    <string name="amountadjustment_daily_food_goal_title">하루 식비 목표</string>
+    <string name="amountadjustment_edit_count_caption_format">목표 수정은 최대 %1$d회까지 가능해요. (남은 횟수 %2$d회)</string>
+    <string name="amountadjustment_submit_button">목표 금액 수정하기</string>
+
+    <string name="amountadjustment_confirm_question">목표 금액을 수정할까요?</string>
+    <string name="amountadjustment_confirm_button">수정하기</string>
 </resources>

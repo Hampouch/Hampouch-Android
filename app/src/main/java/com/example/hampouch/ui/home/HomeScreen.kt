@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
@@ -44,12 +46,18 @@ import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 
 private const val MOCK_USER_NAME = "민준"
+
+private val LocalDateSaver: Saver<LocalDate, Long> = Saver(
+    save = { it.toEpochDay() },
+    restore = { LocalDate.ofEpochDay(it) }
+)
 
 @Composable
 fun HomeScreen(
@@ -67,12 +75,13 @@ fun HomeScreen(
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
+    onNavigateToAmountAdjustment: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
-    var selectedDate by remember { mutableStateOf(referenceToday) }
+    var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
@@ -84,8 +93,28 @@ fun HomeScreen(
             amount = record.amount
         )
     }
-    val uiState = baseUiState.copy(expenses = baseUiState.expenses + storeExpenses)
-    val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
+    // 지출 내역(ExpenseDetailStore: 목데이터 시드 + 지출입력으로 추가한 실제 기록)이
+    // '오늘 지출'의 유일한 기준이다. 홈 자체의 별도 지출 목데이터는 두지 않는다.
+    val uiState = baseUiState.copy(expenses = storeExpenses)
+    // 선택된 날짜가 어느 챌린지(진행중 또는 그 직전 챌린지)에 속하는지에 맞춰 절약 금액/연속 달성을 계산한다.
+    val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
+    val liveChallenge = uiState.challenge?.let { challenge ->
+        val todaySpent = uiState.expenses.sumOf { it.amount }
+        val progress = resolvedChallenge?.let { rc ->
+            ChallengeRepository.computeProgress(referenceToday, rc) { date ->
+                ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+            }
+        }
+        challenge.copy(
+            todayBalance = challenge.dailyLimit - todaySpent,
+            savedAmount = progress?.savedAmount ?: challenge.savedAmount,
+            streakDays = progress?.streakDays ?: challenge.streakDays
+        )
+    }
+    val displayedUiState = uiState.copy(
+        challenge = liveChallenge,
+        miniChallenges = MiniChallengeStore.challengesFor(selectedDate)
+    )
 
     Scaffold(
         modifier = modifier,
@@ -108,10 +137,11 @@ fun HomeScreen(
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
                 onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
                 onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
-                onSuggestionClick = {},
+                onSuggestionClick = { onNavigateToAmountAdjustment() },
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
                 onChallengeSummaryClick = onChallengeSummaryClick,
+                onChallengeDetailClick = onNavigateToAmountAdjustment,
                 onExpenseClick = onNavigateToExpenseDetail,
                 onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 onAddExpenseClick = onAddExpenseClick,
@@ -121,7 +151,7 @@ fun HomeScreen(
             BottomNavItem.HAM_BATTLE -> HamBattleScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
-                onAddClick = {},
+                onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
                 onChallengeClick = onHamBattleChallengeClick,
@@ -132,7 +162,7 @@ fun HomeScreen(
             BottomNavItem.MY_PAGE -> MyPageScreen(
                 selectedBottomTab = selectedBottomTab,
                 onItemSelected = { selectedBottomTab = it },
-                onAddClick = {},
+                onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                 onLoggedOut = onLoggedOut
@@ -142,7 +172,7 @@ fun HomeScreen(
                 HamTipsScreen(
                     selectedBottomTab = selectedBottomTab,
                     onItemSelected = { selectedBottomTab = it },
-                    onAddClick = {},
+                    onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
@@ -153,10 +183,8 @@ fun HomeScreen(
     }
 }
 
-private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState = when (date) {
-    referenceToday.minusDays(1) -> HomeMockData.lowBalanceWithWarningState(MOCK_USER_NAME, date)
-    else -> HomeMockData.freshDayState(MOCK_USER_NAME, date)
-}
+private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState =
+    HomeMockData.freshDayState(UserSession.currentUser.name, date)
 
 @Composable
 private fun HomeContent(
@@ -169,6 +197,7 @@ private fun HomeContent(
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: () -> Unit = {},
+    onChallengeDetailClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
@@ -180,7 +209,6 @@ private fun HomeContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
         HomeHeader(
             userName = uiState.userName,
             hasUnreadNotification = true,
@@ -207,7 +235,7 @@ private fun HomeContent(
                     .clickable(onClick = onChallengeSummaryClick)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                ChallengeBanner(challenge = challenge)
+                ChallengeBanner(challenge = challenge, onDetailClick = onChallengeDetailClick)
                 Spacer(modifier = Modifier.height(16.dp))
                 CharacterGaugeSection(challenge = challenge)
                 Spacer(modifier = Modifier.height(16.dp))

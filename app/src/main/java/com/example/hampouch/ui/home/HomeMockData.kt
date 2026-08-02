@@ -12,19 +12,20 @@ import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
+import com.example.hampouch.data.model.ActiveChallenge
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeChallenge
 import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.data.model.HomeWarning
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.WarningVariant
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 object HomeCategoryCatalog {
@@ -55,57 +56,45 @@ object HomeCategoryCatalog {
 private val periodLabelFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
 
-private const val CHALLENGE_TOTAL_DAYS = 14
-private const val CHALLENGE_DAILY_LIMIT = 20_000
-
 private fun buildChallenge(
-    today: LocalDate,
+    challenge: ActiveChallenge,
+    date: LocalDate,
     todayBalance: Int,
-    savedAmount: Int,
-    streakDays: Int,
-    dailyLimit: Int = CHALLENGE_DAILY_LIMIT,
-    totalDays: Int = CHALLENGE_TOTAL_DAYS,
-    dayOfChallenge: Int = 7
-): HomeChallenge {
-    val startDate = today.minusDays((dayOfChallenge - 1).toLong())
-    val endDate = startDate.plusDays((totalDays - 1).toLong())
-    return HomeChallenge(
-        totalDays = totalDays,
-        dDay = ChronoUnit.DAYS.between(today, endDate).toInt(),
-        periodStartLabel = startDate.format(periodLabelFormatter),
-        periodEndLabel = endDate.format(periodLabelFormatter),
-        dailyLimit = dailyLimit,
-        todayBalance = todayBalance,
-        savedAmount = savedAmount,
-        streakDays = streakDays
-    )
-}
+    savedAmount: Int = challenge.savedAmount,
+    streakDays: Int = challenge.streakDays
+): HomeChallenge = HomeChallenge(
+    totalDays = challenge.totalDays,
+    // D-day는 '지금 실제 오늘'이 아니라 화면에서 보고 있는 날짜(date) 기준으로 계산한다.
+    dDay = challenge.dDayFrom(date).coerceAtLeast(0),
+    periodStartLabel = challenge.periodStart.format(periodLabelFormatter),
+    periodEndLabel = challenge.periodEnd.format(periodLabelFormatter),
+    dailyLimit = challenge.dailyLimit,
+    todayBalance = todayBalance,
+    savedAmount = savedAmount,
+    streakDays = streakDays,
+    isEnded = challenge.periodEnd.isBefore(LocalDate.now())
+)
 
 object HomeMockData {
 
-    fun freshDayState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
-        userName = userName,
-        selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = CHALLENGE_DAILY_LIMIT,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
-        expenses = emptyList(),
-        miniChallenges = MiniChallengeMockData.todayChallenges(),
-        warnings = emptyList()
-    )
+    // 날짜가 속한 챌린지(진행중 챌린지 또는 그 직전 챌린지)를 찾아 카드에 반영한다.
+    // 어느 챌린지에도 속하지 않는 날짜는 challenge가 null이 되어 '진행중인 챌린지 없음'으로 표시된다.
+    fun freshDayState(userName: String, date: LocalDate): HomeUiState {
+        val challenge = ChallengeRepository.challengeFor(date)
+        return HomeUiState(
+            userName = userName,
+            selectedDate = date,
+            challenge = challenge?.let { buildChallenge(it, date, todayBalance = it.dailyLimit) },
+            expenses = emptyList(),
+            miniChallenges = MiniChallengeMockData.todayChallenges(),
+            warnings = emptyList()
+        )
+    }
 
     fun lowBalanceWithWarningState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -153,12 +142,7 @@ object HomeMockData {
     fun normalBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 7_300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 7_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -174,12 +158,7 @@ object HomeMockData {
     fun decreasingBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 17_300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 17_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 2_700),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 1_500),

@@ -369,7 +369,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun StatusBadge(status: ChallengeStatus, modifier: Modifier = Modifier) {
     val (bg, textColor) = when (status) {
-        ChallengeStatus.IN_PROGRESS -> HPStatusFailBg to HPStatusFailText
+        ChallengeStatus.IN_PROGRESS -> HPTipRecruitBg to HPTipRecruitText
         ChallengeStatus.SUCCESS -> HPStatusInProgressBg to HPStatusInProgressText
         ChallengeStatus.FAIL -> HPStatusSuccessBg to HPStatusSuccessText
     }
@@ -389,7 +389,7 @@ fun StatusBadge(status: ChallengeStatus, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ChallengeRecordCard(record: ChallengeRecord, modifier: Modifier = Modifier) {
+fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modifier: Modifier = Modifier) {
     val isSuccess = record.status == ChallengeStatus.SUCCESS
     val progressColor = if (isSuccess) HPStatusInProgressText else HPStatusSuccessText
     val progressFraction = if (record.targetAmount > 0) {
@@ -403,6 +403,7 @@ fun ChallengeRecordCard(record: ChallengeRecord, modifier: Modifier = Modifier) 
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
+            .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
         Row(
