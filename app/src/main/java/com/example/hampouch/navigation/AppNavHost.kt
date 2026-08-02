@@ -28,6 +28,8 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
+import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
@@ -192,6 +194,9 @@ fun AppNavHost(
                 },
                 onNavigateToExpenseCalendar = {
                     navController.navigate(Screen.ExpenseCalendar.route)
+                },
+                onNavigateToAmountAdjustment = {
+                    navController.navigate(Screen.AmountAdjustment.route)
                 },
                 onLoggedOut = {
                     navController.navigate(Screen.Onboarding.route) {
@@ -481,6 +486,13 @@ fun AppNavHost(
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.AmountAdjustment.route) {
+            AmountAdjustmentRoute(
+                challenge = AmountAdjustmentMockData.challenge(),
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

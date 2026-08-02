@@ -58,6 +58,7 @@ fun HomeScreen(
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
+    onNavigateToAmountAdjustment: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -87,7 +88,7 @@ fun HomeScreen(
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
                 onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
                 onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
-                onSuggestionClick = {},
+                onSuggestionClick = { onNavigateToAmountAdjustment() },
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
                 onExpenseClick = onNavigateToExpenseDetail,
