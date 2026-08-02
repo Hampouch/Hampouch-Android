@@ -45,7 +45,8 @@ object HomeCategoryCatalog {
         Category("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain),
         Category("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30)),
         Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A)),
-        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E))
+        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E)),
+        Category("etc", R.string.category_etc, Icons.Filled.Restaurant, HPText)
     )
 
     fun byId(id: String?): Category? = categories.firstOrNull { it.id == id }
