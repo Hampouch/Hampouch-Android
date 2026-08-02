@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,6 +54,11 @@ import java.time.LocalDate
 
 private const val MOCK_USER_NAME = "민준"
 
+private val LocalDateSaver: Saver<LocalDate, Long> = Saver(
+    save = { it.toEpochDay() },
+    restore = { LocalDate.ofEpochDay(it) }
+)
+
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -75,7 +81,7 @@ fun HomeScreen(
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
-    var selectedDate by remember { mutableStateOf(referenceToday) }
+    var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
@@ -87,14 +93,18 @@ fun HomeScreen(
             amount = record.amount
         )
     }
-    val uiState = baseUiState.copy(expenses = baseUiState.expenses + storeExpenses)
+    // 지출 내역(ExpenseDetailStore: 목데이터 시드 + 지출입력으로 추가한 실제 기록)이
+    // '오늘 지출'의 유일한 기준이다. 홈 자체의 별도 지출 목데이터는 두지 않는다.
+    val uiState = baseUiState.copy(expenses = storeExpenses)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val todaySpent = uiState.expenses.sumOf { it.amount }
-        val (savedAmount, streakDays) = computeChallengeProgress(referenceToday, challenge.dailyLimit)
+        val progress = ChallengeRepository.computeProgress(referenceToday) { date ->
+            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        }
         challenge.copy(
             todayBalance = challenge.dailyLimit - todaySpent,
-            savedAmount = savedAmount,
-            streakDays = streakDays
+            savedAmount = progress.savedAmount,
+            streakDays = progress.streakDays
         )
     }
     val displayedUiState = uiState.copy(
@@ -169,36 +179,8 @@ fun HomeScreen(
     }
 }
 
-private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState {
-    val userName = UserSession.currentUser.name
-    return when (date) {
-        referenceToday -> HomeMockData.freshDayState(userName, date)
-        else -> HomeMockData.randomDayState(userName, date)
-    }
-}
-
-private fun totalSpentOn(date: LocalDate, referenceToday: LocalDate): Int =
-    mockStateForDate(date, referenceToday).expenses.sumOf { it.amount } +
-        ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
-
-private fun dailyBalanceOn(date: LocalDate, referenceToday: LocalDate, dailyLimit: Int): Int =
-    dailyLimit - totalSpentOn(date, referenceToday)
-
-// 절약 금액 = 챌린지 시작일부터 오늘까지 날짜별 '오늘 잔액'의 누적 합계.
-// 연속 달성 = 오늘부터 거슬러 올라가며 '오늘 잔액'이 0원 이상인 날짜가 끊기지 않고 이어진 일수.
-private fun computeChallengeProgress(referenceToday: LocalDate, dailyLimit: Int): Pair<Int, Int> {
-    val active = ChallengeRepository.activeChallenge
-    val trackedEnd = if (referenceToday.isBefore(active.periodEnd)) referenceToday else active.periodEnd
-    val elapsedDays = generateSequence(active.periodStart) { it.plusDays(1) }
-        .takeWhile { !it.isAfter(trackedEnd) }
-        .toList()
-    val savedAmount = elapsedDays.sumOf { dailyBalanceOn(it, referenceToday, dailyLimit) }
-    var streakDays = 0
-    for (day in elapsedDays.asReversed()) {
-        if (dailyBalanceOn(day, referenceToday, dailyLimit) >= 0) streakDays++ else break
-    }
-    return savedAmount to streakDays
-}
+private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState =
+    HomeMockData.freshDayState(UserSession.currentUser.name, date)
 
 @Composable
 private fun HomeContent(

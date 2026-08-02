@@ -26,7 +26,6 @@ import com.example.hampouch.ui.theme.HPText
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.random.Random
 
 object HomeCategoryCatalog {
     data class Category(
@@ -55,19 +54,6 @@ object HomeCategoryCatalog {
 
 private val periodLabelFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
-
-private val RandomExpenseNamesByCategory: Map<String, List<String>> = mapOf(
-    "delivery" to listOf("배달의민족", "요기요", "쿠팡이츠"),
-    "dining_out" to listOf("연남동 국밥집", "한신 포차", "역전 우동"),
-    "convenience" to listOf("GS25", "CU", "세븐일레븐"),
-    "cafe" to listOf("스타벅스", "메가커피", "이디야"),
-    "snack" to listOf("올리브영 간식", "다이소 과자"),
-    "mart" to listOf("이마트24", "홈플러스 익스프레스"),
-    "drink" to listOf("호프집", "포장마차"),
-    "etc" to listOf("기타 지출")
-)
-
-private val RandomReasonTagPool: List<String?> = listOf(null, "스트레스", "보상", "귀찮음", "그냥")
 
 private fun buildChallenge(
     todayBalance: Int,
@@ -130,33 +116,6 @@ object HomeMockData {
             )
         )
     )
-
-    fun randomDayState(userName: String, date: LocalDate): HomeUiState {
-        val rng = Random(date.toEpochDay())
-        val spentAmount = 2_000 + rng.nextInt(0, 23_000)
-        val todayBalance = (ChallengeRepository.activeChallenge.dailyLimit - spentAmount).coerceAtLeast(0)
-        val categoryIds = HomeCategoryCatalog.categories.map { it.id }
-        val expenseCount = rng.nextInt(1, 5)
-        val expenses = (0 until expenseCount).map { index ->
-            val categoryId = categoryIds[rng.nextInt(categoryIds.size)]
-            val storeNames = RandomExpenseNamesByCategory[categoryId]
-            ExpenseEntry(
-                id = "rand_${date.toEpochDay()}_$index",
-                categoryId = categoryId,
-                name = storeNames?.get(rng.nextInt(storeNames.size)),
-                reasonTag = RandomReasonTagPool[rng.nextInt(RandomReasonTagPool.size)],
-                amount = 1_000 + rng.nextInt(0, 16) * 500
-            )
-        }
-        return HomeUiState(
-            userName = userName,
-            selectedDate = date,
-            challenge = buildChallenge(todayBalance = todayBalance),
-            expenses = expenses,
-            miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
-            warnings = emptyList()
-        )
-    }
 
     fun noActiveChallengeState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,

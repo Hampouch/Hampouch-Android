@@ -11,7 +11,7 @@ data class MiniChallengeEntry(
         get() = when {
             totalDays == null -> "오늘만"
             achievedDays <= 0 -> "${totalDays}일간"
-            else -> "${achievedDays.coerceAtMost(totalDays)}/${totalDays}일"
+            else -> "${achievedDays.coerceAtMost(totalDays)}/${totalDays}"
         }
 }
 

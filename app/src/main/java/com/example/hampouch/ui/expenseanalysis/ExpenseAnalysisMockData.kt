@@ -29,7 +29,7 @@ val ExpenseAnalysisCategoryLegendOrder: List<String> =
     listOf("delivery", "snack", "dining_out", "mart", "convenience", "drink", "cafe", ExpenseAnalysisEtcId)
 
 val ExpenseAnalysisCategoryTabOrder: List<String> =
-    HomeCategoryCatalog.categories.map { it.id } + ExpenseAnalysisEtcId
+    HomeCategoryCatalog.categories.map { it.id }
 
 val ExpenseAnalysisReasonTabOrder: List<String> =
     ExpenseReasonCatalog.reasons.map { it.id } + ExpenseAnalysisEtcId

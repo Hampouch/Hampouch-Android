@@ -8,6 +8,7 @@ import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
 import com.example.hampouch.data.model.EmotionStat
 import com.example.hampouch.data.model.SpendingEmotion
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -68,10 +69,15 @@ object ChallengeResultMockData {
         )
     )
 
-    // 현재 진행중인 챌린지: 홈/금액조정/지출입력과 동일한 ChallengeRepository를 참조해 숫자를 일치시킨다.
+    // 현재 진행중인 챌린지: 홈과 동일하게 ChallengeRepository.computeProgress로 실제 지출 내역을
+    // 근거로 절약 금액/연속 달성/일별 성공 여부를 계산한다(별도 목데이터를 두지 않는다).
     fun inProgress(): ChallengeResultUiState {
         val active = ChallengeRepository.activeChallenge
-        val successDays = active.streakDays.coerceIn(1, active.totalDays)
+        val referenceToday = LocalDate.now()
+        val progress = ChallengeRepository.computeProgress(referenceToday) { date ->
+            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        }
+        val successDays = progress.dailyRecords.values.count { it == SUCCESS }
         return ChallengeResultUiState(
             status = ChallengeResultStatus.IN_PROGRESS,
             title = "${active.totalDays}일 챌린지",
@@ -79,16 +85,14 @@ object ChallengeResultMockData {
             periodEnd = active.periodEnd,
             totalDays = active.totalDays,
             successDays = successDays,
-            streakDays = active.streakDays,
+            streakDays = progress.streakDays,
             amountLabel = "총 절약",
-            amountValue = active.savedAmount,
+            amountValue = progress.savedAmount,
             goalAmount = active.targetAmount,
-            actualAmount = (active.targetAmount - active.savedAmount).coerceAtLeast(0),
+            actualAmount = (active.targetAmount - progress.savedAmount).coerceAtLeast(0),
             dailyLimit = active.dailyLimit,
             emotionStats = emotionStats,
-            dailyRecords = (1..successDays).associate { day ->
-                active.periodStart.plusDays((day - 1).toLong()) to SUCCESS
-            }
+            dailyRecords = progress.dailyRecords
         )
     }
 }

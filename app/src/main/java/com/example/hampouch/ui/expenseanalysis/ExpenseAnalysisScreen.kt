@@ -32,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,6 +74,11 @@ sealed class ExpenseAnalysisHeaderMode {
     data class Challenge(val totalDays: Int, val periodStart: LocalDate, val periodEnd: LocalDate) : ExpenseAnalysisHeaderMode()
 }
 
+private val YearMonthSaver: Saver<YearMonth, Long> = Saver(
+    save = { it.year * 100L + it.monthValue },
+    restore = { YearMonth.of((it / 100).toInt(), (it % 100).toInt()) }
+)
+
 @Composable
 fun ExpenseAnalysisRoute(
     headerMode: ExpenseAnalysisHeaderMode,
@@ -83,7 +90,7 @@ fun ExpenseAnalysisRoute(
     referenceToday: LocalDate = LocalDate.now(),
     allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
-    var displayedMonth by remember {
+    var displayedMonth by rememberSaveable(stateSaver = YearMonthSaver) {
         mutableStateOf((headerMode as? ExpenseAnalysisHeaderMode.Month)?.initialMonth ?: YearMonth.from(referenceToday))
     }
 

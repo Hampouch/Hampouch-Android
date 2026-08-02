@@ -53,7 +53,7 @@ object ExpenseDetailMockData {
             ExpenseRecord(
                 id = "e4",
                 date = yesterday,
-                amount = 15_800,
+                amount = 3_500,
                 customCategoryName = "자취요리",
                 expenseName = "장보기 재료",
                 reasonId = "stress"
@@ -73,33 +73,58 @@ object ExpenseDetailMockData {
                 expenseName = "지출내역",
                 customReason = "감정태깅"
             ),
+            // 이하 e7~e11: 챌린지 기간(하루 한도 20,000원) 중 2일은 한도 초과, 1일은 정확히
+            // 한도와 같음, 나머지는 한도 미만이 되도록 날짜별 합계를 맞춘 기록.
             ExpenseRecord(
                 id = "e7",
                 date = referenceToday.minusDays(6),
-                amount = 163_000,
+                amount = 15_000,
                 categoryId = "mart",
-                expenseName = "장보기"
+                expenseName = "이마트24"
+            ),
+            ExpenseRecord(
+                id = "e7b",
+                date = referenceToday.minusDays(6),
+                amount = 8_000,
+                categoryId = "cafe",
+                expenseName = "이디야",
+                reasonId = "reward"
             ),
             ExpenseRecord(
                 id = "e8",
                 date = referenceToday.minusDays(5),
-                amount = 14_000,
+                amount = 9_000,
                 categoryId = "convenience",
-                expenseName = "편의점"
+                expenseName = "CU"
             ),
             ExpenseRecord(
                 id = "e9",
                 date = referenceToday.minusDays(4),
-                amount = 12_000,
+                amount = 20_000,
                 categoryId = "delivery",
-                expenseName = "배달음식"
+                expenseName = "배달의민족"
             ),
             ExpenseRecord(
                 id = "e10",
                 date = referenceToday.minusDays(3),
-                amount = 124_000,
+                amount = 18_000,
                 categoryId = "dining_out",
-                expenseName = "외식"
+                expenseName = "한신 포차"
+            ),
+            ExpenseRecord(
+                id = "e10b",
+                date = referenceToday.minusDays(3),
+                amount = 7_000,
+                categoryId = "drink",
+                expenseName = "포장마차",
+                reasonId = "lazy"
+            ),
+            ExpenseRecord(
+                id = "e11",
+                date = referenceToday.minusDays(2),
+                amount = 4_500,
+                categoryId = "snack",
+                expenseName = "다이소 과자"
             )
         )
         // 지출 분석 화면(월별 추이, 카테고리/이유별 통계)이 참고할 6개월치 과거 이력.
@@ -110,6 +135,9 @@ object ExpenseDetailMockData {
 
     private fun generateHistoryRecords(referenceToday: LocalDate): List<ExpenseRecord> {
         val startMonth = YearMonth.from(referenceToday).minusMonths(5)
+        // 진행중인 챌린지 기간은 홈/금액조정 화면의 손으로 맞춘 데이터가 대신하므로,
+        // 이력 생성은 챌린지 시작일 이전까지만 채워 두 데이터가 겹쳐서 하루 잔액이 어긋나지 않게 한다.
+        val activeChallengeStart = ChallengeRepository.activeChallenge.periodStart
         val result = mutableListOf<ExpenseRecord>()
         var counter = 0
 
@@ -118,7 +146,7 @@ object ExpenseDetailMockData {
             var day = 1
             while (day <= month.lengthOfMonth()) {
                 val date = month.atDay(day)
-                if (!date.isAfter(referenceToday)) {
+                if (!date.isAfter(referenceToday) && date.isBefore(activeChallengeStart)) {
                     counter++
                     result += buildHistoryRecord(counter, date)
                 }
@@ -132,7 +160,7 @@ object ExpenseDetailMockData {
     private fun buildHistoryRecord(counter: Int, date: LocalDate): ExpenseRecord {
         val isWeekendPeak = date.dayOfWeek == DayOfWeek.FRIDAY || date.dayOfWeek == DayOfWeek.SATURDAY
         val baseAmount = 6_000 + (counter % 6) * 3_000
-        val amount = if (isWeekendPeak) (baseAmount * 1.8).toInt() else baseAmount
+        val amount = (if (isWeekendPeak) (baseAmount * 1.5).toInt() else baseAmount).coerceAtMost(19_500)
 
         val useCustomCategory = counter % 9 == 0
         val categoryId = historyCategoryCycle[counter % historyCategoryCycle.size]
