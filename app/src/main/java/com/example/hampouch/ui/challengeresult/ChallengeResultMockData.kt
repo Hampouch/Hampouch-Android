@@ -7,6 +7,7 @@ import com.example.hampouch.data.model.DailyRecordStatus.FAIL
 import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
 import com.example.hampouch.data.model.EmotionStat
 import com.example.hampouch.data.model.SpendingEmotion
+import com.example.hampouch.data.repository.ChallengeRepository
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -67,22 +68,27 @@ object ChallengeResultMockData {
         )
     )
 
-    val inProgress = ChallengeResultUiState(
-        status = ChallengeResultStatus.IN_PROGRESS,
-        title = "14일 챌린지",
-        periodStart = LocalDate.of(2026,5,1),
-        periodEnd = LocalDate.of(2026,5,14),
-        totalDays = 14,
-        successDays = 6,
-        streakDays = 6,
-        amountLabel = "총 절약",
-        amountValue = 27_500,
-        goalAmount = 400_000,
-        actualAmount = 372_500,
-        dailyLimit = 25_000,
-        emotionStats = emotionStats,
-        dailyRecords = recordsOf(
-            *(1..6).map { it to SUCCESS }.toTypedArray()
+    // 현재 진행중인 챌린지: 홈/금액조정/지출입력과 동일한 ChallengeRepository를 참조해 숫자를 일치시킨다.
+    fun inProgress(): ChallengeResultUiState {
+        val active = ChallengeRepository.activeChallenge
+        val successDays = active.streakDays.coerceIn(1, active.totalDays)
+        return ChallengeResultUiState(
+            status = ChallengeResultStatus.IN_PROGRESS,
+            title = "${active.totalDays}일 챌린지",
+            periodStart = active.periodStart,
+            periodEnd = active.periodEnd,
+            totalDays = active.totalDays,
+            successDays = successDays,
+            streakDays = active.streakDays,
+            amountLabel = "총 절약",
+            amountValue = active.savedAmount,
+            goalAmount = active.targetAmount,
+            actualAmount = (active.targetAmount - active.savedAmount).coerceAtLeast(0),
+            dailyLimit = active.dailyLimit,
+            emotionStats = emotionStats,
+            dailyRecords = (1..successDays).associate { day ->
+                active.periodStart.plusDays((day - 1).toLong()) to SUCCESS
+            }
         )
-    )
+    }
 }

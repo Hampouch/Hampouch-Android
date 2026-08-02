@@ -6,6 +6,7 @@ import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.HamTipsRepository
+import com.example.hampouch.ui.session.UserSession
 
 object MyPageMockData {
 
@@ -16,11 +17,15 @@ object MyPageMockData {
 
     private val takenNicknames = listOf("햄포치")
 
-    fun defaultProfile(): MyPageProfile = MyPageProfile(
-        name = "절약왕 민준",
-        handle = "hampochi_minjun",
-        email = "hampouch@example.com"
-    )
+    // 로그인 세션(UserSession)과 동일한 계정 정보를 표시해 화면 간 사용자 이름/이메일 불일치를 없앤다.
+    fun defaultProfile(): MyPageProfile {
+        val user = UserSession.currentUser
+        return MyPageProfile(
+            name = user.name,
+            handle = "hampochi_${user.id}",
+            email = user.email
+        )
+    }
 
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 

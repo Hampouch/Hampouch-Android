@@ -18,14 +18,15 @@ import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.data.model.HomeWarning
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.WarningVariant
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlin.random.Random
 
 object HomeCategoryCatalog {
     data class Category(
@@ -55,26 +56,31 @@ object HomeCategoryCatalog {
 private val periodLabelFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
 
-private const val CHALLENGE_TOTAL_DAYS = 14
-private const val CHALLENGE_DAILY_LIMIT = 20_000
+private val RandomExpenseNamesByCategory: Map<String, List<String>> = mapOf(
+    "delivery" to listOf("배달의민족", "요기요", "쿠팡이츠"),
+    "dining_out" to listOf("연남동 국밥집", "한신 포차", "역전 우동"),
+    "convenience" to listOf("GS25", "CU", "세븐일레븐"),
+    "cafe" to listOf("스타벅스", "메가커피", "이디야"),
+    "snack" to listOf("올리브영 간식", "다이소 과자"),
+    "mart" to listOf("이마트24", "홈플러스 익스프레스"),
+    "drink" to listOf("호프집", "포장마차"),
+    "etc" to listOf("기타 지출")
+)
+
+private val RandomReasonTagPool: List<String?> = listOf(null, "스트레스", "보상", "귀찮음", "그냥")
 
 private fun buildChallenge(
-    today: LocalDate,
     todayBalance: Int,
-    savedAmount: Int,
-    streakDays: Int,
-    dailyLimit: Int = CHALLENGE_DAILY_LIMIT,
-    totalDays: Int = CHALLENGE_TOTAL_DAYS,
-    dayOfChallenge: Int = 7
+    savedAmount: Int = ChallengeRepository.activeChallenge.savedAmount,
+    streakDays: Int = ChallengeRepository.activeChallenge.streakDays
 ): HomeChallenge {
-    val startDate = today.minusDays((dayOfChallenge - 1).toLong())
-    val endDate = startDate.plusDays((totalDays - 1).toLong())
+    val challenge = ChallengeRepository.activeChallenge
     return HomeChallenge(
-        totalDays = totalDays,
-        dDay = ChronoUnit.DAYS.between(today, endDate).toInt(),
-        periodStartLabel = startDate.format(periodLabelFormatter),
-        periodEndLabel = endDate.format(periodLabelFormatter),
-        dailyLimit = dailyLimit,
+        totalDays = challenge.totalDays,
+        dDay = challenge.dDayFrom(LocalDate.now()),
+        periodStartLabel = challenge.periodStart.format(periodLabelFormatter),
+        periodEndLabel = challenge.periodEnd.format(periodLabelFormatter),
+        dailyLimit = challenge.dailyLimit,
         todayBalance = todayBalance,
         savedAmount = savedAmount,
         streakDays = streakDays
@@ -86,12 +92,7 @@ object HomeMockData {
     fun freshDayState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = CHALLENGE_DAILY_LIMIT,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(todayBalance = ChallengeRepository.activeChallenge.dailyLimit),
         expenses = emptyList(),
         miniChallenges = MiniChallengeMockData.todayChallenges(),
         warnings = emptyList()
@@ -100,12 +101,7 @@ object HomeMockData {
     fun lowBalanceWithWarningState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(todayBalance = 300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -135,6 +131,33 @@ object HomeMockData {
         )
     )
 
+    fun randomDayState(userName: String, date: LocalDate): HomeUiState {
+        val rng = Random(date.toEpochDay())
+        val spentAmount = 2_000 + rng.nextInt(0, 23_000)
+        val todayBalance = (ChallengeRepository.activeChallenge.dailyLimit - spentAmount).coerceAtLeast(0)
+        val categoryIds = HomeCategoryCatalog.categories.map { it.id }
+        val expenseCount = rng.nextInt(1, 5)
+        val expenses = (0 until expenseCount).map { index ->
+            val categoryId = categoryIds[rng.nextInt(categoryIds.size)]
+            val storeNames = RandomExpenseNamesByCategory[categoryId]
+            ExpenseEntry(
+                id = "rand_${date.toEpochDay()}_$index",
+                categoryId = categoryId,
+                name = storeNames?.get(rng.nextInt(storeNames.size)),
+                reasonTag = RandomReasonTagPool[rng.nextInt(RandomReasonTagPool.size)],
+                amount = 1_000 + rng.nextInt(0, 16) * 500
+            )
+        }
+        return HomeUiState(
+            userName = userName,
+            selectedDate = date,
+            challenge = buildChallenge(todayBalance = todayBalance),
+            expenses = expenses,
+            miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
+            warnings = emptyList()
+        )
+    }
+
     fun noActiveChallengeState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
@@ -153,12 +176,7 @@ object HomeMockData {
     fun normalBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 7_300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(todayBalance = 7_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -174,12 +192,7 @@ object HomeMockData {
     fun decreasingBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(
-            today = date,
-            todayBalance = 17_300,
-            savedAmount = 21_400,
-            streakDays = 4
-        ),
+        challenge = buildChallenge(todayBalance = 17_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 2_700),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 1_500),

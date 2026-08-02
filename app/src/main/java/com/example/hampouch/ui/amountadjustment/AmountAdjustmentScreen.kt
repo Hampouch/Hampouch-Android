@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.AmountAdjustmentChallenge
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.dialog.AmountAdjustmentConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.formatWon
@@ -186,7 +187,7 @@ fun AmountAdjustmentRoute(
                 stringResource(
                     R.string.amountadjustment_edit_count_caption_format,
                     challenge.maxEditCount,
-                    editCount
+                    (challenge.maxEditCount - editCount).coerceAtLeast(0)
                 ),
                 style = MaterialTheme.typography.labelMedium,
                 color = HPText,
@@ -221,6 +222,7 @@ fun AmountAdjustmentRoute(
             onConfirm = {
                 showConfirmDialog = false
                 editCount = (editCount + 1).coerceAtMost(challenge.maxEditCount)
+                ChallengeRepository.updateTargetAmount(selectedAmount)
             }
         )
     }
@@ -422,7 +424,7 @@ private fun DailyFoodGoalCard(amount: Int, modifier: Modifier = Modifier) {
 private fun AmountAdjustmentScreenPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge(editCount = 0),
+            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 0),
             onBackClick = {}
         )
     }
@@ -433,7 +435,7 @@ private fun AmountAdjustmentScreenPreview() {
 private fun AmountAdjustmentScreenMaxEditPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge(editCount = 1),
+            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 1),
             onBackClick = {}
         )
     }

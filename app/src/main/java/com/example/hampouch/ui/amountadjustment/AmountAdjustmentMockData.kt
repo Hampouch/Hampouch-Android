@@ -1,17 +1,30 @@
 package com.example.hampouch.ui.amountadjustment
 
 import com.example.hampouch.data.model.AmountAdjustmentChallenge
+import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import java.time.LocalDate
 
 object AmountAdjustmentMockData {
-    fun challenge(editCount: Int = 0): AmountAdjustmentChallenge = AmountAdjustmentChallenge(
-        totalDays = 14,
-        dDay = 7,
-        periodStart = LocalDate.of(2026, 5, 1),
-        periodEnd = LocalDate.of(2026, 5, 14),
-        targetAmount = 140_000,
-        dailyLimit = 10_000,
-        overAmount = 21_400,
-        editCount = editCount
-    )
+    fun challenge(): AmountAdjustmentChallenge {
+        val active = ChallengeRepository.activeChallenge
+        val today = LocalDate.now()
+        val trackedEnd = if (today.isBefore(active.periodEnd)) today else active.periodEnd
+        val overAmount = generateSequence(active.periodStart) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(trackedEnd) }
+            .sumOf { day ->
+                val spent = ExpenseDetailStore.recordsForDate(day).sumOf { it.amount }
+                (spent - active.dailyLimit).coerceAtLeast(0)
+            }
+        return AmountAdjustmentChallenge(
+            totalDays = active.totalDays,
+            dDay = active.dDayFrom(today),
+            periodStart = active.periodStart,
+            periodEnd = active.periodEnd,
+            targetAmount = active.targetAmount,
+            dailyLimit = active.dailyLimit,
+            overAmount = overAmount,
+            editCount = active.editCount
+        )
+    }
 }

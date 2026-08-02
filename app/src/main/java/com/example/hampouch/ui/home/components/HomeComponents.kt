@@ -129,7 +129,7 @@ fun DateSelectorRow(
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dates = listOf(referenceToday.minusDays(1), referenceToday, referenceToday.plusDays(1))
+    val dates = listOf(selectedDate.minusDays(1), selectedDate, selectedDate.plusDays(1))
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -180,18 +180,38 @@ private fun DateChip(
 }
 
 @Composable
-fun ChallengeBanner(challenge: HomeChallenge, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
+fun ChallengeBanner(
+    challenge: HomeChallenge,
+    onDetailClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.home_challenge_in_progress_format, challenge.totalDays),
                 style = MaterialTheme.typography.titleSmall,
-                color = HPBlack
+                color = HPBlack,
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable(onClick = onDetailClick)
+            ) {
+                Text(
+                    text = stringResource(R.string.home_challenge_detail_link),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPText
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = HPText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(
                     R.string.home_challenge_period_format,
@@ -199,20 +219,21 @@ fun ChallengeBanner(challenge: HomeChallenge, modifier: Modifier = Modifier) {
                     challenge.periodEndLabel
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = HPText
+                color = HPText,
+                modifier = Modifier.weight(1f)
             )
-        }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(HPMain)
-                .padding(horizontal = 14.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.home_challenge_dday_format, challenge.dDay),
-                style = MaterialTheme.typography.labelLarge,
-                color = HPWhite
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(HPMain)
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.home_challenge_dday_format, challenge.dDay),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = HPWhite
+                )
+            }
         }
     }
 }
@@ -221,6 +242,7 @@ private fun characterDrawableRes(state: CharacterState): Int = when (state) {
     CharacterState.CHUBBY -> R.drawable.img_hamster_chubby
     CharacterState.NORMAL -> R.drawable.img_hamster_normal
     CharacterState.THIN -> R.drawable.img_hamster_thin
+    CharacterState.OVER_LIMIT -> R.drawable.img_hamster_fail
 }
 
 @Composable
@@ -270,7 +292,7 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
                     .fillMaxHeight()
                     .fillMaxWidth(fraction = animatedRatio.coerceIn(0f, 1f))
                     .clip(RoundedCornerShape(50))
-                    .background(HPMain)
+                    .background(if (challenge.isOverLimit) HPSub else HPMain)
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -287,7 +309,7 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
             Text(
                 text = stringResource(R.string.home_amount_won_format, formatWon(challenge.todayBalance)),
                 style = MaterialTheme.typography.titleSmall,
-                color = HPBlack
+                color = if (challenge.isOverLimit) HPSub else HPBlack
             )
         }
     }
@@ -323,9 +345,13 @@ fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Mod
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.home_saved_amount_format, formatWon(savedAmount)),
+                    text = if (savedAmount >= 0) {
+                        stringResource(R.string.home_saved_amount_format, formatWon(savedAmount))
+                    } else {
+                        stringResource(R.string.home_saved_amount_negative_format, formatWon(savedAmount))
+                    },
                     style = MaterialTheme.typography.titleSmall,
-                    color = HPMain
+                    color = if (savedAmount >= 0) HPMain else HPSub
                 )
             }
             Row(

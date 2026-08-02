@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
@@ -44,6 +45,7 @@ import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -67,6 +69,7 @@ fun HomeScreen(
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
+    onNavigateToAmountAdjustment: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -85,7 +88,19 @@ fun HomeScreen(
         )
     }
     val uiState = baseUiState.copy(expenses = baseUiState.expenses + storeExpenses)
-    val displayedUiState = uiState.copy(miniChallenges = MiniChallengeStore.challengesFor(selectedDate))
+    val liveChallenge = uiState.challenge?.let { challenge ->
+        val todaySpent = uiState.expenses.sumOf { it.amount }
+        val (savedAmount, streakDays) = computeChallengeProgress(referenceToday, challenge.dailyLimit)
+        challenge.copy(
+            todayBalance = challenge.dailyLimit - todaySpent,
+            savedAmount = savedAmount,
+            streakDays = streakDays
+        )
+    }
+    val displayedUiState = uiState.copy(
+        challenge = liveChallenge,
+        miniChallenges = MiniChallengeStore.challengesFor(selectedDate)
+    )
 
     Scaffold(
         modifier = modifier,
@@ -108,10 +123,11 @@ fun HomeScreen(
                 onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
                 onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
                 onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
-                onSuggestionClick = {},
+                onSuggestionClick = { onNavigateToAmountAdjustment() },
                 onStartChallengeClick = onStartChallengeClick,
                 onCalendarClick = onCalendarClick,
                 onChallengeSummaryClick = onChallengeSummaryClick,
+                onChallengeDetailClick = onNavigateToAmountAdjustment,
                 onExpenseClick = onNavigateToExpenseDetail,
                 onViewAllExpensesClick = onNavigateToExpenseCalendar,
                 onAddExpenseClick = onAddExpenseClick,
@@ -153,9 +169,35 @@ fun HomeScreen(
     }
 }
 
-private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState = when (date) {
-    referenceToday.minusDays(1) -> HomeMockData.lowBalanceWithWarningState(MOCK_USER_NAME, date)
-    else -> HomeMockData.freshDayState(MOCK_USER_NAME, date)
+private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState {
+    val userName = UserSession.currentUser.name
+    return when (date) {
+        referenceToday -> HomeMockData.freshDayState(userName, date)
+        else -> HomeMockData.randomDayState(userName, date)
+    }
+}
+
+private fun totalSpentOn(date: LocalDate, referenceToday: LocalDate): Int =
+    mockStateForDate(date, referenceToday).expenses.sumOf { it.amount } +
+        ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+
+private fun dailyBalanceOn(date: LocalDate, referenceToday: LocalDate, dailyLimit: Int): Int =
+    dailyLimit - totalSpentOn(date, referenceToday)
+
+// 절약 금액 = 챌린지 시작일부터 오늘까지 날짜별 '오늘 잔액'의 누적 합계.
+// 연속 달성 = 오늘부터 거슬러 올라가며 '오늘 잔액'이 0원 이상인 날짜가 끊기지 않고 이어진 일수.
+private fun computeChallengeProgress(referenceToday: LocalDate, dailyLimit: Int): Pair<Int, Int> {
+    val active = ChallengeRepository.activeChallenge
+    val trackedEnd = if (referenceToday.isBefore(active.periodEnd)) referenceToday else active.periodEnd
+    val elapsedDays = generateSequence(active.periodStart) { it.plusDays(1) }
+        .takeWhile { !it.isAfter(trackedEnd) }
+        .toList()
+    val savedAmount = elapsedDays.sumOf { dailyBalanceOn(it, referenceToday, dailyLimit) }
+    var streakDays = 0
+    for (day in elapsedDays.asReversed()) {
+        if (dailyBalanceOn(day, referenceToday, dailyLimit) >= 0) streakDays++ else break
+    }
+    return savedAmount to streakDays
 }
 
 @Composable
@@ -169,6 +211,7 @@ private fun HomeContent(
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: () -> Unit = {},
+    onChallengeDetailClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
@@ -207,7 +250,7 @@ private fun HomeContent(
                     .clickable(onClick = onChallengeSummaryClick)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                ChallengeBanner(challenge = challenge)
+                ChallengeBanner(challenge = challenge, onDetailClick = onChallengeDetailClick)
                 Spacer(modifier = Modifier.height(16.dp))
                 CharacterGaugeSection(challenge = challenge)
                 Spacer(modifier = Modifier.height(16.dp))

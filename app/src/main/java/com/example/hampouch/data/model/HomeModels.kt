@@ -5,7 +5,8 @@ import java.time.LocalDate
 enum class CharacterState {
     CHUBBY,
     NORMAL,
-    THIN;
+    THIN,
+    OVER_LIMIT;
 
     companion object {
         fun fromRatio(ratio: Float): CharacterState = when {
@@ -26,11 +27,18 @@ data class HomeChallenge(
     val savedAmount: Int,
     val streakDays: Int
 ) {
+    val isOverLimit: Boolean
+        get() = todayBalance < 0
+
     val balanceRatio: Float
-        get() = if (dailyLimit <= 0) 0f else (todayBalance.toFloat() / dailyLimit.toFloat()).coerceIn(0f, 1f)
+        get() = when {
+            isOverLimit -> 1f
+            dailyLimit <= 0 -> 0f
+            else -> (todayBalance.toFloat() / dailyLimit.toFloat()).coerceIn(0f, 1f)
+        }
 
     val characterState: CharacterState
-        get() = CharacterState.fromRatio(balanceRatio)
+        get() = if (isOverLimit) CharacterState.OVER_LIMIT else CharacterState.fromRatio(balanceRatio)
 }
 
 data class ExpenseEntry(

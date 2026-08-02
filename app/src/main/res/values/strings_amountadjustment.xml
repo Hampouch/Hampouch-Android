@@ -21,7 +21,7 @@
     <string name="amountadjustment_won_suffix">원</string>
 
     <string name="amountadjustment_daily_food_goal_title">하루 식비 목표</string>
-    <string name="amountadjustment_edit_count_caption_format">목표 수정은 최대 %1$d회까지 가능해요. (현재 %2$d회)</string>
+    <string name="amountadjustment_edit_count_caption_format">목표 수정은 최대 %1$d회까지 가능해요. (남은 횟수 %2$d회)</string>
     <string name="amountadjustment_submit_button">목표 금액 수정하기</string>
 
     <string name="amountadjustment_confirm_question">목표 금액을 수정할까요?</string>
