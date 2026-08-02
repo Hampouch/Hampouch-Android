@@ -12,6 +12,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,7 +47,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -54,8 +57,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.ui.home.HomeCategoryCatalog
@@ -66,8 +71,6 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
 
@@ -182,7 +185,11 @@ fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
 @Composable
 fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
-    Canvas(modifier = modifier.fillMaxWidth().height(1.dp)) {
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(1.dp)
+    ) {
         drawLine(color, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
     }
 }
@@ -213,7 +220,6 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
             Box(
                 modifier = Modifier
                     .size(width = 160.dp, height = 140.dp)
-                    .clip(RoundedCornerShape(14.dp))
                     .background(HPGray5)
             ) {
                 if (painter != null) {
@@ -221,7 +227,9 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
                         painter = painter,
                         contentDescription = stringResource(R.string.cd_expense_photo),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxWidth().height(140.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
                     )
                 }
             }
@@ -239,7 +247,7 @@ fun <T> ThreeColumnChipGrid(
         items.chunked(3).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 rowItems.forEach { item ->
                     Box(modifier = Modifier.weight(1f)) { chip(item) }
@@ -259,13 +267,17 @@ fun ChoiceChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    iconTint: Color = HPText
+    iconRes: Int? = null,
+    iconTint: Color = HPText,
+    iconSize: Dp = 16.dp,
+    iconSpacing: Dp = 4.dp
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
     val contentColor = if (selected) HPWhite else HPBlack
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .height(40.dp)
             .clip(RoundedCornerShape(50))
             .background(backgroundColor)
             .border(
@@ -278,18 +290,26 @@ fun ChoiceChip(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (icon != null) {
+        if (iconRes != null) {
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(iconSize)
+            )
+            Spacer(modifier = Modifier.width(iconSpacing))
+        } else if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (selected) HPWhite else iconTint,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(iconSize)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(iconSpacing))
         }
         Text(
             label,
             style = MaterialTheme.typography.bodySmall,
+            fontSize = 16.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
             maxLines = 1
@@ -305,18 +325,36 @@ fun ExpenseTextField(
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
     minLines: Int = 1,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    showBorder: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(HPWhite)
-            .border(width = 1.dp, color = HPGray4, shape = RoundedCornerShape(10.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .then(
+                if (showBorder) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = HPGray4,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .padding(contentPadding)
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = HPGray5)
+            Text(
+                placeholder,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start,
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPGray5
+            )
         }
         BasicTextField(
             value = value,
@@ -375,7 +413,8 @@ private fun rememberExpensePhotoPickerLauncher(
     onPhotosPicked: (List<String>) -> Unit
 ): () -> Unit {
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = maxItems.coerceAtLeast(1))
+        // PickMultipleVisualMedia requires maxItems > 1
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = maxItems.coerceAtLeast(2))
     ) { uris -> if (uris.isNotEmpty()) onPhotosPicked(uris.map { it.toString() }) }
     return { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 }
@@ -387,12 +426,13 @@ fun ExpensePhotoEditSection(
     photoUris: List<String>,
     onPhotosAdded: (List<String>) -> Unit,
     onPhotosRemoved: (Set<String>) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxCount: Int = ExpensePhotoMaxCount
 ) {
     var selectMode by remember { mutableStateOf(false) }
     var selectedUris by remember { mutableStateOf(setOf<String>()) }
     val pickerLauncher = rememberExpensePhotoPickerLauncher(
-        maxItems = (ExpensePhotoMaxCount - photoUris.size).coerceAtLeast(1),
+        maxItems = (maxCount - photoUris.size).coerceAtLeast(1),
         onPhotosPicked = onPhotosAdded
     )
 
@@ -430,7 +470,9 @@ fun ExpensePhotoEditSection(
         }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             photoUris.forEach { uri ->
@@ -439,12 +481,13 @@ fun ExpensePhotoEditSection(
                     selectMode = selectMode,
                     selected = uri in selectedUris,
                     onToggleSelected = {
-                        selectedUris = if (uri in selectedUris) selectedUris - uri else selectedUris + uri
+                        selectedUris =
+                            if (uri in selectedUris) selectedUris - uri else selectedUris + uri
                     },
                     onChangeClick = { pickerLauncher() }
                 )
             }
-            if (photoUris.isNotEmpty() && photoUris.size < ExpensePhotoMaxCount) {
+            if (photoUris.isNotEmpty() && photoUris.size < maxCount) {
                 AddPhotoTile(onClick = { pickerLauncher() })
             }
         }
@@ -457,7 +500,12 @@ private fun AddPhotoTextButton(onClick: () -> Unit, modifier: Modifier = Modifie
         modifier = modifier.clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Filled.Add, contentDescription = null, tint = HPMain, modifier = Modifier.size(16.dp))
+        Icon(
+            Icons.Filled.Add,
+            contentDescription = null,
+            tint = HPMain,
+            modifier = Modifier.size(16.dp)
+        )
         Spacer(modifier = Modifier.width(2.dp))
         Text(
             stringResource(R.string.expensedetail_photo_add),
@@ -490,7 +538,9 @@ private fun EditablePhotoTile(
                 painter = painter,
                 contentDescription = stringResource(R.string.cd_expense_photo),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().height(130.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
             )
         }
         if (!selectMode) {
@@ -537,7 +587,11 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.cd_add_photo), tint = HPText)
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = stringResource(R.string.cd_add_photo),
+                tint = HPText
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 stringResource(R.string.expensedetail_photo_add),
@@ -549,7 +603,10 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ExpenseSummaryCard(record: com.example.hampouch.data.model.ExpenseRecord, modifier: Modifier = Modifier) {
+fun ExpenseSummaryCard(
+    record: com.example.hampouch.data.model.ExpenseRecord,
+    modifier: Modifier = Modifier
+) {
     val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
@@ -558,49 +615,61 @@ fun ExpenseSummaryCard(record: com.example.hampouch.data.model.ExpenseRecord, mo
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
             .padding(15.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(resolveCategoryColor(record.categoryId).copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = resolveCategoryIcon(record.categoryId),
-                contentDescription = null,
-                tint = resolveCategoryColor(record.categoryId),
-                modifier = Modifier.size(20.dp)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(resolveCategoryColor(record.categoryId).copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = resolveCategoryIcon(record.categoryId),
+                    contentDescription = null,
+                    tint = resolveCategoryColor(record.categoryId),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    record.expenseName ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HPBlack
+                )
+                Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+            }
         }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(horizontalAlignment = Alignment.End) {
+            if (reasonLabel != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(HPGray3)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        reasonLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = HPText
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             Text(
-                record.expenseName ?: categoryLabel,
+                stringResource(
+                    R.string.expensedetail_amount_won_format,
+                    formatWon(record.amount)
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = HPBlack
             )
-            Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         }
-        if (reasonLabel != null) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(HPGray3)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(reasonLabel, style = MaterialTheme.typography.labelMedium, color = HPText)
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-        Text(
-            stringResource(R.string.expensedetail_amount_won_format, formatWon(record.amount)),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPBlack
-        )
     }
 }
 
@@ -621,7 +690,12 @@ fun ExpenseDateField(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Filled.CalendarMonth, contentDescription = null, tint = HPText, modifier = Modifier.size(18.dp))
+        Icon(
+            Icons.Filled.CalendarMonth,
+            contentDescription = null,
+            tint = HPText,
+            modifier = Modifier.size(18.dp)
+        )
         Spacer(modifier = Modifier.width(10.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
     }

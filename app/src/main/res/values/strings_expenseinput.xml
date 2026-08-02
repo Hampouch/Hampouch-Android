@@ -1,3 +1,54 @@
 <resources>
     <!-- 지출 입력 -->
+    <string name="expenseinput_title">지출 입력</string>
+    <string name="expenseinput_optional_badge">선택 사항</string>
+
+    <string name="expenseinput_today_balance">오늘 잔액</string>
+    <string name="expenseinput_amount_question">얼마 썼어요?</string>
+    <string name="expenseinput_no_spending_today">오늘은 안 썼어요</string>
+    <string name="expenseinput_max_amount_error_format">%1$s원까지 입력할 수 있어요</string>
+
+    <string name="expenseinput_category_question">어떤 지출인가요?</string>
+    <string name="expenseinput_category_description">지출명 및 지출 카테고리를 입력해주세요.</string>
+    <string name="expenseinput_expense_name_label">지출명</string>
+
+    <string name="expenseinput_reason_question">이유가 뭐예요?</string>
+    <string name="expenseinput_reason_description_line1">이 소비 왜 했어요?</string>
+    <string name="expenseinput_reason_description_line2">나중에 패턴으로 보여줄게요.</string>
+    <string name="expenseinput_reason_pick_one">한 가지만 골라주세요.</string>
+    <string name="expenseinput_reason_custom_input">직접 입력</string>
+    <string name="expenseinput_reason_label">지출 이유</string>
+    <string name="expenseinput_reason_placeholder">지출 이유를 입력해주세요.</string>
+    <string name="expenseinput_reason_none_tag">태그 없음</string>
+
+    <string name="expenseinput_memo_question">메모나 사진을 남겨볼까요?</string>
+    <string name="expenseinput_memo_description_line1">안 해도 괜찮아요.</string>
+    <string name="expenseinput_memo_description_line2">나중에 기록하고 싶을 때 유용해요.</string>
+    <string name="expenseinput_memo_placeholder">예) 식후 커피 어떻게 참아요..</string>
+    <string name="expenseinput_photo_attach_title">영수증/사진 첨부</string>
+    <string name="expenseinput_photo_attach_subtitle">카메라 또는 갤러리에서 선택</string>
+    <string name="expenseinput_memo_label">메모</string>
+    <string name="expenseinput_photo_label">사진</string>
+
+    <string name="expenseinput_balance_after_format">지출 후 잔액</string>
+    <string name="expenseinput_won_format">%1$s원</string>
+
+    <string name="expenseinput_next_button">다음</string>
+    <string name="expenseinput_skip_rest">건너뛰기 (기록만 할게요)</string>
+    <string name="expenseinput_delete_digit">DEL</string>
+
+    <string name="expenseinput_category_label">카테고리</string>
+    <string name="expenseinput_category_placeholder">카테고리를 입력해주세요.</string>
+
+    <string name="expenseinput_skip_prompt_title">오늘 식비 지출이 없나요?</string>
+    <string name="expenseinput_skip_prompt_confirm">지출 없음</string>
+
+    <string name="expenseinput_category_skip_prompt_title">지출명과 카테고리 없이 저장할까요?</string>
+    <string name="expenseinput_category_skip_prompt_confirm">저장</string>
+
+    <string name="expenseinput_save_question">이렇게 저장할까요?</string>
+    <string name="expenseinput_save_button">저장</string>
+
+    <string name="cd_expenseinput_delete_digit">한 자리 지우기</string>
+    <string name="cd_expenseinput_photo_attach">사진 촬영 또는 첨부</string>
 </resources>

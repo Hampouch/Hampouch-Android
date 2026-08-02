@@ -70,9 +70,6 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    // TODO: 챌린지 성공/실패 화면으로 넘어가려면
-    //  state: ChallengeResultUiState = ChallengeResultMockData.complete
-    //  state: ChallengeResultUiState = ChallengeResultMockData.fail
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress,
     onBackClick: () -> Unit = {},
     onExpenseAnalysisClick: () -> Unit = {},

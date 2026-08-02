@@ -32,7 +32,6 @@ data class HamBattleActiveChallenge(
     val penalty: String,
     val participants: List<HamBattleParticipantSpending>,
     val dDay: String,
-    val statusMessage: String,
     val periodLabel: String = ""
 )
 

@@ -156,13 +156,11 @@ private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
         Text(
             "· 챌린지가 시작되면 입장할 수 없어요.",
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
             color = HPText
         )
         Text(
             "· 3일 이상 지출 미입력 시 무효 처리 됩니다.",
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
             color = HPText
         )
 
@@ -208,7 +206,7 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
                 fontWeight = FontWeight.Bold,
                 color = if (isMe) HPMain else HPBlack
             )
-            Text("${participant.amount}", style = Body16Bold, color = if (isMe) HPMain else HPBlack)
+            Text("0", style = Body16Bold, color = if (isMe) HPMain else HPBlack)
         }
     }
 }
@@ -246,7 +244,6 @@ private fun WaitingPenaltyBox(penalty: String) {
         Text(
             penalty,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
             color = HPBlack
         )
     }

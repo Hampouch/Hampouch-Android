@@ -20,7 +20,6 @@ object HamBattleMockData {
                 HamBattleParticipantSpending("이준혁", 113_000)
             ),
             dDay = "D-3",
-            statusMessage = "현재 내가 이기는 중",
             periodLabel = "26.05.01 - 26.05.07 (7일)"
         ),
         HamBattleActiveChallenge(
@@ -30,22 +29,22 @@ object HamBattleMockData {
             title = "5월 식비 절약왕 가리기",
             penalty = "전원에게 삼겹살 쏘기",
             participants = listOf(
-                HamBattleParticipantSpending("김수진", 61_000),
+                HamBattleParticipantSpending("김수진", 161_000),
                 HamBattleParticipantSpending("나", 73_200),
                 HamBattleParticipantSpending("박민서", 87_500),
+                HamBattleParticipantSpending("일이삼사오육칠팔구공", 0),
                 HamBattleParticipantSpending(
                     "이준혁",
                     113_000,
                     status = HamBattleParticipantStatus.DISQUALIFIED
                 ),
                 HamBattleParticipantSpending(
-                    "최태양",
-                    152_600,
+                    "최태양최태양최태양",
+                    1_152_600,
                     status = HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
                 )
             ),
             dDay = "D-11",
-            statusMessage = "현재 2위",
             periodLabel = "26.05.01 - 26.05.14 (14일)"
         )
     )
@@ -94,7 +93,7 @@ object HamBattleMockData {
                 HamBattleParticipantSpending("나", 0)
             ),
             joinedCount = 1,
-            totalCount = 5,
+            totalCount = 10,
             startsInDay = "D-2",
             startDateLabel = "5월 1일 시작",
             startDateShortLabel = "05.01"

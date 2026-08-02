@@ -46,6 +46,7 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -57,7 +58,7 @@ private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
 
 @Composable
-fun HamBattleOneVsOneResultScreen(
+fun HamBattleChallengesResultScreen(
     challenge: HamBattleActiveChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
@@ -183,7 +184,12 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (highlighted) HPSub2 else HPWhite)
+            .border(
+                width = if (highlighted) 1.dp else 0.dp,
+                color = if (highlighted) HPSub else Color.Transparent,
+                shape = RoundedCornerShape(14.dp)
+            )
+            .background(if (highlighted) HPSub2.copy(alpha = 0.4f) else HPWhite)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -205,11 +211,11 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 participant.name,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = if (highlighted) HPMain else HPText
+                color = HPMain
             )
             Text(
                 formatWon(participant.amount),
-                style = Body16Bold,
+                fontSize = 16.sp,
                 color = HPBlack
             )
         }
@@ -310,8 +316,8 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
 
 @Preview
 @Composable
-private fun HamBattleOneVsOneResultScreenPreview() {
+private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleOneVsOneResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges[0])
     }
 }
