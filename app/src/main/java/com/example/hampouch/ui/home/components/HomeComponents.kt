@@ -472,10 +472,8 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick:
         Column(modifier = Modifier.weight(1f)) {
             if (entry.name != null) {
                 Text(text = entry.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)
-                Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
-            } else {
-                Text(text = categoryLabel, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)
             }
+            Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         }
         if (entry.reasonTag != null) {
             Box(
