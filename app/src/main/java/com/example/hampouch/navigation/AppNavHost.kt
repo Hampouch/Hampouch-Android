@@ -39,6 +39,7 @@ import com.example.hampouch.ui.expensedetail.ExpenseCalendarRoute
 import com.example.hampouch.ui.expensedetail.ExpenseDetailRoute
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.ExpenseEditRoute
+import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
@@ -193,6 +194,9 @@ fun AppNavHost(
                 onNavigateToExpenseCalendar = {
                     navController.navigate(Screen.ExpenseCalendar.route)
                 },
+                onAddExpenseClick = {
+                    navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
+                },
                 onLoggedOut = {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
@@ -246,6 +250,30 @@ fun AppNavHost(
                 },
                 onExpenseAnalysisClick = {
                     navController.navigate(Screen.ExpenseAnalysis.createRoute(YearMonth.now()))
+                },
+                onAddExpenseClick = { date ->
+                    navController.navigate(Screen.ExpenseInput.createRoute(date))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ExpenseInput.route,
+            arguments = listOf(navArgument("initialDateEpochDay") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
+            val initialDate = LocalDate.ofEpochDay(epochDay)
+            val dailyLimit = 20_000
+            val alreadySpent = ExpenseDetailStore.recordsForDate(initialDate).sumOf { it.amount }
+            ExpenseInputRoute(
+                todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),
+                dailyLimit = dailyLimit,
+                initialDate = initialDate,
+                onBackClick = { navController.popBackStack() },
+                onNoSpendingToday = { navController.popBackStack() },
+                onComplete = { record ->
+                    ExpenseDetailStore.upsert(record)
+                    navController.popBackStack()
                 }
             )
         }
