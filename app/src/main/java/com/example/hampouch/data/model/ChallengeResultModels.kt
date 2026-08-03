@@ -40,5 +40,6 @@ data class ChallengeResultUiState(
     val actualAmount: Int,
     val dailyLimit: Int,
     val emotionStats: List<EmotionStat>,
-    val dailyRecords: Map<LocalDate, DailyRecordStatus>
+    val dailyRecords: Map<LocalDate, DailyRecordStatus>,
+    val isEditable: Boolean = false
 )

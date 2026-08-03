@@ -14,7 +14,7 @@ object AmountAdjustmentMockData {
             .takeWhile { !it.isAfter(trackedEnd) }
             .sumOf { day ->
                 val spent = ExpenseDetailStore.recordsForDate(day).sumOf { it.amount }
-                (spent - active.dailyLimit).coerceAtLeast(0)
+                (spent - active.dailyLimitOn(day)).coerceAtLeast(0)
             }
         return AmountAdjustmentChallenge(
             totalDays = active.totalDays,

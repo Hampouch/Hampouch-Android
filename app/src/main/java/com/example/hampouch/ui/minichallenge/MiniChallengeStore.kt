@@ -50,4 +50,12 @@ object MiniChallengeStore {
     fun removeChallenge(date: LocalDate, id: String) {
         challengesByDate = challengesByDate + (date to challengesFor(date).filterNot { it.id == id })
     }
+
+    fun resetForAccount() {
+        challengesByDate = mapOf(
+            LocalDate.now().minusDays(1) to MiniChallengeMockData.yesterdayChallenges(),
+            LocalDate.now() to MiniChallengeMockData.todayChallenges()
+        )
+        recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
+    }
 }

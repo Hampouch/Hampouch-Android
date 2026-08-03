@@ -1,6 +1,11 @@
 package com.example.hampouch.ui.mypage
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,10 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
+import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -50,6 +56,7 @@ import com.example.hampouch.ui.mypage.components.SettingsMenuRow
 import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.LocalDate
 
 private enum class MyPageRoute {
     MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY,
@@ -64,16 +71,20 @@ fun MyPageScreen(
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onLoggedOut: () -> Unit = {}
+    onLoggedOut: () -> Unit = {},
+    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
+    onNavigateToAmountAdjustment: () -> Unit = {},
+    onNavigateToTakeABreak: () -> Unit = {},
+    onStartNewChallengeClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var route by remember { mutableStateOf(MyPageRoute.MAIN) }
-    var previousListRoute by remember { mutableStateOf(MyPageRoute.MY_TIPS) }
+    var route by rememberSaveable { mutableStateOf(MyPageRoute.MAIN) }
+    var previousListRoute by rememberSaveable { mutableStateOf(MyPageRoute.MY_TIPS) }
     var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
-    var selectedPostId by remember { mutableStateOf<String?>(null) }
-    var selectedChallengeStatus by remember { mutableStateOf(ChallengeStatus.SUCCESS) }
+    var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedChallengeId by rememberSaveable { mutableStateOf<String?>(null) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
     val myTips = MyPageMockData.myTips()
     val savedTips = MyPageMockData.savedTips()
@@ -84,7 +95,12 @@ fun MyPageScreen(
         route = if (tip.type == TipPostType.BATTLE) MyPageRoute.BATTLE_DETAIL else MyPageRoute.TIP_DETAIL
     }
 
-    when (route) {
+    AnimatedContent(
+        targetState = route,
+        transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
+        label = "mypage_route_transition"
+    ) { currentRoute ->
+    when (currentRoute) {
         MyPageRoute.MAIN -> {
             Box(modifier = modifier.fillMaxSize()) {
                 Scaffold(
@@ -206,7 +222,7 @@ fun MyPageScreen(
                 records = challengeRecords,
                 onBackClick = { route = MyPageRoute.MAIN },
                 onRecordClick = { record ->
-                    selectedChallengeStatus = record.status
+                    selectedChallengeId = record.id
                     route = MyPageRoute.CHALLENGE_RESULT
                 },
                 onNotificationClick = onNotificationClick,
@@ -216,14 +232,20 @@ fun MyPageScreen(
 
         MyPageRoute.CHALLENGE_RESULT -> {
             BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
-            ChallengeResultScreen(
-                state = when (selectedChallengeStatus) {
-                    ChallengeStatus.IN_PROGRESS -> ChallengeResultMockData.inProgress()
-                    ChallengeStatus.SUCCESS -> ChallengeResultMockData.complete
-                    ChallengeStatus.FAIL -> ChallengeResultMockData.fail
-                },
-                onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY }
-            )
+            val challenge = selectedChallengeId?.let { id -> ChallengeRepository.challenges.find { it.id == id } }
+            if (challenge != null) {
+                val state = ChallengeResultMockData.forChallenge(challenge)
+                ChallengeResultScreen(
+                    state = state,
+                    onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY },
+                    onExpenseAnalysisClick = {
+                        onNavigateToChallengeExpenseAnalysis(state.totalDays, state.periodStart, state.periodEnd)
+                    },
+                    onAdjustGoalClick = onNavigateToAmountAdjustment,
+                    onStartNewChallengeClick = onStartNewChallengeClick,
+                    onTakeABreakClick = onNavigateToTakeABreak
+                )
+            }
         }
 
         MyPageRoute.MY_TIPS -> {
@@ -289,6 +311,7 @@ fun MyPageScreen(
                 )
             }
         }
+    }
     }
 }
 

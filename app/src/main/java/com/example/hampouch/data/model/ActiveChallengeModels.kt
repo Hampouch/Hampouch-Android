@@ -3,6 +3,11 @@ package com.example.hampouch.data.model
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+data class DailyLimitOverride(
+    val effectiveFrom: LocalDate,
+    val dailyLimit: Int
+)
+
 data class ActiveChallenge(
     val id: String,
     val totalDays: Int,
@@ -12,7 +17,9 @@ data class ActiveChallenge(
     val targetAmount: Int,
     val savedAmount: Int,
     val streakDays: Int,
-    val editCount: Int
+    val editCount: Int,
+    val repeatMonthly: Boolean = false,
+    val dailyLimitOverrides: List<DailyLimitOverride> = listOf(DailyLimitOverride(periodStart, dailyLimit))
 ) {
     val maxEditCount: Int
         get() = if (totalDays >= 15) 2 else 1
@@ -22,6 +29,10 @@ data class ActiveChallenge(
 
     fun dDayFrom(referenceToday: LocalDate): Int =
         ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt()
+
+    fun dailyLimitOn(date: LocalDate): Int =
+        dailyLimitOverrides.filter { !it.effectiveFrom.isAfter(date) }.maxByOrNull { it.effectiveFrom }?.dailyLimit
+            ?: dailyLimit
 }
 
 data class ChallengeProgress(

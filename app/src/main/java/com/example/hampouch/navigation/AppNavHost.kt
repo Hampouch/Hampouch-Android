@@ -29,6 +29,7 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.data.model.ExpenseChallengePeriod
+import com.example.hampouch.data.repository.AccountDataCoordinator
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
@@ -73,6 +74,10 @@ fun AppNavHost(
         if (UserSession.restore(context)) Screen.Home.route else Screen.Onboarding.route
     }
 
+    LaunchedEffect(UserSession.currentUser.id) {
+        AccountDataCoordinator.syncIfNeeded(UserSession.currentUser.id)
+    }
+
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
@@ -112,6 +117,7 @@ fun AppNavHost(
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
+                    ChallengeRepository.startNewChallenge(request)
                     navController.navigate(Screen.Login.route)
                 }
             )
@@ -187,9 +193,11 @@ fun AppNavHost(
                     navController.navigate(Screen.MiniChallenge.createRoute(date))
                 },
                 onCalendarClick = {
-                    navController.navigate(Screen.ExpenseAnalysis.createRoute(YearMonth.now()))
+                    navController.navigate(Screen.ExpenseCalendar.route)
                 },
-                onChallengeSummaryClick = { navController.navigate(Screen.ChallengeSummary.route) },
+                onChallengeSummaryClick = { challengeId ->
+                    navController.navigate(Screen.ChallengeSummary.createRoute(challengeId))
+                },
                 onHamBattleStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onHamBattleChallengeClick = { challengeId ->
                     navController.navigate(Screen.ChallengeResult.createRoute(challengeId))
@@ -210,6 +218,9 @@ fun AppNavHost(
                 },
                 onNavigateToChallengeEndExpenseCalendar = {
                     navController.navigate(Screen.ChallengeEndExpenseCalendar.route)
+                },
+                onNavigateToChallengeExpenseAnalysis = { totalDays, start, end ->
+                    navController.navigate(Screen.ExpenseAnalysisChallenge.createRoute(totalDays, start, end))
                 },
                 onNavigateToTakeABreak = {
                     navController.navigate(Screen.TakeABreak.route)
@@ -305,7 +316,7 @@ fun AppNavHost(
         ) { backStackEntry ->
             val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
             val initialDate = LocalDate.ofEpochDay(epochDay)
-            val dailyLimit = ChallengeRepository.activeChallenge.dailyLimit
+            val dailyLimit = ChallengeRepository.activeChallenge.dailyLimitOn(initialDate)
             val alreadySpent = ExpenseDetailStore.recordsForDate(initialDate).sumOf { it.amount }
             ExpenseInputRoute(
                 todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),
@@ -534,27 +545,31 @@ fun AppNavHost(
             }
         }
 
-        composable(Screen.ChallengeSummary.route) {
-            // TODO: 챌린지 성공/실패 화면으로 넘어가려면
-            //  state: ChallengeResultUiState = ChallengeResultMockData.complete
-            //  state: ChallengeResultUiState = ChallengeResultMockData.fail
-            val state = ChallengeResultMockData.inProgress()
-            ChallengeResultScreen(
-                state = state,
-                onBackClick = { navController.popBackStack() },
-                onExpenseAnalysisClick = {
-                    navController.navigate(
-                        Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
-                    )
-                },
-                onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
-                onStartNewChallengeClick = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
-            )
+        composable(
+            route = Screen.ChallengeSummary.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
+            val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
+            if (challenge != null) {
+                val state = ChallengeResultMockData.forChallenge(challenge)
+                ChallengeResultScreen(
+                    state = state,
+                    onBackClick = { navController.popBackStack() },
+                    onExpenseAnalysisClick = {
+                        navController.navigate(
+                            Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
+                        )
+                    },
+                    onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
+                    onStartNewChallengeClick = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
+                )
+            }
         }
 
         composable(Screen.TakeABreak.route) {

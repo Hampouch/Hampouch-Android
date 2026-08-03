@@ -1,96 +1,83 @@
 package com.example.hampouch.ui.challengeresult
 
+import com.example.hampouch.data.model.ActiveChallenge
 import com.example.hampouch.data.model.ChallengeResultStatus
 import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.DailyRecordStatus
-import com.example.hampouch.data.model.DailyRecordStatus.FAIL
 import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
 import com.example.hampouch.data.model.EmotionStat
+import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.model.SpendingEmotion
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import java.time.LocalDate
-import java.time.YearMonth
+import kotlin.math.roundToInt
 
 object ChallengeResultMockData {
 
-    private val challengeMonth = YearMonth.of(2026, 5)
+    private fun reasonIdToEmotion(reasonId: String?): SpendingEmotion = when (reasonId) {
+        "stress" -> SpendingEmotion.STRESS
+        "reward" -> SpendingEmotion.REWARD
+        "lazy" -> SpendingEmotion.LAZY
+        "craving" -> SpendingEmotion.CRAVING
+        else -> SpendingEmotion.ETC
+    }
 
-    private val emotionStats = listOf(
-        EmotionStat(SpendingEmotion.CRAVING, 42),
-        EmotionStat(SpendingEmotion.STRESS, 25),
-        EmotionStat(SpendingEmotion.LAZY, 15),
-        EmotionStat(SpendingEmotion.REWARD, 10),
-        EmotionStat(SpendingEmotion.ETC, 8)
-    )
+    private fun computeEmotionStats(records: List<ExpenseRecord>): List<EmotionStat> {
+        val totalAmount = records.sumOf { it.amount }
+        if (totalAmount <= 0) return SpendingEmotion.entries.map { EmotionStat(it, 0) }
+        return SpendingEmotion.entries.map { emotion ->
+            val amount = records.filter { reasonIdToEmotion(it.reasonId) == emotion }.sumOf { it.amount }
+            EmotionStat(emotion, (amount * 100.0 / totalAmount).roundToInt())
+        }
+    }
 
-    private fun mayDay(day: Int): LocalDate = challengeMonth.atDay(day)
+    fun forChallenge(challenge: ActiveChallenge, referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState {
+        val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+        val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(trackedEnd) }
+            .flatMap { ExpenseDetailStore.recordsForDate(it) }
+            .toList()
+        val actualAmount = recordsInPeriod.sumOf { it.amount }
 
-    private fun recordsOf(vararg days: Pair<Int, DailyRecordStatus>): Map<LocalDate, DailyRecordStatus> =
-        days.associate { (day, status) -> mayDay(day) to status }
-
-    val complete = ChallengeResultUiState(
-        status = ChallengeResultStatus.COMPLETE,
-        title = "14일 챌린지",
-        periodStart = mayDay(1),
-        periodEnd = mayDay(14),
-        totalDays = 14,
-        successDays = 14,
-        streakDays = 14,
-        amountLabel = "총 절약",
-        amountValue = 27_500,
-        goalAmount = 400_000,
-        actualAmount = 372_500,
-        dailyLimit = 25_000,
-        emotionStats = emotionStats,
-        dailyRecords = recordsOf(
-            *(1..14).map { it to SUCCESS }.toTypedArray()
-        )
-    )
-
-    val fail = ChallengeResultUiState(
-        status = ChallengeResultStatus.FAIL,
-        title = "14일 챌린지",
-        periodStart = mayDay(1),
-        periodEnd = mayDay(14),
-        totalDays = 14,
-        successDays = 9,
-        streakDays = 4,
-        amountLabel = "초과 금액",
-        amountValue = 24_100,
-        goalAmount = 400_000,
-        actualAmount = 424_100,
-        dailyLimit = 25_000,
-        emotionStats = emotionStats,
-        dailyRecords = recordsOf(
-            1 to SUCCESS, 2 to SUCCESS, 3 to FAIL, 4 to SUCCESS, 5 to FAIL,
-            6 to SUCCESS, 7 to FAIL, 8 to SUCCESS, 9 to SUCCESS, 10 to SUCCESS,
-            11 to FAIL, 12 to SUCCESS, 13 to FAIL, 14 to SUCCESS
-        )
-    )
-
-    fun inProgress(): ChallengeResultUiState {
-        val active = ChallengeRepository.activeChallenge
-        val referenceToday = LocalDate.now()
-        val progress = ChallengeRepository.computeProgress(referenceToday) { date ->
+        val progress = ChallengeRepository.computeProgress(referenceToday, challenge) { date ->
             ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
         }
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
+
+        val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge.id
+        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.periodEnd)
+
+        val status = when {
+            isOngoing -> ChallengeResultStatus.IN_PROGRESS
+            actualAmount <= challenge.targetAmount -> ChallengeResultStatus.COMPLETE
+            else -> ChallengeResultStatus.FAIL
+        }
+        val amountLabel = if (status == ChallengeResultStatus.FAIL) "초과 금액" else "총 절약"
+        val amountValue = when (status) {
+            ChallengeResultStatus.IN_PROGRESS -> progress.savedAmount
+            ChallengeResultStatus.FAIL -> (actualAmount - challenge.targetAmount).coerceAtLeast(0)
+            ChallengeResultStatus.COMPLETE -> (challenge.targetAmount - actualAmount).coerceAtLeast(0)
+        }
+
         return ChallengeResultUiState(
-            status = ChallengeResultStatus.IN_PROGRESS,
-            title = "${active.totalDays}일 챌린지",
-            periodStart = active.periodStart,
-            periodEnd = active.periodEnd,
-            totalDays = active.totalDays,
+            status = status,
+            title = "${challenge.totalDays}일 챌린지",
+            periodStart = challenge.periodStart,
+            periodEnd = challenge.periodEnd,
+            totalDays = challenge.totalDays,
             successDays = successDays,
             streakDays = progress.streakDays,
-            amountLabel = "총 절약",
-            amountValue = progress.savedAmount,
-            goalAmount = active.targetAmount,
-            actualAmount = (active.targetAmount - progress.savedAmount).coerceAtLeast(0),
-            dailyLimit = active.dailyLimit,
-            emotionStats = emotionStats,
-            dailyRecords = progress.dailyRecords
+            amountLabel = amountLabel,
+            amountValue = amountValue,
+            goalAmount = challenge.targetAmount,
+            actualAmount = actualAmount,
+            dailyLimit = challenge.dailyLimit,
+            emotionStats = computeEmotionStats(recordsInPeriod),
+            dailyRecords = progress.dailyRecords,
+            isEditable = isActiveChallenge && ChallengeRepository.hasOngoingChallenge
         )
     }
+
+    fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
+        forChallenge(ChallengeRepository.activeChallenge, referenceToday)
 }

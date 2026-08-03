@@ -67,7 +67,7 @@ private fun buildChallenge(
     dDay = challenge.dDayFrom(date).coerceAtLeast(0),
     periodStartLabel = challenge.periodStart.format(periodLabelFormatter),
     periodEndLabel = challenge.periodEnd.format(periodLabelFormatter),
-    dailyLimit = challenge.dailyLimit,
+    dailyLimit = challenge.dailyLimitOn(date),
     todayBalance = todayBalance,
     savedAmount = savedAmount,
     streakDays = streakDays,
@@ -81,7 +81,7 @@ object HomeMockData {
         return HomeUiState(
             userName = userName,
             selectedDate = date,
-            challenge = challenge?.let { buildChallenge(it, date, todayBalance = it.dailyLimit) },
+            challenge = challenge?.let { buildChallenge(it, date, todayBalance = it.dailyLimitOn(date)) },
             expenses = emptyList(),
             miniChallenges = MiniChallengeMockData.todayChallenges(),
             warnings = emptyList()
