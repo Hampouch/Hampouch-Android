@@ -1,5 +1,6 @@
 package com.example.hampouch.navigation
 
+import com.example.hampouch.data.model.ChallengeResultStatus
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -26,6 +27,10 @@ sealed class Screen(val route: String) {
         fun createRoute(challengeId: String) = "hambattle_waiting_challenge_detail/$challengeId"
     }
     data object ChallengeSummary : Screen("challenge_summary")
+    data object NextChallenge : Screen("next_challenge/{status}/{suggestedTargetAmount}") {
+        fun createRoute(status: ChallengeResultStatus, suggestedTargetAmount: Int) =
+            "next_challenge/${status.name}/$suggestedTargetAmount"
+    }
     data object TakeABreak : Screen("take_a_break")
     data object AmountAdjustment : Screen("amount_adjustment")
     data object ExpenseDetail : Screen("expense_detail/{expenseId}") {

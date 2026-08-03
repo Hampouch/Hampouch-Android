@@ -85,6 +85,22 @@ object ChallengeRepository {
         return null
     }
 
+    fun startNewChallenge(totalDays: Int, targetAmount: Int, startDate: LocalDate = LocalDate.now()) {
+        activeChallengeState.value = ActiveChallenge(
+            id = "challenge_active",
+            totalDays = totalDays,
+            periodStart = startDate,
+            periodEnd = startDate.plusDays((totalDays - 1).toLong()),
+            dailyLimit = (targetAmount / totalDays).coerceAtLeast(0),
+            targetAmount = targetAmount,
+            savedAmount = 0,
+            streakDays = 0,
+            editCount = 0
+        )
+        challengeEndAcknowledged = false
+        hasVisitedExpenseEditAfterEnd = false
+    }
+
     fun updateTargetAmount(newTargetAmount: Int) {
         val current = activeChallengeState.value
         activeChallengeState.value = current.copy(

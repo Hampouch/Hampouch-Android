@@ -28,6 +28,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.data.model.ChallengeResultStatus
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
@@ -47,6 +48,7 @@ import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
+import com.example.hampouch.ui.nextchallenge.NextChallengeRoute
 import com.example.hampouch.ui.notification.NotificationMockData
 import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.onboarding.OnboardingRoute
@@ -538,7 +540,7 @@ fun AppNavHost(
             // TODO: 챌린지 성공/실패 화면으로 넘어가려면
             //  state: ChallengeResultUiState = ChallengeResultMockData.complete
             //  state: ChallengeResultUiState = ChallengeResultMockData.fail
-            val state = ChallengeResultMockData.inProgress()
+            val state = ChallengeResultMockData.fail
             ChallengeResultScreen(
                 state = state,
                 onBackClick = { navController.popBackStack() },
@@ -548,12 +550,38 @@ fun AppNavHost(
                     )
                 },
                 onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
-                onStartNewChallengeClick = {
+                onStartNewChallengeClick = { suggestedTargetAmount ->
+                    navController.navigate(Screen.NextChallenge.createRoute(state.status, suggestedTargetAmount))
+                },
+                onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
+            )
+        }
+
+        composable(
+            route = Screen.NextChallenge.route,
+            arguments = listOf(
+                navArgument("status") { type = NavType.StringType },
+                navArgument("suggestedTargetAmount") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val status = backStackEntry.arguments?.getString("status")
+                ?.let { runCatching { ChallengeResultStatus.valueOf(it) }.getOrNull() }
+                ?: ChallengeResultStatus.COMPLETE
+            val suggestedTargetAmount = backStackEntry.arguments?.getInt("suggestedTargetAmount") ?: 0
+            val previousResult = if (status == ChallengeResultStatus.FAIL) {
+                ChallengeResultMockData.fail
+            } else {
+                ChallengeResultMockData.complete
+            }
+            NextChallengeRoute(
+                previousResult = previousResult,
+                suggestedTargetAmount = suggestedTargetAmount,
+                onBackClick = { navController.popBackStack() },
+                onStartChallengeClick = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                },
-                onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
+                }
             )
         }
 

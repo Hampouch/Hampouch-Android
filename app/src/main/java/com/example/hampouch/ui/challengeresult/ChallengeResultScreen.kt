@@ -68,6 +68,9 @@ import kotlinx.coroutines.launch
 
 private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 ${date.dayOfMonth}일"
 
+private fun recommendedTightenedTarget(actualAmount: Int): Int =
+    ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
+
 @Composable
 fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
@@ -75,7 +78,7 @@ fun ChallengeResultScreen(
     onExpenseAnalysisClick: () -> Unit = {},
     onAdjustGoalClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {},
+    onStartNewChallengeClick: (Int) -> Unit = {},
     onTakeABreakClick: () -> Unit = {}
 ) {
     val isFinished = state.status != ChallengeResultStatus.IN_PROGRESS
@@ -186,7 +189,7 @@ fun ChallengeResultScreen(
                             if (state.status == ChallengeResultStatus.FAIL) {
                                 showGoalAdjustmentDialog = true
                             } else {
-                                onStartNewChallengeClick()
+                                onStartNewChallengeClick(recommendedTightenedTarget(state.actualAmount))
                             }
                         },
                         onTakeABreakClick = onTakeABreakClick
@@ -200,11 +203,11 @@ fun ChallengeResultScreen(
 
     if (showGoalAdjustmentDialog) {
         ChallengeGoalAdjustmentDialog(
-            currentDailyLimit = state.dailyLimit,
+            currentGoalAmount = state.goalAmount,
             onDismissRequest = { showGoalAdjustmentDialog = false },
-            onStartNewChallengeClick = {
+            onStartNewChallengeClick = { selectedAmount ->
                 showGoalAdjustmentDialog = false
-                onStartNewChallengeClick()
+                onStartNewChallengeClick(selectedAmount)
             }
         )
     }
