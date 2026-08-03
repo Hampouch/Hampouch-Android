@@ -20,4 +20,9 @@
     <string name="notification_lock_preview_placeholder_title">제목</string>
     <string name="notification_lock_preview_placeholder_body">내용</string>
     <string name="notification_lock_preview_placeholder_time">시간</string>
+
+    <!-- 실기기 테스트용 시스템 알림 -->
+    <string name="notification_channel_name">햄포치 알림</string>
+    <string name="notification_channel_description">챌린지, 햄배틀, 커뮤니티 알림을 보내드려요.</string>
+    <string name="notification_test_send_button">테스트 알림 보내기</string>
 </resources>
