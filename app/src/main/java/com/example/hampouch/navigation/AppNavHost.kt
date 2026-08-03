@@ -28,6 +28,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
@@ -56,6 +57,7 @@ import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
 import java.time.YearMonth
 import com.example.hampouch.ui.takeabreak.TakeABreakScreen
+import com.example.hampouch.ui.takeabreak.TakeABreakStore
 
 private const val TAG = "AppNavHost"
 
@@ -206,6 +208,12 @@ fun AppNavHost(
                 onNavigateToExpenseCalendar = {
                     navController.navigate(Screen.ExpenseCalendar.route)
                 },
+                onNavigateToChallengeEndExpenseCalendar = {
+                    navController.navigate(Screen.ChallengeEndExpenseCalendar.route)
+                },
+                onNavigateToTakeABreak = {
+                    navController.navigate(Screen.TakeABreak.route)
+                },
                 onAddExpenseClick = {
                     navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
                 },
@@ -270,6 +278,24 @@ fun AppNavHost(
                 onAddExpenseClick = { date ->
                     navController.navigate(Screen.ExpenseInput.createRoute(date))
                 }
+            )
+        }
+
+        composable(Screen.ChallengeEndExpenseCalendar.route) {
+            val active = ChallengeRepository.activeChallenge
+            ExpenseCalendarRoute(
+                onBackClick = {
+                    ChallengeRepository.markVisitedExpenseEditAfterEnd()
+                    navController.popBackStack()
+                },
+                onExpenseClick = { expenseId ->
+                    navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
+                },
+                challengePeriod = ExpenseChallengePeriod(startDate = active.periodStart, endDate = active.periodEnd),
+                onAddExpenseClick = { date ->
+                    navController.navigate(Screen.ExpenseInput.createRoute(date))
+                },
+                restrictToChallengePeriod = true
             )
         }
 
@@ -521,6 +547,7 @@ fun AppNavHost(
                         Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
                     )
                 },
+                onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
                 onStartNewChallengeClick = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -534,7 +561,8 @@ fun AppNavHost(
             TakeABreakScreen(
                 onClose = { navController.popBackStack() },
                 onKeepChallenge = { navController.popBackStack() },
-                onStartBreak = { _, _ ->
+                onStartBreak = { duration, customDays ->
+                    TakeABreakStore.startBreak(duration, customDays)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }

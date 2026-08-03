@@ -35,6 +35,7 @@ sealed class Screen(val route: String) {
         fun createRoute(expenseId: String) = "expense_edit/$expenseId"
     }
     data object ExpenseCalendar : Screen("expense_calendar")
+    data object ChallengeEndExpenseCalendar : Screen("challenge_end_expense_calendar")
     data object ExpenseInput : Screen("expense_input/{initialDateEpochDay}") {
         fun createRoute(initialDate: LocalDate) = "expense_input/${initialDate.toEpochDay()}"
     }

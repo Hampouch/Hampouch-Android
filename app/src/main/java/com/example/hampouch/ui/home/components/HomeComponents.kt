@@ -184,7 +184,6 @@ private fun DateChip(
 @Composable
 fun ChallengeBanner(
     challenge: HomeChallenge,
-    onDetailClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -199,10 +198,7 @@ fun ChallengeBanner(
                 color = HPBlack,
                 modifier = Modifier.weight(1f)
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(onClick = onDetailClick)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = stringResource(R.string.home_challenge_detail_link),
                     style = MaterialTheme.typography.bodySmall,

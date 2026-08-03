@@ -34,4 +34,20 @@
     <string name="cd_hamster_character">햄포치 캐릭터</string>
     <string name="cd_warning_icon">주의</string>
     <string name="category_etc">기타</string>
+
+    <string name="home_missing_expense_title">오늘 식비, 입력하셨나요?</string>
+    <string name="home_missing_expense_subtitle_line1">아직 오늘 기록이 없어요.</string>
+    <string name="home_missing_expense_subtitle_line2">잊기 전에 남겨볼까요?</string>
+    <string name="home_missing_expense_input_now_button">지금 입력하기</string>
+    <string name="home_missing_expense_no_spending_button">오늘은 안 썼어요</string>
+    <string name="home_missing_expense_later_link">나중에 할게요</string>
+
+    <string name="home_challenge_ended_title_format">%1$d일 챌린지 종료 !</string>
+    <string name="home_challenge_ended_subtitle">식비 절약 챌린지가 종료되었어요</string>
+    <string name="home_challenge_ended_initial_line1">지출 수정이 완료되었나요?</string>
+    <string name="home_challenge_ended_initial_line2">최종 종료를 위해 챌린지 종료 버튼을 눌러주세요.</string>
+    <string name="home_challenge_ended_after_edit_line1">까먹은 지출이 있다면 입력해주세요.</string>
+    <string name="home_challenge_ended_after_edit_line2">챌린지가 최종 종료되면 지출 수정이 불가해요.</string>
+    <string name="home_challenge_ended_edit_expense_button">지출 수정하기</string>
+    <string name="home_challenge_ended_finish_button">챌린지 종료</string>
 </resources>

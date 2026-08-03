@@ -151,6 +151,27 @@ fun GoalSummaryCard(
 }
 
 @Composable
+fun GoalAmountAdjustmentLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(58.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+    ) {
+        Text(
+            "목표 금액 수정하기",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPWhite,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = HPWhite)
+    }
+}
+
+@Composable
 fun ExpenseAnalysisLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = onClick,

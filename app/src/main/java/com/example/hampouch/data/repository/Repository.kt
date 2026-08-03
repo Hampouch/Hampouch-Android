@@ -1,6 +1,8 @@
 package com.example.hampouch.data.repository
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.hampouch.data.model.ActiveChallenge
 import com.example.hampouch.data.model.ChallengeProgress
 import com.example.hampouch.data.model.DailyRecordStatus
@@ -39,6 +41,23 @@ object ChallengeRepository {
 
     val activeChallenge: ActiveChallenge
         get() = activeChallengeState.value
+
+    var challengeEndAcknowledged: Boolean by mutableStateOf(false)
+        private set
+
+    var hasVisitedExpenseEditAfterEnd: Boolean by mutableStateOf(false)
+        private set
+
+    fun isChallengeJustEnded(referenceToday: LocalDate): Boolean =
+        !challengeEndAcknowledged && referenceToday.isAfter(activeChallenge.periodEnd)
+
+    fun markVisitedExpenseEditAfterEnd() {
+        hasVisitedExpenseEditAfterEnd = true
+    }
+
+    fun acknowledgeChallengeEnd() {
+        challengeEndAcknowledged = true
+    }
 
     val previousChallenge: ActiveChallenge
         get() {

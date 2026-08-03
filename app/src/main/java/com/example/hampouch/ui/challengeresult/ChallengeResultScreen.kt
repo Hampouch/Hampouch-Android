@@ -73,6 +73,7 @@ fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
     onBackClick: () -> Unit = {},
     onExpenseAnalysisClick: () -> Unit = {},
+    onAdjustGoalClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {},
     onTakeABreakClick: () -> Unit = {}
@@ -143,6 +144,9 @@ fun ChallengeResultScreen(
                             )
                         }
 
+                        if (state.status == ChallengeResultStatus.IN_PROGRESS) {
+                            GoalAmountAdjustmentLinkButton(onClick = onAdjustGoalClick)
+                        }
                         ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
                         SpendingEmotionAnalysis(stats = state.emotionStats)
                     }
