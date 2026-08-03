@@ -71,8 +71,9 @@ fun HomeScreen(
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
     openHamTipsWriteBattleOnStart: Boolean = false,
     onStartChallengeClick: () -> Unit = {},
+    onStartFoodSavingChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
-    onChallengeSummaryClick: () -> Unit = {},
+    onChallengeSummaryClick: (String) -> Unit = {},
     onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
@@ -81,6 +82,7 @@ fun HomeScreen(
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
     onNavigateToChallengeEndExpenseCalendar: () -> Unit = {},
+    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
     onNavigateToTakeABreak: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
@@ -145,9 +147,9 @@ fun HomeScreen(
                     onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
                     onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
                     onSuggestionClick = { onNavigateToAmountAdjustment() },
-                    onStartChallengeClick = onStartChallengeClick,
+                    onStartChallengeClick = onStartFoodSavingChallengeClick,
                     onCalendarClick = onCalendarClick,
-                    onChallengeSummaryClick = onChallengeSummaryClick,
+                    onChallengeSummaryClick = { resolvedChallenge?.let { onChallengeSummaryClick(it.id) } },
                     onExpenseClick = onNavigateToExpenseDetail,
                     onViewAllExpensesClick = onNavigateToExpenseCalendar,
                     onAddExpenseClick = onAddExpenseClick,
@@ -207,7 +209,11 @@ fun HomeScreen(
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                 onNotificationClick = onNotificationClick,
-                onLoggedOut = onLoggedOut
+                onLoggedOut = onLoggedOut,
+                onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
+                onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
+                onNavigateToTakeABreak = onNavigateToTakeABreak,
+                onStartNewChallengeClick = { onStartChallengeClick() }
             )
 
             BottomNavItem.COMMUNITY -> {

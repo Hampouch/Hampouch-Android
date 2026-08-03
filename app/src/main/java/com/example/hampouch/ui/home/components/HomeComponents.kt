@@ -58,6 +58,7 @@ import com.example.hampouch.data.model.HomeChallenge
 import com.example.hampouch.data.model.HomeWarning
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.WarningVariant
+import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -65,7 +66,6 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
-import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -481,22 +481,9 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick:
             }
             Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         }
-        if (entry.reasonTag != null) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(HPSub3)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(text = entry.reasonTag, style = MaterialTheme.typography.labelMedium, color = HPSub)
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-        Text(
-            text = stringResource(R.string.home_amount_won_format, formatWon(entry.amount)),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPBlack
+        ReasonTagAndAmountColumn(
+            reasonTag = entry.reasonTag,
+            amountText = stringResource(R.string.home_amount_won_format, formatWon(entry.amount))
         )
     }
 }

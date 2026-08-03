@@ -151,23 +151,34 @@ fun GoalSummaryCard(
 }
 
 @Composable
-fun GoalAmountAdjustmentLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun GoalAmountAdjustmentLinkButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    val contentColor = if (enabled) HPWhite else HPText
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
             .height(58.dp),
         shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+        colors = ButtonDefaults.buttonColors(
+            containerColor = HPMain,
+            contentColor = HPWhite,
+            disabledContainerColor = HPGray4,
+            disabledContentColor = HPText
+        )
     ) {
         Text(
             "목표 금액 수정하기",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = HPWhite,
+            color = contentColor,
             modifier = Modifier.weight(1f)
         )
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = HPWhite)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = contentColor)
     }
 }
 

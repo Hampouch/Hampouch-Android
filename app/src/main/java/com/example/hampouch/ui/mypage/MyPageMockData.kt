@@ -28,38 +28,30 @@ object MyPageMockData {
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 
     fun challengeHistory(): List<ChallengeRecord> {
-        val active = ChallengeRepository.activeChallenge
         val referenceToday = LocalDate.now()
-        val targetAmount = active.dailyLimit * active.totalDays
-
-        val elapsedDays = ChallengeRepository.elapsedDays(referenceToday)
-        val activeActualAmount = elapsedDays.sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
-        val activeRecord = ChallengeRecord(
-            id = "active_challenge",
-            status = ChallengeStatus.IN_PROGRESS,
-            totalDays = active.totalDays,
-            startDateLabel = active.periodStart.format(challengeHistoryPeriodFormatter),
-            endDateLabel = null,
-            targetAmount = targetAmount,
-            actualAmount = activeActualAmount
-        )
-
-        val previous = ChallengeRepository.previousChallenge
-        val previousTargetAmount = previous.dailyLimit * previous.totalDays
-        val pastActualAmount = generateSequence(previous.periodStart) { it.plusDays(1) }
-            .takeWhile { !it.isAfter(previous.periodEnd) }
-            .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
-        val pastRecord = ChallengeRecord(
-            id = "past_challenge_1",
-            status = if (pastActualAmount <= previousTargetAmount) ChallengeStatus.SUCCESS else ChallengeStatus.FAIL,
-            totalDays = previous.totalDays,
-            startDateLabel = previous.periodStart.format(challengeHistoryPeriodFormatter),
-            endDateLabel = previous.periodEnd.format(challengeHistoryPeriodFormatter),
-            targetAmount = previousTargetAmount,
-            actualAmount = pastActualAmount
-        )
-
-        return listOf(activeRecord, pastRecord)
+        return ChallengeRepository.challenges
+            .sortedByDescending { it.periodStart }
+            .map { challenge ->
+                val isOngoing = challenge.id == ChallengeRepository.activeChallenge.id &&
+                    !referenceToday.isAfter(challenge.periodEnd)
+                val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+                val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
+                    .takeWhile { !it.isAfter(trackedEnd) }
+                    .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
+                ChallengeRecord(
+                    id = challenge.id,
+                    status = when {
+                        isOngoing -> ChallengeStatus.IN_PROGRESS
+                        actualAmount <= challenge.targetAmount -> ChallengeStatus.SUCCESS
+                        else -> ChallengeStatus.FAIL
+                    },
+                    totalDays = challenge.totalDays,
+                    startDateLabel = challenge.periodStart.format(challengeHistoryPeriodFormatter),
+                    endDateLabel = challenge.periodEnd.format(challengeHistoryPeriodFormatter),
+                    targetAmount = challenge.targetAmount,
+                    actualAmount = actualAmount
+                )
+            }
     }
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()

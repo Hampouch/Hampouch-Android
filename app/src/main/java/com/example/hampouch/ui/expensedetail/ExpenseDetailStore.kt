@@ -23,4 +23,8 @@ object ExpenseDetailStore {
     fun delete(id: String) {
         recordsById = recordsById - id
     }
+
+    fun resetForAccount() {
+        recordsById = ExpenseDetailMockData.initialRecords()
+    }
 }

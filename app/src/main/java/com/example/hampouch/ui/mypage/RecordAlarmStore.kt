@@ -46,4 +46,9 @@ object RecordAlarmStore {
     fun dismissForToday(referenceToday: LocalDate) {
         dismissedDate = referenceToday
     }
+
+    fun resetForAccount() {
+        state = RecordAlarmSettingsState()
+        dismissedDate = null
+    }
 }

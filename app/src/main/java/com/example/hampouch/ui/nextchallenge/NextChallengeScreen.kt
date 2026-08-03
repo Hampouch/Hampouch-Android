@@ -77,8 +77,8 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ChallengeResultStatus
 import com.example.hampouch.data.model.ChallengeResultUiState
+import com.example.hampouch.data.model.OnboardingRequest
 import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
@@ -110,6 +110,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 private val NextChallengePeriodFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy.MM.dd")
@@ -133,6 +134,12 @@ internal fun LocalDate.toEpochMillisUtc(): Long =
 
 internal fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+
+internal fun monthlyTotalDays(startDate: LocalDate, referenceToday: LocalDate = LocalDate.now()): Int {
+    val effectiveStart = if (startDate.isBefore(referenceToday)) referenceToday else startDate
+    val periodEnd = effectiveStart.plusMonths(1).minusDays(1)
+    return ChronoUnit.DAYS.between(effectiveStart, periodEnd).toInt() + 1
+}
 
 private fun buildRecommendationMessage(
     previousResult: ChallengeResultUiState,
@@ -191,9 +198,10 @@ fun NextChallengeRoute(
     val effectivePeriodDays = customPeriodDays?.takeIf { it > 0 }
         ?: periodDays?.takeIf { it > 0 }
         ?: previousResult.totalDays
+    val currentStartDate = startDate
     val dailyGoal = when {
         periodEnabled -> (targetAmount ?: 0) / effectivePeriodDays
-        startDate != null -> (targetAmount ?: 0) / 30
+        currentStartDate != null -> (targetAmount ?: 0) / monthlyTotalDays(currentStartDate)
         else -> targetAmount ?: 0
     }
     val startDateText =
@@ -394,13 +402,14 @@ fun NextChallengeRoute(
             onCancel = { showStartConfirmDialog = false },
             onConfirm = {
                 showStartConfirmDialog = false
-                val days = effectivePeriodDays
-                val start = if (dateFixed) (startDate ?: LocalDate.now()) else LocalDate.now()
-                ChallengeRepository.startNewChallenge(
-                    totalDays = days,
-                    targetAmount = targetAmount ?: suggestedTargetAmount,
-                    startDate = start
+                val request = OnboardingRequest(
+                    dateFixed = dateFixed,
+                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
+                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
+                    totalTargetAmount = targetAmount ?: suggestedTargetAmount,
+                    topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
+                ChallengeRepository.startNewChallenge(request)
                 onStartChallengeClick()
             }
         )
@@ -892,12 +901,46 @@ internal fun NextChallengeDatePickerDialog(
     }
 }
 
+private val PreviewCompleteResult = ChallengeResultUiState(
+    status = ChallengeResultStatus.COMPLETE,
+    title = "14일 챌린지",
+    periodStart = LocalDate.of(2026, 5, 1),
+    periodEnd = LocalDate.of(2026, 5, 14),
+    totalDays = 14,
+    successDays = 14,
+    streakDays = 14,
+    amountLabel = "총 절약",
+    amountValue = 27_500,
+    goalAmount = 400_000,
+    actualAmount = 372_500,
+    dailyLimit = 25_000,
+    emotionStats = emptyList(),
+    dailyRecords = emptyMap()
+)
+
+private val PreviewFailResult = ChallengeResultUiState(
+    status = ChallengeResultStatus.FAIL,
+    title = "14일 챌린지",
+    periodStart = LocalDate.of(2026, 5, 1),
+    periodEnd = LocalDate.of(2026, 5, 14),
+    totalDays = 14,
+    successDays = 9,
+    streakDays = 4,
+    amountLabel = "초과 금액",
+    amountValue = 24_100,
+    goalAmount = 400_000,
+    actualAmount = 424_100,
+    dailyLimit = 25_000,
+    emotionStats = emptyList(),
+    dailyRecords = emptyMap()
+)
+
 @Preview(showBackground = true, name = "1. 성공 다음 챌린지")
 @Composable
 private fun NextChallengeRouteCompletePreview() {
     HampouchTheme {
         NextChallengeRoute(
-            previousResult = ChallengeResultMockData.complete,
+            previousResult = PreviewCompleteResult,
             suggestedTargetAmount = 350_000,
             onBackClick = {},
             onStartChallengeClick = {}
@@ -910,7 +953,7 @@ private fun NextChallengeRouteCompletePreview() {
 private fun NextChallengeRouteFailPreview() {
     HampouchTheme {
         NextChallengeRoute(
-            previousResult = ChallengeResultMockData.fail,
+            previousResult = PreviewFailResult,
             suggestedTargetAmount = 440_000,
             onBackClick = {},
             onStartChallengeClick = {}

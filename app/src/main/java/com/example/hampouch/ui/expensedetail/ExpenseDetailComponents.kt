@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
@@ -665,32 +666,10 @@ fun ExpenseSummaryCard(
                 Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
             }
         }
-        Column(horizontalAlignment = Alignment.End) {
-            if (reasonLabel != null) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(HPGray3)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        reasonLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = HPText
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            Text(
-                stringResource(
-                    R.string.expensedetail_amount_won_format,
-                    formatWon(record.amount)
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPBlack
-            )
-        }
+        ReasonTagAndAmountColumn(
+            reasonTag = reasonLabel,
+            amountText = stringResource(R.string.expensedetail_amount_won_format, formatWon(record.amount))
+        )
     }
 }
 

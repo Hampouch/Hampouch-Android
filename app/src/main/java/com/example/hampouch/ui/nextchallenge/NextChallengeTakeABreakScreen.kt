@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.data.model.OnboardingRequest
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -71,9 +72,10 @@ fun NextChallengeTakeABreakRoute(
 
     val explicitPeriodDays = customPeriodDays?.takeIf { it > 0 } ?: periodDays?.takeIf { it > 0 }
     val effectivePeriodDays = explicitPeriodDays ?: DefaultTakeABreakTotalDays
+    val currentStartDate = startDate
     val dailyGoal = when {
         periodEnabled -> (targetAmount ?: 0) / effectivePeriodDays
-        startDate != null -> (targetAmount ?: 0) / 30
+        currentStartDate != null -> (targetAmount ?: 0) / monthlyTotalDays(currentStartDate)
         else -> targetAmount ?: 0
     }
     val startDateText =
@@ -263,13 +265,14 @@ fun NextChallengeTakeABreakRoute(
             onCancel = { showStartConfirmDialog = false },
             onConfirm = {
                 showStartConfirmDialog = false
-                val days = effectivePeriodDays
-                val start = if (dateFixed) (startDate ?: LocalDate.now()) else LocalDate.now()
-                ChallengeRepository.startNewChallenge(
-                    totalDays = days,
-                    targetAmount = targetAmount ?: 0,
-                    startDate = start
+                val request = OnboardingRequest(
+                    dateFixed = dateFixed,
+                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
+                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
+                    totalTargetAmount = targetAmount ?: 0,
+                    topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
+                ChallengeRepository.startNewChallenge(request)
                 onStartChallengeClick()
             }
         )

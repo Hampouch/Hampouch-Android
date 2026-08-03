@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.onboarding.OnboardingCalculations
 import com.example.hampouch.ui.onboarding.OnboardingUiState
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
 import com.example.hampouch.ui.onboarding.components.OnboardingBulletList
@@ -27,7 +28,6 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
-import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
@@ -46,18 +46,8 @@ fun ChallengeGoalStep(
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
-    val impliedPeriodDays = when {
-        state.periodEnabled -> state.challengePeriodDays
-        state.dateFixed -> 30
-        else -> null
-    }
-
-    val recommendedTotalTarget = state.lastMonthFoodExpense?.let { expense ->
-        impliedPeriodDays?.let { period ->
-            val rawRecommendation = expense.toDouble() / 30 * period * 0.9
-            (rawRecommendation / 1000.0).roundToInt() * 1000
-        }
-    }
+    val impliedPeriodDays = OnboardingCalculations.impliedPeriodDays(state)
+    val recommendedTotalTarget = OnboardingCalculations.recommendedTotalTarget(state.lastMonthFoodExpense, impliedPeriodDays)
     val effectiveTotalTarget = state.totalTargetAmount ?: recommendedTotalTarget
     val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
         effectiveTotalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
@@ -124,11 +114,9 @@ fun ChallengeGoalStep(
 
             Box(modifier = Modifier.weight(1f))
 
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
-
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
-                enabled = state.totalTargetAmount != null,
+                enabled = true,
                 onClick = onNext
             )
         }
