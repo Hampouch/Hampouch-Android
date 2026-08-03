@@ -1,6 +1,11 @@
 package com.example.hampouch.ui.hamtips
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -98,7 +103,7 @@ fun HamTipsScreen(
     var editingPostId by remember { mutableStateOf<String?>(null) }
 
     val allPosts = HamTipsRepository.allPosts
-    val popularPosts = allPosts.sortedByDescending { it.likeCount }
+    val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }
     val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
     val onCategoryTabSelected: (HamTipsCategoryTab) -> Unit = { tab ->
@@ -114,7 +119,12 @@ fun HamTipsScreen(
         route = if (post.type == TipPostType.BATTLE) HamTipsRoute.BATTLE_DETAIL else HamTipsRoute.DETAIL
     }
 
-    when (route) {
+    AnimatedContent(
+        targetState = route,
+        transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
+        label = "hamtips_route_transition"
+    ) { currentRoute ->
+    when (currentRoute) {
         HamTipsRoute.WRITE_TIP -> {
             BackHandler(onBack = onBackToMain)
             HamTipsWriteTipScreen(
@@ -188,7 +198,7 @@ fun HamTipsScreen(
                     HamTipsFab(onClick = { showFabMenu = true })
                 }
             ) { innerPadding ->
-                when (route) {
+                when (currentRoute) {
                     HamTipsRoute.MAIN -> HamTipsMainContent(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
@@ -277,6 +287,7 @@ fun HamTipsScreen(
                 onDismiss = { showFabMenu = false }
             )
         }
+    }
     }
 }
 

@@ -1,7 +1,10 @@
 package com.example.hampouch.ui.common
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
+import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
@@ -182,5 +187,32 @@ fun FooterLinkRow(
         ) {
             Text(linkText, style = Body16Bold, color = HPSub)
         }
+    }
+}
+
+@Composable
+fun ReasonTagAndAmountColumn(
+    reasonTag: String?,
+    amountText: String,
+    modifier: Modifier = Modifier
+) {
+    Column(horizontalAlignment = Alignment.End, modifier = modifier) {
+        if (reasonTag != null) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(HPGray4)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(reasonTag, style = MaterialTheme.typography.labelMedium, color = HPText)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        Text(
+            amountText,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPBlack
+        )
     }
 }

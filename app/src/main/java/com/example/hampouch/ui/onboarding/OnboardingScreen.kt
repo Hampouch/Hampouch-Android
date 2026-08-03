@@ -92,14 +92,9 @@ fun OnboardingRoute(
                         30 -> ChallengePeriodType.ONE_MONTH
                         else -> ChallengePeriodType.CUSTOM
                     }
-                    val impliedPeriodDays = when {
-                        uiState.periodEnabled -> uiState.challengePeriodDays
-                        uiState.dateFixed -> 30
-                        else -> null
-                    }
-                    val recommendedTotalTarget = uiState.lastMonthFoodExpense?.let { expense ->
-                        impliedPeriodDays?.let { period -> (expense.toDouble() / 30 * period).roundToInt() }
-                    }
+                    val impliedPeriodDays = OnboardingCalculations.impliedPeriodDays(uiState)
+                    val recommendedTotalTarget =
+                        OnboardingCalculations.recommendedTotalTarget(uiState.lastMonthFoodExpense, impliedPeriodDays)
                     val totalTarget = uiState.totalTargetAmount ?: recommendedTotalTarget
                     val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
                         totalTarget?.let { total -> (total.toDouble() / period).roundToInt() }

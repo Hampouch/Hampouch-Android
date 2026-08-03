@@ -52,12 +52,12 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.ExpenseCalendarViewMode
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
-import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -510,7 +510,7 @@ private fun CalendarDayCell(
             modifier = Modifier
                 .size(28.dp)
                 .clip(CircleShape)
-                .background(if (selected) HPSub3 else Color.Transparent),
+                .background(if (selected) HPSub2 else Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -646,22 +646,9 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
             )
             Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         }
-        if (reasonLabel != null) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(HPSub3)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(reasonLabel, style = MaterialTheme.typography.labelMedium, color = HPText)
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-        Text(
-            stringResource(R.string.expensedetail_amount_won_format, formatWon(record.amount)),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPBlack
+        ReasonTagAndAmountColumn(
+            reasonTag = reasonLabel,
+            amountText = stringResource(R.string.expensedetail_amount_won_format, formatWon(record.amount))
         )
     }
 }

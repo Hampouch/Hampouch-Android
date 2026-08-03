@@ -55,6 +55,9 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ChallengeResultStatus
 import com.example.hampouch.data.model.ChallengeResultUiState
+import com.example.hampouch.data.model.DailyRecordStatus
+import com.example.hampouch.data.model.EmotionStat
+import com.example.hampouch.data.model.SpendingEmotion
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPSub1
@@ -144,8 +147,8 @@ fun ChallengeResultScreen(
                             )
                         }
 
-                        if (state.status == ChallengeResultStatus.IN_PROGRESS) {
-                            GoalAmountAdjustmentLinkButton(onClick = onAdjustGoalClick)
+                        if (!isFinished) {
+                            GoalAmountAdjustmentLinkButton(onClick = onAdjustGoalClick, enabled = state.isEditable)
                         }
                         ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
                         SpendingEmotionAnalysis(stats = state.emotionStats)
@@ -377,11 +380,51 @@ private fun ChallengeResultScreenInProgressPreview() {
     }
 }
 
+private val PreviewCompleteState = ChallengeResultUiState(
+    status = ChallengeResultStatus.COMPLETE,
+    title = "14일 챌린지",
+    periodStart = LocalDate.of(2026, 5, 1),
+    periodEnd = LocalDate.of(2026, 5, 14),
+    totalDays = 14,
+    successDays = 14,
+    streakDays = 14,
+    amountLabel = "총 절약",
+    amountValue = 27_500,
+    goalAmount = 400_000,
+    actualAmount = 372_500,
+    dailyLimit = 25_000,
+    emotionStats = listOf(
+        EmotionStat(SpendingEmotion.CRAVING, 42),
+        EmotionStat(SpendingEmotion.STRESS, 25),
+        EmotionStat(SpendingEmotion.LAZY, 15),
+        EmotionStat(SpendingEmotion.REWARD, 10),
+        EmotionStat(SpendingEmotion.ETC, 8)
+    ),
+    dailyRecords = (1..14).associate { LocalDate.of(2026, 5, it) to DailyRecordStatus.SUCCESS },
+    isEditable = false
+)
+
+private val PreviewFailState = PreviewCompleteState.copy(
+    status = ChallengeResultStatus.FAIL,
+    successDays = 9,
+    streakDays = 4,
+    amountLabel = "초과 금액",
+    amountValue = 24_100,
+    actualAmount = 424_100,
+    dailyRecords = mapOf(
+        1 to DailyRecordStatus.SUCCESS, 2 to DailyRecordStatus.SUCCESS, 3 to DailyRecordStatus.FAIL,
+        4 to DailyRecordStatus.SUCCESS, 5 to DailyRecordStatus.FAIL, 6 to DailyRecordStatus.SUCCESS,
+        7 to DailyRecordStatus.FAIL, 8 to DailyRecordStatus.SUCCESS, 9 to DailyRecordStatus.SUCCESS,
+        10 to DailyRecordStatus.SUCCESS, 11 to DailyRecordStatus.FAIL, 12 to DailyRecordStatus.SUCCESS,
+        13 to DailyRecordStatus.FAIL, 14 to DailyRecordStatus.SUCCESS
+    ).mapKeys { (day, _) -> LocalDate.of(2026, 5, day) }
+)
+
 @Preview(showBackground = true, name = "완료")
 @Composable
 private fun ChallengeResultScreenCompletePreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.complete)
+        ChallengeResultScreen(state = PreviewCompleteState)
     }
 }
 
@@ -389,6 +432,6 @@ private fun ChallengeResultScreenCompletePreview() {
 @Composable
 private fun ChallengeResultScreenFailPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.fail)
+        ChallengeResultScreen(state = PreviewFailState)
     }
 }

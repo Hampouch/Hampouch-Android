@@ -33,4 +33,8 @@ object TakeABreakStore {
     fun endBreakNow() {
         breakEndDate = null
     }
+
+    fun resetForAccount() {
+        breakEndDate = null
+    }
 }
