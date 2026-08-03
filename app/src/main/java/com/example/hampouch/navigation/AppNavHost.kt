@@ -187,11 +187,6 @@ fun AppNavHost(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
                 onStartChallengeClick = {
-                    navController.navigate(Screen.Onboarding.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                onStartFoodSavingChallengeClick = {
                     navController.navigate(Screen.NextChallengeTakeABreak.route)
                 },
                 onNavigateToMiniChallenge = { date ->
