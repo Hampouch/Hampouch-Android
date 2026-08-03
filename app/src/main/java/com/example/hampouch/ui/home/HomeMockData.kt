@@ -64,7 +64,6 @@ private fun buildChallenge(
     streakDays: Int = challenge.streakDays
 ): HomeChallenge = HomeChallenge(
     totalDays = challenge.totalDays,
-    // D-day는 '지금 실제 오늘'이 아니라 화면에서 보고 있는 날짜(date) 기준으로 계산한다.
     dDay = challenge.dDayFrom(date).coerceAtLeast(0),
     periodStartLabel = challenge.periodStart.format(periodLabelFormatter),
     periodEndLabel = challenge.periodEnd.format(periodLabelFormatter),
@@ -77,8 +76,6 @@ private fun buildChallenge(
 
 object HomeMockData {
 
-    // 날짜가 속한 챌린지(진행중 챌린지 또는 그 직전 챌린지)를 찾아 카드에 반영한다.
-    // 어느 챌린지에도 속하지 않는 날짜는 challenge가 null이 되어 '진행중인 챌린지 없음'으로 표시된다.
     fun freshDayState(userName: String, date: LocalDate): HomeUiState {
         val challenge = ChallengeRepository.challengeFor(date)
         return HomeUiState(

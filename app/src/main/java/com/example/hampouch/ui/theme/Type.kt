@@ -8,7 +8,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 
-// Set of Material typography styles to start with
 val PretendardFontFamily = FontFamily(
     Font(R.font.pretendard_thin, FontWeight.Thin),
     Font(R.font.pretendard_extra_light, FontWeight.ExtraLight),
@@ -128,7 +127,6 @@ val Typography = Typography(
     )
 )
 
-// Material3 Typography 슬롯에 없는, 화면 전반에서 자주 쓰이는 커스텀 텍스트 스타일
 val Body16Bold = TextStyle(
     fontFamily = PretendardFontFamily,
     fontWeight = FontWeight.Bold,

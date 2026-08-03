@@ -29,7 +29,8 @@ fun ChallengeHistoryScreen(
     records: List<ChallengeRecord>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onRecordClick: (ChallengeRecord) -> Unit = {}
+    onRecordClick: (ChallengeRecord) -> Unit = {},
+    onNotificationClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -39,7 +40,7 @@ fun ChallengeHistoryScreen(
         MyPageMainTopBar(
             title = stringResource(R.string.challenge_history_title),
             onBackClick = onBackClick,
-            onNotificationClick = {},
+            onNotificationClick = onNotificationClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         if (records.isEmpty()) {

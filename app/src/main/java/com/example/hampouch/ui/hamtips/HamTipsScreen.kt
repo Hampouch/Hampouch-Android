@@ -84,6 +84,7 @@ fun HamTipsScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     openWriteBattleOnStart: Boolean = false
 ) {
     var route by remember {
@@ -198,7 +199,7 @@ fun HamTipsScreen(
                         allPosts = filteredSortedPosts(allPosts, null, searchQuery, sortOrder),
                         sortOrder = sortOrder,
                         onSortOrderChange = { sortOrder = it },
-                        onNotificationClick = {},
+                        onNotificationClick = onNotificationClick,
                         onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
                         onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
                         onPostClick = onPostClick,
@@ -217,7 +218,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -235,7 +236,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -253,7 +254,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )

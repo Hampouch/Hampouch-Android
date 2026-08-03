@@ -151,6 +151,27 @@ fun GoalSummaryCard(
 }
 
 @Composable
+fun GoalAmountAdjustmentLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(58.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+    ) {
+        Text(
+            "목표 금액 수정하기",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPWhite,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = HPWhite)
+    }
+}
+
+@Composable
 fun ExpenseAnalysisLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = onClick,
@@ -218,7 +239,6 @@ private fun SpendingEmotion.toVisual(): EmotionVisual = when (this) {
         "보상"
     )
 
-    // 기타 항목은 별도 png가 없어 벡터 아이콘을 그대로 사용
     SpendingEmotion.ETC -> EmotionVisual(null, HPTipEtcBg, HPBlack, "기타")
 }
 

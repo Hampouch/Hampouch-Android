@@ -70,10 +70,14 @@ import java.util.Locale
 private fun expenseInputEnabled(
     period: ExpenseChallengePeriod?,
     referenceToday: LocalDate,
-    selectedDate: LocalDate
-): Boolean = period != null &&
-    !referenceToday.isBefore(period.startDate) && !referenceToday.isAfter(period.endDate) &&
-    !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
+    selectedDate: LocalDate,
+    restrictToChallengePeriod: Boolean
+): Boolean {
+    if (period == null) return false
+    if (restrictToChallengePeriod) return period.isActiveOn(selectedDate)
+    return !referenceToday.isBefore(period.startDate) && !referenceToday.isAfter(period.endDate) &&
+        !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
+}
 
 private fun weekGridStart(date: LocalDate): LocalDate {
     val offset = date.dayOfWeek.value % 7
@@ -102,18 +106,25 @@ fun ExpenseCalendarRoute(
     weeklyTotal: Int = ExpenseDetailMockData.weeklyTotal(),
     weeklyDailyAverage: Int = ExpenseDetailMockData.weeklyDailyAverage(),
     onExpenseAnalysisClick: () -> Unit = {},
-    onAddExpenseClick: (LocalDate) -> Unit = {}
+    onAddExpenseClick: (LocalDate) -> Unit = {},
+    restrictToChallengePeriod: Boolean = false
 ) {
+    val initialSelectedDate = if (restrictToChallengePeriod) {
+        challengePeriod?.endDate ?: referenceToday
+    } else {
+        referenceToday
+    }
     var viewMode by remember { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
-    var selectedDate by remember { mutableStateOf(referenceToday) }
-    var displayedMonth by remember { mutableStateOf(referenceToday.withDayOfMonth(1)) }
+    var selectedDate by remember { mutableStateOf(initialSelectedDate) }
+    var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
     var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
     val summaryByDate = ExpenseDetailStore.recordsById.values
         .groupBy { it.date }
         .mapValues { (_, records) -> records.sumOf { it.amount } }
     val dayRecords = ExpenseDetailStore.recordsForDate(selectedDate)
-    val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate)
+    val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate, restrictToChallengePeriod)
     val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
+    val editableRange = challengePeriod.takeIf { restrictToChallengePeriod }
 
     Scaffold(
         modifier = modifier,
@@ -127,7 +138,8 @@ fun ExpenseCalendarRoute(
                 onBackClick = onBackClick,
                 onAnalysisClick = onExpenseAnalysisClick,
                 onPreviousMonth = { displayedMonth = displayedMonth.minusMonths(1) },
-                onNextMonth = { displayedMonth = displayedMonth.plusMonths(1) }
+                onNextMonth = { displayedMonth = displayedMonth.plusMonths(1) },
+                showAnalysisAction = !restrictToChallengePeriod
             )
         },
         containerColor = HPGray2
@@ -147,11 +159,13 @@ fun ExpenseCalendarRoute(
                     .background(HPSub4)
                     .padding(20.dp)
             ) {
-                CalendarViewModeToggle(
-                    viewMode = viewMode,
-                    onViewModeChange = { viewMode = it }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                if (!restrictToChallengePeriod) {
+                    CalendarViewModeToggle(
+                        viewMode = viewMode,
+                        onViewModeChange = { viewMode = it }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 if (viewMode == ExpenseCalendarViewMode.MONTHLY) {
                     CalendarStatCard(
                         totalLabel = stringResource(
@@ -167,7 +181,8 @@ fun ExpenseCalendarRoute(
                         referenceToday = referenceToday,
                         selectedDate = selectedDate,
                         summaryByDate = summaryByDate,
-                        onDateSelected = { selectedDate = it }
+                        onDateSelected = { selectedDate = it },
+                        editableRange = editableRange
                     )
                 } else {
                     CalendarStatCard(
@@ -227,7 +242,7 @@ fun ExpenseCalendarRoute(
             ) {
                 Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
             }
-            if (!inputEnabled && challengeEnded) {
+            if (!inputEnabled && challengeEnded && !restrictToChallengePeriod) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.expensedetail_calendar_input_disabled_message),
@@ -250,7 +265,8 @@ private fun ExpenseCalendarTopBar(
     onAnalysisClick: () -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showAnalysisAction: Boolean = true
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
@@ -284,12 +300,14 @@ private fun ExpenseCalendarTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onAnalysisClick) {
-                Icon(
-                    Icons.Filled.BarChart,
-                    contentDescription = stringResource(R.string.cd_expense_analysis),
-                    tint = HPBlack
-                )
+            if (showAnalysisAction) {
+                IconButton(onClick = onAnalysisClick) {
+                    Icon(
+                        Icons.Filled.BarChart,
+                        contentDescription = stringResource(R.string.cd_expense_analysis),
+                        tint = HPBlack
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPGray2)
@@ -406,7 +424,8 @@ private fun MonthCalendarGrid(
     selectedDate: LocalDate,
     summaryByDate: Map<LocalDate, Int>,
     onDateSelected: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    editableRange: ExpenseChallengePeriod? = null
 ) {
     val gridStart = monthGridStart(month)
     val monthValue = month.monthValue
@@ -417,14 +436,16 @@ private fun MonthCalendarGrid(
             Row(modifier = Modifier.fillMaxWidth()) {
                 repeat(7) { dayIndex ->
                     val date = gridStart.plusDays((weekIndex * 7 + dayIndex).toLong())
+                    val isEditable = editableRange == null || editableRange.isActiveOn(date)
                     CalendarDayCell(
                         date = date,
                         isCurrentMonth = date.monthValue == monthValue,
                         referenceToday = referenceToday,
                         selected = date == selectedDate,
                         amount = summaryByDate[date],
-                        onClick = { if (!date.isAfter(referenceToday)) onDateSelected(date) },
-                        modifier = Modifier.weight(1f)
+                        onClick = { if (!date.isAfter(referenceToday) && isEditable) onDateSelected(date) },
+                        modifier = Modifier.weight(1f),
+                        forceMutedColor = !isEditable
                     )
                 }
             }
@@ -469,17 +490,19 @@ private fun CalendarDayCell(
     selected: Boolean,
     amount: Int?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    forceMutedColor: Boolean = false
 ) {
     val isFuture = date.isAfter(referenceToday)
     val numberColor = when {
+        forceMutedColor -> HPText
         isFuture -> HPText
         !isCurrentMonth -> HPSub2
         else -> HPBlack
     }
     Column(
         modifier = modifier
-            .clickable(enabled = !isFuture, onClick = onClick)
+            .clickable(enabled = !isFuture && !forceMutedColor, onClick = onClick)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -683,5 +706,20 @@ private fun ExpenseCalendarChallengeEndedPreview() {
 private fun ExpenseCalendarWeeklyPreview() {
     HampouchTheme {
         ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {})
+    }
+}
+
+@Preview(showBackground = true, name = "12. 지출 캘린더 (챌린지 종료 후 수정 - 제한 모드)")
+@Composable
+private fun ExpenseCalendarChallengeEndEditPreview() {
+    val today = remember { LocalDate.now() }
+    HampouchTheme {
+        ExpenseCalendarRoute(
+            onBackClick = {},
+            onExpenseClick = {},
+            referenceToday = today,
+            challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today),
+            restrictToChallengePeriod = true
+        )
     }
 }

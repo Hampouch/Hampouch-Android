@@ -22,7 +22,6 @@ object UserSession {
     fun login(context: Context, user: User) {
         currentUserState.value = user
         isLoggedInState.value = true
-        // 목데이터 계정 id만 로컬에 저장해 로그인 상태를 유지한다.
         // TODO: 서버팀 로그인 API 연동 시 토큰 기반 세션 저장/복원으로 교체
         context.applicationContext
             .getSharedPreferences(SESSION_PREFS_NAME, Context.MODE_PRIVATE)
@@ -31,7 +30,6 @@ object UserSession {
             .apply()
     }
 
-    // 앱 재실행 시 저장된 목데이터 계정 id로 로그인 상태를 복원한다. 복원에 성공하면 true.
     fun restore(context: Context): Boolean {
         val savedUserId = context.applicationContext
             .getSharedPreferences(SESSION_PREFS_NAME, Context.MODE_PRIVATE)

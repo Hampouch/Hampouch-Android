@@ -31,6 +31,9 @@ import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.dialog.ChallengeEndedDialog
+import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
+import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
@@ -46,11 +49,14 @@ import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
+import com.example.hampouch.ui.mypage.RecordAlarmStore
 import com.example.hampouch.ui.session.UserSession
+import com.example.hampouch.ui.takeabreak.TakeABreakStore
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
+import java.time.LocalTime
 
 private const val MOCK_USER_NAME = "민준"
 
@@ -74,8 +80,11 @@ fun HomeScreen(
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
+    onNavigateToChallengeEndExpenseCalendar: () -> Unit = {},
+    onNavigateToTakeABreak: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -93,10 +102,7 @@ fun HomeScreen(
             amount = record.amount
         )
     }
-    // 지출 내역(ExpenseDetailStore: 목데이터 시드 + 지출입력으로 추가한 실제 기록)이
-    // '오늘 지출'의 유일한 기준이다. 홈 자체의 별도 지출 목데이터는 두지 않는다.
     val uiState = baseUiState.copy(expenses = storeExpenses)
-    // 선택된 날짜가 어느 챌린지(진행중 또는 그 직전 챌린지)에 속하는지에 맞춰 절약 금액/연속 달성을 계산한다.
     val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val todaySpent = uiState.expenses.sumOf { it.amount }
@@ -131,22 +137,56 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         when (selectedBottomTab) {
-            BottomNavItem.HOME -> HomeContent(
-                uiState = displayedUiState,
-                referenceToday = referenceToday,
-                onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
-                onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
-                onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
-                onSuggestionClick = { onNavigateToAmountAdjustment() },
-                onStartChallengeClick = onStartChallengeClick,
-                onCalendarClick = onCalendarClick,
-                onChallengeSummaryClick = onChallengeSummaryClick,
-                onChallengeDetailClick = onNavigateToAmountAdjustment,
-                onExpenseClick = onNavigateToExpenseDetail,
-                onViewAllExpensesClick = onNavigateToExpenseCalendar,
-                onAddExpenseClick = onAddExpenseClick,
-                modifier = Modifier.padding(innerPadding)
-            )
+            BottomNavItem.HOME -> {
+                HomeContent(
+                    uiState = displayedUiState,
+                    referenceToday = referenceToday,
+                    onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
+                    onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+                    onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
+                    onSuggestionClick = { onNavigateToAmountAdjustment() },
+                    onStartChallengeClick = onStartChallengeClick,
+                    onCalendarClick = onCalendarClick,
+                    onChallengeSummaryClick = onChallengeSummaryClick,
+                    onExpenseClick = onNavigateToExpenseDetail,
+                    onViewAllExpensesClick = onNavigateToExpenseCalendar,
+                    onAddExpenseClick = onAddExpenseClick,
+                    onNotificationClick = onNotificationClick,
+                    modifier = Modifier.padding(innerPadding)
+                )
+
+                val hasExpenseToday = ExpenseDetailStore.recordsForDate(referenceToday).isNotEmpty()
+                when {
+                    TakeABreakStore.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
+                        onStartNowClick = {
+                            TakeABreakStore.endBreakNow()
+                            onStartChallengeClick()
+                        },
+                        onStartTomorrowClick = { TakeABreakStore.postponeOneDay() },
+                        onRestMoreClick = onNavigateToTakeABreak
+                    )
+
+                    ChallengeRepository.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
+                        totalDays = ChallengeRepository.activeChallenge.totalDays,
+                        hasVisitedExpenseEdit = ChallengeRepository.hasVisitedExpenseEditAfterEnd,
+                        onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
+                        onFinishChallengeClick = {
+                            ChallengeRepository.acknowledgeChallengeEnd()
+                            onStartChallengeClick()
+                        }
+                    )
+
+                    RecordAlarmStore.isMissingReminderDue(referenceToday, LocalTime.now(), hasExpenseToday) ->
+                        MissingExpenseReminderDialog(
+                            onInputNowClick = {
+                                RecordAlarmStore.dismissForToday(referenceToday)
+                                onAddExpenseClick()
+                            },
+                            onNoSpendingTodayClick = { RecordAlarmStore.dismissForToday(referenceToday) },
+                            onLaterClick = { RecordAlarmStore.dismissForToday(referenceToday) }
+                        )
+                }
+            }
 
             BottomNavItem.HAM_BATTLE -> HamBattleScreen(
                 selectedBottomTab = selectedBottomTab,
@@ -154,6 +194,7 @@ fun HomeScreen(
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
+                onNotificationClick = onNotificationClick,
                 onChallengeClick = onHamBattleChallengeClick,
                 onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
                 onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
@@ -165,6 +206,7 @@ fun HomeScreen(
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                onNotificationClick = onNotificationClick,
                 onLoggedOut = onLoggedOut
             )
 
@@ -175,6 +217,7 @@ fun HomeScreen(
                     onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    onNotificationClick = onNotificationClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
                 )
                 LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
@@ -197,10 +240,10 @@ private fun HomeContent(
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: () -> Unit = {},
-    onChallengeDetailClick: () -> Unit = {},
     onExpenseClick: (String) -> Unit = {},
     onViewAllExpensesClick: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -213,7 +256,7 @@ private fun HomeContent(
             userName = uiState.userName,
             hasUnreadNotification = true,
             onCalendarClick = onCalendarClick,
-            onNotificationClick = {}
+            onNotificationClick = onNotificationClick
         )
         Spacer(modifier = Modifier.height(16.dp))
         DateSelectorRow(
@@ -235,7 +278,7 @@ private fun HomeContent(
                     .clickable(onClick = onChallengeSummaryClick)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                ChallengeBanner(challenge = challenge, onDetailClick = onChallengeDetailClick)
+                ChallengeBanner(challenge = challenge)
                 Spacer(modifier = Modifier.height(16.dp))
                 CharacterGaugeSection(challenge = challenge)
                 Spacer(modifier = Modifier.height(16.dp))

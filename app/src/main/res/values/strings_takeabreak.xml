@@ -1,3 +1,10 @@
 <resources>
     <!-- 쉬어가기 -->
+    <string name="takeabreak_ended_welcome_back">다시 돌아오신 걸 환영해요!</string>
+    <string name="takeabreak_ended_title">등록한 휴식기가 끝났어요</string>
+    <string name="takeabreak_ended_subtitle_line1">포치가 푹 쉬고 일어났어요.</string>
+    <string name="takeabreak_ended_subtitle_line2">오늘부터 다시 가볍게 챌린지를 시작해봐요.</string>
+    <string name="takeabreak_ended_start_now_button">지금 바로 시작할게요</string>
+    <string name="takeabreak_ended_start_tomorrow_button">내일부터 할게요</string>
+    <string name="takeabreak_ended_rest_more_link">조금 더 쉴게요</string>
 </resources>

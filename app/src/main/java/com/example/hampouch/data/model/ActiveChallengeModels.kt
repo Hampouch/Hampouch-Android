@@ -24,8 +24,6 @@ data class ActiveChallenge(
         ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt()
 }
 
-// 챌린지 시작일부터 기준일까지, 실제 지출 내역을 근거로 계산한 진행 현황.
-// 홈/챌린지 결과 화면이 이 하나의 계산 결과를 공유해 서로 다른 숫자를 보여주지 않도록 한다.
 data class ChallengeProgress(
     val savedAmount: Int,
     val streakDays: Int,

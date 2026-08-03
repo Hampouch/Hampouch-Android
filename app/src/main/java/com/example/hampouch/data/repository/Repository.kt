@@ -1,12 +1,13 @@
 package com.example.hampouch.data.repository
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.hampouch.data.model.ActiveChallenge
 import com.example.hampouch.data.model.ChallengeProgress
 import com.example.hampouch.data.model.DailyRecordStatus
 import java.time.LocalDate
 
-// 서버팀 API 연동 전까지 화면 간 "현재 진행중인 챌린지" 정보를 일치시키는 단일 소스.
 // TODO: 서버팀 챌린지 API 연동 시 이 목데이터 대신 data/remote/ApiService 호출 결과로 activeChallengeState를 채우도록 교체.
 object ChallengeRepository {
 
@@ -41,8 +42,23 @@ object ChallengeRepository {
     val activeChallenge: ActiveChallenge
         get() = activeChallengeState.value
 
-    // 현재 챌린지 바로 직전에 끝난 7일짜리 챌린지. 홈 화면에서 그 기간의 날짜를 볼 때와
-    // 마이페이지 '지난 챌린지'가 이 하나의 정의를 공유한다.
+    var challengeEndAcknowledged: Boolean by mutableStateOf(false)
+        private set
+
+    var hasVisitedExpenseEditAfterEnd: Boolean by mutableStateOf(false)
+        private set
+
+    fun isChallengeJustEnded(referenceToday: LocalDate): Boolean =
+        !challengeEndAcknowledged && referenceToday.isAfter(activeChallenge.periodEnd)
+
+    fun markVisitedExpenseEditAfterEnd() {
+        hasVisitedExpenseEditAfterEnd = true
+    }
+
+    fun acknowledgeChallengeEnd() {
+        challengeEndAcknowledged = true
+    }
+
     val previousChallenge: ActiveChallenge
         get() {
             val active = activeChallenge
@@ -61,7 +77,6 @@ object ChallengeRepository {
             )
         }
 
-    // 해당 날짜가 속한 챌린지(진행중 또는 바로 이전 챌린지)를 반환한다. 둘 다 아니면 null(진행중인 챌린지 없음).
     fun challengeFor(date: LocalDate): ActiveChallenge? {
         val active = activeChallenge
         if (!date.isBefore(active.periodStart)) return active
@@ -79,7 +94,6 @@ object ChallengeRepository {
         )
     }
 
-    // 챌린지 시작일부터 기준일(또는 챌린지 종료일 중 이른 쪽)까지의 날짜 목록.
     fun elapsedDays(referenceToday: LocalDate, challenge: ActiveChallenge = activeChallenge): List<LocalDate> {
         val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
         return generateSequence(challenge.periodStart) { it.plusDays(1) }
@@ -87,8 +101,6 @@ object ChallengeRepository {
             .toList()
     }
 
-    // spentOnDate: 해당 날짜의 실제 지출 합계를 반환하는 함수(호출부에서 ExpenseDetailStore를 주입).
-    // 홈 화면과 챌린지 결과 화면이 동일한 로직으로 절약 금액/연속 달성/일별 성공 여부를 계산하도록 공유한다.
     fun computeProgress(
         referenceToday: LocalDate,
         challenge: ActiveChallenge = activeChallenge,
