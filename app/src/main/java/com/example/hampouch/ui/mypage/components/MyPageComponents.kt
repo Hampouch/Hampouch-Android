@@ -23,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.data.model.ChallengeRecord
@@ -103,13 +103,7 @@ fun MyPageMainTopBar(
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onNotificationClick) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
-                tint = HPBlack
-            )
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 

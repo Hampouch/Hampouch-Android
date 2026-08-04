@@ -59,6 +59,10 @@
     <string name="hamtips_write_title_placeholder">핵심을 한 줄로 요약해주세요</string>
     <string name="hamtips_write_section_content">내용</string>
     <string name="hamtips_write_content_placeholder">구체적일 수록 공감을 많이 받아요</string>
+    <string name="hamtips_write_hint_title">이런 내용이 있으면 더 좋아요</string>
+    <string name="hamtips_write_hint_bullet1">얼마나 절약했는지 (예: 한 달 8만원)</string>
+    <string name="hamtips_write_hint_bullet2">어디서 어떻게 줄였는지</string>
+    <string name="hamtips_write_hint_bullet3">따라 할 수 있는 구체적인 방법</string>
 
     <!-- 메뉴 추천 -->
     <string name="hamtips_write_menu_heading">무슨 메뉴를 공유할까요?</string>

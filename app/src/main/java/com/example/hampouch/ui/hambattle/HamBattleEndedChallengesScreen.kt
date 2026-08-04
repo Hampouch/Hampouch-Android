@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.HamBattleEndedChallenge
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -90,9 +90,7 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
             }
         },
         actions = {
-            IconButton(onClick = onNotificationClick) {
-                Icon(Icons.Filled.Notifications, contentDescription = "알림", tint = HPBlack)
-            }
+            NotificationBellIcon(onClick = onNotificationClick)
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
     )
