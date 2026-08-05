@@ -19,6 +19,7 @@ import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
 import com.example.hampouch.ui.onboarding.components.OnboardingHeaderCard
 import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
+import com.example.hampouch.ui.onboarding.components.OnboardingSecondaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
 import com.example.hampouch.ui.onboarding.components.SkipText
@@ -30,6 +31,7 @@ fun ExpenseDiagnosisStep(
     onExpenseChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
@@ -75,7 +77,12 @@ fun ExpenseDiagnosisStep(
 
             Box(modifier = Modifier.weight(1f))
 
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
+
+            OnboardingSecondaryButton(
+                text = stringResource(R.string.onboarding_existing_login),
+                onClick = onNavigateToLogin
+            )
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
@@ -94,7 +101,8 @@ private fun ExpenseDiagnosisStepPreview() {
             state = OnboardingUiState(lastMonthFoodExpense = 452000),
             onExpenseChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }

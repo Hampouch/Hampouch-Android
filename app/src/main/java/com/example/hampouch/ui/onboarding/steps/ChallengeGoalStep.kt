@@ -28,6 +28,7 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
+import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
@@ -42,6 +43,7 @@ fun ChallengeGoalStep(
     onTotalTargetChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
@@ -114,6 +116,8 @@ fun ChallengeGoalStep(
 
             Box(modifier = Modifier.weight(1f))
 
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
+
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
                 enabled = true,
@@ -135,7 +139,8 @@ private fun ChallengeGoalStepPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }
@@ -151,7 +156,8 @@ private fun ChallengeGoalStepDateFixedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }
@@ -169,7 +175,8 @@ private fun ChallengeGoalStepEditedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }

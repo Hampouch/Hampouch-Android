@@ -10,8 +10,8 @@
     <string name="amountadjustment_period_format">%1$s ~ %2$s</string>
     <string name="amountadjustment_target_amount_label">목표 금액</string>
     <string name="amountadjustment_daily_limit_label">하루 한도</string>
-    <string name="amountadjustment_over_amount_prefix">현재 </string>
-    <string name="amountadjustment_over_amount_suffix"> 초과</string>
+    <string name="amountadjustment_over_amount_prefix">"지금까지 "</string>
+    <string name="amountadjustment_over_amount_suffix">" 초과"</string>
 
     <string name="amountadjustment_goal_amount_note">이미 지난 기록은 그대로 유지되고, 남은 기간에만 적용돼요.</string>
     <string name="amountadjustment_option_keep">현재 유지</string>

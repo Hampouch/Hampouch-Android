@@ -48,8 +48,8 @@ import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
-import com.example.hampouch.ui.notification.NotificationMockData
 import com.example.hampouch.ui.notification.NotificationScreen
+import com.example.hampouch.ui.notification.NotificationStore
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.session.UserSession
@@ -119,7 +119,8 @@ fun AppNavHost(
                     Log.d(TAG, "Onboarding finished with mock request: $request")
                     ChallengeRepository.startNewChallenge(request)
                     navController.navigate(Screen.Login.route)
-                }
+                },
+                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
             )
         }
 
@@ -594,8 +595,10 @@ fun AppNavHost(
 
         composable(Screen.Notification.route) {
             NotificationScreen(
-                notifications = NotificationMockData.populated(),
-                onBackClick = { navController.popBackStack() }
+                notifications = NotificationStore.items,
+                onBackClick = { navController.popBackStack() },
+                onMarkAllReadClick = { NotificationStore.markAllRead() },
+                onNotificationClick = { item -> NotificationStore.markRead(item.id) }
             )
         }
     }
