@@ -69,6 +69,7 @@ fun PeriodStep(
     onStartDateChange: (LocalDate) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -205,7 +206,7 @@ fun PeriodStep(
                 }
             }
 
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNext)
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
@@ -266,7 +267,8 @@ private fun PeriodStepDateFixedPreview() {
             onDateFixedChange = {},
             onStartDateChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }
@@ -282,7 +284,8 @@ private fun PeriodStepPeriodPreview() {
             onDateFixedChange = {},
             onStartDateChange = {},
             onNext = {},
-            onBack = {}
+            onBack = {},
+            onNavigateToLogin = {}
         )
     }
 }

@@ -259,7 +259,6 @@ private fun HomeContent(
     ) {
         HomeHeader(
             userName = uiState.userName,
-            hasUnreadNotification = true,
             onCalendarClick = onCalendarClick,
             onNotificationClick = onNotificationClick
         )

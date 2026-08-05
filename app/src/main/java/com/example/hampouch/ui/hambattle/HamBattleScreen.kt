@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -55,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.model.HamBattleActiveChallenge
 import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.navigation.BottomNavBar
@@ -142,13 +142,7 @@ private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modif
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onNotificationClick) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
-                tint = HPBlack
-            )
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 

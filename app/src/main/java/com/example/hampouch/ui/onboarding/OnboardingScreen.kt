@@ -24,6 +24,7 @@ import kotlin.math.roundToInt
 @Composable
 fun OnboardingRoute(
     onOnboardingComplete: (OnboardingRequest) -> Unit,
+    onNavigateToLogin: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var step by remember { mutableStateOf(OnboardingStep.SPLASH) }
@@ -44,7 +45,8 @@ fun OnboardingRoute(
                 state = uiState,
                 onExpenseChange = { uiState = uiState.copy(lastMonthFoodExpense = it) },
                 onNext = { step = OnboardingStep.PERIOD_SETTING },
-                onBack = {}
+                onBack = {},
+                onNavigateToLogin = onNavigateToLogin
             )
 
             OnboardingStep.PERIOD_SETTING -> PeriodStep(
@@ -64,14 +66,16 @@ fun OnboardingRoute(
                 },
                 onStartDateChange = { uiState = uiState.copy(startDate = it) },
                 onNext = { step = OnboardingStep.GOAL_SETTING },
-                onBack = { step = OnboardingStep.EXPENSE_DIAGNOSIS }
+                onBack = { step = OnboardingStep.EXPENSE_DIAGNOSIS },
+                onNavigateToLogin = onNavigateToLogin
             )
 
             OnboardingStep.GOAL_SETTING -> ChallengeGoalStep(
                 state = uiState,
                 onTotalTargetChange = { uiState = uiState.copy(totalTargetAmount = it) },
                 onNext = { step = OnboardingStep.CATEGORY_SELECT },
-                onBack = { step = OnboardingStep.PERIOD_SETTING }
+                onBack = { step = OnboardingStep.PERIOD_SETTING },
+                onNavigateToLogin = onNavigateToLogin
             )
 
             OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(

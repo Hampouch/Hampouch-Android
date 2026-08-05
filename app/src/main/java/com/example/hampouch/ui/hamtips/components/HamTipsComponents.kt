@@ -32,7 +32,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -61,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.model.HamTipsCategoryTab
 import com.example.hampouch.data.model.HamTipsFabMenuOption
 import com.example.hampouch.data.model.HamTipsSortOrder
@@ -92,13 +92,7 @@ fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modi
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onNotificationClick) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
-                tint = HPBlack
-            )
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -129,13 +123,7 @@ fun HamTipsDetailTopBar(
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onNotificationClick) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
-                tint = HPBlack
-            )
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 

@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -52,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.model.CharacterState
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeChallenge
@@ -77,7 +77,6 @@ internal fun formatWon(amount: Int): String = "%,d".format(amount)
 @Composable
 fun HomeHeader(
     userName: String,
-    hasUnreadNotification: Boolean,
     onCalendarClick: () -> Unit,
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -101,24 +100,7 @@ fun HomeHeader(
                 tint = HPBlack
             )
         }
-        Box {
-            IconButton(onClick = onNotificationClick) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = stringResource(R.string.cd_notification),
-                    tint = HPBlack
-                )
-            }
-            if (hasUnreadNotification) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp, end = 8.dp)
-                        .size(8.dp)
-                        .align(Alignment.TopEnd)
-                        .background(HPSub, CircleShape)
-                )
-            }
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
