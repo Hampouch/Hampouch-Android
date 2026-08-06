@@ -51,7 +51,7 @@ data class HamBattleChallenge(
     val participants: List<HamBattleParticipantSpending> = emptyList(),
     val totalCount: Int,
     val durationDays: Int,
-    /** null이면 아직 시작일이 정해지지 않은 챌린지(예: 커뮤니티에서 참가만 한 경우). */
+    /** null이면 아직 시작일이 정해지지 않은 챌린지. */
     val startDate: LocalDate? = null,
     val link: String = "",
     /** 지출 미입력 탈락자가 늘어 남은 인원이 1명 이하가 되는 등, 진행 도중 강제로 종료된 경우. */

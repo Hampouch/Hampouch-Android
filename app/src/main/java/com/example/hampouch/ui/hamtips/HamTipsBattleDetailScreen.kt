@@ -49,6 +49,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.ZoneOffset
 
 /**
  * 게시글에 달린 링크로 실제 생성된 햄배틀 챌린지를 찾아 그 정보를 그대로 보여준다.
@@ -63,7 +64,10 @@ private fun battleChallengeRequestFrom(
     challengeName = linkedChallenge?.title ?: post.title,
     participantCount = capacityLabel,
     durationDays = durationLabel,
-    startDateMillis = null,
+    startDateMillis = linkedChallenge?.startDate
+        ?.atStartOfDay(ZoneOffset.UTC)
+        ?.toInstant()
+        ?.toEpochMilli(),
     penalty = linkedChallenge?.penalty ?: post.battleInfo?.penalty.orEmpty()
 )
 
@@ -129,6 +133,7 @@ fun HamTipsBattleDetailScreen(
     onBackClick: () -> Unit,
     onDeleted: () -> Unit,
     onNavigateToBattleLink: (String) -> Unit,
+    onNavigateToHamBattleTab: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
@@ -278,7 +283,14 @@ fun HamTipsBattleDetailScreen(
                         showRoomFull = true
                     } else {
                         HamTipsRepository.joinBattle(post.id)
-                        onNavigateToBattleLink(joinedChallenge.id)
+                        if (joinedChallenge.isFull) {
+                            // 내가 참가하면서 정원이 다 찼으면 이 챌린지는 더 이상 "대기중"이
+                            // 아니라 진행중(또는 시작일 전이면 대기중) 목록으로 넘어가므로,
+                            // 대기중 상세화면 대신 햄배틀 탭으로 보낸다.
+                            onNavigateToHamBattleTab()
+                        } else {
+                            onNavigateToBattleLink(joinedChallenge.id)
+                        }
                     }
                 }
             )

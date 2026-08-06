@@ -303,7 +303,8 @@ object HamBattleMockData {
         title: String,
         penalty: String,
         link: String,
-        totalCount: Int
+        totalCount: Int,
+        referenceToday: LocalDate = LocalDate.now()
     ): HamBattleChallenge? {
         val existing = challengesState.value.find { it.link == link }
         if (existing != null) {
@@ -321,7 +322,7 @@ object HamBattleMockData {
             ),
             totalCount = totalCount,
             durationDays = DEFAULT_DURATION_DAYS,
-            startDate = null,
+            startDate = referenceToday,
             link = link
         )
         challengesState.value = challengesState.value + newChallenge

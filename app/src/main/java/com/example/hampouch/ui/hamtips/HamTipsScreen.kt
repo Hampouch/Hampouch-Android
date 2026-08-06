@@ -89,6 +89,7 @@ fun HamTipsScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit = {},
+    onNavigateToHamBattleTab: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     openWriteBattleOnStart: Boolean = false,
     initialWriteBattleLink: String = "",
@@ -191,7 +192,8 @@ fun HamTipsScreen(
                     post = post,
                     onBackClick = onBackToMain,
                     onDeleted = onBackToMain,
-                    onNavigateToBattleLink = onNavigateToHamBattleLink
+                    onNavigateToBattleLink = onNavigateToHamBattleLink,
+                    onNavigateToHamBattleTab = onNavigateToHamBattleTab
                 )
             }
         }

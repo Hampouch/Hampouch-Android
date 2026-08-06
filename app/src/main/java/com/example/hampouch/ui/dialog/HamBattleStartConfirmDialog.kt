@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.dialog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +34,9 @@ import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @Composable
 fun HamBattleStartConfirmDialog(
@@ -106,8 +110,38 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
                 color = HPMain,
             )
         }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                challengeStartDateLabel(request.startDateMillis),
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
+                color = HPMain
+            )
+            Text(
+                challengeStartSuffixLabel(request.startDateMillis),
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
+                color = HPText
+            )
+        }
     }
 }
+
+// 아직 실제로 만들어진 챌린지가 아니라 시작일을 모를 때(커뮤니티 참가 확인 등)는
+// 챌린지 시작일이 기본값인 오늘로 잡힌다는 걸 그대로 보여준다.
+private fun challengeStartDateLabel(startDateMillis: Long?): String {
+    val date = startDateMillis?.let {
+        Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+    } ?: LocalDate.now()
+    return "${date.monthValue}월 ${date.dayOfMonth}일 "
+}
+
+private fun challengeStartSuffixLabel(startDateMillis: Long?): String =
+    if (startDateMillis == null) "배틀 시작 예정" else "시작"
 
 @Composable
 fun ConfirmActionCard(
