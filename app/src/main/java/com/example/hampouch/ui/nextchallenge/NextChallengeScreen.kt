@@ -600,7 +600,6 @@ private fun PochiRecommendationCard(
         Text(
             message,
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = HPBlack
         )

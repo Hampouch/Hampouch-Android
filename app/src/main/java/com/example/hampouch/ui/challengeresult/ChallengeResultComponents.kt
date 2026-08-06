@@ -144,7 +144,6 @@ fun GoalSummaryCard(
         Text(
             "목표 ${formatWon(goalAmount)}  →  실제 ${formatWon(actualAmount)} 사용",
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
             color = HPBlack
         )
     }
@@ -462,7 +461,7 @@ private fun CalendarLegendItem(color: Color, label: String) {
                 .background(color)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, fontSize = 14.sp, color = HPText)
+        Text(label, style = MaterialTheme.typography.labelLarge, color = HPText)
     }
 }
 

@@ -106,8 +106,7 @@ fun ParticipantAvatarLabel(
                 Text(
                     participant.name,
                     modifier = Modifier.width(ParticipantNameWidth),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = HPBlack
@@ -145,9 +144,10 @@ private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending) 
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
+                    modifier = Modifier.width(ParticipantNameWidth),
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = HPBlack
                 )
             }
@@ -240,6 +240,7 @@ fun RankedParticipantList(
                     modifier = Modifier.width(80.dp),
                     fontSize = 14.sp,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.End,
                     color = HPBlack
                 )

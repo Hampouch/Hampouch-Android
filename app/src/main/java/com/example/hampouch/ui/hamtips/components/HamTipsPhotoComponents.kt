@@ -120,6 +120,7 @@ private fun AttachedPhotoTile(uriString: String, onRemove: () -> Unit, modifier:
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
+                // 고정 크기(22dp) 삭제 배지를 96dp 썸네일 모서리 밖으로 살짝 걸치게 하는 용도 — 화면 크기와 무관해 절대좌표 유지
                 .offset(x = 6.dp, y = (-6).dp)
                 .size(22.dp)
                 .clip(CircleShape)

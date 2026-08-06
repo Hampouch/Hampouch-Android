@@ -468,8 +468,7 @@ private fun ExpenseInputAmountStep(
                 stringResource(R.string.expenseinput_amount_question),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 24.sp,
+                style = MaterialTheme.typography.headlineSmall,
                 color = HPText
             )
             Spacer(modifier = Modifier.height(13.dp))
@@ -544,8 +543,7 @@ private fun ExpenseInputAmountStep(
                         .fillMaxWidth()
                         .clickable(onClick = onNoSpendingToday),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = HPText
                 )
             }
@@ -578,8 +576,7 @@ private fun ExpenseInputCategoryStep(
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             stringResource(R.string.expenseinput_category_question),
-            style = MaterialTheme.typography.titleSmall,
-            fontSize = 24.sp,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = HPBlack
         )
@@ -587,7 +584,6 @@ private fun ExpenseInputCategoryStep(
         Text(
             stringResource(R.string.expenseinput_category_description),
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
             color = HPText
         )
         Spacer(modifier = Modifier.height(30.dp))
@@ -660,22 +656,19 @@ private fun ExpenseInputReasonStep(
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             stringResource(R.string.expenseinput_reason_question),
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             stringResource(R.string.expenseinput_reason_description_line1),
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
             color = HPText
         )
         Text(
             stringResource(R.string.expenseinput_reason_description_line2),
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
             color = HPText
         )
         Spacer(modifier = Modifier.height(30.dp))
@@ -697,7 +690,6 @@ private fun ExpenseInputReasonStep(
                             Text(
                                 expenseName,
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontSize = 18.sp,
                                 color = HPText
                             )
                         }

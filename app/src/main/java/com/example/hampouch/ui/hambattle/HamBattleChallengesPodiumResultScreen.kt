@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
@@ -249,6 +250,8 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = HPMain
             )
         }
@@ -355,7 +358,14 @@ private fun ExtraRankRow(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPGray4)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Text(participant.name, style = Body16Bold, color = HPBlack, modifier = Modifier.weight(1f))
+        Text(
+            participant.name,
+            style = Body16Bold,
+            color = HPBlack,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         Text(formatWon(participant.amount), style = Body16Bold, color = HPBlack)
     }
 }

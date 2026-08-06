@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -211,11 +212,15 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 participant.name,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = HPMain
             )
             Text(
                 formatWon(participant.amount),
                 fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = HPBlack
             )
         }
@@ -251,8 +256,11 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,
+            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             color = HPText
         )
     }

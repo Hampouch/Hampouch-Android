@@ -119,8 +119,7 @@ fun ExpenseInputBalanceCard(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(R.string.expenseinput_today_balance),
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = HPBlack
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -254,13 +253,12 @@ fun ExpenseInputAmountSummaryCard(
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 formatWon(amount),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
                 color = HPBlack
             )
             Spacer(modifier = Modifier.padding(start = 4.dp))
-            Text("원", style = MaterialTheme.typography.bodyMedium, fontSize = 18.sp, color = HPText)
+            Text("원", style = MaterialTheme.typography.bodyLarge, color = HPText)
         }
         Spacer(modifier = Modifier.height(5.dp))
         DashedDivider(color = HPBlack)

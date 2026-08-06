@@ -158,7 +158,6 @@ fun HamBattleAddScreen(
                 "시작일까지 아무도 참여하지 않으면 챌린지는 자동으로 사라져요",
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodySmall,
-                fontSize = 14.sp,
                 color = HPText
             )
 

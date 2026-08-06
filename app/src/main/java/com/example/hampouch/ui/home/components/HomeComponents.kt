@@ -303,15 +303,16 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
     }
 }
 
-private val StreakBoxWidthDelta = 30.dp
+private const val StreakBoxWidthDeltaRatio = 0.2f
 
 @Composable
 fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val gap = 12.dp
         val halfWidth = (maxWidth - gap) / 2
-        val savingsBoxWidth = halfWidth + StreakBoxWidthDelta
-        val streakBoxWidth = halfWidth - StreakBoxWidthDelta
+        val widthDelta = halfWidth * StreakBoxWidthDeltaRatio
+        val savingsBoxWidth = halfWidth + widthDelta
+        val streakBoxWidth = halfWidth - widthDelta
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -356,6 +357,7 @@ fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Mod
                     contentDescription = null,
                     tint = HPWhite,
                     modifier = Modifier
+                        // 아이콘 글리프가 비대칭이라 시각적으로 중앙에 오도록 보정하는 1dp 미세조정 — 화면 크기와 무관해 절대좌표 유지
                         .offset(x = (-1).dp)
                         .size(32.dp)
                 )
@@ -646,6 +648,7 @@ fun NoActiveChallengeSection(onStartChallengeClick: () -> Unit, modifier: Modifi
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 12.dp)
+                // 고정 크기(110x128dp) 캐릭터 이미지가 카드 하단 밖으로 일부 걸치도록 하는 용도 — 화면 크기와 무관해 절대좌표 유지
                 .offset(y = 28.dp)
                 .width(110.dp)
                 .height(128.dp)

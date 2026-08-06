@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -335,7 +336,7 @@ private fun SummaryCard(
                     .background(HPGray4)
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(winner.name, style = Body16Bold, color = HPBlack)
+            Text(winner.name, style = Body16Bold, color = HPBlack, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 formatWon(winner.amount),
@@ -402,8 +403,11 @@ private fun EndedRankRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     participant.name,
+                    modifier = Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = nameColor
                 )
                 if (isWinner) {
@@ -452,8 +456,11 @@ private fun EndedDisqualifiedRow(participant: HamBattleParticipantSpending) {
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,
+            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             color = HPText
         )
     }
@@ -495,11 +502,14 @@ private fun EndedPenaltyBox(penalty: String, penaltyTargetName: String) {
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
-        Row() {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 penaltyTargetName,
+                modifier = Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = HPMain
             )
             Text(
