@@ -79,6 +79,7 @@ fun HomeScreen(
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
+    onHamBattleViewEndedChallengeDetailClick: (String) -> Unit = {},
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
@@ -201,6 +202,7 @@ fun HomeScreen(
                 onChallengeClick = onHamBattleChallengeClick,
                 onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
                 onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
+                onViewEndedChallengeDetailClick = onHamBattleViewEndedChallengeDetailClick,
             )
 
             BottomNavItem.MY_PAGE -> MyPageScreen(

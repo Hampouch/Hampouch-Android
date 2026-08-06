@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -29,7 +29,7 @@ private const val PAGE_COUNT = 2
 
 @Composable
 fun HamBattleChallengesResultPagerScreen(
-    challenge: HamBattleActiveChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
@@ -96,7 +96,7 @@ private fun ResultPageIndicator(
 private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
         HamBattleChallengesResultPagerScreen(
-            challenge = HamBattleMockData.activeChallenges.first()
+            challenge = HamBattleMockData.activeChallenges().first()
         )
     }
 }

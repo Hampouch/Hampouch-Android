@@ -217,6 +217,11 @@ fun AppNavHost(
                 onHamBattleViewEndedChallengesClick = {
                     navController.navigate(Screen.HamBattleEndedChallenges.route)
                 },
+                onHamBattleViewEndedChallengeDetailClick = { challengeId ->
+                    navController.navigate(
+                        Screen.HamBattleEndedChallengeDetail.createRoute(challengeId)
+                    )
+                },
                 onHamBattleWaitingChallengeClick = { challengeId ->
                     navController.navigate(
                         Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
@@ -481,7 +486,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.activeChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
@@ -520,7 +525,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.endedChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
@@ -541,7 +546,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.waitingChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,

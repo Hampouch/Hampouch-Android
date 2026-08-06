@@ -42,8 +42,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
@@ -56,7 +56,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleWaitingChallengeDetailScreen(
-    challenge: HamBattleWaitingChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onShareToCommunityClick: () -> Unit = {}
 ) {
@@ -140,7 +140,7 @@ private fun WaitingDetailTopBar(title: String, onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
+private fun WaitingInfoCard(challenge: HamBattleChallenge) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,7 +150,7 @@ private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
     ) {
         Row() {
             Text(
-                challenge.startDateShortLabel,
+                challenge.startDateShortLabel(),
                 style = Body16Bold,
                 color = HPMain
             )
@@ -262,6 +262,6 @@ private fun WaitingPenaltyBox(penalty: String) {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges.first())
+        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges().first())
     }
 }

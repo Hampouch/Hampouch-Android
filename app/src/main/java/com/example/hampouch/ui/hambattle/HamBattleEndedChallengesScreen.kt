@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleEndedChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -45,7 +45,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleEndedChallengesScreen(
-    endedChallenges: List<HamBattleEndedChallenge> = HamBattleMockData.endedChallenges,
+    endedChallenges: List<HamBattleChallenge> = HamBattleMockData.endedChallenges(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {}
@@ -97,7 +97,7 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
 }
 
 @Composable
-private fun EndedChallengeCard(challenge: HamBattleEndedChallenge, onClick: () -> Unit) {
+private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val winnerName = ranked.firstOrNull()?.name.orEmpty()
 

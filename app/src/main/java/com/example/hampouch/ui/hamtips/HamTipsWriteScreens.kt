@@ -331,7 +331,7 @@ fun HamTipsWriteBattleScreen(
     onBackClick: () -> Unit,
     onSubmitted: () -> Unit,
     initialLink: String = "",
-    waitingChallengeLinks: List<String> = HamBattleMockData.waitingChallenges.map { it.link }
+    waitingChallengeLinks: List<String> = HamBattleMockData.waitingChallenges().map { it.link }
 ) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }

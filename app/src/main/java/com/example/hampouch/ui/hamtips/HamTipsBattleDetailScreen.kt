@@ -30,12 +30,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleWaitingChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
+import com.example.hampouch.ui.dialog.HamBattleRoomFullDialog
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
@@ -57,7 +58,7 @@ private fun battleChallengeRequestFrom(
     post: TipPost,
     durationLabel: String,
     capacityLabel: String,
-    linkedChallenge: HamBattleWaitingChallenge? = null
+    linkedChallenge: HamBattleChallenge? = null
 ) = HamBattleChallengeRequest(
     challengeName = linkedChallenge?.title ?: post.title,
     participantCount = capacityLabel,
@@ -132,6 +133,7 @@ fun HamTipsBattleDetailScreen(
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var showJoinConfirm by remember { mutableStateOf(false) }
+    var showRoomFull by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
     var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
@@ -142,7 +144,7 @@ fun HamTipsBattleDetailScreen(
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleInfo = post.battleInfo
     val linkedChallenge = battleInfo?.link?.let { link ->
-        HamBattleMockData.waitingChallenges.find { it.link == link }
+        HamBattleMockData.challenges.find { it.link == link }
     }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
@@ -194,7 +196,7 @@ fun HamTipsBattleDetailScreen(
                     HamTipsBattleInfoCard(
                         summaryRequest = summaryRequest,
                         showActionButton = !isAuthor,
-                        isFull = battleInfo.isFull,
+                        isFull = linkedChallenge?.isFull ?: battleInfo.isFull,
                         onActionClick = { showJoinConfirm = true }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -265,17 +267,29 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    HamTipsRepository.joinBattle(post.id)
                     val joinedChallenge = HamBattleMockData.joinChallengeFromCommunityPost(
+                        authorName = post.authorName,
                         title = post.title,
                         penalty = battleInfo.penalty,
                         link = battleInfo.link,
                         totalCount = battleInfo.capacity
                     )
-                    onNavigateToBattleLink(joinedChallenge.id)
+                    if (joinedChallenge == null) {
+                        showRoomFull = true
+                    } else {
+                        HamTipsRepository.joinBattle(post.id)
+                        onNavigateToBattleLink(joinedChallenge.id)
+                    }
                 }
             )
         }
+    }
+
+    if (showRoomFull) {
+        HamBattleRoomFullDialog(
+            challengeTitle = summaryRequest.challengeName,
+            onConfirmClick = { showRoomFull = false }
+        )
     }
 }
 
