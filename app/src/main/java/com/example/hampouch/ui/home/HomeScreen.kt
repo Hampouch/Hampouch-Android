@@ -212,7 +212,7 @@ fun HomeScreen(
                 onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
                 onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
                 onNavigateToTakeABreak = onNavigateToTakeABreak,
-                onStartNewChallengeClick = onStartChallengeClick
+                onStartNewChallengeClick = { onStartChallengeClick() }
             )
 
             BottomNavItem.COMMUNITY -> {
