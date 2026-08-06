@@ -6,10 +6,13 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.hampouch.core.config.AuthConfig
 import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.data.model.AuthProvider
+import com.example.hampouch.data.model.AuthSession
 import com.example.hampouch.data.model.SocialCredential
-import com.example.hampouch.data.model.UserSession
+import com.example.hampouch.data.model.User
+import com.example.hampouch.data.model.UserRole
 import com.example.hampouch.data.remote.ApiException
 import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.EmailSendData
@@ -23,6 +26,8 @@ import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
+import com.example.hampouch.ui.login.LoginMockData
+import com.example.hampouch.ui.session.UserSession
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -51,7 +56,7 @@ class AuthRepository private constructor(private val context: Context) {
         val PROFILE_IMAGE_URL = stringPreferencesKey("profile_image_url")
     }
 
-    val userSession: Flow<UserSession?> = context.authDataStore.data.map { preferences ->
+    val userSession: Flow<AuthSession?> = context.authDataStore.data.map { preferences ->
         val provider = preferences[Keys.PROVIDER]?.let { AuthProvider.valueOf(it) }
         val userId = preferences[Keys.USER_ID]
         val role = preferences[Keys.ROLE]
@@ -64,7 +69,7 @@ class AuthRepository private constructor(private val context: Context) {
         ) {
             null
         } else {
-            UserSession(
+            AuthSession(
                 provider = provider,
                 userId = userId,
                 role = role,
@@ -83,7 +88,10 @@ class AuthRepository private constructor(private val context: Context) {
      * 소셜 SDK에서 받은 [credential]을 서버(/api/auth/social)로 전달해 로그인 검증을 수행하고,
      * 성공 시 발급된 토큰과 사용자 정보를 세션으로 저장한다.
      */
-    suspend fun loginWithSocial(credential: SocialCredential): Result<UserSession> {
+    suspend fun loginWithSocial(credential: SocialCredential): Result<AuthSession> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockLoginWithSocial(credential)
+        }
         return try {
             val response = NetworkModule.apiService.loginWithSocial(
                 SocialLoginRequest(
@@ -94,7 +102,7 @@ class AuthRepository private constructor(private val context: Context) {
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                val session = UserSession(
+                val session = AuthSession(
                     provider = credential.provider,
                     userId = body.user.userId,
                     role = body.user.role,
@@ -131,13 +139,16 @@ class AuthRepository private constructor(private val context: Context) {
     /**
      * 이메일+비밀번호로 일반 로그인을 서버(/api/auth/login)에 요청하고, 성공 시 세션을 저장한다.
      */
-    suspend fun login(email: String, password: String): Result<UserSession> {
+    suspend fun login(email: String, password: String): Result<AuthSession> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockLogin(email, password)
+        }
         return try {
             val response = NetworkModule.apiService.login(LoginRequest(email = email, password = password))
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                val session = UserSession(
+                val session = AuthSession(
                     provider = AuthProvider.LOCAL,
                     userId = body.user.userId,
                     role = body.user.role,
@@ -177,6 +188,9 @@ class AuthRepository private constructor(private val context: Context) {
         email: String,
         purpose: EmailVerificationPurpose
     ): Result<EmailSendData> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockSendEmailVerificationCode()
+        }
         return try {
             val response = NetworkModule.apiService.sendEmailVerificationCode(
                 EmailSendRequest(email = email, purpose = purpose.name)
@@ -212,6 +226,9 @@ class AuthRepository private constructor(private val context: Context) {
         code: String,
         purpose: EmailVerificationPurpose
     ): Result<EmailVerifyData> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockVerifyEmailCode(email, code, purpose)
+        }
         return try {
             val response = NetworkModule.apiService.verifyEmailCode(
                 EmailVerifyRequest(email = email, code = code, purpose = purpose.name)
@@ -243,6 +260,9 @@ class AuthRepository private constructor(private val context: Context) {
      * 닉네임 중복 여부를 서버(/api/auth/nickname/check)에 확인한다.
      */
     suspend fun checkNicknameAvailability(nickname: String): Result<NicknameCheckData> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockCheckNicknameAvailability(nickname)
+        }
         return try {
             val response = NetworkModule.apiService.checkNickname(nickname)
 
@@ -273,6 +293,9 @@ class AuthRepository private constructor(private val context: Context) {
      * 성공해도 로그인 토큰은 내려오지 않으므로, 이어서 로그인 화면에서 별도로 로그인해야 한다.
      */
     suspend fun signUp(email: String, password: String, nickname: String): Result<SignUpData> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return mockSignUp(email, nickname)
+        }
         return try {
             val response = NetworkModule.apiService.signUp(
                 SignUpRequest(email = email, password = password, nickname = nickname)
@@ -305,6 +328,9 @@ class AuthRepository private constructor(private val context: Context) {
      * 응답에 data가 없으므로 HTTP 성공 여부만으로 판단한다.
      */
     suspend fun resetPassword(email: String, newPassword: String): Result<Unit> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return Result.success(Unit)
+        }
         return try {
             val response = NetworkModule.apiService.resetPassword(
                 PasswordResetRequest(email = email, newPassword = newPassword)
@@ -331,7 +357,76 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    suspend fun saveSession(session: UserSession) {
+    // region 목데이터 모드 (AuthConfig.USE_SERVER_AUTH == false)
+    // 서버 없이 화면/네비게이션을 확인할 때 쓰는 더미 구현. LoginMockData의 고정 계정으로만 동작하며,
+    // signUp/checkNicknameAvailability 등은 실제로 계정을 만들거나 저장하지 않는다(단순 성공 흉내).
+
+    private fun mockLogin(email: String, password: String): Result<AuthSession> {
+        val account = LoginMockData.findAccount(email, password)
+            ?: return Result.failure(
+                ApiException(code = "INVALID_CREDENTIALS", message = "이메일 및 비밀번호를 다시 확인해주세요.")
+            )
+        return mockSignIn(AuthProvider.LOCAL, account)
+    }
+
+    private fun mockLoginWithSocial(credential: SocialCredential): Result<AuthSession> {
+        val account = LoginMockData.accounts.find { it.email == credential.email }
+            ?: LoginMockData.normalUser
+        return mockSignIn(credential.provider, account)
+    }
+
+    private fun mockSignIn(provider: AuthProvider, account: User): Result<AuthSession> {
+        val session = AuthSession(
+            provider = provider,
+            userId = account.id.hashCode().toLong(),
+            role = account.role.name,
+            status = "ACTIVE",
+            accessToken = "mock-access-token",
+            refreshToken = "mock-refresh-token",
+            tokenType = "Bearer",
+            nickname = account.name,
+            email = account.email,
+            profileImageUrl = null
+        )
+        return Result.success(session)
+    }
+
+    private fun mockSendEmailVerificationCode(): Result<EmailSendData> =
+        Result.success(EmailSendData(expiresInSeconds = 180))
+
+    private fun mockVerifyEmailCode(
+        email: String,
+        code: String,
+        purpose: EmailVerificationPurpose
+    ): Result<EmailVerifyData> {
+        // 목데이터 모드에서는 인증번호를 실제로 발송하지 않으므로 고정 코드(123456)만 통과시킨다.
+        return if (code == "123456") {
+            Result.success(EmailVerifyData(email = email, purpose = purpose.name, verified = true))
+        } else {
+            Result.failure(ApiException(code = "INVALID_CODE", message = "인증번호를 다시 확인해주세요. (목데이터 모드: 123456)"))
+        }
+    }
+
+    private fun mockCheckNicknameAvailability(nickname: String): Result<NicknameCheckData> {
+        val taken = LoginMockData.accounts.any { it.name == nickname }
+        return Result.success(NicknameCheckData(nickname = nickname, available = !taken))
+    }
+
+    private fun mockSignUp(email: String, nickname: String): Result<SignUpData> =
+        Result.success(
+            SignUpData(
+                userId = email.hashCode().toLong(),
+                email = email,
+                nickname = nickname,
+                provider = AuthProvider.LOCAL.name
+            )
+        )
+    // endregion
+
+    /**
+     * 세션을 DataStore에 저장하고, 역할 기반 화면들이 참조하는 [UserSession]도 함께 갱신한다.
+     */
+    suspend fun saveSession(session: AuthSession) {
         context.authDataStore.edit { preferences ->
             preferences[Keys.PROVIDER] = session.provider.name
             preferences[Keys.USER_ID] = session.userId
@@ -346,10 +441,20 @@ class AuthRepository private constructor(private val context: Context) {
                 preferences[Keys.PROFILE_IMAGE_URL] = it
             } ?: preferences.remove(Keys.PROFILE_IMAGE_URL)
         }
+        UserSession.login(context, sessionToUser(session))
     }
+
+    private fun sessionToUser(session: AuthSession): User = User(
+        id = session.userId.toString(),
+        name = session.nickname ?: session.email ?: "회원",
+        email = session.email ?: "",
+        password = "",
+        role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
+    )
 
     suspend fun clearSession() {
         context.authDataStore.edit { it.clear() }
+        UserSession.logout(context)
     }
 
     companion object {
