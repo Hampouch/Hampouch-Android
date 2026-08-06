@@ -13,6 +13,7 @@ fun BottomNavScaffold(
     selectedItem: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
+    onAddClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     Scaffold(
@@ -23,7 +24,7 @@ fun BottomNavScaffold(
             BottomNavBar(
                 selectedItem = selectedItem,
                 onItemSelected = onItemSelected,
-                onAddClick = {}
+                onAddClick = onAddClick
             )
         }
     ) { innerPadding ->

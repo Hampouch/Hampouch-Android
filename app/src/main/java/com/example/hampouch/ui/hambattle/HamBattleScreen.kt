@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hambattle
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +49,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,10 +61,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
-import com.example.hampouch.data.model.HamBattleActiveChallenge
-import com.example.hampouch.data.model.HamBattleWaitingChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.dialog.HamBattleChallengeCancelledDialog
+import com.example.hampouch.ui.dialog.HamBattleMissedSpendingDialog
+import com.example.hampouch.ui.dialog.HamBattleParticipationInvalidatedDialog
+import com.example.hampouch.ui.dialog.HamBattleWaitingChallengeExpiredDialog
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
@@ -79,13 +88,14 @@ fun HamBattleScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    activeChallenges: List<HamBattleActiveChallenge> = HamBattleMockData.activeChallenges,
-    waitingChallenges: List<HamBattleWaitingChallenge> = HamBattleMockData.waitingChallenges,
+    activeChallenges: List<HamBattleChallenge> = HamBattleMockData.activeChallenges(),
+    waitingChallenges: List<HamBattleChallenge> = HamBattleMockData.waitingChallenges(),
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onViewEndedChallengesClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {},
     onWaitingChallengeClick: (String) -> Unit = {},
+    onViewEndedChallengeDetailClick: (String) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -125,6 +135,94 @@ fun HamBattleScreen(
                 )
             }
         }
+    }
+
+    val expiredWaitingChallenge = remember(waitingChallenges) {
+        waitingChallenges.firstOrNull { it.isExpired() }
+    }
+
+    // 3일 연속 지출 미입력이면 그 자리에서 바로 탈락 처리(그 시점까지의 지출 금액으로 고정)하고,
+    // 그 결과 남은(탈락하지 않은) 참가자가 1명 이하로 줄면 챌린지 자체를 강제 종료시킨다.
+    LaunchedEffect(activeChallenges) {
+        activeChallenges.forEach { challenge ->
+            val me = challenge.participants.find { it.name == "나" }
+            if (me != null &&
+                me.status != HamBattleParticipantStatus.DISQUALIFIED &&
+                HamBattleMockData.myMissedStreakDays(challenge) >= 3
+            ) {
+                HamBattleMockData.disqualifyMe(challenge.id)
+            }
+        }
+        HamBattleMockData.activeChallenges().forEach { challenge ->
+            val remaining = challenge.participants.count { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+            if (remaining <= 1) {
+                HamBattleMockData.cancelChallenge(challenge.id)
+            }
+        }
+    }
+
+    val justCancelledChallenge = HamBattleMockData.challenges.firstOrNull { challenge ->
+        challenge.cancelled && !HamBattleMockData.isCancellationAcknowledged(challenge.id)
+    }
+    val justDisqualifiedChallenge = if (justCancelledChallenge != null) {
+        null
+    } else {
+        activeChallenges.firstOrNull { challenge ->
+            val me = challenge.participants.find { it.name == "나" }
+            me?.status == HamBattleParticipantStatus.DISQUALIFIED &&
+                !HamBattleMockData.isDisqualificationAcknowledged(challenge.id)
+        }
+    }
+    val missedWarningChallenge = if (justCancelledChallenge != null || justDisqualifiedChallenge != null) {
+        null
+    } else {
+        activeChallenges.firstOrNull { challenge ->
+            HamBattleMockData.myMissedStreakDays(challenge) == 2 &&
+                !HamBattleMockData.wasMissedWarningShownToday(challenge.id)
+        }
+    }
+
+    when {
+        expiredWaitingChallenge != null -> HamBattleWaitingChallengeExpiredDialog(
+            challengeTitle = expiredWaitingChallenge.title,
+            onRecreateClick = {
+                HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
+                onStartNewChallengeClick()
+            },
+            onConfirmClick = {
+                HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
+            }
+        )
+
+        justCancelledChallenge != null -> HamBattleChallengeCancelledDialog(
+            challengeTitle = justCancelledChallenge.title,
+            onRecreateClick = {
+                HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
+                onStartNewChallengeClick()
+            },
+            onConfirmClick = {
+                HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
+                onViewEndedChallengeDetailClick(justCancelledChallenge.id)
+            }
+        )
+
+        justDisqualifiedChallenge != null -> HamBattleParticipationInvalidatedDialog(
+            challengeTitle = justDisqualifiedChallenge.title,
+            onConfirmClick = {
+                HamBattleMockData.acknowledgeDisqualification(justDisqualifiedChallenge.id)
+            }
+        )
+
+        missedWarningChallenge != null -> HamBattleMissedSpendingDialog(
+            challengeTitle = missedWarningChallenge.title,
+            onInputSpendingClick = {
+                HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
+                onAddClick()
+            },
+            onConfirmClick = {
+                HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
+            }
+        )
     }
 }
 
@@ -177,8 +275,8 @@ private fun HamBattleEmptyContent(
 @Composable
 private fun HamBattleChallengeListContent(
     modifier: Modifier = Modifier,
-    activeChallenges: List<HamBattleActiveChallenge>,
-    waitingChallenges: List<HamBattleWaitingChallenge>,
+    activeChallenges: List<HamBattleChallenge>,
+    waitingChallenges: List<HamBattleChallenge>,
     onStartNewChallengeClick: () -> Unit,
     onViewEndedChallengesClick: () -> Unit,
     onChallengeClick: (String) -> Unit = {},
@@ -252,7 +350,7 @@ private fun StartNewChallengeButton(onClick: () -> Unit) {
     }
 }
 
-private fun battleStatusMessage(challenge: HamBattleActiveChallenge): String {
+private fun battleStatusMessage(challenge: HamBattleChallenge): String {
     if (challenge.isOneVsOne && challenge.participants.size == 2) {
         val (first, second) = challenge.participants
         val winner = if (first.amount <= second.amount) first else second
@@ -269,7 +367,7 @@ private fun battleStatusMessage(challenge: HamBattleActiveChallenge): String {
 private const val CollapsedRankCount = 3
 
 @Composable
-private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: () -> Unit = {}) {
+private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit = {}) {
     var showAllRanks by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
@@ -327,7 +425,7 @@ private fun ActiveChallengeCard(challenge: HamBattleActiveChallenge, onClick: ()
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(challenge.dDay, style = Body16Bold, color = HPMain)
+            Text(challenge.dDayLabel(), style = Body16Bold, color = HPMain)
             Text(battleStatusMessage(challenge), style = Body16Bold, color = StatusWhoWonText)
         }
     }
@@ -353,7 +451,9 @@ private fun RankingToggleButton(expanded: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: () -> Unit = {}) {
+private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit = {}) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -388,7 +488,7 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
         ) {
             TypeBadge(text = challenge.type, muted = true)
             Text(
-                "시작까지 ${challenge.startsInDay}",
+                "시작까지 ${challenge.startsInDayLabel()}",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = HPText
@@ -443,12 +543,17 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                challenge.startDateLabel,
+                challenge.startDateLabel(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = HPMain
             )
-            TextButton(onClick = {}) {
+            TextButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(challenge.link))
+                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
                 Text(
                     "링크 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,
@@ -515,7 +620,7 @@ fun HamBattleEmptyContentPreview() {
 fun ActiveChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            ActiveChallengeCard(challenge = HamBattleMockData.activeChallenges[0])
+            ActiveChallengeCard(challenge = HamBattleMockData.activeChallenges()[0])
         }
     }
 }
@@ -525,7 +630,7 @@ fun ActiveChallengeCardPreview() {
 fun WaitingChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingChallengeCard(challenge = HamBattleMockData.waitingChallenges[0])
+            WaitingChallengeCard(challenge = HamBattleMockData.waitingChallenges()[0])
         }
     }
 }

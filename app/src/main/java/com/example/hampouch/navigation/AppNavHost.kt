@@ -81,15 +81,18 @@ fun AppNavHost(
     }
 
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
+    var pendingWriteBattleLink by remember { mutableStateOf("") }
+    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
-        if (item == BottomNavItem.HAM_BATTLE) {
-            navController.popBackStack(Screen.Home.route, false)
-        } else {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Home.route) { inclusive = true }
-            }
+        pendingHomeTab = item
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
         }
+    }
+
+    val onBottomNavAddClick: () -> Unit = {
+        navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
     }
 
     val transitionSpec = tween<IntOffset>(durationMillis = 300)
@@ -181,12 +184,20 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
-            val startTab = if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
+            val startTab = pendingHomeTab
+                ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
-            LaunchedEffect(Unit) { openCommunityWriteBattle = false }
+            val writeBattleLink = pendingWriteBattleLink
+            LaunchedEffect(Unit) {
+                openCommunityWriteBattle = false
+                pendingHomeTab = null
+                pendingWriteBattleLink = ""
+            }
             HomeScreen(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
+                initialHamTipsWriteBattleLink = writeBattleLink,
+                onExitHamTipsWriteBattle = { navController.popBackStack() },
                 onStartChallengeClick = {
                     navController.navigate(Screen.NextChallengeTakeABreak.route)
                 },
@@ -206,10 +217,34 @@ fun AppNavHost(
                 onHamBattleViewEndedChallengesClick = {
                     navController.navigate(Screen.HamBattleEndedChallenges.route)
                 },
+                onHamBattleViewEndedChallengeDetailClick = { challengeId ->
+                    navController.navigate(
+                        Screen.HamBattleEndedChallengeDetail.createRoute(challengeId)
+                    )
+                },
                 onHamBattleWaitingChallengeClick = { challengeId ->
                     navController.navigate(
                         Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
                     )
+                },
+                onHamBattleJoinedFromCommunityClick = { challengeId ->
+                    // 커뮤니티에서 참가하기로 들어온 경우, 뒤로가기 하면 원래 보던 게시글이 아니라
+                    // 햄배틀 탭(방금 참가한 챌린지가 보이는 화면)으로 돌아가도록 백스택을 새로 짠다.
+                    pendingHomeTab = BottomNavItem.HAM_BATTLE
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                    navController.navigate(
+                        Screen.HamBattleWaitingChallengeDetail.createRoute(challengeId)
+                    )
+                },
+                onHamBattleJoinedFullFromCommunityClick = {
+                    // 참가하면서 정원이 다 찼으면 더 이상 "대기중 상세"가 아니라 햄배틀 탭
+                    // (진행중/대기중 목록)으로 보낸다.
+                    pendingHomeTab = BottomNavItem.HAM_BATTLE
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 },
                 onNavigateToExpenseDetail = { expenseId ->
                     navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
@@ -459,6 +494,7 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onStartClick = { request ->
                     Log.d(TAG, "HamBattle challenge started: $request")
+                    HamBattleMockData.startNewChallenge(request)
                     navController.popBackStack()
                 }
             )
@@ -469,11 +505,12 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.activeChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleChallengesResultPagerScreen(
                         challenge = challenge,
@@ -487,7 +524,8 @@ fun AppNavHost(
         composable(Screen.HamBattleEndedChallenges.route) {
             BottomNavScaffold(
                 selectedItem = BottomNavItem.HAM_BATTLE,
-                onItemSelected = onBottomNavItemSelected
+                onItemSelected = onBottomNavItemSelected,
+                onAddClick = onBottomNavAddClick
             ) {
                 HamBattleEndedChallengesScreen(
                     onBackClick = { navController.popBackStack() },
@@ -506,11 +544,12 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.endedChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleEndedChallengesDetailScreen(
                         challenge = challenge,
@@ -526,20 +565,24 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = HamBattleMockData.waitingChallenges.find { it.id == challengeId }
+            val challenge = HamBattleMockData.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleWaitingChallengeDetailScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onShareToCommunityClick = {
+                            // pendingHomeTab이 이전에 넘겼던(하지만 실제로 화면에 그려지지 않아
+                            // 아직 소비되지 않았을 수 있는) 값을 그대로 들고 있으면 커뮤니티 탭이
+                            // 아니라 그 탭으로 잘못 열리므로, 여기서 명시적으로 지워준다.
+                            pendingHomeTab = null
                             openCommunityWriteBattle = true
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
-                            }
+                            pendingWriteBattleLink = challenge.link
+                            navController.navigate(Screen.Home.route)
                         }
                     )
                 }
@@ -588,6 +631,7 @@ fun AppNavHost(
                     suggestedTargetAmount = suggestedTargetAmount,
                     onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
+                        pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
@@ -600,6 +644,7 @@ fun AppNavHost(
             NextChallengeTakeABreakRoute(
                 onBackClick = { navController.popBackStack() },
                 onStartChallengeClick = {
+                    pendingHomeTab = null
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
@@ -613,6 +658,7 @@ fun AppNavHost(
                 onKeepChallenge = { navController.popBackStack() },
                 onStartBreak = { duration, customDays ->
                     TakeABreakStore.startBreak(duration, customDays)
+                    pendingHomeTab = null
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }

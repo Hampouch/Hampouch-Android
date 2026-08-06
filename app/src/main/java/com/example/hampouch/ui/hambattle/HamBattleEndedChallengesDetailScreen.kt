@@ -61,7 +61,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleEndedChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.challengeresult.ShareOption
@@ -90,7 +90,7 @@ private val LastPlaceBadgeText = Color(0xFFE17866)
 
 @Composable
 fun HamBattleEndedChallengesDetailScreen(
-    challenge: HamBattleEndedChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onShareResultClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
@@ -153,7 +153,7 @@ fun HamBattleEndedChallengesDetailScreen(
                         SummaryCard(
                             title = challenge.title,
                             type = challenge.type,
-                            periodLabel = challenge.periodLabel,
+                            periodLabel = challenge.periodLabel(),
                             winner = winner,
                             participantCount = challenge.participants.size
                         )
@@ -575,6 +575,6 @@ private fun EndedRankRowPreview() {
 @Composable
 private fun HamBattleEndedChallengesDetailScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.endedChallenges[1])
+        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.endedChallenges()[1])
     }
 }

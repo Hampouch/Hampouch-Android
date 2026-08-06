@@ -41,7 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
@@ -61,7 +61,7 @@ private val StatusBadgeText = Color(0xFF729739)
 
 @Composable
 fun HamBattleChallengesResultScreen(
-    challenge: HamBattleActiveChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
@@ -87,8 +87,8 @@ fun HamBattleChallengesResultScreen(
         ) {
             RankingCard(
                 type = challenge.type,
-                dDay = challenge.dDay,
-                periodLabel = challenge.periodLabel,
+                dDay = challenge.dDayLabel(),
+                periodLabel = challenge.periodLabel(),
                 ranked = ranked,
                 disqualified = disqualified
             )
@@ -359,6 +359,6 @@ private fun OneVsOnePenaltyBoxPreview() {
 @Composable
 private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
     }
 }

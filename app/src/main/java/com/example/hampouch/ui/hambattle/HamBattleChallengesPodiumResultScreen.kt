@@ -50,8 +50,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -72,12 +73,21 @@ private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
 
 @Composable
 fun HamBattleChallengesPodiumResultScreen(
-    challenge: HamBattleActiveChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
-    val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val ranked = remember(challenge, selectedTab) {
+        val participants = if (selectedTab == ResultTab.TODAY) {
+            HamBattleMockData.participantsForToday(challenge)
+        } else {
+            challenge.participants
+        }
+        participants
+            .filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+            .sortedBy { it.amount }
+    }
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
     val extraRanked = if (ranked.size > 3) ranked.drop(3).take(3) else emptyList()
 
@@ -128,7 +138,7 @@ fun HamBattleChallengesPodiumResultScreen(
                 extraRanked = extraRanked,
                 penalty = challenge.penalty,
                 lastPlaceName = lastPlaceName,
-                showPenaltyBox = challenge.participants.size < 4,
+                showPenaltyBox = ranked.size < 4,
                 onStartNewChallengeClick = onStartNewChallengeClick,
                 modifier = Modifier
                     .weight(1f)
@@ -429,7 +439,7 @@ private fun ResultTabTogglePreview() {
 private fun PodiumChartPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
-            PodiumChart(ranked = HamBattleMockData.activeChallenges[1].participants)
+            PodiumChart(ranked = HamBattleMockData.activeChallenges()[1].participants)
         }
     }
 }
@@ -438,7 +448,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
     }
 }
 
@@ -446,6 +456,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[1])
     }
 }

@@ -89,12 +89,19 @@ fun HamTipsScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit = {},
+    onNavigateToHamBattleTab: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    openWriteBattleOnStart: Boolean = false
+    openWriteBattleOnStart: Boolean = false,
+    initialWriteBattleLink: String = "",
+    onExitWriteBattle: () -> Unit = {}
 ) {
     var route by remember {
         mutableStateOf(if (openWriteBattleOnStart) HamTipsRoute.WRITE_BATTLE else HamTipsRoute.MAIN)
     }
+    // True only while the very write-battle screen we were deep-linked into (e.g. from the
+    // HamBattle "공유하기" flow) is still showing. Once the user leaves it, back should behave
+    // like any other in-app HamTips screen instead of exiting all the way out.
+    var isExternalWriteBattleEntry by remember { mutableStateOf(openWriteBattleOnStart) }
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
@@ -113,6 +120,7 @@ fun HamTipsScreen(
     val onBackToMain: () -> Unit = {
         route = HamTipsRoute.MAIN
         selectedCategoryTab = HamTipsCategoryTab.ALL
+        isExternalWriteBattleEntry = false
     }
     val onPostClick: (TipPost) -> Unit = { post ->
         selectedPostId = post.id
@@ -142,10 +150,12 @@ fun HamTipsScreen(
         }
 
         HamTipsRoute.WRITE_BATTLE -> {
-            BackHandler(onBack = onBackToMain)
+            val onWriteBattleBack = if (isExternalWriteBattleEntry) onExitWriteBattle else onBackToMain
+            BackHandler(onBack = onWriteBattleBack)
             HamTipsWriteBattleScreen(
-                onBackClick = onBackToMain,
-                onSubmitted = onBackToMain
+                onBackClick = onWriteBattleBack,
+                onSubmitted = onBackToMain,
+                initialLink = if (isExternalWriteBattleEntry) initialWriteBattleLink else ""
             )
         }
 
@@ -182,7 +192,8 @@ fun HamTipsScreen(
                     post = post,
                     onBackClick = onBackToMain,
                     onDeleted = onBackToMain,
-                    onNavigateToBattleLink = onNavigateToHamBattleLink
+                    onNavigateToBattleLink = onNavigateToHamBattleLink,
+                    onNavigateToHamBattleTab = onNavigateToHamBattleTab
                 )
             }
         }

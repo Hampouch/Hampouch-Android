@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hambattle
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,12 +36,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
@@ -53,11 +57,13 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleWaitingChallengeDetailScreen(
-    challenge: HamBattleWaitingChallenge,
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
-    onShareToCommunityClick: () -> Unit = {},
-    onCopyLinkClick: () -> Unit = {}
+    onShareToCommunityClick: () -> Unit = {}
 ) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
     Scaffold(
         topBar = { WaitingDetailTopBar(title = challenge.title, onBackClick = onBackClick) },
         containerColor = HPWhite
@@ -93,7 +99,10 @@ fun HamBattleWaitingChallengeDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = onCopyLinkClick,
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(challenge.link))
+                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -132,7 +141,7 @@ private fun WaitingDetailTopBar(title: String, onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
+private fun WaitingInfoCard(challenge: HamBattleChallenge) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -142,7 +151,7 @@ private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
     ) {
         Row() {
             Text(
-                challenge.startDateShortLabel,
+                challenge.startDateShortLabel(),
                 style = Body16Bold,
                 color = HPMain
             )
@@ -257,7 +266,7 @@ private fun WaitingPenaltyBox(penalty: String) {
 private fun WaitingInfoCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges.first())
+            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges().first())
         }
     }
 }
@@ -266,6 +275,6 @@ private fun WaitingInfoCardPreview() {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges.first())
+        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges().first())
     }
 }

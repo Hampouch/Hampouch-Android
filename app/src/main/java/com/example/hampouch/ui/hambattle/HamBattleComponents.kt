@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -189,8 +190,10 @@ fun RankedParticipantList(
     participants: List<HamBattleParticipantSpending>,
     maxAmount: Float? = null
 ) {
-    val ranked = participants.sortedBy { it.amount }
-    val effectiveMaxAmount = maxAmount ?: ranked.maxOf { it.amount }.toFloat()
+    val normal = participants.filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+    val disqualified = participants.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
+    val ranked = normal.sortedBy { it.amount }
+    val effectiveMaxAmount = maxAmount ?: participants.maxOf { it.amount }.toFloat()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ranked.forEachIndexed { index, participant ->
             Row(
@@ -241,6 +244,37 @@ fun RankedParticipantList(
                 )
             }
         }
+        disqualified.forEach { participant ->
+            DisqualifiedParticipantRow(participant = participant)
+        }
+    }
+}
+
+@Composable
+private fun DisqualifiedParticipantRow(participant: HamBattleParticipantSpending) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(HPGray4)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "탈락",
+            style = Body16Bold,
+            color = HPText,
+            fontSize = 14.sp,
+            modifier = Modifier.width(28.dp)
+        )
+        ParticipantAvatar(size = 24.dp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            participant.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPText
+        )
     }
 }
 

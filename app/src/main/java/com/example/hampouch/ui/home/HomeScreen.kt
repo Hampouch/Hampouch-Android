@@ -70,6 +70,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
     openHamTipsWriteBattleOnStart: Boolean = false,
+    initialHamTipsWriteBattleLink: String = "",
+    onExitHamTipsWriteBattle: () -> Unit = {},
     onStartChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: (String) -> Unit = {},
@@ -77,7 +79,10 @@ fun HomeScreen(
     onHamBattleStartNewChallengeClick: () -> Unit = {},
     onHamBattleChallengeClick: (String) -> Unit = {},
     onHamBattleViewEndedChallengesClick: () -> Unit = {},
+    onHamBattleViewEndedChallengeDetailClick: (String) -> Unit = {},
     onHamBattleWaitingChallengeClick: (String) -> Unit = {},
+    onHamBattleJoinedFromCommunityClick: (String) -> Unit = {},
+    onHamBattleJoinedFullFromCommunityClick: () -> Unit = {},
     onNavigateToExpenseDetail: (String) -> Unit = {},
     onNavigateToExpenseCalendar: () -> Unit = {},
     onNavigateToChallengeEndExpenseCalendar: () -> Unit = {},
@@ -199,6 +204,7 @@ fun HomeScreen(
                 onChallengeClick = onHamBattleChallengeClick,
                 onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
                 onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
+                onViewEndedChallengeDetailClick = onHamBattleViewEndedChallengeDetailClick,
             )
 
             BottomNavItem.MY_PAGE -> MyPageScreen(
@@ -221,9 +227,12 @@ fun HomeScreen(
                     onItemSelected = { selectedBottomTab = it },
                     onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
-                    onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    onNavigateToHamBattleLink = onHamBattleJoinedFromCommunityClick,
+                    onNavigateToHamBattleTab = onHamBattleJoinedFullFromCommunityClick,
                     onNotificationClick = onNotificationClick,
-                    openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
+                    openWriteBattleOnStart = pendingOpenHamTipsWriteBattle,
+                    initialWriteBattleLink = initialHamTipsWriteBattleLink,
+                    onExitWriteBattle = onExitHamTipsWriteBattle
                 )
                 LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
             }
