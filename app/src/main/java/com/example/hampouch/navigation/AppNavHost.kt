@@ -79,15 +79,17 @@ fun AppNavHost(
     }
 
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
+    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
-        if (item == BottomNavItem.HAM_BATTLE) {
-            navController.popBackStack(Screen.Home.route, false)
-        } else {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Home.route) { inclusive = true }
-            }
+        pendingHomeTab = item
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Home.route) { inclusive = true }
         }
+    }
+
+    val onBottomNavAddClick: () -> Unit = {
+        navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
     }
 
     val transitionSpec = tween<IntOffset>(durationMillis = 300)
@@ -179,12 +181,17 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
-            val startTab = if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
+            val startTab = pendingHomeTab
+                ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
-            LaunchedEffect(Unit) { openCommunityWriteBattle = false }
+            LaunchedEffect(Unit) {
+                openCommunityWriteBattle = false
+                pendingHomeTab = null
+            }
             HomeScreen(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
+                onExitHamTipsWriteBattle = { navController.popBackStack() },
                 onStartChallengeClick = {
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -473,7 +480,8 @@ fun AppNavHost(
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleChallengesResultPagerScreen(
                         challenge = challenge,
@@ -487,7 +495,8 @@ fun AppNavHost(
         composable(Screen.HamBattleEndedChallenges.route) {
             BottomNavScaffold(
                 selectedItem = BottomNavItem.HAM_BATTLE,
-                onItemSelected = onBottomNavItemSelected
+                onItemSelected = onBottomNavItemSelected,
+                onAddClick = onBottomNavAddClick
             ) {
                 HamBattleEndedChallengesScreen(
                     onBackClick = { navController.popBackStack() },
@@ -510,7 +519,8 @@ fun AppNavHost(
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleEndedChallengesDetailScreen(
                         challenge = challenge,
@@ -530,16 +540,15 @@ fun AppNavHost(
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
-                    onItemSelected = onBottomNavItemSelected
+                    onItemSelected = onBottomNavItemSelected,
+                    onAddClick = onBottomNavAddClick
                 ) {
                     HamBattleWaitingChallengeDetailScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onShareToCommunityClick = {
                             openCommunityWriteBattle = true
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
-                            }
+                            navController.navigate(Screen.Home.route)
                         }
                     )
                 }

@@ -70,6 +70,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
     openHamTipsWriteBattleOnStart: Boolean = false,
+    onExitHamTipsWriteBattle: () -> Unit = {},
     onStartChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: (String) -> Unit = {},
@@ -223,7 +224,8 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
                     onNotificationClick = onNotificationClick,
-                    openWriteBattleOnStart = pendingOpenHamTipsWriteBattle
+                    openWriteBattleOnStart = pendingOpenHamTipsWriteBattle,
+                    onExitWriteBattle = onExitHamTipsWriteBattle
                 )
                 LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
             }
