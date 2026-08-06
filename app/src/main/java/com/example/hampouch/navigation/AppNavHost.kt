@@ -79,6 +79,7 @@ fun AppNavHost(
     }
 
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
+    var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
@@ -184,13 +185,16 @@ fun AppNavHost(
             val startTab = pendingHomeTab
                 ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
+            val writeBattleLink = pendingWriteBattleLink
             LaunchedEffect(Unit) {
                 openCommunityWriteBattle = false
                 pendingHomeTab = null
+                pendingWriteBattleLink = ""
             }
             HomeScreen(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
+                initialHamTipsWriteBattleLink = writeBattleLink,
                 onExitHamTipsWriteBattle = { navController.popBackStack() },
                 onStartChallengeClick = {
                     navController.navigate(Screen.Onboarding.route) {
@@ -466,6 +470,7 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onStartClick = { request ->
                     Log.d(TAG, "HamBattle challenge started: $request")
+                    HamBattleMockData.startNewChallenge(request)
                     navController.popBackStack()
                 }
             )
@@ -548,6 +553,7 @@ fun AppNavHost(
                         onBackClick = { navController.popBackStack() },
                         onShareToCommunityClick = {
                             openCommunityWriteBattle = true
+                            pendingWriteBattleLink = challenge.link
                             navController.navigate(Screen.Home.route)
                         }
                     )

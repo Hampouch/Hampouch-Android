@@ -34,6 +34,7 @@ import com.example.hampouch.data.model.MenuRatingType
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipShareCategory
 import com.example.hampouch.ui.dialog.ConfirmActionCard
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldCard
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldLabel
@@ -328,11 +329,14 @@ fun HamTipsWriteMenuScreen(
 @Composable
 fun HamTipsWriteBattleScreen(
     onBackClick: () -> Unit,
-    onSubmitted: () -> Unit
+    onSubmitted: () -> Unit,
+    initialLink: String = "",
+    waitingChallengeLinks: List<String> = HamBattleMockData.waitingChallenges.map { it.link }
 ) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    var link by remember { mutableStateOf("") }
+    var link by remember { mutableStateOf(initialLink) }
+    var showLinkNotFoundError by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
@@ -367,15 +371,33 @@ fun HamTipsWriteBattleScreen(
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsWriteTextField(
                 value = link,
-                onValueChange = { link = it },
+                onValueChange = {
+                    link = it
+                    showLinkNotFoundError = false
+                },
                 placeholder = stringResource(R.string.hamtips_write_battle_link_placeholder)
             )
+            if (showLinkNotFoundError) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.hamtips_write_battle_link_not_found),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
         Spacer(modifier = Modifier.height(24.dp))
         HamTipsSubmitButton(
             text = stringResource(R.string.hamtips_write_submit),
             enabled = isSubmitEnabled,
-            onClick = { showConfirmDialog = true }
+            onClick = {
+                if (link.trim() in waitingChallengeLinks) {
+                    showLinkNotFoundError = false
+                    showConfirmDialog = true
+                } else {
+                    showLinkNotFoundError = true
+                }
+            }
         )
         Spacer(modifier = Modifier.height(24.dp))
     }
@@ -385,7 +407,7 @@ fun HamTipsWriteBattleScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                HamTipsRepository.createBattlePost(title = title, content = content, link = link)
+                HamTipsRepository.createBattlePost(title = title, content = content, link = link.trim())
                 onSubmitted()
             }
         )

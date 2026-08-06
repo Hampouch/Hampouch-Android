@@ -30,11 +30,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleChallengeRequest
+import com.example.hampouch.data.model.HamBattleWaitingChallenge
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
@@ -47,14 +49,22 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 
-private fun battleChallengeRequestFrom(post: TipPost, durationLabel: String, capacityLabel: String) =
-    HamBattleChallengeRequest(
-        challengeName = post.title,
-        participantCount = capacityLabel,
-        durationDays = durationLabel,
-        startDateMillis = null,
-        penalty = post.battleInfo?.penalty.orEmpty()
-    )
+/**
+ * 게시글에 달린 링크로 실제 생성된 햄배틀 챌린지를 찾아 그 정보를 그대로 보여준다.
+ * 매칭되는 챌린지가 없으면(예: 링크를 잘못 입력한 경우) 게시글에 적힌 값으로 대신한다.
+ */
+private fun battleChallengeRequestFrom(
+    post: TipPost,
+    durationLabel: String,
+    capacityLabel: String,
+    linkedChallenge: HamBattleWaitingChallenge? = null
+) = HamBattleChallengeRequest(
+    challengeName = linkedChallenge?.title ?: post.title,
+    participantCount = capacityLabel,
+    durationDays = durationLabel,
+    startDateMillis = null,
+    penalty = linkedChallenge?.penalty ?: post.battleInfo?.penalty.orEmpty()
+)
 
 @Composable
 private fun HamTipsBattleInfoCard(
@@ -131,10 +141,16 @@ fun HamTipsBattleDetailScreen(
     val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleInfo = post.battleInfo
+    val linkedChallenge = battleInfo?.link?.let { link ->
+        HamBattleMockData.waitingChallenges.find { it.link == link }
+    }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
-    val capacityLabel = stringResource(R.string.hamtips_battle_capacity_format, battleInfo?.capacity ?: 0)
-    val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel)
+    val capacityLabel = stringResource(
+        R.string.hamtips_battle_capacity_format,
+        linkedChallenge?.totalCount ?: battleInfo?.capacity ?: 0
+    )
+    val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel, linkedChallenge)
 
     Scaffold(
         modifier = modifier,
@@ -250,7 +266,13 @@ fun HamTipsBattleDetailScreen(
                 onConfirm = {
                     showJoinConfirm = false
                     HamTipsRepository.joinBattle(post.id)
-                    onNavigateToBattleLink(battleInfo.link)
+                    val joinedChallenge = HamBattleMockData.joinChallengeFromCommunityPost(
+                        title = post.title,
+                        penalty = battleInfo.penalty,
+                        link = battleInfo.link,
+                        totalCount = battleInfo.capacity
+                    )
+                    onNavigateToBattleLink(joinedChallenge.id)
                 }
             )
         }

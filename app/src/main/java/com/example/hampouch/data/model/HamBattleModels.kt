@@ -55,5 +55,6 @@ data class HamBattleWaitingChallenge(
     val totalCount: Int,
     val startsInDay: String,
     val startDateLabel: String,
-    val startDateShortLabel: String = ""
+    val startDateShortLabel: String = "",
+    val link: String = ""
 )

@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hambattle
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +48,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -352,6 +356,8 @@ private fun RankingToggleButton(expanded: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: () -> Unit = {}) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -446,7 +452,12 @@ private fun WaitingChallengeCard(challenge: HamBattleWaitingChallenge, onClick: 
                 fontWeight = FontWeight.Bold,
                 color = HPMain
             )
-            TextButton(onClick = {}) {
+            TextButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(challenge.link))
+                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                }
+            ) {
                 Text(
                     "링크 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,

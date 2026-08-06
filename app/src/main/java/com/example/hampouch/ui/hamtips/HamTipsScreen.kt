@@ -91,6 +91,7 @@ fun HamTipsScreen(
     onNavigateToHamBattleLink: (String) -> Unit = {},
     onNotificationClick: () -> Unit = {},
     openWriteBattleOnStart: Boolean = false,
+    initialWriteBattleLink: String = "",
     onExitWriteBattle: () -> Unit = {}
 ) {
     var route by remember {
@@ -152,7 +153,8 @@ fun HamTipsScreen(
             BackHandler(onBack = onWriteBattleBack)
             HamTipsWriteBattleScreen(
                 onBackClick = onWriteBattleBack,
-                onSubmitted = onBackToMain
+                onSubmitted = onBackToMain,
+                initialLink = if (isExternalWriteBattleEntry) initialWriteBattleLink else ""
             )
         }
 
