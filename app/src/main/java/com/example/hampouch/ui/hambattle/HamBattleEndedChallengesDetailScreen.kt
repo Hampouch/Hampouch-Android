@@ -522,6 +522,55 @@ private fun EndedPenaltyBox(penalty: String, penaltyTargetName: String) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun SummaryCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            SummaryCard(
+                title = "점심값 아끼기",
+                type = "개인전",
+                periodLabel = "2024.03.01 ~ 2024.03.07",
+                winner = HamBattleParticipantSpending("나", 15000),
+                participantCount = 5
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EndedRankRowPreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            EndedRankRow(
+                rank = 1,
+                participant = HamBattleParticipantSpending("친구1", 10000),
+                isWinner = true,
+                isMe = false,
+                isLastPlace = false
+            )
+            EndedRankRow(
+                rank = 2,
+                participant = HamBattleParticipantSpending("나", 15000),
+                isWinner = false,
+                isMe = true,
+                isLastPlace = false
+            )
+            EndedRankRow(
+                rank = 5,
+                participant = HamBattleParticipantSpending("친구2", 40000),
+                isWinner = false,
+                isMe = false,
+                isLastPlace = true
+            )
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun HamBattleEndedChallengesDetailScreenPreview() {

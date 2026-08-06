@@ -138,7 +138,7 @@ private fun WaitingInfoCard(challenge: HamBattleWaitingChallenge) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPGray3)
-            .padding(20.dp)
+            .padding(15.dp)
     ) {
         Row() {
             Text(
@@ -249,6 +249,16 @@ private fun WaitingPenaltyBox(penalty: String) {
             style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WaitingInfoCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges.first())
+        }
     }
 }
 

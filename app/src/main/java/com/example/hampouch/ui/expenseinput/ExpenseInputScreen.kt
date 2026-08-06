@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -486,7 +487,6 @@ private fun ExpenseInputAmountStep(
                     color = HPText
                 )
             }
-            Spacer(modifier = Modifier.height(14.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -516,7 +516,7 @@ private fun ExpenseInputAmountStep(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(25.dp))
+            Spacer(modifier = Modifier.height(5.dp))
         }
 
         Column(
@@ -526,26 +526,42 @@ private fun ExpenseInputAmountStep(
                 .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                 .background(HPWhite)
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 30.dp)
             ) {
-                Spacer(modifier = Modifier.height(30.dp))
-                ExpenseAmountNumPad(
-                    onDigit = onDigit,
-                    onDelete = onDelete
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    stringResource(R.string.expenseinput_no_spending_today),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNoSpendingToday),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText
-                )
+                val noSpendingTextEstimatedHeight = 24.dp
+                val fixedOverheadHeight = 30.dp + 20.dp + noSpendingTextEstimatedHeight
+                val hasRoomToFill = maxHeight - fixedOverheadHeight >= ExpenseAmountNumPadMinHeight
+                val columnModifier = if (hasRoomToFill) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                }
+                Column(modifier = columnModifier) {
+                    Spacer(modifier = Modifier.height(15.dp))
+                    ExpenseAmountNumPad(
+                        onDigit = onDigit,
+                        onDelete = onDelete,
+                        modifier = if (hasRoomToFill) {
+                            Modifier.weight(1f)
+                        } else {
+                            Modifier.height(ExpenseAmountNumPadMinHeight)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        stringResource(R.string.expenseinput_no_spending_today),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onNoSpendingToday),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = HPText
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
             }
             Column(
                 modifier = Modifier

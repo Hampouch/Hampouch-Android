@@ -280,7 +280,7 @@ private fun HomeContent(
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPSub4)
                     .clickable(onClick = onChallengeSummaryClick)
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(horizontal = 15.dp, vertical = 16.dp)
             ) {
                 ChallengeBanner(challenge = challenge)
                 Spacer(modifier = Modifier.height(16.dp))

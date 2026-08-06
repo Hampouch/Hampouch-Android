@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -82,7 +83,7 @@ fun HamBattleChallengesResultScreen(
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             RankingCard(
                 type = challenge.type,
@@ -92,10 +93,10 @@ fun HamBattleChallengesResultScreen(
                 disqualified = disqualified
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             OneVsOnePenaltyBox(penalty = challenge.penalty, lastPlaceName = lastPlaceName)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             Button(
                 onClick = onStartNewChallengeClick,
                 modifier = Modifier
@@ -143,7 +144,7 @@ private fun RankingCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPSub4)
-            .padding(20.dp)
+            .padding(15.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -191,7 +192,7 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 shape = RoundedCornerShape(14.dp)
             )
             .background(if (highlighted) HPSub2.copy(alpha = 0.4f) else HPWhite)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -237,7 +238,7 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(HPGray4)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -270,15 +271,16 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
 private fun MissedLogBadge() {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(30))
             .background(HPSub3)
             .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
         Text(
-            "연속 지출 미기록",
-            style = MaterialTheme.typography.labelSmall,
+            "연속 지출\n미기록",
+            style = MaterialTheme.typography.labelSmall.copy(lineHeight = 14.sp),
             fontWeight = FontWeight.Bold,
-            color = HPMain
+            color = HPMain,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -307,7 +309,7 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .border(1.dp, HPText, RoundedCornerShape(20.dp))
-            .padding(horizontal = 20.dp, vertical = 15.dp)
+            .padding(horizontal = 20.dp, vertical = 10.dp)
     ) {
         Text("벌칙", style = Body16Bold, color = HPBlack)
         Spacer(modifier = Modifier.height(6.dp))
@@ -319,6 +321,37 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
             fontWeight = FontWeight.Bold,
             color = HPText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RankingCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            RankingCard(
+                type = "개인전",
+                dDay = "D-3",
+                periodLabel = "2024.03.01 ~ 2024.03.07",
+                ranked = listOf(
+                    HamBattleParticipantSpending("나", 15000),
+                    HamBattleParticipantSpending("친구1", 20000, HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS)
+                ),
+                disqualified = listOf(
+                    HamBattleParticipantSpending("친구2", 50000, HamBattleParticipantStatus.DISQUALIFIED)
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OneVsOnePenaltyBoxPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            OneVsOnePenaltyBox(penalty = "커피 사기", lastPlaceName = "친구1")
+        }
     }
 }
 

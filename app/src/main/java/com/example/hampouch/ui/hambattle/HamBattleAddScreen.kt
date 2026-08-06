@@ -472,6 +472,37 @@ private fun StartDateField(dateMillis: Long?, onClick: () -> Unit) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ChallengeIntroSectionPreview() {
+    HampouchTheme {
+        Column(modifier = Modifier.padding(20.dp)) {
+            ChallengeIntroSection()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ChallengeNameFieldPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            ChallengeNameField(value = "", onValueChange = {})
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectablePillPreview() {
+    HampouchTheme {
+        Row(modifier = Modifier.padding(20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SelectablePill(text = "3일", selected = true, onClick = {})
+            SelectablePill(text = "7일", selected = false, onClick = {})
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun HamBattleAddScreenPreview() {

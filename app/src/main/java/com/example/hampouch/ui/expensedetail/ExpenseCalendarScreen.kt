@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ExpenseCalendarViewMode
 import com.example.hampouch.data.model.ExpenseChallengePeriod
@@ -152,20 +154,21 @@ fun ExpenseCalendarRoute(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(HPSub4)
-                    .padding(20.dp)
+                    .padding(5.dp)
+                    .padding(top = 5.dp)
             ) {
                 if (!restrictToChallengePeriod) {
                     CalendarViewModeToggle(
                         viewMode = viewMode,
                         onViewModeChange = { viewMode = it }
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
                 if (viewMode == ExpenseCalendarViewMode.MONTHLY) {
                     CalendarStatCard(
@@ -176,7 +179,7 @@ fun ExpenseCalendarRoute(
                         totalAmount = monthlyTotal,
                         dailyAverage = monthlyDailyAverage
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     MonthCalendarGrid(
                         month = displayedMonth,
                         referenceToday = referenceToday,
@@ -208,7 +211,7 @@ fun ExpenseCalendarRoute(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             SelectedDayHeader(selectedDate = selectedDate, referenceToday = referenceToday, dayRecords = dayRecords)
             Spacer(modifier = Modifier.height(10.dp))
             if (dayRecords.isEmpty()) {
@@ -323,6 +326,7 @@ private fun CalendarViewModeToggle(
 ) {
     Row(
         modifier = modifier
+            .padding(horizontal = 10.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
             .background(HPWhite.copy(alpha = 0.4f))
@@ -376,10 +380,11 @@ private fun CalendarStatCard(
 ) {
     Column(
         modifier = modifier
+            .padding(horizontal = 10.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(HPWhite)
-            .padding(vertical = 18.dp),
+            .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(totalLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
@@ -526,7 +531,8 @@ private fun CalendarDayCell(
             amount?.let { formatWon(it) } ?: "",
             style = MaterialTheme.typography.labelSmall,
             color = HPMain,
-            maxLines = 1
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 7.sp, maxFontSize = 12.sp)
         )
     }
 }

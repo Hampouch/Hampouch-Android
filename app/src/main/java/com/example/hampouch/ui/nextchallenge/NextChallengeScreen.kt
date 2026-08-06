@@ -428,7 +428,6 @@ internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Mo
             .drawBehind {
                 val diameterPx = heroCircleDiameter.toPx()
                 val radiusPx = diameterPx / 2f
-                // top-start circle: origin (0,0) shifted by (-60dp, -40dp), then centered
                 drawCircle(
                     color = heroCircleColor,
                     radius = radiusPx,
@@ -437,7 +436,6 @@ internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Mo
                         y = (-40).dp.toPx() + radiusPx
                     )
                 )
-                // bottom-end circle: bottom-right corner shifted by (50dp, 40dp), then centered
                 drawCircle(
                     color = heroCircleColor,
                     radius = radiusPx,

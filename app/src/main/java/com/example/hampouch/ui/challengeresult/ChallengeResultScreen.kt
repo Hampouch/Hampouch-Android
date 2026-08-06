@@ -304,7 +304,6 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
             modifier = Modifier
                 .size(170.dp)
                 .align(Alignment.TopStart)
-                // 고정 크기(170dp) 장식용 원을 자기 자신의 크기에 비례해 모서리 밖으로 밀어내는 용도라 화면 크기와 무관함 — 절대좌표 유지
                 .offset(x = (-60).dp, y = (-40).dp)
                 .clip(CircleShape)
                 .background(HPSub2.copy(alpha = 0.10f))
@@ -313,7 +312,6 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
             modifier = Modifier
                 .size(170.dp)
                 .align(Alignment.BottomEnd)
-                // 위와 동일한 이유로 절대좌표 유지
                 .offset(x = 50.dp, y = 40.dp)
                 .clip(CircleShape)
                 .background(HPSub2.copy(alpha = 0.10f))
