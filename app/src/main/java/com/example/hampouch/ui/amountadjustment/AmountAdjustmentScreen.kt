@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.AmountAdjustmentChallenge
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.dialog.AbandonChallengeConfirmDialog
 import com.example.hampouch.ui.dialog.AmountAdjustmentConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.formatWon
@@ -57,6 +59,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -81,7 +84,8 @@ private fun AmountAdjustmentOption.amountFor(targetAmount: Int): Int =
 fun AmountAdjustmentRoute(
     challenge: AmountAdjustmentChallenge,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> }
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
@@ -89,6 +93,7 @@ fun AmountAdjustmentRoute(
     }
     var customAmount by remember(challenge) { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showAbandonConfirmDialog by remember { mutableStateOf(false) }
 
     val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
     val selectedAmount = customAmount
@@ -212,17 +217,42 @@ fun AmountAdjustmentRoute(
             ) {
                 Text(stringResource(R.string.amountadjustment_submit_button), style = MaterialTheme.typography.titleSmall)
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                stringResource(R.string.amountadjustment_abandon_button),
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPSub,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showAbandonConfirmDialog = true }
+            )
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
 
     if (showConfirmDialog) {
+        val isLastEdit = editCount + 1 >= challenge.maxEditCount
         AmountAdjustmentConfirmDialog(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
                 editCount = (editCount + 1).coerceAtMost(challenge.maxEditCount)
                 ChallengeRepository.updateTargetAmount(selectedAmount)
+            },
+            subtext = if (isLastEdit) stringResource(R.string.amountadjustment_last_edit_warning) else null
+        )
+    }
+
+    if (showAbandonConfirmDialog) {
+        AbandonChallengeConfirmDialog(
+            onCancel = { showAbandonConfirmDialog = false },
+            onConfirm = {
+                showAbandonConfirmDialog = false
+                ChallengeRepository.abandonChallenge()
+                val actualAmount = ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge).actualAmount
+                val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
+                onChallengeAbandoned(challenge.id, suggestedTargetAmount)
             }
         )
     }

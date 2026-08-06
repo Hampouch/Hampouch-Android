@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
+import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
@@ -57,6 +58,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 private const val MOCK_USER_NAME = "민준"
 
@@ -91,7 +93,8 @@ fun HomeScreen(
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onLoggedOut: () -> Unit = {}
+    onLoggedOut: () -> Unit = {},
+    onChallengeEndedFinishClick: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
@@ -178,7 +181,7 @@ fun HomeScreen(
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
                         onFinishChallengeClick = {
                             ChallengeRepository.acknowledgeChallengeEnd()
-                            onStartChallengeClick()
+                            onChallengeEndedFinishClick()
                         }
                     )
 
@@ -188,7 +191,12 @@ fun HomeScreen(
                                 RecordAlarmStore.dismissForToday(referenceToday)
                                 onAddExpenseClick()
                             },
-                            onNoSpendingTodayClick = { RecordAlarmStore.dismissForToday(referenceToday) },
+                            onNoSpendingTodayClick = {
+                                ExpenseDetailStore.upsert(
+                                    ExpenseRecord(id = UUID.randomUUID().toString(), date = referenceToday, amount = 0)
+                                )
+                                RecordAlarmStore.dismissForToday(referenceToday)
+                            },
                             onLaterClick = { RecordAlarmStore.dismissForToday(referenceToday) }
                         )
                 }

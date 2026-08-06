@@ -153,7 +153,8 @@ fun ConfirmActionCard(
     confirmLabel: String,
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
-    subtext: String? = null
+    subtext: String? = null,
+    subtextLines: List<String>? = null
 ) {
     Column(
         modifier = Modifier
@@ -178,6 +179,18 @@ fun ConfirmActionCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = HPSub
             )
+        }
+        if (subtextLines != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                subtextLines.forEach { line ->
+                    Text(
+                        "• $line",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPSub
+                    )
+                }
+            }
         }
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {

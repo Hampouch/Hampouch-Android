@@ -26,4 +26,11 @@
 
     <string name="amountadjustment_confirm_question">목표 금액을 수정할까요?</string>
     <string name="amountadjustment_confirm_button">수정하기</string>
+    <string name="amountadjustment_last_edit_warning">수정 이후 챌린지 중단은 불가해요.</string>
+
+    <string name="amountadjustment_abandon_button">챌린지 포기하기</string>
+    <string name="amountadjustment_abandon_confirm_title">챌린지를 포기할까요?</string>
+    <string name="amountadjustment_abandon_confirm_bullet1">챌린지가 실패되고 되돌릴 수 없어요.</string>
+    <string name="amountadjustment_abandon_confirm_bullet2">지출 기록은 그대로 유지돼요.</string>
+    <string name="amountadjustment_abandon_confirm_button">포기하기</string>
 </resources>

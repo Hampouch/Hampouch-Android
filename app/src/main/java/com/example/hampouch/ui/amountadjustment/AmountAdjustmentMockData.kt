@@ -17,6 +17,7 @@ object AmountAdjustmentMockData {
                 (spent - active.dailyLimitOn(day)).coerceAtLeast(0)
             }
         return AmountAdjustmentChallenge(
+            id = active.id,
             totalDays = active.totalDays,
             dDay = active.dDayFrom(today),
             periodStart = active.periodStart,

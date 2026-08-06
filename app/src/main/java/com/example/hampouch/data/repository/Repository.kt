@@ -65,7 +65,7 @@ object ChallengeRepository {
         get() = challenges.last()
 
     val hasOngoingChallenge: Boolean
-        get() = !LocalDate.now().isAfter(activeChallenge.periodEnd)
+        get() = !LocalDate.now().isAfter(activeChallenge.effectivePeriodEnd)
 
     var challengeEndAcknowledged: Boolean by mutableStateOf(false)
         private set
@@ -138,7 +138,14 @@ object ChallengeRepository {
     }
 
     fun challengeFor(date: LocalDate): ActiveChallenge? =
-        challenges.firstOrNull { !date.isBefore(it.periodStart) && !date.isAfter(it.periodEnd) }
+        challenges.firstOrNull { !date.isBefore(it.periodStart) && !date.isAfter(it.effectivePeriodEnd) }
+
+    fun abandonChallenge(referenceToday: LocalDate = LocalDate.now()) {
+        val updated = activeChallenge.copy(abandonedDate = referenceToday)
+        challengesState.value = challenges.dropLast(1) + updated
+        challengeEndAcknowledged = true
+        hasVisitedExpenseEditAfterEnd = false
+    }
 
     fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate = LocalDate.now()) {
         val current = activeChallenge
@@ -153,7 +160,7 @@ object ChallengeRepository {
     }
 
     fun elapsedDays(referenceToday: LocalDate, challenge: ActiveChallenge = activeChallenge): List<LocalDate> {
-        val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+        val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         return generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
             .toList()

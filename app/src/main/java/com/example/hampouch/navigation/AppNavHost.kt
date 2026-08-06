@@ -278,6 +278,12 @@ fun AppNavHost(
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onChallengeEndedFinishClick = {
+                    val challenge = ChallengeRepository.activeChallenge
+                    val actualAmount = ChallengeResultMockData.forChallenge(challenge).actualAmount
+                    val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
+                    navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
                 }
             )
         }
@@ -675,7 +681,10 @@ fun AppNavHost(
         composable(Screen.AmountAdjustment.route) {
             AmountAdjustmentRoute(
                 challenge = AmountAdjustmentMockData.challenge(),
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
+                    navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount))
+                }
             )
         }
 
