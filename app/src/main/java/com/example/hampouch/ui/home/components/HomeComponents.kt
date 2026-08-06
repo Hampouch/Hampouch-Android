@@ -303,15 +303,16 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
     }
 }
 
-private val StreakBoxWidthDelta = 30.dp
+private const val StreakBoxWidthDeltaRatio = 0.2f
 
 @Composable
 fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val gap = 12.dp
         val halfWidth = (maxWidth - gap) / 2
-        val savingsBoxWidth = halfWidth + StreakBoxWidthDelta
-        val streakBoxWidth = halfWidth - StreakBoxWidthDelta
+        val widthDelta = halfWidth * StreakBoxWidthDeltaRatio
+        val savingsBoxWidth = halfWidth + widthDelta
+        val streakBoxWidth = halfWidth - widthDelta
 
         Row(
             modifier = Modifier.fillMaxWidth(),

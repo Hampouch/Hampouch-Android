@@ -45,6 +45,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -188,7 +189,14 @@ fun CategoryLegendRow(
                 .background(dotColor)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = HPBlack, modifier = Modifier.weight(1f))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(amount)),
             style = MaterialTheme.typography.bodyMedium,
@@ -255,7 +263,14 @@ fun ReasonStatChip(item: AmountBreakdownItem, modifier: Modifier = Modifier) {
 @Composable
 fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Color, modifier: Modifier = Modifier) {
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = HPBlack, modifier = Modifier.width(72.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = HPBlack,
+            modifier = Modifier.width(72.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -542,9 +557,17 @@ fun ExpenseAnalysisListItem(
                 record.expenseName ?: categoryLabel,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = HPBlack
+                color = HPBlack,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+            Text(
+                categoryLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = HPText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         Column(horizontalAlignment = Alignment.End) {
             if (showReasonChip && reasonLabel != null) {

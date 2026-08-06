@@ -96,7 +96,6 @@ private fun ShareOptionRow(option: ShareOption, onClick: () -> Unit) {
         Text(
             option.label,
             style = MaterialTheme.typography.bodyMedium,
-            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = HPBlack
         )

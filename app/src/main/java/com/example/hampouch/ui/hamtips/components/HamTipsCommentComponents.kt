@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
@@ -132,7 +133,10 @@ fun HamTipsReplyRow(
                     text = if (reply.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else reply.authorName,
                     style = MaterialTheme.typography.bodySmall,
                     color = HPBlack,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f, fill = false),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (!reply.isDeleted) {
                     Spacer(modifier = Modifier.width(6.dp))
@@ -178,7 +182,10 @@ fun HamTipsCommentRow(
                         text = if (comment.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else comment.authorName,
                         style = MaterialTheme.typography.bodyMedium,
                         color = HPBlack,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (!comment.isDeleted && showAuthorTag) {
                         Spacer(modifier = Modifier.width(6.dp))
@@ -253,7 +260,9 @@ fun HamTipsCommentInputBar(
                     text = stringResource(R.string.hamtips_reply_target_tag_format, replyTargetName),
                     style = MaterialTheme.typography.labelMedium,
                     color = HPReplyTag,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.width(6.dp))
             }

@@ -12,12 +12,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -119,8 +122,7 @@ fun ExpenseInputBalanceCard(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 stringResource(R.string.expenseinput_today_balance),
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = HPBlack
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -188,21 +190,35 @@ private val NumPadKeys = listOf(
     "00", "0", "DEL"
 )
 
+private val NumPadRows = NumPadKeys.chunked(3)
+private val NumPadKeyMinHeight = 48.dp
+
+val ExpenseAmountNumPadMinHeight = NumPadKeyMinHeight * NumPadRows.size
+
 @Composable
 fun ExpenseAmountNumPad(
     onDigit: (String) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        NumPadKeys.chunked(3).forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth()) {
-                row.forEach { key ->
-                    NumPadKey(
-                        label = key,
-                        onClick = { if (key == "DEL") onDelete() else onDigit(key) },
-                        modifier = Modifier.weight(1f)
-                    )
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val rowHeight = (maxHeight / NumPadRows.size).coerceAtLeast(NumPadKeyMinHeight)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            NumPadRows.forEach { row ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(rowHeight)
+                ) {
+                    row.forEach { key ->
+                        NumPadKey(
+                            label = key,
+                            onClick = { if (key == "DEL") onDelete() else onDigit(key) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
                 }
             }
         }
@@ -214,7 +230,7 @@ private fun NumPadKey(label: String, onClick: () -> Unit, modifier: Modifier = M
     val isDelete = label == "DEL"
     Column(
         modifier = modifier
-            .height(64.dp)
+            .heightIn(min = NumPadKeyMinHeight)
             .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClickLabel = if (isDelete) stringResource(R.string.cd_expenseinput_delete_digit) else null,
@@ -254,13 +270,12 @@ fun ExpenseInputAmountSummaryCard(
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 formatWon(amount),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
                 color = HPBlack
             )
             Spacer(modifier = Modifier.padding(start = 4.dp))
-            Text("원", style = MaterialTheme.typography.bodyMedium, fontSize = 18.sp, color = HPText)
+            Text("원", style = MaterialTheme.typography.bodyLarge, color = HPText)
         }
         Spacer(modifier = Modifier.height(5.dp))
         DashedDivider(color = HPBlack)

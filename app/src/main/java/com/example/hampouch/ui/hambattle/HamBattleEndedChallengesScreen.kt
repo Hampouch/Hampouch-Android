@@ -3,6 +3,7 @@ package com.example.hampouch.ui.hambattle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -145,6 +146,19 @@ private fun EndedChallengeCard(challenge: HamBattleEndedChallenge, onClick: () -
             style = Body16Bold,
             color = StatusWhoWonText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EndedChallengeCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            EndedChallengeCard(
+                challenge = HamBattleMockData.endedChallenges[0],
+                onClick = {}
+            )
+        }
     }
 }
 

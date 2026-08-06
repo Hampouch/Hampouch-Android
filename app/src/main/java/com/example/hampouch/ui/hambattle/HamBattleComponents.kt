@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,25 +25,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
-import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 import java.util.Locale
 
 val StatusWhoWonText = Color(0xFF5572AB)
 
 private val ParticipantNameWidth = 56.dp
-
-private val MyParticipantCardWidth = 130.dp
 
 fun formatWon(amount: Int): String {
     return String.format(Locale.KOREA, "%,d원", amount)
@@ -89,25 +88,22 @@ fun ParticipantAvatarLabel(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(32.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite),
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ParticipantAvatar(size = 22.dp)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
-                    modifier = Modifier.width(ParticipantNameWidth),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
+                    modifier = Modifier.widthIn(max = 80.dp),
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = HPBlack
@@ -115,9 +111,9 @@ fun ParticipantAvatarLabel(
             }
             Text(
                 formatWon(participant.amount),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
+                overflow = TextOverflow.Ellipsis,
                 color = HPBlack
             )
         }
@@ -125,37 +121,36 @@ fun ParticipantAvatarLabel(
 }
 
 @Composable
-private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending) {
+private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .width(MyParticipantCardWidth)
-            .height(32.dp)
+        modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite),
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ParticipantAvatar(size = 22.dp)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
+                    modifier = Modifier.widthIn(max = 80.dp),
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = HPBlack
                 )
             }
             Text(
                 formatWon(participant.amount),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
+                overflow = TextOverflow.Ellipsis,
                 color = HPBlack
             )
         }
@@ -171,9 +166,9 @@ fun OneVsOneRow(first: HamBattleParticipantSpending, second: HamBattleParticipan
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isFirstMe) {
-            MyParticipantAvatarLabel(participant = first)
+            MyParticipantAvatarLabel(participant = first, modifier = Modifier.weight(1f))
         } else {
-            ParticipantAvatarLabel(participant = first)
+            ParticipantAvatarLabel(participant = first, modifier = Modifier.weight(1f))
         }
         Text(
             "vs",
@@ -182,9 +177,9 @@ fun OneVsOneRow(first: HamBattleParticipantSpending, second: HamBattleParticipan
             color = HPText
         )
         if (isFirstMe) {
-            ParticipantAvatarLabel(participant = second)
+            ParticipantAvatarLabel(participant = second, modifier = Modifier.weight(1f))
         } else {
-            MyParticipantAvatarLabel(participant = second)
+            MyParticipantAvatarLabel(participant = second, modifier = Modifier.weight(1f))
         }
     }
 }
@@ -240,10 +235,98 @@ fun RankedParticipantList(
                     modifier = Modifier.width(80.dp),
                     fontSize = 14.sp,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.End,
                     color = HPBlack
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SectionLabelPreview() {
+    HampouchTheme {
+        SectionLabel(text = "섹션 라벨")
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TypeBadgePreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TypeBadge(text = "기본 뱃지")
+            TypeBadge(text = "비활성 뱃지", muted = true)
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ParticipantAvatarPreview() {
+    HampouchTheme {
+        ParticipantAvatar(size = 40.dp)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ParticipantAvatarLabelPreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier
+                .background(HPGray5)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ParticipantAvatarLabel(
+                participant = HamBattleParticipantSpending("햄스터", 45000)
+            )
+            MyParticipantAvatarLabel(
+                participant = HamBattleParticipantSpending("나", 12000)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun OneVsOneRowPreview() {
+    HampouchTheme {
+        Box(
+            modifier = Modifier
+                .background(HPGray5)
+                .padding(16.dp)
+        ) {
+            OneVsOneRow(
+                first = HamBattleParticipantSpending("나", 50000),
+                second = HamBattleParticipantSpending("상대방", 35000)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RankedParticipantListPreview() {
+    HampouchTheme {
+        val mockParticipants = listOf(
+            HamBattleParticipantSpending("나", 50000),
+            HamBattleParticipantSpending("친구1", 30000),
+            HamBattleParticipantSpending("친구2", 85000),
+            HamBattleParticipantSpending("친구3", 15000)
+        )
+        Box(
+            modifier = Modifier
+                .background(HPGray5)
+                .padding(16.dp)
+        ) {
+            RankedParticipantList(participants = mockParticipants)
         }
     }
 }
