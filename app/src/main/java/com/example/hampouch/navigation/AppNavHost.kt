@@ -48,6 +48,8 @@ import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
+import com.example.hampouch.ui.nextchallenge.NextChallengeRoute
+import com.example.hampouch.ui.nextchallenge.NextChallengeTakeABreakRoute
 import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationStore
 import com.example.hampouch.ui.onboarding.OnboardingRoute
@@ -197,9 +199,7 @@ fun AppNavHost(
                 initialHamTipsWriteBattleLink = writeBattleLink,
                 onExitHamTipsWriteBattle = { navController.popBackStack() },
                 onStartChallengeClick = {
-                    navController.navigate(Screen.Onboarding.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
+                    navController.navigate(Screen.NextChallengeTakeABreak.route)
                 },
                 onNavigateToMiniChallenge = { date ->
                     navController.navigate(Screen.MiniChallenge.createRoute(date))
@@ -606,15 +606,50 @@ fun AppNavHost(
                         )
                     },
                     onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
-                    onStartNewChallengeClick = {
-                        pendingHomeTab = null
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
-                        }
+                    onStartNewChallengeClick = { suggestedTargetAmount ->
+                        navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
                     },
                     onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
                 )
             }
+        }
+
+        composable(
+            route = Screen.NextChallenge.route,
+            arguments = listOf(
+                navArgument("challengeId") { type = NavType.StringType },
+                navArgument("suggestedTargetAmount") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
+            val suggestedTargetAmount = backStackEntry.arguments?.getInt("suggestedTargetAmount") ?: 0
+            val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
+            if (challenge != null) {
+                val previousResult = ChallengeResultMockData.forChallenge(challenge)
+                NextChallengeRoute(
+                    previousResult = previousResult,
+                    suggestedTargetAmount = suggestedTargetAmount,
+                    onBackClick = { navController.popBackStack() },
+                    onStartChallengeClick = {
+                        pendingHomeTab = null
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        composable(Screen.NextChallengeTakeABreak.route) {
+            NextChallengeTakeABreakRoute(
+                onBackClick = { navController.popBackStack() },
+                onStartChallengeClick = {
+                    pendingHomeTab = null
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.TakeABreak.route) {

@@ -52,16 +52,16 @@ private enum class GoalAdjustmentOption(val label: String, val multiplier: Doubl
 
 @Composable
 fun ChallengeGoalAdjustmentDialog(
-    currentDailyLimit: Int,
+    currentGoalAmount: Int,
     onDismissRequest: () -> Unit,
-    onStartNewChallengeClick: () -> Unit
+    onStartNewChallengeClick: (Int) -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         ChallengeGoalAdjustmentCard(
-            currentDailyLimit = currentDailyLimit,
+            currentGoalAmount = currentGoalAmount,
             onStartNewChallengeClick = onStartNewChallengeClick,
             modifier = Modifier
                 .fillMaxWidth()
@@ -72,8 +72,8 @@ fun ChallengeGoalAdjustmentDialog(
 
 @Composable
 private fun ChallengeGoalAdjustmentCard(
-    currentDailyLimit: Int,
-    onStartNewChallengeClick: () -> Unit,
+    currentGoalAmount: Int,
+    onStartNewChallengeClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedOption by remember { mutableStateOf<GoalAdjustmentOption?>(null) }
@@ -105,7 +105,7 @@ private fun ChallengeGoalAdjustmentCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             GoalAdjustmentOption.entries.forEach { option ->
-                val amount = (currentDailyLimit * option.multiplier).roundToInt()
+                val amount = (currentGoalAmount * option.multiplier).roundToInt()
                 GoalOptionCard(
                     label = option.label,
                     value = formatWon(amount),
@@ -118,7 +118,11 @@ private fun ChallengeGoalAdjustmentCard(
 
         Spacer(modifier = Modifier.height(20.dp))
         Button(
-            onClick = onStartNewChallengeClick,
+            onClick = {
+                selectedOption?.let { option ->
+                    onStartNewChallengeClick((currentGoalAmount * option.multiplier).roundToInt())
+                }
+            },
             enabled = selectedOption != null,
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,6 +193,6 @@ private fun GoalOptionCard(
 @Composable
 private fun ChallengeGoalAdjustmentCardPreview() {
     HampouchTheme {
-        ChallengeGoalAdjustmentCard(currentDailyLimit = 25_000, onStartNewChallengeClick = {})
+        ChallengeGoalAdjustmentCard(currentGoalAmount = 400_000, onStartNewChallengeClick = {})
     }
 }

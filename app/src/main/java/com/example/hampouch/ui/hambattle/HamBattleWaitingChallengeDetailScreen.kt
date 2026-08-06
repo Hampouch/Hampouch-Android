@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.HamBattleChallenge
@@ -146,7 +147,7 @@ private fun WaitingInfoCard(challenge: HamBattleChallenge) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPGray3)
-            .padding(20.dp)
+            .padding(15.dp)
     ) {
         Row() {
             Text(
@@ -208,11 +209,13 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
                 .background(if (isMe) HPWhite else HPGray4)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 participant.name,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = if (isMe) HPMain else HPBlack
             )
             Text("0", style = Body16Bold, color = if (isMe) HPMain else HPBlack)
@@ -255,6 +258,16 @@ private fun WaitingPenaltyBox(penalty: String) {
             style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WaitingInfoCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges().first())
+        }
     }
 }
 

@@ -63,7 +63,7 @@ fun HamBattleChallengesResultPagerScreen(
         ResultPageIndicator(
             pageCount = PAGE_COUNT,
             currentPage = pagerState.currentPage,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier.padding(vertical = 6.dp)
         )
     }
 }
@@ -87,6 +87,16 @@ private fun ResultPageIndicator(
                     .clip(CircleShape)
                     .background(if (selected) HPMain else HPGray4)
             )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ResultPageIndicatorPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
+            ResultPageIndicator(pageCount = 3, currentPage = 1)
         }
     }
 }

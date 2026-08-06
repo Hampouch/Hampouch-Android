@@ -55,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,6 +77,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 
 private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
@@ -590,5 +592,45 @@ private fun EmptyAvatarSlot(size: Dp) {
             radius = (size.toPx() - strokeWidthPx) / 2,
             style = Stroke(width = strokeWidthPx, pathEffect = dash)
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HamBattleScreenPreview() {
+    HampouchTheme {
+        HamBattleScreen(
+            selectedBottomTab = BottomNavItem.HAM_BATTLE,
+            onItemSelected = {},
+            onAddClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HamBattleEmptyContentPreview() {
+    HampouchTheme {
+        HamBattleEmptyContent(onStartNewChallengeClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ActiveChallengeCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            ActiveChallengeCard(challenge = HamBattleMockData.activeChallenges()[0])
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WaitingChallengeCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingChallengeCard(challenge = HamBattleMockData.waitingChallenges()[0])
+        }
     }
 }

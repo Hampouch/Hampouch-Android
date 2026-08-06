@@ -3,7 +3,6 @@ package com.example.hampouch.ui.hamtips
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +43,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
@@ -122,9 +122,19 @@ private fun DashedDivider(modifier: Modifier = Modifier) {
 
 @Composable
 private fun MenuInfoRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(modifier = modifier.fillMaxWidth()) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPText)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPMain,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -204,12 +214,15 @@ internal fun HamTipsPostHeader(post: TipPost, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(10.dp))
         Text(text = post.title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
         Spacer(modifier = Modifier.height(8.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = post.authorName,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (post.isEditorAuthor) HPSub else HPText,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = stringResource(

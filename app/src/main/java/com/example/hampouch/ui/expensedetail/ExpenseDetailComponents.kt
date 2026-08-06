@@ -58,6 +58,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -203,8 +204,16 @@ fun ExpenseInfoRow(label: String, value: String, modifier: Modifier = Modifier) 
             .padding(vertical = 14.dp)
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -309,8 +318,7 @@ fun ChoiceChip(
         }
         Text(
             label,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 16.sp,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
             maxLines = 1
@@ -640,7 +648,7 @@ fun ExpenseSummaryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f, fill = false)) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -661,9 +669,17 @@ fun ExpenseSummaryCard(
                     record.expenseName ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = HPBlack
+                    color = HPBlack,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Text(categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+                Text(
+                    categoryLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
         ReasonTagAndAmountColumn(

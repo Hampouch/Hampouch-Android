@@ -75,7 +75,7 @@ fun MyPageScreen(
     onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNavigateToTakeABreak: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onStartNewChallengeClick: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(MyPageRoute.MAIN) }

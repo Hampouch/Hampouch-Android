@@ -28,6 +28,11 @@ sealed class Screen(val route: String) {
     data object ChallengeSummary : Screen("challenge_summary/{challengeId}") {
         fun createRoute(challengeId: String) = "challenge_summary/$challengeId"
     }
+    data object NextChallenge : Screen("next_challenge/{challengeId}/{suggestedTargetAmount}") {
+        fun createRoute(challengeId: String, suggestedTargetAmount: Int) =
+            "next_challenge/$challengeId/$suggestedTargetAmount"
+    }
+    data object NextChallengeTakeABreak : Screen("next_challenge_take_a_break")
     data object TakeABreak : Screen("take_a_break")
     data object AmountAdjustment : Screen("amount_adjustment")
     data object ExpenseDetail : Screen("expense_detail/{expenseId}") {

@@ -354,9 +354,11 @@ fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: (
                 text = post.authorName,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (post.isEditorAuthor) HPSub else HPText,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.weight(1f))
             HamTipsStatRow(post = post)
         }
     }

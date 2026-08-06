@@ -197,7 +197,14 @@ fun ProfileCard(
         ProfileAvatar(avatarUri = avatarUri, size = 56.dp)
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = name, style = MaterialTheme.typography.titleSmall, color = HPBlack, fontWeight = FontWeight.Normal)
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleSmall,
+                color = HPBlack,
+                fontWeight = FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.mypage_handle_format, handle),
@@ -568,7 +575,9 @@ fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit
             text = tip.title,
             style = MaterialTheme.typography.bodyMedium,
             color = HPBlack,
-            fontWeight = FontWeight.Normal
+            fontWeight = FontWeight.Normal,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(

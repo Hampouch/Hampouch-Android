@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -96,7 +97,7 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 "벌칙: ",
                 style = MaterialTheme.typography.bodyMedium,
@@ -108,6 +109,9 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 12.sp,
                 color = HPMain,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
