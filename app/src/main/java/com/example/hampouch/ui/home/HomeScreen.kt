@@ -271,13 +271,13 @@ private fun HomeContent(
             onCalendarClick = onCalendarClick,
             onNotificationClick = onNotificationClick
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(5.dp))
         DateSelectorRow(
             referenceToday = referenceToday,
             selectedDate = uiState.selectedDate,
             onDateSelected = onDateSelected
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
         val challenge = uiState.challenge
         if (challenge == null) {
@@ -289,12 +289,12 @@ private fun HomeContent(
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPSub4)
                     .clickable(onClick = onChallengeSummaryClick)
-                    .padding(horizontal = 15.dp, vertical = 16.dp)
+                    .padding(horizontal = 15.dp, vertical = 13.dp)
             ) {
                 ChallengeBanner(challenge = challenge)
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 CharacterGaugeSection(challenge = challenge)
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
             }
 
@@ -304,20 +304,20 @@ private fun HomeContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         TodayExpenseSection(
             expenses = uiState.expenses,
             onViewAllClick = onViewAllExpensesClick,
             onAddExpenseClick = onAddExpenseClick,
             onExpenseClick = onExpenseClick
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         MiniChallengeSection(
             items = uiState.miniChallenges,
             onViewAllClick = onViewAllMiniChallengesClick,
             onToggle = onToggleMiniChallenge
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
     }
 }
 

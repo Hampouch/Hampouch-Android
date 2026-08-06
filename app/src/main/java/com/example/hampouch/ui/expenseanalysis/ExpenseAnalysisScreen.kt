@@ -315,7 +315,7 @@ private fun CategoryAnalysisCard(items: List<AmountBreakdownItem>, totalAmount: 
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPWhite)
-            .padding(16.dp)
+            .padding(5.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ExpenseAnalysisDonutChart(
@@ -325,7 +325,7 @@ private fun CategoryAnalysisCard(items: List<AmountBreakdownItem>, totalAmount: 
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1.3f)) {
+            Column(modifier = Modifier.weight(1.7f)) {
                 items.forEach { item ->
                     CategoryLegendRow(
                         label = analysisCategoryLabel(item.id),
@@ -405,7 +405,7 @@ private fun WeekdayAnalysisCard(items: List<WeekdayAmount>, peakDays: Set<DayOfW
 private fun weekdayPeakLabel(peakDays: Set<DayOfWeek>): String? {
     if (peakDays.isEmpty()) return null
     val ordered = ExpenseAnalysisWeekdayOrder.filter { it in peakDays }
-    val names = ordered.map { it.getDisplayName(TextStyle.NARROW, Locale.KOREA) }
+    val names = ordered.map { it.getDisplayName(TextStyle.NARROW, Locale.KOREA) + stringResource(R.string.expenseanalysis_weekday_suffix) }
     return if (names.size >= 2) {
         stringResource(R.string.expenseanalysis_weekday_peak_two_format, names[0], names[1])
     } else {

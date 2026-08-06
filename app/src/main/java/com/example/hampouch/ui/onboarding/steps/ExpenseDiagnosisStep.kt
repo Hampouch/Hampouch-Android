@@ -31,6 +31,7 @@ fun ExpenseDiagnosisStep(
     onExpenseChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
+    onSkipClick: () -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -77,7 +78,7 @@ fun ExpenseDiagnosisStep(
 
             Box(modifier = Modifier.weight(1f))
 
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
+            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onSkipClick)
 
             OnboardingSecondaryButton(
                 text = stringResource(R.string.onboarding_existing_login),
@@ -102,6 +103,7 @@ private fun ExpenseDiagnosisStepPreview() {
             onExpenseChange = {},
             onNext = {},
             onBack = {},
+            onSkipClick = {},
             onNavigateToLogin = {}
         )
     }

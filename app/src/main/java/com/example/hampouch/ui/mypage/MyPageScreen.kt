@@ -80,7 +80,7 @@ fun MyPageScreen(
     val context = LocalContext.current
     var route by rememberSaveable { mutableStateOf(MyPageRoute.MAIN) }
     var previousListRoute by rememberSaveable { mutableStateOf(MyPageRoute.MY_TIPS) }
-    var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
+    val profile = MyPageProfileStore.profile
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -179,7 +179,7 @@ fun MyPageScreen(
                 isNicknameTaken = MyPageMockData::isNicknameTaken,
                 onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmit = { newName, newAvatarUri ->
-                    profile = profile.copy(name = newName, avatarUri = newAvatarUri)
+                    MyPageProfileStore.update(newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
                 modifier = modifier.fillMaxSize()

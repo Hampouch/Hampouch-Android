@@ -362,7 +362,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
                     label = state.amountLabel,
                     value = formatWon(state.amountValue),
                     highlighted = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.3f)
                 )
                 StatBox(
                     label = "연속 달성",

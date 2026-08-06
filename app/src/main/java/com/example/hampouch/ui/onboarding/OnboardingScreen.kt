@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.data.model.ChallengePeriodType
 import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
 import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
@@ -20,6 +21,32 @@ import com.example.hampouch.ui.onboarding.steps.PeriodStep
 import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlin.math.roundToInt
+
+private fun buildOnboardingRequest(uiState: OnboardingUiState): OnboardingRequest {
+    val periodType = when (uiState.challengePeriodDays) {
+        7 -> ChallengePeriodType.ONE_WEEK
+        14 -> ChallengePeriodType.TWO_WEEKS
+        30 -> ChallengePeriodType.ONE_MONTH
+        else -> ChallengePeriodType.CUSTOM
+    }
+    val impliedPeriodDays = OnboardingCalculations.impliedPeriodDays(uiState)
+    val recommendedTotalTarget =
+        OnboardingCalculations.recommendedTotalTarget(uiState.lastMonthFoodExpense, impliedPeriodDays)
+    val totalTarget = uiState.totalTargetAmount ?: recommendedTotalTarget
+    val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
+        totalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
+    }
+    return OnboardingRequest(
+        lastMonthFoodExpense = uiState.lastMonthFoodExpense,
+        challengePeriodType = periodType,
+        customPeriodDays = uiState.challengePeriodDays,
+        dateFixed = uiState.dateFixed,
+        startDate = uiState.startDate,
+        dailyTargetAmount = dailyTarget,
+        totalTargetAmount = totalTarget,
+        topSpendingCategoryIds = uiState.selectedCategoryIds.toList()
+    )
+}
 
 @Composable
 fun OnboardingRoute(
@@ -29,6 +56,17 @@ fun OnboardingRoute(
 ) {
     var step by remember { mutableStateOf(OnboardingStep.SPLASH) }
     var uiState by remember { mutableStateOf(OnboardingUiState()) }
+    var showSkipConfirmDialog by remember { mutableStateOf(false) }
+
+    if (showSkipConfirmDialog) {
+        OnboardingSkipConfirmDialog(
+            onCancel = { showSkipConfirmDialog = false },
+            onConfirm = {
+                showSkipConfirmDialog = false
+                onOnboardingComplete(buildOnboardingRequest(uiState))
+            }
+        )
+    }
 
     AnimatedContent(
         targetState = step,
@@ -46,6 +84,7 @@ fun OnboardingRoute(
                 onExpenseChange = { uiState = uiState.copy(lastMonthFoodExpense = it) },
                 onNext = { step = OnboardingStep.PERIOD_SETTING },
                 onBack = {},
+                onSkipClick = { showSkipConfirmDialog = true },
                 onNavigateToLogin = onNavigateToLogin
             )
 
@@ -67,7 +106,7 @@ fun OnboardingRoute(
                 onStartDateChange = { uiState = uiState.copy(startDate = it) },
                 onNext = { step = OnboardingStep.GOAL_SETTING },
                 onBack = { step = OnboardingStep.EXPENSE_DIAGNOSIS },
-                onNavigateToLogin = onNavigateToLogin
+                onNavigateToLogin = { showSkipConfirmDialog = true }
             )
 
             OnboardingStep.GOAL_SETTING -> ChallengeGoalStep(
@@ -75,7 +114,7 @@ fun OnboardingRoute(
                 onTotalTargetChange = { uiState = uiState.copy(totalTargetAmount = it) },
                 onNext = { step = OnboardingStep.CATEGORY_SELECT },
                 onBack = { step = OnboardingStep.PERIOD_SETTING },
-                onNavigateToLogin = onNavigateToLogin
+                onNavigateToLogin = { showSkipConfirmDialog = true }
             )
 
             OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(
@@ -89,33 +128,7 @@ fun OnboardingRoute(
                         }
                     )
                 },
-                onStart = {
-                    val periodType = when (uiState.challengePeriodDays) {
-                        7 -> ChallengePeriodType.ONE_WEEK
-                        14 -> ChallengePeriodType.TWO_WEEKS
-                        30 -> ChallengePeriodType.ONE_MONTH
-                        else -> ChallengePeriodType.CUSTOM
-                    }
-                    val impliedPeriodDays = OnboardingCalculations.impliedPeriodDays(uiState)
-                    val recommendedTotalTarget =
-                        OnboardingCalculations.recommendedTotalTarget(uiState.lastMonthFoodExpense, impliedPeriodDays)
-                    val totalTarget = uiState.totalTargetAmount ?: recommendedTotalTarget
-                    val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
-                        totalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
-                    }
-                    onOnboardingComplete(
-                        OnboardingRequest(
-                            lastMonthFoodExpense = uiState.lastMonthFoodExpense,
-                            challengePeriodType = periodType,
-                            customPeriodDays = uiState.challengePeriodDays,
-                            dateFixed = uiState.dateFixed,
-                            startDate = uiState.startDate,
-                            dailyTargetAmount = dailyTarget,
-                            totalTargetAmount = totalTarget,
-                            topSpendingCategoryIds = uiState.selectedCategoryIds.toList()
-                        )
-                    )
-                },
+                onStart = { onOnboardingComplete(buildOnboardingRequest(uiState)) },
                 onBack = { step = OnboardingStep.GOAL_SETTING }
             )
         }

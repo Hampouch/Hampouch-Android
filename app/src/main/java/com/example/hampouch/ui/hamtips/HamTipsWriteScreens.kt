@@ -2,10 +2,12 @@ package com.example.hampouch.ui.hamtips
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -61,6 +63,7 @@ fun formatMenuTitle(menuName: String, place: String, price: Int): String {
 @Composable
 private fun HamTipsWriteScaffold(
     onBackClick: () -> Unit,
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
@@ -70,11 +73,26 @@ private fun HamTipsWriteScaffold(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .fillMaxWidth(),
-            content = content
-        )
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth(),
+                content = content
+            )
+            if (footer != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                ) {
+                    footer()
+                }
+            }
+        }
     }
 }
 
@@ -140,12 +158,12 @@ fun HamTipsWriteTipScreen(
             heading = stringResource(R.string.hamtips_write_tip_heading),
             subheading = stringResource(R.string.hamtips_write_tip_subheading)
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         HamTipsFieldCard {
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_board))
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsCategoryPickerRow(selected = category, onSelected = { category = it })
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_title))
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsWriteTextField(
@@ -153,7 +171,7 @@ fun HamTipsWriteTipScreen(
                 onValueChange = { title = it },
                 placeholder = stringResource(R.string.hamtips_write_title_placeholder)
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_content))
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsWriteTextField(
@@ -163,7 +181,7 @@ fun HamTipsWriteTipScreen(
                 minHeight = 160.dp,
                 singleLine = false
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_photo))
             Spacer(modifier = Modifier.height(10.dp))
             PhotoAttachGrid(
@@ -172,9 +190,9 @@ fun HamTipsWriteTipScreen(
                 onPhotoRemoved = { removed -> photoUris = photoUris - removed }
             )
         }
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         HamTipsWriteHintSection()
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         HamTipsSubmitButton(
             text = stringResource(R.string.hamtips_write_submit),
             enabled = isSubmitEnabled,
@@ -217,47 +235,56 @@ fun HamTipsWriteMenuScreen(
     val previewTitle = formatMenuTitle(menuName, place, price)
     val isSubmitEnabled = menuName.isNotBlank() && place.isNotBlank() && price > 0
 
-    HamTipsWriteScaffold(onBackClick = onBackClick) {
+    HamTipsWriteScaffold(
+        onBackClick = onBackClick,
+        footer = {
+            HamTipsSubmitButton(
+                text = stringResource(R.string.hamtips_write_submit),
+                enabled = isSubmitEnabled,
+                onClick = { showConfirmDialog = true }
+            )
+        }
+    ) {
         HamTipsWriteHeader(
             overline = stringResource(R.string.hamtips_write_overline),
             heading = stringResource(R.string.hamtips_write_menu_heading),
             subheading = stringResource(R.string.hamtips_write_menu_subheading)
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         HamTipsFieldCard {
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_title_preview_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsTitlePreviewBox(previewText = previewTitle)
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_name_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = menuName,
                 onValueChange = { menuName = it },
                 placeholder = stringResource(R.string.hamtips_write_menu_name_placeholder)
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_place_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = place,
                 onValueChange = { place = it },
                 placeholder = stringResource(R.string.hamtips_write_menu_place_placeholder)
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_price_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsPriceInputField(price = price, onPriceChange = { price = it })
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_rating_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(HPWhite)
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 MenuRatingType.entries.forEach { type ->
                     val rating = when (type) {
@@ -278,9 +305,9 @@ fun HamTipsWriteMenuScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_comment_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = comment,
                 onValueChange = { comment = it },
@@ -288,22 +315,16 @@ fun HamTipsWriteMenuScreen(
                 minHeight = 120.dp,
                 singleLine = false
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_photo))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             PhotoAttachGrid(
                 photoUris = photoUris,
                 onPhotosAdded = { added -> photoUris = (photoUris + added).take(HamTipsMaxPhotoCount) },
                 onPhotoRemoved = { removed -> photoUris = photoUris - removed }
             )
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        HamTipsSubmitButton(
-            text = stringResource(R.string.hamtips_write_submit),
-            enabled = isSubmitEnabled,
-            onClick = { showConfirmDialog = true }
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 
     if (showConfirmDialog) {
@@ -347,18 +368,18 @@ fun HamTipsWriteBattleScreen(
             heading = stringResource(R.string.hamtips_write_battle_heading),
             subheading = stringResource(R.string.hamtips_write_battle_subheading)
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         HamTipsFieldCard {
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_title))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = title,
                 onValueChange = { title = it },
                 placeholder = stringResource(R.string.hamtips_write_battle_title_placeholder)
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_content))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = content,
                 onValueChange = { content = it },
@@ -366,9 +387,9 @@ fun HamTipsWriteBattleScreen(
                 minHeight = 160.dp,
                 singleLine = false
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_battle_link_label))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
                 value = link,
                 onValueChange = {

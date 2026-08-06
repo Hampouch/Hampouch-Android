@@ -31,6 +31,7 @@ import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.repository.AccountDataCoordinator
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -119,13 +120,18 @@ fun AppNavHost(
         }
     ) {
         composable(Screen.Onboarding.route) {
+            val goToLogin: () -> Unit = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                }
+            }
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
-                    ChallengeRepository.startNewChallenge(request)
-                    navController.navigate(Screen.Login.route)
+                    OnboardingDataStore.captureOnboardingComplete(request)
+                    goToLogin()
                 },
-                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+                onNavigateToLogin = goToLogin
             )
         }
 

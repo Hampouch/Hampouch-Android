@@ -290,7 +290,10 @@ fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Col
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(amount)),
             style = MaterialTheme.typography.bodySmall,
-            color = HPBlack
+            color = HPBlack,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            modifier = Modifier.width(76.dp)
         )
     }
 }

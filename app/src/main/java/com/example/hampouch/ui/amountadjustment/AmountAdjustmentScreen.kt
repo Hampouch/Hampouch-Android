@@ -85,12 +85,12 @@ fun AmountAdjustmentRoute(
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
-        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.RELAX_20)
+        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.KEEP)
     }
     var customAmount by remember(challenge) { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val canEdit = editCount < challenge.maxEditCount
+    val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
     val selectedAmount = customAmount
         ?: selectedOption?.amountFor(challenge.targetAmount)
         ?: challenge.targetAmount

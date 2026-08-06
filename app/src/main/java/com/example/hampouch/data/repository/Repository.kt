@@ -183,4 +183,10 @@ object ChallengeRepository {
         challengeEndAcknowledged = false
         hasVisitedExpenseEditAfterEnd = false
     }
+
+    fun resetEmpty() {
+        challengesState.value = emptyList()
+        challengeEndAcknowledged = false
+        hasVisitedExpenseEditAfterEnd = false
+    }
 }
