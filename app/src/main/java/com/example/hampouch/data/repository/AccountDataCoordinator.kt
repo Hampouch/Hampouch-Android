@@ -1,5 +1,6 @@
 package com.example.hampouch.data.repository
 
+import android.content.Context
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.AllSettingsStore
@@ -12,7 +13,7 @@ object AccountDataCoordinator {
 
     private var syncedUserId: String? = null
 
-    fun syncIfNeeded(userId: String) {
+    fun syncIfNeeded(context: Context, userId: String) {
         if (userId == syncedUserId) return
         syncedUserId = userId
         ExpenseDetailStore.resetForAccount()
@@ -23,7 +24,7 @@ object AccountDataCoordinator {
         MyPageProfileStore.resetForAccount()
         AllSettingsStore.resetForAccount()
 
-        val newAccountOnboarding = OnboardingDataStore.consumePendingForLogin(userId)
+        val newAccountOnboarding = OnboardingDataStore.consumePendingForLogin(context, userId)
         if (newAccountOnboarding != null) {
             ChallengeRepository.resetEmpty()
             ChallengeRepository.startNewChallenge(newAccountOnboarding)

@@ -235,16 +235,7 @@ fun HamTipsWriteMenuScreen(
     val previewTitle = formatMenuTitle(menuName, place, price)
     val isSubmitEnabled = menuName.isNotBlank() && place.isNotBlank() && price > 0
 
-    HamTipsWriteScaffold(
-        onBackClick = onBackClick,
-        footer = {
-            HamTipsSubmitButton(
-                text = stringResource(R.string.hamtips_write_submit),
-                enabled = isSubmitEnabled,
-                onClick = { showConfirmDialog = true }
-            )
-        }
-    ) {
+    HamTipsWriteScaffold(onBackClick = onBackClick) {
         HamTipsWriteHeader(
             overline = stringResource(R.string.hamtips_write_overline),
             heading = stringResource(R.string.hamtips_write_menu_heading),
@@ -325,6 +316,12 @@ fun HamTipsWriteMenuScreen(
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
+        HamTipsSubmitButton(
+            text = stringResource(R.string.hamtips_write_submit),
+            enabled = isSubmitEnabled,
+            onClick = { showConfirmDialog = true }
+        )
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
     if (showConfirmDialog) {
@@ -362,7 +359,23 @@ fun HamTipsWriteBattleScreen(
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
 
-    HamTipsWriteScaffold(onBackClick = onBackClick) {
+    HamTipsWriteScaffold(
+        onBackClick = onBackClick,
+        footer = {
+            HamTipsSubmitButton(
+                text = stringResource(R.string.hamtips_write_submit),
+                enabled = isSubmitEnabled,
+                onClick = {
+                    if (link.trim() in waitingChallengeLinks) {
+                        showLinkNotFoundError = false
+                        showConfirmDialog = true
+                    } else {
+                        showLinkNotFoundError = true
+                    }
+                }
+            )
+        }
+    ) {
         HamTipsWriteHeader(
             overline = stringResource(R.string.hamtips_write_overline),
             heading = stringResource(R.string.hamtips_write_battle_heading),
@@ -407,20 +420,7 @@ fun HamTipsWriteBattleScreen(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        HamTipsSubmitButton(
-            text = stringResource(R.string.hamtips_write_submit),
-            enabled = isSubmitEnabled,
-            onClick = {
-                if (link.trim() in waitingChallengeLinks) {
-                    showLinkNotFoundError = false
-                    showConfirmDialog = true
-                } else {
-                    showLinkNotFoundError = true
-                }
-            }
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 
     if (showConfirmDialog) {

@@ -74,11 +74,16 @@ fun AppNavHost(
 
     val context = LocalContext.current
     val startDestination = remember {
-        if (UserSession.restore(context)) Screen.Home.route else Screen.Onboarding.route
+        OnboardingDataStore.restorePendingIfNeeded(context)
+        when {
+            UserSession.restore(context) -> Screen.Home.route
+            OnboardingDataStore.hasCompletedOnboarding(context) -> Screen.Login.route
+            else -> Screen.Onboarding.route
+        }
     }
 
     LaunchedEffect(UserSession.currentUser.id) {
-        AccountDataCoordinator.syncIfNeeded(UserSession.currentUser.id)
+        AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id)
     }
 
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
@@ -128,7 +133,7 @@ fun AppNavHost(
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
-                    OnboardingDataStore.captureOnboardingComplete(request)
+                    OnboardingDataStore.captureOnboardingComplete(context, request)
                     goToLogin()
                 },
                 onNavigateToLogin = goToLogin
@@ -183,7 +188,7 @@ fun AppNavHost(
             LoadingStep(
                 onTimeout = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        popUpTo(Screen.Loading.route) { inclusive = true }
                     }
                 }
             )

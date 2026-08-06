@@ -286,7 +286,7 @@ fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Col
                     .background(barColor)
             )
         }
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(amount)),
             style = MaterialTheme.typography.bodySmall,

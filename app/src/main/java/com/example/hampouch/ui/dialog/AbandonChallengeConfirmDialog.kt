@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
@@ -44,7 +45,8 @@ private fun AbandonChallengeConfirmDialogCard(
             subtextLines = listOf(
                 stringResource(R.string.amountadjustment_abandon_confirm_bullet1),
                 stringResource(R.string.amountadjustment_abandon_confirm_bullet2)
-            )
+            ),
+            subtextColor = HPText
         )
     }
 }
