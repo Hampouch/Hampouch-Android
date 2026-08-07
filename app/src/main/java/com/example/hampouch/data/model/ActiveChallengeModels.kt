@@ -19,13 +19,17 @@ data class ActiveChallenge(
     val streakDays: Int,
     val editCount: Int,
     val repeatMonthly: Boolean = false,
-    val dailyLimitOverrides: List<DailyLimitOverride> = listOf(DailyLimitOverride(periodStart, dailyLimit))
+    val dailyLimitOverrides: List<DailyLimitOverride> = listOf(DailyLimitOverride(periodStart, dailyLimit)),
+    val abandonedDate: LocalDate? = null
 ) {
     val maxEditCount: Int
         get() = if (totalDays >= 15) 2 else 1
 
     val canEditTarget: Boolean
         get() = editCount < maxEditCount
+
+    val effectivePeriodEnd: LocalDate
+        get() = abandonedDate?.minusDays(1) ?: periodEnd
 
     fun dDayFrom(referenceToday: LocalDate): Int =
         ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt()

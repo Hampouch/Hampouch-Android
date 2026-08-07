@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -403,6 +406,7 @@ fun HamTipsDetailScreen(
     onBackClick: () -> Unit,
     onEditClick: (TipPost) -> Unit,
     onDeleted: () -> Unit,
+    scrollToComments: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
@@ -410,6 +414,17 @@ fun HamTipsDetailScreen(
     var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    var commentsSectionOffset by remember { mutableStateOf<Int?>(null) }
+    var hasScrolledToComments by remember { mutableStateOf(false) }
+
+    LaunchedEffect(scrollToComments, commentsSectionOffset) {
+        val offset = commentsSectionOffset
+        if (scrollToComments && !hasScrolledToComments && offset != null) {
+            hasScrolledToComments = true
+            scrollState.animateScrollTo(offset)
+        }
+    }
 
     val isAuthor = post.authorId == UserSession.currentUser.id
     val canDeletePost = HamTipsRepository.canDeletePost(post)
@@ -443,7 +458,7 @@ fun HamTipsDetailScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -472,7 +487,10 @@ fun HamTipsDetailScreen(
                 post = post,
                 onReplyClick = { replyTarget = it },
                 onMoreClick = { commentMenuTarget = it },
-                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
+                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply },
+                modifier = Modifier.onGloballyPositioned { coordinates ->
+                    commentsSectionOffset = coordinates.positionInParent().y.toInt()
+                }
             )
             Spacer(modifier = Modifier.height(24.dp))
         }

@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
+import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.model.HomeUiState
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
@@ -57,6 +58,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 private const val MOCK_USER_NAME = "민준"
 
@@ -72,6 +74,9 @@ fun HomeScreen(
     openHamTipsWriteBattleOnStart: Boolean = false,
     initialHamTipsWriteBattleLink: String = "",
     onExitHamTipsWriteBattle: () -> Unit = {},
+    initialMyTipDetailPostId: String? = null,
+    initialMyTipDetailScrollToComments: Boolean = false,
+    initialPopularPostId: String? = null,
     onStartChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: (String) -> Unit = {},
@@ -91,11 +96,14 @@ fun HomeScreen(
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onLoggedOut: () -> Unit = {}
+    onLoggedOut: () -> Unit = {},
+    onChallengeEndedFinishClick: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
+    var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
+    var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
@@ -178,7 +186,7 @@ fun HomeScreen(
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
                         onFinishChallengeClick = {
                             ChallengeRepository.acknowledgeChallengeEnd()
-                            onStartChallengeClick()
+                            onChallengeEndedFinishClick()
                         }
                     )
 
@@ -188,7 +196,12 @@ fun HomeScreen(
                                 RecordAlarmStore.dismissForToday(referenceToday)
                                 onAddExpenseClick()
                             },
-                            onNoSpendingTodayClick = { RecordAlarmStore.dismissForToday(referenceToday) },
+                            onNoSpendingTodayClick = {
+                                ExpenseDetailStore.upsert(
+                                    ExpenseRecord(id = UUID.randomUUID().toString(), date = referenceToday, amount = 0)
+                                )
+                                RecordAlarmStore.dismissForToday(referenceToday)
+                            },
                             onLaterClick = { RecordAlarmStore.dismissForToday(referenceToday) }
                         )
                 }
@@ -207,19 +220,24 @@ fun HomeScreen(
                 onViewEndedChallengeDetailClick = onHamBattleViewEndedChallengeDetailClick,
             )
 
-            BottomNavItem.MY_PAGE -> MyPageScreen(
-                selectedBottomTab = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = onAddExpenseClick,
-                modifier = Modifier.padding(innerPadding),
-                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
-                onNotificationClick = onNotificationClick,
-                onLoggedOut = onLoggedOut,
-                onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
-                onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
-                onNavigateToTakeABreak = onNavigateToTakeABreak,
-                onStartNewChallengeClick = { onStartChallengeClick() }
-            )
+            BottomNavItem.MY_PAGE -> {
+                MyPageScreen(
+                    selectedBottomTab = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = onAddExpenseClick,
+                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    onNotificationClick = onNotificationClick,
+                    onLoggedOut = onLoggedOut,
+                    onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
+                    onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
+                    onNavigateToTakeABreak = onNavigateToTakeABreak,
+                    onStartNewChallengeClick = { onStartChallengeClick() },
+                    initialTipDetailPostId = pendingMyTipDetailPostId,
+                    initialTipDetailScrollToComments = initialMyTipDetailScrollToComments
+                )
+                LaunchedEffect(Unit) { pendingMyTipDetailPostId = null }
+            }
 
             BottomNavItem.COMMUNITY -> {
                 HamTipsScreen(
@@ -232,9 +250,13 @@ fun HomeScreen(
                     onNotificationClick = onNotificationClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle,
                     initialWriteBattleLink = initialHamTipsWriteBattleLink,
-                    onExitWriteBattle = onExitHamTipsWriteBattle
+                    onExitWriteBattle = onExitHamTipsWriteBattle,
+                    initialPopularPostId = pendingPopularPostId
                 )
-                LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
+                LaunchedEffect(Unit) {
+                    pendingOpenHamTipsWriteBattle = false
+                    pendingPopularPostId = null
+                }
             }
         }
     }
@@ -271,13 +293,13 @@ private fun HomeContent(
             onCalendarClick = onCalendarClick,
             onNotificationClick = onNotificationClick
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(5.dp))
         DateSelectorRow(
             referenceToday = referenceToday,
             selectedDate = uiState.selectedDate,
             onDateSelected = onDateSelected
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
         val challenge = uiState.challenge
         if (challenge == null) {
@@ -289,12 +311,12 @@ private fun HomeContent(
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPSub4)
                     .clickable(onClick = onChallengeSummaryClick)
-                    .padding(horizontal = 15.dp, vertical = 16.dp)
+                    .padding(horizontal = 15.dp, vertical = 13.dp)
             ) {
                 ChallengeBanner(challenge = challenge)
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 CharacterGaugeSection(challenge = challenge)
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
             }
 
@@ -304,20 +326,20 @@ private fun HomeContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         TodayExpenseSection(
             expenses = uiState.expenses,
             onViewAllClick = onViewAllExpensesClick,
             onAddExpenseClick = onAddExpenseClick,
             onExpenseClick = onExpenseClick
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         MiniChallengeSection(
             items = uiState.miniChallenges,
             onViewAllClick = onViewAllMiniChallengesClick,
             onToggle = onToggleMiniChallenge
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(15.dp))
     }
 }
 

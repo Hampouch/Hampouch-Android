@@ -31,7 +31,8 @@ fun TipListScreen(
     tips: List<TipPost>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onTipClick: (TipPost) -> Unit = {}
+    onTipClick: (TipPost) -> Unit = {},
+    onNotificationClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -41,8 +42,8 @@ fun TipListScreen(
         MyPageMainTopBar(
             title = title,
             onBackClick = onBackClick,
-            onNotificationClick = {},
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(horizontal = 20.dp)
         )
         if (tips.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

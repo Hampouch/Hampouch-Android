@@ -114,7 +114,8 @@ fun RecordAlarmScreen(
                 title = stringResource(R.string.record_alarm_receive_title),
                 subtitle = stringResource(R.string.record_alarm_receive_subtitle),
                 checked = state.receiveEnabled,
-                onCheckedChange = ::onMasterToggle
+                onCheckedChange = ::onMasterToggle,
+                onRowClick = { onMasterToggle(!state.receiveEnabled) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -129,7 +130,8 @@ fun RecordAlarmScreen(
                         title = stringResource(R.string.record_alarm_missing_reminder_title),
                         subtitle = stringResource(R.string.record_alarm_missing_reminder_subtitle),
                         checked = state.missingReminderEnabled,
-                        onCheckedChange = ::onMissingReminderToggle
+                        onCheckedChange = ::onMissingReminderToggle,
+                        onRowClick = { onMissingReminderToggle(!state.missingReminderEnabled) }
                     )
                     if (state.missingReminderEnabled) {
                         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -197,7 +199,8 @@ fun RecordAlarmScreen(
                     title = stringResource(R.string.record_alarm_limit_over_title),
                     subtitle = stringResource(R.string.record_alarm_limit_over_subtitle),
                     checked = state.limitOverEnabled,
-                    onCheckedChange = ::onLimitOverToggle
+                    onCheckedChange = ::onLimitOverToggle,
+                    onRowClick = { onLimitOverToggle(!state.limitOverEnabled) }
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))

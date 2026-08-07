@@ -75,15 +75,19 @@ fun MyPageScreen(
     onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNavigateToTakeABreak: () -> Unit = {},
-    onStartNewChallengeClick: (Int) -> Unit = {}
+    onStartNewChallengeClick: (Int) -> Unit = {},
+    initialTipDetailPostId: String? = null,
+    initialTipDetailScrollToComments: Boolean = false
 ) {
     val context = LocalContext.current
-    var route by rememberSaveable { mutableStateOf(MyPageRoute.MAIN) }
+    var route by rememberSaveable {
+        mutableStateOf(if (initialTipDetailPostId != null) MyPageRoute.TIP_DETAIL else MyPageRoute.MAIN)
+    }
     var previousListRoute by rememberSaveable { mutableStateOf(MyPageRoute.MY_TIPS) }
-    var profile by remember { mutableStateOf(MyPageMockData.defaultProfile()) }
+    val profile = MyPageProfileStore.profile
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
-    var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }
     var selectedChallengeId by rememberSaveable { mutableStateOf<String?>(null) }
     val challengeRecords = remember { MyPageMockData.challengeHistory() }
     val myTips = MyPageMockData.myTips()
@@ -179,7 +183,7 @@ fun MyPageScreen(
                 isNicknameTaken = MyPageMockData::isNicknameTaken,
                 onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmit = { newName, newAvatarUri ->
-                    profile = profile.copy(name = newName, avatarUri = newAvatarUri)
+                    MyPageProfileStore.update(newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
                 modifier = modifier.fillMaxSize()
@@ -256,6 +260,7 @@ fun MyPageScreen(
                 tips = myTips,
                 onBackClick = { route = MyPageRoute.MAIN },
                 onTipClick = onTipClick,
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -268,6 +273,7 @@ fun MyPageScreen(
                 tips = savedTips,
                 onBackClick = { route = MyPageRoute.MAIN },
                 onTipClick = onTipClick,
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -281,7 +287,7 @@ fun MyPageScreen(
                     onBackClick = { route = previousListRoute },
                     onEditClick = { route = MyPageRoute.EDIT_TIP },
                     onDeleted = { route = previousListRoute },
-                    modifier = modifier.fillMaxSize()
+                    scrollToComments = post.id == initialTipDetailPostId && initialTipDetailScrollToComments
                 )
             }
         }
@@ -294,8 +300,7 @@ fun MyPageScreen(
                     post = post,
                     onBackClick = { route = previousListRoute },
                     onDeleted = { route = previousListRoute },
-                    onNavigateToBattleLink = onNavigateToHamBattleLink,
-                    modifier = modifier.fillMaxSize()
+                    onNavigateToBattleLink = onNavigateToHamBattleLink
                 )
             }
         }

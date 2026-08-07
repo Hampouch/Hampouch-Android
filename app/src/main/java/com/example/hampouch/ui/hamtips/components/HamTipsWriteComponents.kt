@@ -3,6 +3,7 @@ package com.example.hampouch.ui.hamtips.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,9 +29,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
@@ -107,7 +111,7 @@ fun HamTipsCategoryPickerRow(
                     .background(if (isSelected) HPMain else HPWhite)
                     .border(1.dp, if (isSelected) HPMain else HPGray5, RoundedCornerShape(50))
                     .clickable { onSelected(category) }
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = stringResource(category.labelResId),
@@ -129,12 +133,17 @@ fun HamTipsWriteTextField(
     minHeight: androidx.compose.ui.unit.Dp = 48.dp,
     singleLine: Boolean = true
 ) {
+    val focusRequester = remember { FocusRequester() }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = minHeight)
             .clip(RoundedCornerShape(12.dp))
             .background(HPWhite)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { focusRequester.requestFocus() }
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         if (value.isEmpty()) {
@@ -146,7 +155,9 @@ fun HamTipsWriteTextField(
             singleLine = singleLine,
             textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPBlack),
             cursorBrush = SolidColor(HPMain),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
         )
     }
 }

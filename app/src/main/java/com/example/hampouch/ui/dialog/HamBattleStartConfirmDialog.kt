@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -153,7 +154,10 @@ fun ConfirmActionCard(
     confirmLabel: String,
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
-    subtext: String? = null
+    subtext: String? = null,
+    subtextLines: List<String>? = null,
+    subtextColor: Color = HPSub,
+    subtextTextAlign: TextAlign = TextAlign.Center
 ) {
     Column(
         modifier = Modifier
@@ -174,10 +178,22 @@ fun ConfirmActionCard(
             Text(
                 subtext,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
+                textAlign = subtextTextAlign,
                 style = MaterialTheme.typography.bodySmall,
-                color = HPSub
+                color = subtextColor
             )
+        }
+        if (subtextLines != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                subtextLines.forEach { line ->
+                    Text(
+                        "• $line",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = subtextColor
+                    )
+                }
+            }
         }
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {

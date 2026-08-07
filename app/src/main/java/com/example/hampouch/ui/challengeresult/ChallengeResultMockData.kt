@@ -32,7 +32,7 @@ object ChallengeResultMockData {
     }
 
     fun forChallenge(challenge: ActiveChallenge, referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState {
-        val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+        val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
             .flatMap { ExpenseDetailStore.recordsForDate(it) }
@@ -45,9 +45,10 @@ object ChallengeResultMockData {
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
 
         val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge.id
-        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.periodEnd)
+        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
 
         val status = when {
+            challenge.abandonedDate != null -> ChallengeResultStatus.FAIL
             isOngoing -> ChallengeResultStatus.IN_PROGRESS
             actualAmount <= challenge.targetAmount -> ChallengeResultStatus.COMPLETE
             else -> ChallengeResultStatus.FAIL
@@ -80,4 +81,7 @@ object ChallengeResultMockData {
 
     fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
         forChallenge(ChallengeRepository.activeChallenge, referenceToday)
+
+    fun recommendedTightenedTarget(actualAmount: Int): Int =
+        ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
 }

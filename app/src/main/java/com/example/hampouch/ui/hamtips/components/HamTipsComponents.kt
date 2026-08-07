@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -296,6 +297,7 @@ fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier, onClick
             style = MaterialTheme.typography.bodySmall,
             color = HPBlack,
             fontWeight = FontWeight.Bold,
+            minLines = 2,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -321,7 +323,7 @@ fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: (
             Text(text = formatTimeAgo(post.postedMinutesAgo), style = MaterialTheme.typography.labelSmall, color = HPText)
         }
         Spacer(modifier = Modifier.height(10.dp))
-        Row(verticalAlignment = Alignment.Top) {
+        Row(modifier = Modifier.heightIn(min = 64.dp), verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = post.title,

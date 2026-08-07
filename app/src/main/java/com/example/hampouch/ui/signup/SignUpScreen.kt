@@ -43,6 +43,7 @@ import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
+import com.example.hampouch.ui.login.LoginMockData
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
@@ -213,6 +214,7 @@ fun SignUpScreen(
                     showPasswordError = !isPasswordValid
                     showTermsError = !areRequiredTermsChecked
                     if (isPasswordValid && areRequiredTermsChecked) {
+                        LoginMockData.register(email, password, nickname)
                         onSignUpSuccess()
                     }
                 },
