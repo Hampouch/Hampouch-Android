@@ -38,11 +38,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.core.auth.SocialAuthManager
+import com.example.hampouch.data.model.AuthSession
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
+import com.example.hampouch.ui.dialog.SocialSignUpNicknameDialog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
@@ -71,10 +73,63 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
 
+    // 소셜 로그인 결과 서버에 아직 닉네임이 없는 신규 유저일 때만 채워지며, 닉네임 다이얼로그를 띄우는 트리거로 쓰인다.
+    var pendingSocialSignUp by remember { mutableStateOf<AuthSession?>(null) }
+    var socialNickname by rememberSaveable { mutableStateOf("") }
+    var isSocialNicknameAvailable by remember { mutableStateOf(false) }
+    var socialNicknameCheckMessage by remember { mutableStateOf<String?>(null) }
+
     visibleCompleteDialogMessage?.let { message ->
         CompleteDialog(
             message = message,
             onDismiss = { visibleCompleteDialogMessage = null }
+        )
+    }
+
+    pendingSocialSignUp?.let { session ->
+        SocialSignUpNicknameDialog(
+            nickname = socialNickname,
+            onNicknameChange = {
+                socialNickname = it
+                isSocialNicknameAvailable = false
+                socialNicknameCheckMessage = null
+            },
+            onCheckNickname = {
+                coroutineScope.launch {
+                    authRepository.checkNicknameAvailability(socialNickname)
+                        .onSuccess { data ->
+                            isSocialNicknameAvailable = data.available
+                            socialNicknameCheckMessage = if (data.available) {
+                                "사용 가능한 닉네임입니다."
+                            } else {
+                                "이미 존재하는 닉네임입니다."
+                            }
+                        }
+                        .onFailure { error ->
+                            isSocialNicknameAvailable = false
+                            socialNicknameCheckMessage = error.message ?: "닉네임 확인에 실패했습니다."
+                        }
+                }
+            },
+            nicknameCheckMessage = socialNicknameCheckMessage,
+            isSignUpEnabled = isSocialNicknameAvailable,
+            onSignUp = {
+                coroutineScope.launch {
+                    authRepository.completeSocialSignUp(session, socialNickname)
+                        .onSuccess {
+                            pendingSocialSignUp = null
+                            socialNickname = ""
+                            isSocialNicknameAvailable = false
+                            socialNicknameCheckMessage = null
+                            loginErrorMessage = null
+                            onLoginSuccess()
+                        }
+                        .onFailure { error ->
+                            Log.e(TAG, "소셜 회원가입 닉네임 설정 실패", error)
+                            socialNicknameCheckMessage = error.message ?: "닉네임 설정에 실패했습니다."
+                        }
+                }
+            }
         )
     }
 
@@ -104,9 +159,13 @@ fun LoginScreen(
                         result.onSuccess { credential ->
                             coroutineScope.launch {
                                 authRepository.loginWithSocial(credential)
-                                    .onSuccess {
+                                    .onSuccess { outcome ->
                                         loginErrorMessage = null
-                                        onLoginSuccess()
+                                        if (outcome.isNewUser) {
+                                            pendingSocialSignUp = outcome.session
+                                        } else {
+                                            onLoginSuccess()
+                                        }
                                     }
                                     .onFailure { error ->
                                         Log.e(TAG, "카카오 로그인 실패", error)
@@ -130,9 +189,13 @@ fun LoginScreen(
                         SocialAuthManager.signInWithGoogle(context)
                             .onSuccess { credential ->
                                 authRepository.loginWithSocial(credential)
-                                    .onSuccess {
+                                    .onSuccess { outcome ->
                                         loginErrorMessage = null
-                                        onLoginSuccess()
+                                        if (outcome.isNewUser) {
+                                            pendingSocialSignUp = outcome.session
+                                        } else {
+                                            onLoginSuccess()
+                                        }
                                     }
                                     .onFailure { error ->
                                         Log.e(TAG, "구글 로그인 실패", error)

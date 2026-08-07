@@ -36,3 +36,14 @@ data class AuthSession(
     val email: String?,
     val profileImageUrl: String?
 )
+
+/**
+ * [com.example.hampouch.data.repository.AuthRepository.loginWithSocial] 결과.
+ * isNewUser == true면 서버에 닉네임이 아직 없는 신규 가입자이므로, 화면단에서 닉네임 입력 다이얼로그를 띄운 뒤
+ * [com.example.hampouch.data.repository.AuthRepository.completeSocialSignUp]까지 마쳐야 로그인이 완료된다.
+ * 이 경우 [session]은 아직 DataStore에 저장되지 않은 상태다.
+ */
+data class SocialLoginOutcome(
+    val session: AuthSession,
+    val isNewUser: Boolean
+)

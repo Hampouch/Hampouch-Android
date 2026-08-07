@@ -2,7 +2,7 @@
     <!-- 마이페이지 / 계정 설정 / 전체 설정 / 기록 알림 / 비밀번호 변경 / 프로필 수정 / 지난 챌린지 기록 -->
 
     <string name="mypage_title">마이페이지</string>
-    <string name="mypage_handle_format">@%1$s</string>
+    <string name="mypage_handle_format">%1$s</string>
     <string name="mypage_menu_challenge_history">지난 챌린지 기록</string>
     <string name="mypage_menu_my_tips">내가 쓴 꿀팁</string>
     <string name="mypage_menu_saved_tips">저장한 꿀팁</string>

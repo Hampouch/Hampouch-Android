@@ -7,6 +7,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.example.hampouch.BuildConfig
+import com.example.hampouch.core.config.AuthConfig
 import com.example.hampouch.data.model.AuthProvider
 import com.example.hampouch.data.model.SocialCredential
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -21,6 +22,9 @@ private const val TAG = "SocialAuthManager"
 object SocialAuthManager {
 
     suspend fun signInWithGoogle(context: Context): Result<SocialCredential> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return Result.success(mockCredential(AuthProvider.GOOGLE))
+        }
         return try {
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
@@ -57,6 +61,10 @@ object SocialAuthManager {
     }
 
     fun signInWithKakao(context: Context, onResult: (Result<SocialCredential>) -> Unit) {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            onResult(Result.success(mockCredential(AuthProvider.KAKAO)))
+            return
+        }
         val onKakaoAccountLogin: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             when {
                 token != null -> fetchKakaoUserSession(token.accessToken, onResult)
@@ -79,6 +87,26 @@ object SocialAuthManager {
         } else {
             UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
         }
+    }
+
+    /**
+     * 목데이터 모드([AuthConfig.USE_SERVER_AUTH] == false)에서는 실제 카카오/구글 SDK를 호출하지 않고
+     * 이 가짜 자격 증명으로 바로 로그인 흐름을 이어간다. 서버/SDK 설정 없이도 소셜 회원가입(닉네임 다이얼로그)
+     * 화면을 테스트할 수 있도록 하기 위함이다. 이메일은 provider별로 고정된 테스트 이메일을 쓴다.
+     */
+    private fun mockCredential(provider: AuthProvider): SocialCredential {
+        val testEmail = when (provider) {
+            AuthProvider.KAKAO -> "kakao.test@test.com"
+            AuthProvider.GOOGLE -> "google.test@test.com"
+            AuthProvider.LOCAL -> "test@test.com"
+        }
+        return SocialCredential(
+            provider = provider,
+            providerToken = "mock-provider-token",
+            nickname = null,
+            email = testEmail,
+            profileImageUrl = null
+        )
     }
 
     private fun fetchKakaoUserSession(accessToken: String, onResult: (Result<SocialCredential>) -> Unit) {

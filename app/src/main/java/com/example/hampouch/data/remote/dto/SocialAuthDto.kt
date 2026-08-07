@@ -28,6 +28,19 @@ data class AuthUser(
 )
 
 /**
+ * 소셜 회원가입 온보딩 마지막 단계(닉네임 최초 설정, PATCH /api/auth/nickname)용 요청/응답.
+ * accessToken으로 인증된 사용자 본인의 닉네임만 설정할 수 있다.
+ */
+data class SetNicknameRequest(
+    val nickname: String
+)
+
+data class SetNicknameData(
+    val userId: Long,
+    val nickname: String
+)
+
+/**
  * 4xx 등 에러 응답 바디. 성공 응답([ApiResponse])과 달리 data 대신 status/fieldErrors를 담는다.
  */
 data class ApiErrorBody(

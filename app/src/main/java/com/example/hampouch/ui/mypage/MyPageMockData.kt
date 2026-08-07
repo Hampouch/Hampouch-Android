@@ -20,7 +20,7 @@ object MyPageMockData {
         val user = UserSession.currentUser
         return MyPageProfile(
             name = user.name,
-            handle = "hampochi_${user.id}",
+            handle = user.email,
             email = user.email
         )
     }

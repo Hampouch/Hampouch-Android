@@ -11,6 +11,7 @@ import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.data.model.AuthProvider
 import com.example.hampouch.data.model.AuthSession
 import com.example.hampouch.data.model.SocialCredential
+import com.example.hampouch.data.model.SocialLoginOutcome
 import com.example.hampouch.data.model.User
 import com.example.hampouch.data.model.UserRole
 import com.example.hampouch.data.remote.ApiException
@@ -23,6 +24,7 @@ import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
+import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
@@ -85,10 +87,13 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     /**
-     * 소셜 SDK에서 받은 [credential]을 서버(/api/auth/social)로 전달해 로그인 검증을 수행하고,
-     * 성공 시 발급된 토큰과 사용자 정보를 세션으로 저장한다.
+     * 소셜 SDK에서 받은 [credential]을 서버(/api/auth/social)로 전달해 로그인 검증을 수행한다.
+     *
+     * 신규 유저([SocialLoginOutcome.isNewUser] == true)는 서버에 닉네임이 아직 없으므로 SDK가 돌려준
+     * 프로필 닉네임은 쓰지 않고 세션도 저장하지 않는다 — 화면단에서 닉네임 입력 다이얼로그를 띄운 뒤
+     * [completeSocialSignUp]까지 마쳐야 로그인이 완료된다. 기존 유저는 곧바로 세션을 저장하고 로그인 처리한다.
      */
-    suspend fun loginWithSocial(credential: SocialCredential): Result<AuthSession> {
+    suspend fun loginWithSocial(credential: SocialCredential): Result<SocialLoginOutcome> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockLoginWithSocial(credential)
         }
@@ -110,12 +115,14 @@ class AuthRepository private constructor(private val context: Context) {
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    nickname = credential.nickname,
+                    nickname = if (body.isNewUser) null else credential.nickname,
                     email = credential.email,
                     profileImageUrl = credential.profileImageUrl
                 )
-                saveSession(session)
-                Result.success(session)
+                if (!body.isNewUser) {
+                    saveSession(session)
+                }
+                Result.success(SocialLoginOutcome(session = session, isNewUser = body.isNewUser))
             } else {
                 val error = response.errorBody()?.string()?.let {
                     runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
@@ -132,6 +139,50 @@ class AuthRepository private constructor(private val context: Context) {
         } catch (e: Exception) {
             // 네트워크 오류, BASE_URL 미설정 등은 사용자에게 원문 메시지 대신 안내 문구로 통일해 보여준다.
             Log.e(TAG, "소셜 로그인 네트워크 오류", e)
+            Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
+        }
+    }
+
+    /**
+     * 소셜 회원가입 온보딩 마지막 단계: [loginWithSocial]에서 받은 (아직 저장되지 않은) [session]의
+     * accessToken으로 서버(/api/auth/nickname)에 최초 닉네임을 등록하고, 성공하면 세션을 저장해
+     * 로그인을 완료한다.
+     */
+    suspend fun completeSocialSignUp(session: AuthSession, nickname: String): Result<AuthSession> {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            val updatedSession = session.copy(nickname = nickname)
+            // 이메일+비밀번호 회원가입과 마찬가지로 목데이터 계정 목록에 등록해서, 같은 테스트 이메일로
+            // 다시 소셜 로그인하면 신규 유저가 아닌 기존 유저로 곧바로 로그인되도록 한다.
+            LoginMockData.register(email = updatedSession.email ?: "", password = "", nickname = nickname)
+            saveSession(updatedSession)
+            return Result.success(updatedSession)
+        }
+        return try {
+            val response = NetworkModule.apiService.setNickname(
+                authorization = "${session.tokenType} ${session.accessToken}",
+                request = SetNicknameRequest(nickname = nickname)
+            )
+
+            val body = response.body()?.data
+            if (response.isSuccessful && body != null) {
+                val updatedSession = session.copy(nickname = body.nickname)
+                saveSession(updatedSession)
+                Result.success(updatedSession)
+            } else {
+                val error = response.errorBody()?.string()?.let {
+                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
+                }
+                Result.failure(
+                    ApiException(
+                        code = error?.code ?: "UNKNOWN",
+                        message = error?.message ?: "닉네임 설정에 실패했습니다."
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "닉네임 설정 네트워크 오류", e)
             Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
         }
     }
@@ -294,7 +345,7 @@ class AuthRepository private constructor(private val context: Context) {
      */
     suspend fun signUp(email: String, password: String, nickname: String): Result<SignUpData> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return mockSignUp(email, nickname)
+            return mockSignUp(email, password, nickname)
         }
         return try {
             val response = NetworkModule.apiService.signUp(
@@ -369,10 +420,29 @@ class AuthRepository private constructor(private val context: Context) {
         return mockSignIn(AuthProvider.LOCAL, account)
     }
 
-    private suspend fun mockLoginWithSocial(credential: SocialCredential): Result<AuthSession> {
+    private suspend fun mockLoginWithSocial(credential: SocialCredential): Result<SocialLoginOutcome> {
         val account = LoginMockData.accounts.find { it.email == credential.email }
-            ?: LoginMockData.normalUser
-        return mockSignIn(credential.provider, account)
+        if (account != null) {
+            // 이미 목데이터 모드에서 가입된(닉네임 등록까지 마친) 이메일이면 곧바로 로그인 처리한다.
+            return mockSignIn(credential.provider, account).map { session ->
+                SocialLoginOutcome(session = session, isNewUser = false)
+            }
+        }
+        // 처음 보는 이메일(예: SocialAuthManager의 목데이터 테스트 이메일)이면 실제 서버처럼 신규 유저로 취급해
+        // 닉네임 입력 다이얼로그부터 띄운다. 세션은 아직 저장하지 않고 [completeSocialSignUp]에서 마무리한다.
+        val session = AuthSession(
+            provider = credential.provider,
+            userId = (credential.email ?: credential.providerToken).hashCode().toLong(),
+            role = UserRole.NORMAL.name,
+            status = "ACTIVE",
+            accessToken = "mock-access-token",
+            refreshToken = "mock-refresh-token",
+            tokenType = "Bearer",
+            nickname = null,
+            email = credential.email,
+            profileImageUrl = credential.profileImageUrl
+        )
+        return Result.success(SocialLoginOutcome(session = session, isNewUser = true))
     }
 
     /**
@@ -417,8 +487,10 @@ class AuthRepository private constructor(private val context: Context) {
         return Result.success(NicknameCheckData(nickname = nickname, available = !taken))
     }
 
-    private fun mockSignUp(email: String, nickname: String): Result<SignUpData> =
-        Result.success(
+    private fun mockSignUp(email: String, password: String, nickname: String): Result<SignUpData> {
+        // 실제 회원가입처럼 로그인 화면에서 곧바로 로그인할 수 있도록 목데이터 계정 목록에 등록한다.
+        LoginMockData.register(email = email, password = password, nickname = nickname)
+        return Result.success(
             SignUpData(
                 userId = email.hashCode().toLong(),
                 email = email,
@@ -426,6 +498,7 @@ class AuthRepository private constructor(private val context: Context) {
                 provider = AuthProvider.LOCAL.name
             )
         )
+    }
     // endregion
 
     /**
@@ -447,6 +520,10 @@ class AuthRepository private constructor(private val context: Context) {
             } ?: preferences.remove(Keys.PROFILE_IMAGE_URL)
         }
         UserSession.login(context, sessionToUser(session))
+        // 로그인/회원가입이 실제로 일어나는 이 시점에 계정별 목데이터 스토어(마이페이지 프로필 등)를 동기화한다.
+        // AppNavHost의 콜드 스타트 동기화는 "이미 로그인된 채로 앱을 재시작한 경우"만 커버하고,
+        // 앱을 껐다 켜지 않고 로그인/로그아웃만 반복하는 경우는 여기서 처리해야 한다.
+        AccountDataCoordinator.syncIfNeeded(context, session.userId.toString())
     }
 
     private fun sessionToUser(session: AuthSession): User = User(
