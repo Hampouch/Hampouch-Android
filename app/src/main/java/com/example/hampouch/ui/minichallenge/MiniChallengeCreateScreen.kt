@@ -32,14 +32,13 @@ import com.example.hampouch.ui.minichallenge.components.MiniChallengeCreateTopBa
 import com.example.hampouch.ui.minichallenge.components.MiniChallengeDurationRow
 import com.example.hampouch.ui.minichallenge.components.MiniChallengeNameField
 import com.example.hampouch.ui.theme.HPBlack
+import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-
-private const val DEFAULT_DURATION_INDEX = 2
 
 @Composable
 fun MiniChallengeCreateScreen(
@@ -55,9 +54,10 @@ fun MiniChallengeCreateScreen(
         stringResource(R.string.minichallenge_duration_14days),
         stringResource(R.string.minichallenge_duration_31days)
     )
-    var selectedDurationIndex by remember { mutableStateOf(DEFAULT_DURATION_INDEX) }
+    var selectedDurationIndex by remember { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
-    val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
+    val selectedTotalDays = selectedDurationIndex?.let { MiniChallengeDurationDayValues[it] }
+    val isFormValid = name.isNotBlank() && selectedDurationIndex != null
 
     Scaffold(
         modifier = modifier,
@@ -66,12 +66,18 @@ fun MiniChallengeCreateScreen(
         bottomBar = {
             Button(
                 onClick = { showConfirmDialog = true },
+                enabled = isFormValid,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HPMain, contentColor = HPWhite)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HPMain,
+                    contentColor = HPWhite,
+                    disabledContainerColor = HPGray5,
+                    disabledContentColor = HPWhite
+                )
             ) {
                 Text(
                     stringResource(R.string.minichallenge_add_challenge_button),
