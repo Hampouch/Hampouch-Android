@@ -153,7 +153,7 @@ object HamTipsMockData {
             likeCount = 88,
             hasImage = false,
             battleInfo = BattleRecruitInfo(
-                link = "3",
+                link = "hamtip_7",
                 durationDays = 14,
                 capacity = 8,
                 penalty = "인증 안하면 벌금 5천원",
@@ -241,7 +241,7 @@ object HamTipsMockData {
             likeCount = 573,
             hasImage = false,
             battleInfo = BattleRecruitInfo(
-                link = "3",
+                link = "hamtip_13",
                 durationDays = 7,
                 capacity = 5,
                 penalty = "커피 쿠폰 쏘기",

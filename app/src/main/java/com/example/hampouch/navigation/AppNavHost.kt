@@ -6,11 +6,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
@@ -21,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
@@ -63,6 +68,9 @@ import java.time.LocalDate
 import java.time.YearMonth
 import com.example.hampouch.ui.takeabreak.TakeABreakScreen
 import com.example.hampouch.ui.takeabreak.TakeABreakStore
+import com.example.hampouch.ui.theme.HPGray2
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 private const val TAG = "AppNavHost"
 
@@ -76,25 +84,39 @@ fun AppNavHost(
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val startDestination = remember {
-        OnboardingDataStore.restorePendingIfNeeded(context)
-        when {
-            UserSession.restore(context) -> Screen.Home.route
-            OnboardingDataStore.hasCompletedOnboarding(context) -> Screen.Login.route
-            else -> Screen.Onboarding.route
-        }
-    }
-
-    LaunchedEffect(UserSession.currentUser.id) {
-        AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id)
-    }
-
+    val authRepository = remember { AuthRepository.getInstance(context) }
+    val coroutineScope = rememberCoroutineScope()
+    var startDestination by remember { mutableStateOf<String?>(null) }
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
 
+    // DataStore에 저장된 인증 세션(서버/목데이터 공용)을 확인해 시작 화면을 정한다.
+    // 로그인 상태라면 화면 전역에서 참조하는 UserSession도 함께 복원하고 계정별 데이터를 동기화한다.
+    // 로그인 상태가 아니면 온보딩을 이미 완료(또는 건너뛰기)한 적이 있는지에 따라 로그인/온보딩 화면으로 보낸다.
+    LaunchedEffect(Unit) {
+        OnboardingDataStore.restorePendingIfNeeded(context)
+        val session = authRepository.userSession.first()
+        startDestination = if (session != null) {
+            UserSession.restore(context)
+            AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id)
+            Screen.Home.route
+        } else if (OnboardingDataStore.hasCompletedOnboarding(context)) {
+            Screen.Login.route
+        } else {
+            Screen.Onboarding.route
+        }
+    }
+
+    val resolvedStartDestination = startDestination
+    if (resolvedStartDestination == null) {
+        Box(modifier = modifier.fillMaxSize().background(HPGray2))
+        return
+    }
+
+    // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         pendingHomeTab = item
         navController.navigate(Screen.Home.route) {
@@ -160,7 +182,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = resolvedStartDestination,
         modifier = modifier,
         enterTransition = {
             slideInHorizontally(animationSpec = transitionSpec, initialOffsetX = { it / 4 }) +
@@ -342,6 +364,9 @@ fun AppNavHost(
                 },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {
+                    // MyPageScreen에서 이미 UserSession.logout()을 호출했으니, 여기서는 DataStore에 저장된
+                    // 인증 세션(서버/목데이터 공용)도 함께 비워서 다음 실행 시 다시 로그인 화면으로 가게 한다.
+                    coroutineScope.launch { authRepository.clearSession() }
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }

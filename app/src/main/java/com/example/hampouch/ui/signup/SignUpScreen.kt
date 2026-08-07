@@ -26,11 +26,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,11 +41,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
-import com.example.hampouch.ui.login.LoginMockData
+import com.example.hampouch.ui.common.formatRemainingTime
+import com.example.hampouch.ui.common.rememberCountdownSeconds
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
@@ -51,6 +56,7 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -63,18 +69,27 @@ fun SignUpScreen(
     var password by rememberSaveable { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var isEmailAvailable by remember { mutableStateOf<Boolean?>(null) }
-    var isEmailCodeVerified by remember { mutableStateOf<Boolean?>(null) }
-    var isNicknameAvailable by remember { mutableStateOf<Boolean?>(null) }
-    var showPasswordError by rememberSaveable { mutableStateOf(false) }
+    var emailSendMessage by remember { mutableStateOf<String?>(null) }
+    var emailVerifyMessage by remember { mutableStateOf<String?>(null) }
+    var isEmailVerified by remember { mutableStateOf(false) }
+    var emailCodeExpiresAtMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    var nicknameCheckMessage by remember { mutableStateOf<String?>(null) }
+    var isNicknameAvailable by remember { mutableStateOf(false) }
     var isTermsChecked by rememberSaveable { mutableStateOf(false) }
     var isPrivacyChecked by rememberSaveable { mutableStateOf(false) }
     var isMarketingChecked by rememberSaveable { mutableStateOf(false) }
-    var showTermsError by rememberSaveable { mutableStateOf(false) }
+    var signUpErrorMessage by remember { mutableStateOf<String?>(null) }
     val isPasswordValid = password.length >= 8 &&
-        password.any { it.isLetter() } &&
+        password.any { it in 'a'..'z' || it in 'A'..'Z' } &&
         password.any { it.isDigit() }
+    val showPasswordError = password.isNotEmpty() && !isPasswordValid
     val areRequiredTermsChecked = isTermsChecked && isPrivacyChecked
+    val isSignUpEnabled = isEmailVerified && isNicknameAvailable && isPasswordValid && areRequiredTermsChecked
+    val emailCodeRemainingSeconds = rememberCountdownSeconds(emailCodeExpiresAtMillis)
+    val isEmailCodeExpired = emailCodeRemainingSeconds == 0
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val authRepository = remember { AuthRepository.getInstance(context) }
 
     Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
         Column(
@@ -100,41 +115,67 @@ fun SignUpScreen(
                 LoginTextField(
                     label = "이메일",
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        isEmailVerified = false
+                    },
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
-                        // TODO: 서버 연결 후 실제 이메일 중복확인 로직 작성
-                        isEmailAvailable = isEmailAvailable != true
+                        coroutineScope.launch {
+                            authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.SIGNUP)
+                                .onSuccess { data ->
+                                    emailSendMessage = "인증번호가 발송되었습니다."
+                                    emailCodeExpiresAtMillis =
+                                        System.currentTimeMillis() + data.expiresInSeconds * 1000L
+                                }
+                                .onFailure { error ->
+                                    emailSendMessage = error.message ?: "인증번호 발송에 실패했습니다."
+                                }
+                        }
                     }
                 )
-                if (isEmailAvailable != null) {
-                    FieldMessage(
-                        if (isEmailAvailable == true) "인증번호가 발송되었습니다." else "이미 가입된 이메일입니다."
-                    )
-                }
+                emailSendMessage?.let { FieldMessage(it) }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
-                    label = "인증번호",
+                    label = if (emailCodeRemainingSeconds != null && !isEmailCodeExpired) {
+                        "인증번호 (${formatRemainingTime(emailCodeRemainingSeconds)})"
+                    } else {
+                        "인증번호"
+                    },
                     value = emailCode,
-                    onValueChange = { emailCode = it },
+                    onValueChange = {
+                        emailCode = it
+                        isEmailVerified = false
+                    },
                     placeholder = "인증번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
-                        // TODO: 서버 연결 후 실제 인증번호 확인 로직 작성
-                        isEmailCodeVerified = isEmailCodeVerified != true
-                    }
+                        coroutineScope.launch {
+                            authRepository.verifyEmailCode(email, emailCode, EmailVerificationPurpose.SIGNUP)
+                                .onSuccess {
+                                    isEmailVerified = true
+                                    emailCodeExpiresAtMillis = null
+                                    emailVerifyMessage = "이메일 인증이 완료되었습니다."
+                                }
+                                .onFailure { error ->
+                                    isEmailVerified = false
+                                    emailVerifyMessage = error.message ?: "인증번호를 다시 확인해주세요."
+                                }
+                        }
+                    },
+                    isCheckEnabled = !isEmailCodeExpired
                 )
-                if (isEmailCodeVerified != null) {
-                    FieldMessage(
-                        if (isEmailCodeVerified == true) "확인되었습니다." else "인증번호를 다시 확인해주세요."
-                    )
+                if (isEmailCodeExpired) {
+                    FieldMessage("인증번호가 만료되었습니다.")
+                } else {
+                    emailVerifyMessage?.let { FieldMessage(it) }
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
@@ -146,6 +187,7 @@ fun SignUpScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
+                    isValid = isPasswordValid,
                     visualTransformation = if (isPasswordVisible) {
                         VisualTransformation.None
                     } else {
@@ -174,22 +216,34 @@ fun SignUpScreen(
                 LoginTextField(
                     label = "닉네임",
                     value = nickname,
-                    onValueChange = { nickname = it },
+                    onValueChange = {
+                        nickname = it
+                        isNicknameAvailable = false
+                    },
                     placeholder = "닉네임을 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
                     onCheckClick = {
-                        // TODO: 서버 연결 후 실제 닉네임 중복확인 로직 작성
-                        isNicknameAvailable = isNicknameAvailable != true
+                        coroutineScope.launch {
+                            authRepository.checkNicknameAvailability(nickname)
+                                .onSuccess { data ->
+                                    isNicknameAvailable = data.available
+                                    nicknameCheckMessage = if (data.available) {
+                                        "사용가능한 닉네임입니다."
+                                    } else {
+                                        "이미 존재하는 닉네임입니다."
+                                    }
+                                }
+                                .onFailure { error ->
+                                    isNicknameAvailable = false
+                                    nicknameCheckMessage = error.message ?: "닉네임 확인에 실패했습니다."
+                                }
+                        }
                     }
                 )
-                if (isNicknameAvailable != null) {
-                    FieldMessage(
-                        if (isNicknameAvailable == true) "사용가능한 닉네임입니다." else "이미 존재하는 닉네임입니다."
-                    )
-                }
+                nicknameCheckMessage?.let { FieldMessage(it) }
 
                 Spacer(modifier = Modifier.size(30.dp))
                 TermsAgreementSection(
@@ -200,24 +254,25 @@ fun SignUpScreen(
                     isMarketingChecked = isMarketingChecked,
                     onMarketingCheckedChange = { isMarketingChecked = it }
                 )
-                if (showTermsError) {
-                    FieldMessage("필수 항목을 체크해주세요.")
-                }
             }
 
-
+            signUpErrorMessage?.let { FieldMessage(it) }
 
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 실제 회원가입 API 호출로 교체
-                    showPasswordError = !isPasswordValid
-                    showTermsError = !areRequiredTermsChecked
-                    if (isPasswordValid && areRequiredTermsChecked) {
-                        LoginMockData.register(email, password, nickname)
-                        onSignUpSuccess()
+                    coroutineScope.launch {
+                        authRepository.signUp(email, password, nickname)
+                            .onSuccess {
+                                signUpErrorMessage = null
+                                onSignUpSuccess()
+                            }
+                            .onFailure { error ->
+                                signUpErrorMessage = error.message ?: "회원가입에 실패했습니다."
+                            }
                     }
                 },
+                enabled = isSignUpEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.login
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,11 +37,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.core.auth.SocialAuthManager
+import com.example.hampouch.data.model.AuthSession
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
-import com.example.hampouch.ui.session.UserSession
+import com.example.hampouch.ui.dialog.SocialSignUpNicknameDialog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
@@ -47,6 +52,9 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
+
+private const val TAG = "LoginScreen"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -60,13 +68,68 @@ fun LoginScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var showLoginError by rememberSaveable { mutableStateOf(false) }
+    var loginErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var visibleCompleteDialogMessage by remember { mutableStateOf(completeDialogMessage) }
+    val coroutineScope = rememberCoroutineScope()
+    val authRepository = remember { AuthRepository.getInstance(context) }
+
+    // 소셜 로그인 결과 서버에 아직 닉네임이 없는 신규 유저일 때만 채워지며, 닉네임 다이얼로그를 띄우는 트리거로 쓰인다.
+    var pendingSocialSignUp by remember { mutableStateOf<AuthSession?>(null) }
+    var socialNickname by rememberSaveable { mutableStateOf("") }
+    var isSocialNicknameAvailable by remember { mutableStateOf(false) }
+    var socialNicknameCheckMessage by remember { mutableStateOf<String?>(null) }
 
     visibleCompleteDialogMessage?.let { message ->
         CompleteDialog(
             message = message,
             onDismiss = { visibleCompleteDialogMessage = null }
+        )
+    }
+
+    pendingSocialSignUp?.let { session ->
+        SocialSignUpNicknameDialog(
+            nickname = socialNickname,
+            onNicknameChange = {
+                socialNickname = it
+                isSocialNicknameAvailable = false
+                socialNicknameCheckMessage = null
+            },
+            onCheckNickname = {
+                coroutineScope.launch {
+                    authRepository.checkNicknameAvailability(socialNickname)
+                        .onSuccess { data ->
+                            isSocialNicknameAvailable = data.available
+                            socialNicknameCheckMessage = if (data.available) {
+                                "사용 가능한 닉네임입니다."
+                            } else {
+                                "이미 존재하는 닉네임입니다."
+                            }
+                        }
+                        .onFailure { error ->
+                            isSocialNicknameAvailable = false
+                            socialNicknameCheckMessage = error.message ?: "닉네임 확인에 실패했습니다."
+                        }
+                }
+            },
+            nicknameCheckMessage = socialNicknameCheckMessage,
+            isSignUpEnabled = isSocialNicknameAvailable,
+            onSignUp = {
+                coroutineScope.launch {
+                    authRepository.completeSocialSignUp(session, socialNickname)
+                        .onSuccess {
+                            pendingSocialSignUp = null
+                            socialNickname = ""
+                            isSocialNicknameAvailable = false
+                            socialNicknameCheckMessage = null
+                            loginErrorMessage = null
+                            onLoginSuccess()
+                        }
+                        .onFailure { error ->
+                            Log.e(TAG, "소셜 회원가입 닉네임 설정 실패", error)
+                            socialNicknameCheckMessage = error.message ?: "닉네임 설정에 실패했습니다."
+                        }
+                }
+            }
         )
     }
 
@@ -91,14 +154,60 @@ fun LoginScreen(
                 iconRes = R.drawable.login_kakao,
                 iconDescription = "kakao_login",
                 label = "카카오로 계속하기",
-                onClick = {}
+                onClick = {
+                    SocialAuthManager.signInWithKakao(context) { result ->
+                        result.onSuccess { credential ->
+                            coroutineScope.launch {
+                                authRepository.loginWithSocial(credential)
+                                    .onSuccess { outcome ->
+                                        loginErrorMessage = null
+                                        if (outcome.isNewUser) {
+                                            pendingSocialSignUp = outcome.session
+                                        } else {
+                                            onLoginSuccess()
+                                        }
+                                    }
+                                    .onFailure { error ->
+                                        Log.e(TAG, "카카오 로그인 실패", error)
+                                        loginErrorMessage = error.message ?: "카카오 로그인에 실패했습니다."
+                                    }
+                            }
+                        }.onFailure { error ->
+                            Log.e(TAG, "카카오 로그인 실패", error)
+                            loginErrorMessage = "카카오 로그인에 실패했습니다."
+                        }
+                    }
+                }
             )
             Spacer(modifier = Modifier.size(10.dp))
             SocialLoginButton(
                 iconRes = R.drawable.login_google,
                 iconDescription = "google_login",
                 label = "구글로 계속하기",
-                onClick = {}
+                onClick = {
+                    coroutineScope.launch {
+                        SocialAuthManager.signInWithGoogle(context)
+                            .onSuccess { credential ->
+                                authRepository.loginWithSocial(credential)
+                                    .onSuccess { outcome ->
+                                        loginErrorMessage = null
+                                        if (outcome.isNewUser) {
+                                            pendingSocialSignUp = outcome.session
+                                        } else {
+                                            onLoginSuccess()
+                                        }
+                                    }
+                                    .onFailure { error ->
+                                        Log.e(TAG, "구글 로그인 실패", error)
+                                        loginErrorMessage = error.message ?: "구글 로그인에 실패했습니다."
+                                    }
+                            }
+                            .onFailure { error ->
+                                Log.e(TAG, "구글 로그인 실패", error)
+                                loginErrorMessage = "구글 로그인에 실패했습니다."
+                            }
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.size(30.dp))
@@ -148,10 +257,10 @@ fun LoginScreen(
                     }
                 )
             }
-            if (showLoginError) {
+            loginErrorMessage?.let { message ->
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    "이메일 및 비밀번호를 다시 확인해주세요.",
+                    message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = HPSub
                 )
@@ -159,10 +268,17 @@ fun LoginScreen(
             Spacer(modifier = Modifier.size(30.dp))
             Button(
                 onClick = {
-                    // TODO: 서버 연결 후 실제 로그인 검증으로 교체
-                    val matchedAccount = LoginMockData.findAccount(email, password)
-                    UserSession.login(context, matchedAccount ?: LoginMockData.normalUser)
-                    onLoginSuccess()
+                    coroutineScope.launch {
+                        authRepository.login(email, password)
+                            .onSuccess {
+                                loginErrorMessage = null
+                                onLoginSuccess()
+                            }
+                            .onFailure { error ->
+                                Log.e(TAG, "이메일 로그인 실패", error)
+                                loginErrorMessage = error.message ?: "로그인에 실패했습니다."
+                            }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

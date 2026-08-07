@@ -28,7 +28,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,10 +48,42 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
+import com.example.hampouch.ui.theme.HPStatusInProgressText
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import kotlinx.coroutines.delay
 
+// 화면에서 공통으로 쓰는 컴포저블 모음.
+
+/**
+ * [expiresAtMillis] 시각까지 남은 초를 1초마다 갱신해서 돌려준다. null이면 타이머를 돌리지 않는다.
+ */
+@Composable
+fun rememberCountdownSeconds(expiresAtMillis: Long?): Int? {
+    var remainingSeconds by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(expiresAtMillis) {
+        if (expiresAtMillis == null) {
+            remainingSeconds = null
+            return@LaunchedEffect
+        }
+        while (true) {
+            val remaining = ((expiresAtMillis - System.currentTimeMillis()) / 1000).toInt()
+            remainingSeconds = remaining.coerceAtLeast(0)
+            if (remaining <= 0) break
+            delay(1000)
+        }
+    }
+    return remainingSeconds
+}
+
+fun formatRemainingTime(totalSeconds: Int): String {
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
+// 로그인 / 회원가입 화면에서 사용
 @Composable
 fun OrDivider(text: String) {
     Row(
@@ -89,14 +125,25 @@ fun LoginTextField(
     keyboardOptions: KeyboardOptions,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: @Composable (() -> Unit)? = null,
-    onCheckClick: (() -> Unit)? = null
+    onCheckClick: (() -> Unit)? = null,
+    isCheckEnabled: Boolean = true,
+    isValid: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = OutlinedTextFieldDefaults.colors(
-        unfocusedBorderColor = HPGray5,
-        unfocusedContainerColor = HPWhite,
-        focusedContainerColor = HPWhite,
-    )
+    val colors = if (isValid) {
+        OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = HPStatusInProgressText,
+            focusedBorderColor = HPStatusInProgressText,
+            unfocusedContainerColor = HPWhite,
+            focusedContainerColor = HPWhite,
+        )
+    } else {
+        OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = HPGray5,
+            unfocusedContainerColor = HPWhite,
+            focusedContainerColor = HPWhite,
+        )
+    }
 
     Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -148,15 +195,16 @@ fun LoginTextField(
         )
         if (onCheckClick != null) {
             Spacer(modifier = Modifier.size(8.dp))
-            CheckButton(onClick = onCheckClick)
+            CheckButton(onClick = onCheckClick, enabled = isCheckEnabled)
         }
     }
 }
 
 @Composable
-fun CheckButton(onClick: () -> Unit) {
+fun CheckButton(onClick: () -> Unit, enabled: Boolean = true) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier.height(48.dp),
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = HPWhite),

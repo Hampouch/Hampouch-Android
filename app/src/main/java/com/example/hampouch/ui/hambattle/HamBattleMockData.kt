@@ -235,19 +235,19 @@ object HamBattleMockData {
             ),
 
             // 대기중 — 이미 시작일이 지났는데 인원이 안 차서 자동 취소 대상이 되는 예시.
-            HamBattleChallenge(
-                id = "3",
-                type = "그룹",
-                title = "식비 내기",
-                penalty = "간식 사기",
-                participants = listOf(
-                    HamBattleParticipantSpending("나", 0)
-                ),
-                totalCount = 10,
-                durationDays = 7,
-                startDate = LocalDate.of(2026, 5, 1),
-                link = "hampouch.app/battle/f3k9j2a1"
-            )
+//            HamBattleChallenge(
+//                id = "3",
+//                type = "그룹",
+//                title = "식비 내기",
+//                penalty = "간식 사기",
+//                participants = listOf(
+//                    HamBattleParticipantSpending("나", 0)
+//                ),
+//                totalCount = 10,
+//                durationDays = 7,
+//                startDate = LocalDate.of(2026, 5, 1),
+//                link = "hampouch.app/battle/f3k9j2a1"
+//            )
         )
     )
 
