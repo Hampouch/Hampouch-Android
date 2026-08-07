@@ -37,7 +37,8 @@ object MiniChallengeStore {
             name = name.ifBlank { "이름 없는 챌린지" },
             totalDays = totalDays,
             achievedDays = 0,
-            isChecked = false
+            isChecked = false,
+            startDate = date
         )
         challengesByDate = challengesByDate + (date to (challengesFor(date) + entry))
     }

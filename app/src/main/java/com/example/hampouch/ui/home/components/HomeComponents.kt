@@ -515,7 +515,7 @@ private fun MiniChallengeRow(item: MiniChallengeEntry, onToggle: () -> Unit, mod
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = item.periodLabel,
+            text = item.periodLabel(),
             style = MaterialTheme.typography.bodySmall,
             color = HPText
         )
