@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,14 +27,11 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -261,7 +259,6 @@ fun ExpenseCalendarRoute(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpenseCalendarTopBar(
     title: String,
@@ -272,50 +269,56 @@ private fun ExpenseCalendarTopBar(
     modifier: Modifier = Modifier,
     showAnalysisAction: Boolean = true
 ) {
-    CenterAlignedTopAppBar(
-        modifier = modifier,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onPreviousMonth) {
-                    Icon(
-                        Icons.Filled.ChevronLeft,
-                        contentDescription = stringResource(R.string.cd_calendar_month_prev),
-                        tint = HPBlack
-                    )
-                }
-                Text(title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = HPBlack)
-                IconButton(onClick = onNextMonth) {
-                    Icon(
-                        Icons.Filled.ChevronRight,
-                        contentDescription = stringResource(R.string.cd_calendar_month_next),
-                        tint = HPBlack
-                    )
-                }
-            }
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .background(HPGray2)
+            .padding(horizontal = 20.dp)
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back),
+                tint = HPBlack
+            )
+        }
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onPreviousMonth) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.cd_back),
+                    Icons.Filled.ChevronLeft,
+                    contentDescription = stringResource(R.string.cd_calendar_month_prev),
                     tint = HPBlack
                 )
             }
-        },
-        actions = {
-            if (showAnalysisAction) {
-                IconButton(onClick = onAnalysisClick) {
-                    Icon(
-                        Icons.Filled.BarChart,
-                        contentDescription = stringResource(R.string.cd_expense_analysis),
-                        tint = HPBlack
-                    )
-                }
+            Text(title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
+            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = HPBlack)
+            IconButton(onClick = onNextMonth) {
+                Icon(
+                    Icons.Filled.ChevronRight,
+                    contentDescription = stringResource(R.string.cd_calendar_month_next),
+                    tint = HPBlack
+                )
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPGray2)
-    )
+        }
+        if (showAnalysisAction) {
+            IconButton(onClick = onAnalysisClick) {
+                Icon(
+                    Icons.Filled.BarChart,
+                    contentDescription = stringResource(R.string.cd_expense_analysis),
+                    tint = HPBlack
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.width(48.dp))
+        }
+    }
 }
 
 @Composable

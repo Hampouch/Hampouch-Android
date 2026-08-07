@@ -1,18 +1,22 @@
 package com.example.hampouch.data.model
 
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+
 data class MiniChallengeEntry(
     val id: String,
     val name: String,
     val totalDays: Int? = null,
     val achievedDays: Int = 0,
-    val isChecked: Boolean = false
+    val isChecked: Boolean = false,
+    val startDate: LocalDate = LocalDate.now()
 ) {
-    val periodLabel: String
-        get() = when {
-            totalDays == null -> "오늘만"
-            achievedDays <= 0 -> "${totalDays}일간"
-            else -> "${achievedDays.coerceAtMost(totalDays)}/${totalDays}"
-        }
+    fun periodLabel(referenceToday: LocalDate = LocalDate.now()): String {
+        if (totalDays == null) return "오늘만"
+        val daysElapsed = ChronoUnit.DAYS.between(startDate, referenceToday).toInt()
+        val daysRemaining = (totalDays - 1 - daysElapsed).coerceAtLeast(0)
+        return if (daysRemaining <= 0) "D-DAY" else "D-$daysRemaining"
+    }
 }
 
 data class RecommendedMiniChallenge(

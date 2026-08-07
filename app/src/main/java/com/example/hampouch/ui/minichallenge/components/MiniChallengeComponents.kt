@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -83,7 +84,6 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiniChallengeTopBar(
     onBackClick: () -> Unit,
@@ -91,29 +91,31 @@ fun MiniChallengeTopBar(
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.minichallenge_title)
 ) {
-    CenterAlignedTopAppBar(
-        modifier = modifier,
-        title = {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleSmall,
-                color = HPBlack
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .background(HPWhite)
+            .padding(horizontal = 20.dp)
+            .height(64.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back),
+                tint = HPBlack
             )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.cd_back),
-                    tint = HPBlack
-                )
-            }
-        },
-        actions = {
-            NotificationBellIcon(onClick = onNotificationClick)
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
-    )
+        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleSmall,
+            color = HPBlack,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f)
+        )
+        NotificationBellIcon(onClick = onNotificationClick)
+    }
 }
 
 private val dateLabelFormatter = DateTimeFormatter.ofPattern("MM.dd")
@@ -350,7 +352,7 @@ fun MiniChallengeItemRow(
             Text(text = item.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = item.periodLabel,
+                text = item.periodLabel(),
                 style = MaterialTheme.typography.bodySmall,
                 color = HPText
             )
