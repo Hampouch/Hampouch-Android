@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.dialog.MiniChallengeAddConfirmDialog
 import com.example.hampouch.ui.minichallenge.components.MiniChallengeCreateTopBar
 import com.example.hampouch.ui.minichallenge.components.MiniChallengeDurationRow
@@ -43,6 +44,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 @Composable
 fun MiniChallengeCreateScreen(
     modifier: Modifier = Modifier,
+    existingNames: List<String> = emptyList(),
     onBackClick: () -> Unit = {},
     onAddChallengeClick: (name: String, totalDays: Int?) -> Unit = { _, _ -> }
 ) {
@@ -56,6 +58,7 @@ fun MiniChallengeCreateScreen(
     )
     var selectedDurationIndex by remember { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showDuplicateNameError by remember { mutableStateOf(false) }
     val selectedTotalDays = selectedDurationIndex?.let { MiniChallengeDurationDayValues[it] }
     val isFormValid = name.isNotBlank() && selectedDurationIndex != null
 
@@ -65,7 +68,14 @@ fun MiniChallengeCreateScreen(
         topBar = { MiniChallengeCreateTopBar(onBackClick = onBackClick) },
         bottomBar = {
             Button(
-                onClick = { showConfirmDialog = true },
+                onClick = {
+                    if (existingNames.any { MiniChallengeStore.normalizeName(it) == MiniChallengeStore.normalizeName(name) }) {
+                        showDuplicateNameError = true
+                    } else {
+                        showDuplicateNameError = false
+                        showConfirmDialog = true
+                    }
+                },
                 enabled = isFormValid,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +144,16 @@ fun MiniChallengeCreateScreen(
                     color = HPBlack
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                MiniChallengeNameField(value = name, onValueChange = { name = it })
+                MiniChallengeNameField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        showDuplicateNameError = false
+                    }
+                )
+                if (showDuplicateNameError) {
+                    FieldMessage(stringResource(R.string.minichallenge_name_duplicate_error))
+                }
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     text = stringResource(R.string.minichallenge_period_label),
