@@ -32,7 +32,7 @@ object MyPageMockData {
         return ChallengeRepository.challenges
             .sortedByDescending { it.periodStart }
             .map { challenge ->
-                val isOngoing = challenge.id == ChallengeRepository.activeChallenge.id &&
+                val isOngoing = challenge.id == ChallengeRepository.activeChallenge?.id &&
                     !referenceToday.isAfter(challenge.effectivePeriodEnd)
                 val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
                 val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }

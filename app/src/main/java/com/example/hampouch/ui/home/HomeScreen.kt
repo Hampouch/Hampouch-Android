@@ -181,7 +181,8 @@ fun HomeScreen(
                     )
 
                     ChallengeRepository.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
-                        totalDays = ChallengeRepository.activeChallenge.totalDays,
+                        // isChallengeJustEnded()가 true인 분기라 activeChallenge는 항상 존재한다.
+                        totalDays = ChallengeRepository.activeChallenge!!.totalDays,
                         hasVisitedExpenseEdit = ChallengeRepository.hasVisitedExpenseEditAfterEnd,
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
                         onFinishChallengeClick = {

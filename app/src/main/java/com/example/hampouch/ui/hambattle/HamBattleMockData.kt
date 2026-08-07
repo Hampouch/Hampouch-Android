@@ -157,7 +157,7 @@ object HamBattleMockData {
      * 저장된 값이 아니라 이 리스트를 읽는 쪽(activeChallenges/waitingChallenges/endedChallenges)에서
      * 날짜·인원을 기준으로 매번 계산한다.
      */
-    private val challengesState = mutableStateOf(
+    private fun buildSeedChallenges(): List<HamBattleChallenge> =
         listOf(
             // 진행중 — 오늘(참조일) 기준으로 진행중이 되도록 날짜를 잡아둔 목데이터.
             HamBattleChallenge(
@@ -249,7 +249,19 @@ object HamBattleMockData {
 //                link = "hampouch.app/battle/f3k9j2a1"
 //            )
         )
-    )
+
+    private val challengesState = mutableStateOf(buildSeedChallenges())
+
+    /**
+     * 계정이 바뀔 때 호출한다. 다른 스토어들과 마찬가지로 실제 계정별 서버 데이터가 없으므로
+     * "빈 상태"가 아니라 초기 시드 목데이터로 되돌리고, 확인/경고 표시 이력도 함께 초기화한다.
+     */
+    fun resetForAccount() {
+        challengesState.value = buildSeedChallenges()
+        acknowledgedDisqualifications.value = emptySet()
+        missedWarningShownDates.value = emptyMap()
+        acknowledgedCancellations.value = emptySet()
+    }
 
     val challenges: List<HamBattleChallenge>
         get() {

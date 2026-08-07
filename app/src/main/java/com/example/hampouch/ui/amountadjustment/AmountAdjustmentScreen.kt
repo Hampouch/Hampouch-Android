@@ -250,7 +250,9 @@ fun AmountAdjustmentRoute(
             onConfirm = {
                 showAbandonConfirmDialog = false
                 ChallengeRepository.abandonChallenge()
-                val actualAmount = ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge).actualAmount
+                // abandonChallenge()는 챌린지를 목록에서 지우지 않고 abandonedDate만 채우므로 여전히 non-null이다.
+                val actualAmount =
+                    ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
                 val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
                 onChallengeAbandoned(challenge.id, suggestedTargetAmount)
             }
