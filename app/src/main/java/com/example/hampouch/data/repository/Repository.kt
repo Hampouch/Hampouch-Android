@@ -61,11 +61,12 @@ object ChallengeRepository {
     val challenges: List<ActiveChallenge>
         get() = challengesState.value
 
-    val activeChallenge: ActiveChallenge
-        get() = challenges.last()
+    // 온보딩을 건너뛴 신규 계정 등, 진행중인 챌린지가 아예 없는 상태([resetEmpty])도 있을 수 있어 nullable이다.
+    val activeChallenge: ActiveChallenge?
+        get() = challenges.lastOrNull()
 
     val hasOngoingChallenge: Boolean
-        get() = !LocalDate.now().isAfter(activeChallenge.effectivePeriodEnd)
+        get() = activeChallenge?.let { !LocalDate.now().isAfter(it.effectivePeriodEnd) } ?: false
 
     var challengeEndAcknowledged: Boolean by mutableStateOf(false)
         private set
@@ -74,14 +75,14 @@ object ChallengeRepository {
         private set
 
     fun isChallengeJustEnded(referenceToday: LocalDate): Boolean =
-        !challengeEndAcknowledged && referenceToday.isAfter(activeChallenge.periodEnd)
+        activeChallenge?.let { !challengeEndAcknowledged && referenceToday.isAfter(it.periodEnd) } ?: false
 
     fun markVisitedExpenseEditAfterEnd() {
         hasVisitedExpenseEditAfterEnd = true
     }
 
     fun acknowledgeChallengeEnd() {
-        val ended = activeChallenge
+        val ended = activeChallenge ?: return
         if (ended.repeatMonthly) {
             val nextStart = ended.periodStart.plusMonths(1)
             val nextEnd = nextStart.plusMonths(1).minusDays(1)
@@ -141,14 +142,15 @@ object ChallengeRepository {
         challenges.firstOrNull { !date.isBefore(it.periodStart) && !date.isAfter(it.effectivePeriodEnd) }
 
     fun abandonChallenge(referenceToday: LocalDate = LocalDate.now()) {
-        val updated = activeChallenge.copy(abandonedDate = referenceToday)
+        val current = activeChallenge ?: return
+        val updated = current.copy(abandonedDate = referenceToday)
         challengesState.value = challenges.dropLast(1) + updated
         challengeEndAcknowledged = true
         hasVisitedExpenseEditAfterEnd = false
     }
 
     fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate = LocalDate.now()) {
-        val current = activeChallenge
+        val current = activeChallenge ?: return
         val newDailyLimit = (newTargetAmount / current.totalDays).coerceAtLeast(0)
         val updated = current.copy(
             targetAmount = newTargetAmount,
@@ -159,7 +161,7 @@ object ChallengeRepository {
         challengesState.value = challenges.dropLast(1) + updated
     }
 
-    fun elapsedDays(referenceToday: LocalDate, challenge: ActiveChallenge = activeChallenge): List<LocalDate> {
+    fun elapsedDays(referenceToday: LocalDate, challenge: ActiveChallenge): List<LocalDate> {
         val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         return generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
@@ -168,7 +170,7 @@ object ChallengeRepository {
 
     fun computeProgress(
         referenceToday: LocalDate,
-        challenge: ActiveChallenge = activeChallenge,
+        challenge: ActiveChallenge,
         spentOnDate: (LocalDate) -> Int
     ): ChallengeProgress {
         val days = elapsedDays(referenceToday, challenge)

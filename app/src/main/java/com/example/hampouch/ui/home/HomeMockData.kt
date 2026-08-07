@@ -91,7 +91,7 @@ object HomeMockData {
     fun lowBalanceWithWarningState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 300),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -139,7 +139,7 @@ object HomeMockData {
     fun normalBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 7_300),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 7_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -155,7 +155,7 @@ object HomeMockData {
     fun decreasingBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge, date, todayBalance = 17_300),
+        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 17_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 2_700),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 1_500),

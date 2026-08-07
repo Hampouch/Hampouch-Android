@@ -44,7 +44,7 @@ object ChallengeResultMockData {
         }
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
 
-        val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge.id
+        val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge?.id
         val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
 
         val status = when {
@@ -79,8 +79,9 @@ object ChallengeResultMockData {
         )
     }
 
+    // 프리뷰/기본값 용도로만 쓰인다(실제 화면은 항상 특정 challengeId로 조회한 챌린지를 전달한다).
     fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
-        forChallenge(ChallengeRepository.activeChallenge, referenceToday)
+        forChallenge(ChallengeRepository.activeChallenge!!, referenceToday)
 
     fun recommendedTightenedTarget(actualAmount: Int): Int =
         ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000

@@ -101,7 +101,7 @@ fun AppNavHost(
         val session = authRepository.userSession.first()
         startDestination = if (session != null) {
             UserSession.restore(context)
-            AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id)
+            AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
             Screen.Home.route
         } else if (OnboardingDataStore.hasCompletedOnboarding(context)) {
             Screen.Login.route
@@ -213,7 +213,12 @@ fun AppNavHost(
                     OnboardingDataStore.captureOnboardingComplete(context, request)
                     goToLogin()
                 },
-                onNavigateToLogin = goToLogin
+                onNavigateToLogin = {
+                    // 건너뛰기: 다음 콜드 스타트 때 온보딩을 다시 보여주지 않도록만 기록하고,
+                    // 챌린지 생성에 쓰일 대기값은 만들지 않는다.
+                    OnboardingDataStore.markOnboardingSkipped(context)
+                    goToLogin()
+                }
             )
         }
 
@@ -372,7 +377,8 @@ fun AppNavHost(
                     }
                 },
                 onChallengeEndedFinishClick = {
-                    val challenge = ChallengeRepository.activeChallenge
+                    // 이 콜백은 방금 끝난 챌린지가 있을 때만(ChallengeEndedDialog) 눌릴 수 있어 null이면 아무 것도 안 한다.
+                    val challenge = ChallengeRepository.activeChallenge ?: return@HomeScreen
                     val actualAmount = ChallengeResultMockData.forChallenge(challenge).actualAmount
                     val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
                     navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
@@ -433,7 +439,8 @@ fun AppNavHost(
         }
 
         composable(Screen.ChallengeEndExpenseCalendar.route) {
-            val active = ChallengeRepository.activeChallenge
+            // 방금 끝난 챌린지가 있을 때만(홈 화면의 "지출 입력하기") 진입할 수 있는 화면이라 null이면 그냥 빠져나간다.
+            val active = ChallengeRepository.activeChallenge ?: return@composable
             ExpenseCalendarRoute(
                 onBackClick = {
                     ChallengeRepository.markVisitedExpenseEditAfterEnd()
@@ -456,7 +463,8 @@ fun AppNavHost(
         ) { backStackEntry ->
             val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
             val initialDate = LocalDate.ofEpochDay(epochDay)
-            val dailyLimit = ChallengeRepository.activeChallenge.dailyLimitOn(initialDate)
+            // 진행중인 챌린지가 없어도(하단 "+" 버튼은 항상 열려있다) 지출은 입력할 수 있어야 하므로 0으로 대체한다.
+            val dailyLimit = ChallengeRepository.activeChallenge?.dailyLimitOn(initialDate) ?: 0
             val alreadySpent = ExpenseDetailStore.recordsForDate(initialDate).sumOf { it.amount }
             ExpenseInputRoute(
                 todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),

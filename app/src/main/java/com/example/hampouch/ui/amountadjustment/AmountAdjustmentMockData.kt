@@ -7,7 +7,10 @@ import java.time.LocalDate
 
 object AmountAdjustmentMockData {
     fun challenge(): AmountAdjustmentChallenge {
-        val active = ChallengeRepository.activeChallenge
+        // 목표 금액 조정 화면은 진행중인 챌린지가 있을 때만(홈 화면 챌린지 카드) 진입할 수 있어 항상 존재를 가정한다.
+        val active = requireNotNull(ChallengeRepository.activeChallenge) {
+            "진행중인 챌린지가 없는 상태에서 목표 금액 조정 화면에 진입했습니다."
+        }
         val today = LocalDate.now()
         val trackedEnd = if (today.isBefore(active.periodEnd)) today else active.periodEnd
         val overAmount = generateSequence(active.periodStart) { it.plusDays(1) }

@@ -226,8 +226,8 @@ object ExpenseDetailMockData {
         )
     }
 
-    fun activeChallengePeriod(): ExpenseChallengePeriod {
-        val active = ChallengeRepository.activeChallenge
+    fun activeChallengePeriod(): ExpenseChallengePeriod? {
+        val active = ChallengeRepository.activeChallenge ?: return null
         return ExpenseChallengePeriod(startDate = active.periodStart, endDate = active.periodEnd)
     }
 

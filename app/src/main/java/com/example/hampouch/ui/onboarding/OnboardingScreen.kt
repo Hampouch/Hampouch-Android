@@ -72,8 +72,9 @@ fun OnboardingRoute(
         OnboardingSkipConfirmDialog(
             onCancel = { showSkipConfirmDialog = false },
             onConfirm = {
+                // 건너뛰기는 입력값이 없으므로 챌린지를 만들지 않는다 — 로그인 화면으로만 이동한다.
                 showSkipConfirmDialog = false
-                onOnboardingComplete(buildOnboardingRequest(uiState))
+                onNavigateToLogin()
             }
         )
     }
