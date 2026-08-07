@@ -157,9 +157,7 @@ fun HamBattleAddScreen(
             Text(
                 "시작일까지 아무도 참여하지 않으면 챌린지는 자동으로 사라져요",
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
                 color = HPText
             )
 
@@ -223,7 +221,6 @@ private fun ChallengeIntroSection() {
     Text(
         "기간 내 식비 총액이 적은 사람이 우승해요.",
         style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Bold,
         color = HPText
     )
 }
@@ -235,7 +232,7 @@ private fun ChallengeNameField(value: String, onValueChange: (String) -> Unit) {
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
-            Text("챌린지 이름을 설정해주세요.", color = Color.Gray, fontWeight = FontWeight.Bold)
+            Text("챌린지 이름을 설정해주세요.", color = HPGray5)
         },
         singleLine = true,
         shape = RoundedCornerShape(10.dp),
@@ -393,13 +390,13 @@ private fun StartDatePickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (Long?) -> Unit
 ) {
-    val tomorrowStartOfDayMillis =
-        LocalDate.now().plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    val todayStartOfDayMillis =
+        LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = initialDateMillis,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= tomorrowStartOfDayMillis
+                return utcTimeMillis >= todayStartOfDayMillis
             }
         }
     )
@@ -472,6 +469,37 @@ private fun StartDateField(dateMillis: Long?, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = if (dateText != null) HPMain else HPGray5
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ChallengeIntroSectionPreview() {
+    HampouchTheme {
+        Column(modifier = Modifier.padding(20.dp)) {
+            ChallengeIntroSection()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ChallengeNameFieldPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            ChallengeNameField(value = "", onValueChange = {})
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectablePillPreview() {
+    HampouchTheme {
+        Row(modifier = Modifier.padding(20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SelectablePill(text = "3일", selected = true, onClick = {})
+            SelectablePill(text = "7일", selected = false, onClick = {})
+        }
     }
 }
 

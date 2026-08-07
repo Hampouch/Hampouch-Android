@@ -1,5 +1,7 @@
 package com.example.hampouch.data.model
 
+import java.time.LocalDate
+
 enum class ChallengePeriodType {
     ONE_WEEK,
     TWO_WEEKS,
@@ -17,7 +19,9 @@ data class OnboardingRequest(
     val lastMonthFoodExpense: Int? = null,
     val challengePeriodType: ChallengePeriodType = ChallengePeriodType.ONE_MONTH,
     val customPeriodDays: Int? = null,
-    val salaryDay: Int? = null,
-    val targetAmount: Int? = null,
+    val dateFixed: Boolean = true,
+    val startDate: LocalDate? = null,
+    val dailyTargetAmount: Int? = null,
+    val totalTargetAmount: Int? = null,
     val topSpendingCategoryIds: List<String> = emptyList()
 )

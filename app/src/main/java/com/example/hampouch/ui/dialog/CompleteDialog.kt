@@ -31,7 +31,7 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import kotlinx.coroutines.delay
 
-private const val CompleteDialogDurationMillis = 2000L
+private const val CompleteDialogDurationMillis = 1000L
 
 @Composable
 fun CompleteDialog(

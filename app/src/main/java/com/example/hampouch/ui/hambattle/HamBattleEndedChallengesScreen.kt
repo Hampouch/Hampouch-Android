@@ -3,6 +3,7 @@ package com.example.hampouch.ui.hambattle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -34,7 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleEndedChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -45,7 +46,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleEndedChallengesScreen(
-    endedChallenges: List<HamBattleEndedChallenge> = HamBattleMockData.endedChallenges,
+    endedChallenges: List<HamBattleChallenge> = HamBattleMockData.endedChallenges(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {}
@@ -90,16 +91,14 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
             }
         },
         actions = {
-            IconButton(onClick = onNotificationClick) {
-                Icon(Icons.Filled.Notifications, contentDescription = "알림", tint = HPBlack)
-            }
+            NotificationBellIcon(onClick = onNotificationClick)
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
     )
 }
 
 @Composable
-private fun EndedChallengeCard(challenge: HamBattleEndedChallenge, onClick: () -> Unit) {
+private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val winnerName = ranked.firstOrNull()?.name.orEmpty()
 
@@ -147,6 +146,19 @@ private fun EndedChallengeCard(challenge: HamBattleEndedChallenge, onClick: () -
             style = Body16Bold,
             color = StatusWhoWonText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EndedChallengeCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            EndedChallengeCard(
+                challenge = HamBattleMockData.endedChallenges()[0],
+                onClick = {}
+            )
+        }
     }
 }
 

@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -52,12 +51,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.model.CharacterState
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.HomeChallenge
 import com.example.hampouch.data.model.HomeWarning
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.WarningVariant
+import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -65,7 +66,6 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
-import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -77,13 +77,14 @@ internal fun formatWon(amount: Int): String = "%,d".format(amount)
 @Composable
 fun HomeHeader(
     userName: String,
-    hasUnreadNotification: Boolean,
     onCalendarClick: () -> Unit,
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -99,24 +100,7 @@ fun HomeHeader(
                 tint = HPBlack
             )
         }
-        Box {
-            IconButton(onClick = onNotificationClick) {
-                Icon(
-                    imageVector = Icons.Filled.Notifications,
-                    contentDescription = stringResource(R.string.cd_notification),
-                    tint = HPBlack
-                )
-            }
-            if (hasUnreadNotification) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 8.dp, end = 8.dp)
-                        .size(8.dp)
-                        .align(Alignment.TopEnd)
-                        .background(HPSub, CircleShape)
-                )
-            }
-        }
+        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -129,7 +113,7 @@ fun DateSelectorRow(
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dates = listOf(referenceToday.minusDays(1), referenceToday, referenceToday.plusDays(1))
+    val dates = listOf(selectedDate.minusDays(1), selectedDate, selectedDate.plusDays(1))
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -180,18 +164,38 @@ private fun DateChip(
 }
 
 @Composable
-fun ChallengeBanner(challenge: HomeChallenge, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
+fun ChallengeBanner(
+    challenge: HomeChallenge,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.home_challenge_in_progress_format, challenge.totalDays),
+                text = if (challenge.isEnded) {
+                    stringResource(R.string.home_challenge_ended_format, challenge.totalDays)
+                } else {
+                    stringResource(R.string.home_challenge_in_progress_format, challenge.totalDays)
+                },
                 style = MaterialTheme.typography.titleSmall,
-                color = HPBlack
+                color = HPBlack,
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.home_challenge_detail_link),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPText
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = HPText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(
                     R.string.home_challenge_period_format,
@@ -199,20 +203,25 @@ fun ChallengeBanner(challenge: HomeChallenge, modifier: Modifier = Modifier) {
                     challenge.periodEndLabel
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = HPText
+                color = HPText,
+                modifier = Modifier.weight(1f)
             )
-        }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(HPMain)
-                .padding(horizontal = 14.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.home_challenge_dday_format, challenge.dDay),
-                style = MaterialTheme.typography.labelLarge,
-                color = HPWhite
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(HPMain)
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = if (challenge.dDay == 0) {
+                        stringResource(R.string.home_challenge_dday_today)
+                    } else {
+                        stringResource(R.string.home_challenge_dday_format, challenge.dDay)
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = HPWhite
+                )
+            }
         }
     }
 }
@@ -221,6 +230,7 @@ private fun characterDrawableRes(state: CharacterState): Int = when (state) {
     CharacterState.CHUBBY -> R.drawable.img_hamster_chubby
     CharacterState.NORMAL -> R.drawable.img_hamster_normal
     CharacterState.THIN -> R.drawable.img_hamster_thin
+    CharacterState.OVER_LIMIT -> R.drawable.img_hamster_fail
 }
 
 @Composable
@@ -270,7 +280,7 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
                     .fillMaxHeight()
                     .fillMaxWidth(fraction = animatedRatio.coerceIn(0f, 1f))
                     .clip(RoundedCornerShape(50))
-                    .background(HPMain)
+                    .background(if (challenge.isOverLimit) HPSub else HPMain)
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -287,21 +297,22 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
             Text(
                 text = stringResource(R.string.home_amount_won_format, formatWon(challenge.todayBalance)),
                 style = MaterialTheme.typography.titleSmall,
-                color = HPBlack
+                color = if (challenge.isOverLimit) HPSub else HPBlack
             )
         }
     }
 }
 
-private val StreakBoxWidthDelta = 30.dp
+private const val StreakBoxWidthDeltaRatio = 0.2f
 
 @Composable
 fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val gap = 12.dp
         val halfWidth = (maxWidth - gap) / 2
-        val savingsBoxWidth = halfWidth + StreakBoxWidthDelta
-        val streakBoxWidth = halfWidth - StreakBoxWidthDelta
+        val widthDelta = halfWidth * StreakBoxWidthDeltaRatio
+        val savingsBoxWidth = halfWidth + widthDelta
+        val streakBoxWidth = halfWidth - widthDelta
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -323,9 +334,13 @@ fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Mod
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.home_saved_amount_format, formatWon(savedAmount)),
+                    text = if (savedAmount >= 0) {
+                        stringResource(R.string.home_saved_amount_format, formatWon(savedAmount))
+                    } else {
+                        stringResource(R.string.home_saved_amount_negative_format, formatWon(savedAmount))
+                    },
                     style = MaterialTheme.typography.titleSmall,
-                    color = HPMain
+                    color = if (savedAmount >= 0) HPMain else HPSub
                 )
             }
             Row(
@@ -386,7 +401,8 @@ fun TodayExpenseSection(
     expenses: List<ExpenseEntry>,
     onViewAllClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onExpenseClick: (String) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(title = stringResource(R.string.home_today_expense_title), onViewAllClick = onViewAllClick)
@@ -408,14 +424,14 @@ fun TodayExpenseSection(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                expenses.forEach { entry -> ExpenseItemCard(entry) }
+                expenses.forEach { entry -> ExpenseItemCard(entry, onClick = { onExpenseClick(entry.id) }) }
             }
         }
     }
 }
 
 @Composable
-fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier) {
+fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val category = HomeCategoryCatalog.byId(entry.categoryId)
     val icon = category?.icon ?: HomeCategoryCatalog.defaultIcon
     val accentColor = category?.accentColor ?: HomeCategoryCatalog.defaultColor
@@ -428,6 +444,7 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(HPWhite)
+            .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -444,27 +461,12 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier) {
         Column(modifier = Modifier.weight(1f)) {
             if (entry.name != null) {
                 Text(text = entry.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)
-                Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
-            } else {
-                Text(text = categoryLabel, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)
             }
+            Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         }
-        if (entry.reasonTag != null) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(HPSub3)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(text = entry.reasonTag, style = MaterialTheme.typography.labelMedium, color = HPSub)
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-        }
-        Text(
-            text = stringResource(R.string.home_amount_won_format, formatWon(entry.amount)),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPBlack
+        ReasonTagAndAmountColumn(
+            reasonTag = entry.reasonTag,
+            amountText = stringResource(R.string.home_amount_won_format, formatWon(entry.amount))
         )
     }
 }

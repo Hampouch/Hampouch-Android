@@ -3,7 +3,6 @@ package com.example.hampouch.ui.hamtips
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,18 +43,21 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
+import com.example.hampouch.data.model.TipReply
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentInputBar
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentRow
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsPhotoCarousel
 import com.example.hampouch.ui.mypage.components.TipCategoryBadge
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -120,9 +122,19 @@ private fun DashedDivider(modifier: Modifier = Modifier) {
 
 @Composable
 private fun MenuInfoRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(modifier = modifier.fillMaxWidth()) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPText)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPMain,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -202,12 +214,15 @@ internal fun HamTipsPostHeader(post: TipPost, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(10.dp))
         Text(text = post.title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
         Spacer(modifier = Modifier.height(8.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = post.authorName,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (post.isEditorAuthor) HPSub else HPText,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = stringResource(
@@ -304,6 +319,7 @@ internal fun HamTipsCommentListColumn(
     post: TipPost,
     onReplyClick: (TipComment) -> Unit,
     onMoreClick: (TipComment) -> Unit,
+    onReplyMoreClick: (TipComment, TipReply) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(horizontal = 20.dp)) {
@@ -312,7 +328,8 @@ internal fun HamTipsCommentListColumn(
                 comment = comment,
                 showAuthorTag = comment.authorId == post.authorId && post.authorId.isNotBlank(),
                 onReplyClick = { onReplyClick(comment) },
-                onMoreClick = { onMoreClick(comment) }
+                onMoreClick = { onMoreClick(comment) },
+                onReplyMoreClick = { reply -> onReplyMoreClick(comment, reply) }
             )
         }
     }
@@ -350,6 +367,37 @@ internal fun HamTipsCommentMoreMenuHost(
 }
 
 @Composable
+internal fun HamTipsReplyMoreMenuHost(
+    post: TipPost,
+    target: Pair<TipComment, TipReply>?,
+    onDismiss: () -> Unit
+) {
+    target?.let { (comment, reply) ->
+        val items = buildList {
+            if (HamTipsRepository.canDeleteReply(post, reply)) {
+                add(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_delete),
+                        isDestructive = true,
+                        onClick = {
+                            HamTipsRepository.deleteReply(post.id, comment.id, reply.id)
+                            onDismiss()
+                        }
+                    )
+                )
+            }
+            add(
+                HamTipsMenuSheetItem(
+                    label = stringResource(R.string.hamtips_more_menu_close),
+                    onClick = onDismiss
+                )
+            )
+        }
+        HamTipsMoreMenuSheet(items = items, onDismiss = onDismiss)
+    }
+}
+
+@Composable
 fun HamTipsDetailScreen(
     post: TipPost,
     onBackClick: () -> Unit,
@@ -359,10 +407,12 @@ fun HamTipsDetailScreen(
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
+    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
 
-    val isAuthor = post.authorId == HamTipsRepository.CURRENT_USER_ID
+    val isAuthor = post.authorId == UserSession.currentUser.id
+    val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
 
     Scaffold(
@@ -371,7 +421,7 @@ fun HamTipsDetailScreen(
         topBar = {
             HamTipsPostDetailTopBar(
                 title = stringResource(titleRes),
-                showMoreButton = isAuthor,
+                showMoreButton = canDeletePost,
                 onBackClick = onBackClick,
                 onMoreClick = { showPostMenu = true }
             )
@@ -421,7 +471,8 @@ fun HamTipsDetailScreen(
             HamTipsCommentListColumn(
                 post = post,
                 onReplyClick = { replyTarget = it },
-                onMoreClick = { commentMenuTarget = it }
+                onMoreClick = { commentMenuTarget = it },
+                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -429,28 +480,38 @@ fun HamTipsDetailScreen(
 
     if (showPostMenu) {
         HamTipsMoreMenuSheet(
-            items = listOf(
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_delete),
-                    isDestructive = true,
-                    onClick = {
-                        showPostMenu = false
-                        HamTipsRepository.deletePost(post.id)
-                        onDeleted()
-                    }
-                ),
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_edit),
-                    onClick = {
-                        showPostMenu = false
-                        onEditClick(post)
-                    }
-                ),
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_close),
-                    onClick = { showPostMenu = false }
+            items = buildList {
+                if (canDeletePost) {
+                    add(
+                        HamTipsMenuSheetItem(
+                            label = stringResource(R.string.hamtips_more_menu_delete),
+                            isDestructive = true,
+                            onClick = {
+                                showPostMenu = false
+                                HamTipsRepository.deletePost(post.id)
+                                onDeleted()
+                            }
+                        )
+                    )
+                }
+                if (isAuthor) {
+                    add(
+                        HamTipsMenuSheetItem(
+                            label = stringResource(R.string.hamtips_more_menu_edit),
+                            onClick = {
+                                showPostMenu = false
+                                onEditClick(post)
+                            }
+                        )
+                    )
+                }
+                add(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_close),
+                        onClick = { showPostMenu = false }
+                    )
                 )
-            ),
+            },
             onDismiss = { showPostMenu = false }
         )
     }
@@ -459,6 +520,12 @@ fun HamTipsDetailScreen(
         post = post,
         target = commentMenuTarget,
         onDismiss = { commentMenuTarget = null }
+    )
+
+    HamTipsReplyMoreMenuHost(
+        post = post,
+        target = replyMenuTarget,
+        onDismiss = { replyMenuTarget = null }
     )
 }
 

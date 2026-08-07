@@ -5,7 +5,8 @@ import com.example.hampouch.R
 data class MyPageProfile(
     val name: String,
     val handle: String,
-    val email: String
+    val email: String,
+    val avatarUri: String? = null
 )
 
 enum class ChallengeStatus(val labelResId: Int) {
@@ -18,15 +19,17 @@ data class ChallengeRecord(
     val id: String,
     val status: ChallengeStatus,
     val totalDays: Int,
-    val achievedDays: Int,
     val startDateLabel: String,
     val endDateLabel: String?,
-    val dailyLimit: Int,
-    val totalSaved: Int
+    val targetAmount: Int,
+    val actualAmount: Int
 )
 
-enum class ReminderDayMode {
-    DAILY, WEEKEND_ONLY, CUSTOM
+enum class ReminderDayMode(val labelResId: Int) {
+    WEEKDAY(R.string.record_alarm_mode_weekday),
+    WEEKEND(R.string.record_alarm_mode_weekend),
+    DAILY(R.string.record_alarm_mode_daily),
+    CUSTOM(R.string.record_alarm_mode_custom)
 }
 
 enum class DayOfWeekLabel(val labelResId: Int) {
@@ -40,25 +43,23 @@ enum class DayOfWeekLabel(val labelResId: Int) {
 }
 
 data class NotificationSettingsState(
-    val recordAlarmEnabled: Boolean = true,
     val challengeAlarmEnabled: Boolean = true,
     val hamBattleAlarmEnabled: Boolean = true,
     val communityAlarmEnabled: Boolean = false
 )
 
 data class RecordAlarmSettingsState(
-    val receiveEnabled: Boolean = true,
-    val missingReminderEnabled: Boolean = true,
-    val limitOverEnabled: Boolean = true,
-    val secondReceiveEnabled: Boolean = true,
-    val dayMode: ReminderDayMode = ReminderDayMode.DAILY,
+    val receiveEnabled: Boolean = false,
+    val missingReminderEnabled: Boolean = false,
+    val limitOverEnabled: Boolean = false,
+    val dayMode: ReminderDayMode = ReminderDayMode.WEEKDAY,
     val selectedDays: Set<DayOfWeekLabel> = setOf(
         DayOfWeekLabel.MON,
         DayOfWeekLabel.TUE,
         DayOfWeekLabel.WED,
         DayOfWeekLabel.THU,
-        DayOfWeekLabel.FRI,
-        DayOfWeekLabel.SAT
+        DayOfWeekLabel.FRI
     ),
-    val timeLabel: String = ""
+    val hour: Int = 20,
+    val minute: Int = 0
 )

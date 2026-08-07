@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +17,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -43,11 +45,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -63,75 +68,81 @@ import java.time.format.DateTimeFormatter
 
 private enum class ResultTab { TODAY, TOTAL }
 
-private val PodiumHeights = mapOf(1 to 180.dp, 2 to 120.dp, 3 to 90.dp)
+private val PodiumHeights = mapOf(1 to 110.dp, 2 to 75.dp, 3 to 55.dp)
 private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
-private val CrownColor = Color(0xFFFFC107)
 
 @Composable
-fun HamBattleChallengeResultScreen(
-    challenge: HamBattleActiveChallenge,
+fun HamBattleChallengesPodiumResultScreen(
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
-    val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
+    val ranked = remember(challenge, selectedTab) {
+        val participants = if (selectedTab == ResultTab.TODAY) {
+            HamBattleMockData.participantsForToday(challenge)
+        } else {
+            challenge.participants
+        }
+        participants
+            .filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+            .sortedBy { it.amount }
+    }
     val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
-    val extraRanked = if (ranked.size > 3) ranked.drop(3) else emptyList()
+    val extraRanked = if (ranked.size > 3) ranked.drop(3).take(3) else emptyList()
 
-    Scaffold(containerColor = HPSub4) { innerPadding ->
-        Box(
+    Scaffold(
+        topBar = { ResultTopBar(title = challenge.title, onBackClick = onBackClick) },
+        containerColor = HPSub4
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                ResultTopBar(title = challenge.title, onBackClick = onBackClick)
+            Spacer(modifier = Modifier.height(10.dp))
+            ResultTabToggle(
+                selectedTab = selectedTab,
+                onSelect = { selectedTab = it },
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            )
 
-                Spacer(modifier = Modifier.height(20.dp))
-                ResultTabToggle(
-                    selectedTab = selectedTab,
-                    onSelect = { selectedTab = it },
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
+            if (selectedTab == ResultTab.TODAY) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                    style = Body16Bold,
+                    color = HPMain,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-
-                if (selectedTab == ResultTab.TODAY) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                        style = Body16Bold,
-                        color = HPMain,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                } else {
-                    Text(
-                        text = " ",
-                        style = Body16Bold,
-                        color = HPMain,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                    Spacer(modifier = Modifier.height(40.dp))
-                }
-
-                PodiumChart(
-                    ranked = ranked,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
+                Spacer(modifier = Modifier.height(24.dp))
+            } else {
+                Text(
+                    text = " ",
+                    style = Body16Bold,
+                    color = HPMain,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+                Spacer(modifier = Modifier.height(40.dp))
             }
+
+            PodiumChart(
+                ranked = ranked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+            )
 
             ResultBottomSheet(
                 extraRanked = extraRanked,
                 penalty = challenge.penalty,
                 lastPlaceName = lastPlaceName,
-                showPenaltyBox = challenge.participants.size < 4,
+                showPenaltyBox = ranked.size < 4,
                 onStartNewChallengeClick = onStartNewChallengeClick,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .weight(1f)
                     .fillMaxWidth()
-                    .fillMaxHeight(2f / 5f)
             )
         }
     }
@@ -151,7 +162,11 @@ private fun ResultTopBar(title: String, onBackClick: () -> Unit) {
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "뒤로가기", tint = HPBlack)
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = HPBlack
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPSub4)
@@ -212,10 +227,12 @@ private fun PodiumChart(ranked: List<HamBattleParticipantSpending>, modifier: Mo
 
 @Composable
 private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         if (rank == 1) {
             Image(
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(28.dp),
                 painter = painterResource(
                     R.drawable.icon_crown
                 ),
@@ -233,7 +250,22 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPGray4)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(participant.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = HPMain)
+        Column(
+            modifier = Modifier
+                .width(90.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                participant.name,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = HPMain
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Box(
             modifier = Modifier
@@ -241,7 +273,11 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPWhite)
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            Text(formatWon(participant.amount), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = HPBlack)
+            Text(
+                formatWon(participant.amount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPBlack
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -265,6 +301,8 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
     }
 }
 
+private val ResultBottomSheetPenaltyContentMinHeight = 182.dp
+
 @Composable
 private fun ResultBottomSheet(
     extraRanked: List<HamBattleParticipantSpending>,
@@ -274,13 +312,41 @@ private fun ResultBottomSheet(
     onStartNewChallengeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-            .background(HPWhite)
-            .padding(horizontal = 20.dp, vertical = 30.dp)
-    ) {
-        if (extraRanked.isNotEmpty()) {
+    val sheetModifier = modifier
+        .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
+        .background(HPWhite)
+        .padding(start = 20.dp, end = 20.dp, top = 30.dp, bottom = 12.dp)
+
+    if (showPenaltyBox) {
+        BoxWithConstraints(modifier = sheetModifier) {
+            if (maxHeight >= ResultBottomSheetPenaltyContentMinHeight) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    PenaltyBox(
+                        penalty = penalty,
+                        lastPlaceName = lastPlaceName,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                    StartNewChallengeButton(
+                        onClick = onStartNewChallengeClick,
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    PenaltyBox(penalty = penalty, lastPlaceName = lastPlaceName)
+                    Spacer(modifier = Modifier.height(20.dp))
+                    StartNewChallengeButton(onClick = onStartNewChallengeClick)
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = sheetModifier.verticalScroll(rememberScrollState())
+        ) {
             extraRanked.forEachIndexed { index, participant ->
                 if (index > 0) {
                     HorizontalDivider(
@@ -290,25 +356,6 @@ private fun ResultBottomSheet(
                     )
                 }
                 ExtraRankRow(rank = index + 4, participant = participant)
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            if (showPenaltyBox) {
-                PenaltyBox(
-                    penalty = penalty,
-                    lastPlaceName = lastPlaceName,
-                    modifier = Modifier.align(Alignment.TopCenter)
-                )
-                StartNewChallengeButton(
-                    onClick = onStartNewChallengeClick,
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
             }
         }
     }
@@ -333,7 +380,14 @@ private fun ExtraRankRow(rank: Int, participant: HamBattleParticipantSpending) {
                 .background(HPGray4)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        Text(participant.name, style = Body16Bold, color = HPBlack, modifier = Modifier.weight(1f))
+        Text(
+            participant.name,
+            style = Body16Bold,
+            color = HPBlack,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         Text(formatWon(participant.amount), style = Body16Bold, color = HPBlack)
     }
 }
@@ -369,18 +423,39 @@ private fun StartNewChallengeButton(onClick: () -> Unit, modifier: Modifier = Mo
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-private fun HambattleChallengeResultScreenOneVsOnePreview() {
+private fun ResultTabTogglePreview() {
     HampouchTheme {
-        HamBattleChallengeResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
+        Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
+            ResultTabToggle(selectedTab = selectedTab, onSelect = { selectedTab = it })
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PodiumChartPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
+            PodiumChart(ranked = HamBattleMockData.activeChallenges()[1].participants)
+        }
     }
 }
 
 @Preview
 @Composable
-private fun HambattleChallengeResultScreenGroupPreview() {
+private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengeResultScreen(challenge = HamBattleMockData.activeChallenges[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
+    }
+}
+
+@Preview
+@Composable
+private fun HambattleChallengesPodiumResultScreenGroupPreview() {
+    HampouchTheme {
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[1])
     }
 }

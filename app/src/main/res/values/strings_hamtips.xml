@@ -59,6 +59,10 @@
     <string name="hamtips_write_title_placeholder">핵심을 한 줄로 요약해주세요</string>
     <string name="hamtips_write_section_content">내용</string>
     <string name="hamtips_write_content_placeholder">구체적일 수록 공감을 많이 받아요</string>
+    <string name="hamtips_write_hint_title">이런 내용이 있으면 더 좋아요</string>
+    <string name="hamtips_write_hint_bullet1">얼마나 절약했는지 (예: 한 달 8만원)</string>
+    <string name="hamtips_write_hint_bullet2">어디서 어떻게 줄였는지</string>
+    <string name="hamtips_write_hint_bullet3">따라 할 수 있는 구체적인 방법</string>
 
     <!-- 메뉴 추천 -->
     <string name="hamtips_write_menu_heading">무슨 메뉴를 공유할까요?</string>
@@ -86,6 +90,7 @@
     <string name="hamtips_write_battle_content_placeholder">챌린지 내용을 설명해주세요</string>
     <string name="hamtips_write_battle_link_label">햄배틀 링크</string>
     <string name="hamtips_write_battle_link_placeholder">초대 링크를 입력해주세요</string>
+    <string name="hamtips_write_battle_link_not_found">해당 햄배틀이 존재하지 않습니다</string>
     <string name="hamtips_battle_join">참가하기</string>
     <string name="hamtips_battle_recruit_done">모집 완료</string>
     <string name="hamtips_battle_penalty_label">"벌칙: "</string>
@@ -110,6 +115,7 @@
     <string name="hamtips_comment_reply_action">답글</string>
     <string name="hamtips_comment_deleted">삭제된 댓글입니다.</string>
     <string name="hamtips_comment_deleted_author">삭제</string>
+    <string name="hamtips_reply_deleted">삭제된 답글입니다.</string>
     <string name="hamtips_cd_comment_more">댓글 더보기</string>
     <string name="hamtips_reply_target_tag_format">@%1$s</string>
     <string name="hamtips_detail_meta_suffix_format"> · %1$s · 조회 %2$s</string>

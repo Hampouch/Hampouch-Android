@@ -3,8 +3,10 @@ package com.example.hampouch.ui.hambattle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -16,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -26,26 +28,31 @@ private const val PAGE_RANKING_LIST = 1
 private const val PAGE_COUNT = 2
 
 @Composable
-fun HamBattleChallengeResultPagerScreen(
-    challenge: HamBattleActiveChallenge,
+fun HamBattleChallengesResultPagerScreen(
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
     val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) { page ->
             when (page) {
-                PAGE_PODIUM -> HamBattleChallengeResultScreen(
+                PAGE_PODIUM -> HamBattleChallengesPodiumResultScreen(
                     challenge = challenge,
                     onBackClick = onBackClick,
                     onStartNewChallengeClick = onStartNewChallengeClick
                 )
 
-                else -> HamBattleOneVsOneResultScreen(
+                else -> HamBattleChallengesResultScreen(
                     challenge = challenge,
                     onBackClick = onBackClick,
                     onStartNewChallengeClick = onStartNewChallengeClick
@@ -53,13 +60,10 @@ fun HamBattleChallengeResultPagerScreen(
             }
         }
 
-        // 스크롤과 무관하게 화면(하단 네비바 바로 위) 고정 위치에 표시.
         ResultPageIndicator(
             pageCount = PAGE_COUNT,
             currentPage = pagerState.currentPage,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
+            modifier = Modifier.padding(vertical = 6.dp)
         )
     }
 }
@@ -87,12 +91,22 @@ private fun ResultPageIndicator(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ResultPageIndicatorPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
+            ResultPageIndicator(pageCount = 3, currentPage = 1)
+        }
+    }
+}
+
 @Preview
 @Composable
-private fun HamBattleChallengeResultPagerScreenPreview() {
+private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
-        HamBattleChallengeResultPagerScreen(
-            challenge = HamBattleMockData.activeChallenges.first()
+        HamBattleChallengesResultPagerScreen(
+            challenge = HamBattleMockData.activeChallenges().first()
         )
     }
 }

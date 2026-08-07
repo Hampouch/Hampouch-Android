@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
@@ -115,18 +116,49 @@ fun HamTipsAuthorTagChip(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HamTipsReplyRow(reply: TipReply, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth().padding(start = 46.dp, top = 10.dp)) {
+fun HamTipsReplyRow(
+    reply: TipReply,
+    onMoreClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(start = 46.dp, top = 10.dp),
+        verticalAlignment = Alignment.Top
+    ) {
         HamTipsProfileAvatar(size = 28.dp)
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = reply.authorName, style = MaterialTheme.typography.bodySmall, color = HPBlack, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = reply.timeLabel, style = MaterialTheme.typography.labelSmall, color = HPText)
+                Text(
+                    text = if (reply.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else reply.authorName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPBlack,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f, fill = false),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!reply.isDeleted) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = reply.timeLabel, style = MaterialTheme.typography.labelSmall, color = HPText)
+                }
             }
             Spacer(modifier = Modifier.height(2.dp))
-            Text(text = reply.content, style = MaterialTheme.typography.bodySmall, color = HPBlack)
+            Text(
+                text = if (reply.isDeleted) stringResource(R.string.hamtips_reply_deleted) else reply.content,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (reply.isDeleted) HPText else HPBlack
+            )
+        }
+        if (!reply.isDeleted) {
+            IconButton(onClick = onMoreClick, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = stringResource(R.string.hamtips_cd_comment_more),
+                    tint = HPText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
@@ -137,6 +169,7 @@ fun HamTipsCommentRow(
     showAuthorTag: Boolean,
     onReplyClick: () -> Unit,
     onMoreClick: () -> Unit,
+    onReplyMoreClick: (TipReply) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(top = 16.dp)) {
@@ -149,7 +182,10 @@ fun HamTipsCommentRow(
                         text = if (comment.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else comment.authorName,
                         style = MaterialTheme.typography.bodyMedium,
                         color = HPBlack,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (!comment.isDeleted && showAuthorTag) {
                         Spacer(modifier = Modifier.width(6.dp))
@@ -188,7 +224,9 @@ fun HamTipsCommentRow(
                 }
             }
         }
-        comment.replies.forEach { reply -> HamTipsReplyRow(reply = reply) }
+        comment.replies.forEach { reply ->
+            HamTipsReplyRow(reply = reply, onMoreClick = { onReplyMoreClick(reply) })
+        }
     }
 }
 
@@ -222,7 +260,9 @@ fun HamTipsCommentInputBar(
                     text = stringResource(R.string.hamtips_reply_target_tag_format, replyTargetName),
                     style = MaterialTheme.typography.labelMedium,
                     color = HPReplyTag,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.width(6.dp))
             }
@@ -315,7 +355,8 @@ private fun HamTipsDeletedCommentRowPreview() {
             ),
             showAuthorTag = false,
             onReplyClick = {},
-            onMoreClick = {}
+            onMoreClick = {},
+            onReplyMoreClick = {}
         )
     }
 }

@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.dialog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,8 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.data.model.HamBattleChallengeRequest
@@ -28,9 +31,13 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @Composable
 fun HamBattleStartConfirmDialog(
@@ -81,39 +88,72 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
         Text(
             "${request.durationDays} · ${request.participantCount}",
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
             color = HPText
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             request.challengeName.ifBlank { "이름 없는 챌린지" },
-            style = Body16Bold,
+            fontSize = 16.sp,
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 "벌칙: ",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
                 color = HPText
             )
             Text(
                 request.penalty,
                 style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
                 color = HPMain,
-                fontWeight = FontWeight.Bold
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                challengeStartDateLabel(request.startDateMillis),
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
+                color = HPMain
+            )
+            Text(
+                challengeStartSuffixLabel(request.startDateMillis),
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 12.sp,
+                color = HPText
             )
         }
     }
 }
+
+// 아직 실제로 만들어진 챌린지가 아니라 시작일을 모를 때(커뮤니티 참가 확인 등)는
+// 챌린지 시작일이 기본값인 오늘로 잡힌다는 걸 그대로 보여준다.
+private fun challengeStartDateLabel(startDateMillis: Long?): String {
+    val date = startDateMillis?.let {
+        Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+    } ?: LocalDate.now()
+    return "${date.monthValue}월 ${date.dayOfMonth}일 "
+}
+
+private fun challengeStartSuffixLabel(startDateMillis: Long?): String =
+    if (startDateMillis == null) "배틀 시작 예정" else "시작"
 
 @Composable
 fun ConfirmActionCard(
     question: String,
     confirmLabel: String,
     onCancel: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    subtext: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -125,10 +165,20 @@ fun ConfirmActionCard(
         Text(
             question,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack
         )
+        if (subtext != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                subtext,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall,
+                color = HPSub
+            )
+        }
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
             Button(
@@ -142,7 +192,6 @@ fun ConfirmActionCard(
                 Text(
                     "취소",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
                     color = HPText
                 )
             }

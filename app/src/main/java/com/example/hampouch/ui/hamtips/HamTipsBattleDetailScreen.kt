@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,19 +25,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.HamBattleChallengeRequest
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.data.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
+import com.example.hampouch.ui.dialog.HamBattleRoomFullDialog
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
+import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -44,15 +51,27 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.ZoneOffset
 
-private fun battleChallengeRequestFrom(post: TipPost, durationLabel: String, capacityLabel: String) =
-    HamBattleChallengeRequest(
-        challengeName = post.title,
-        participantCount = capacityLabel,
-        durationDays = durationLabel,
-        startDateMillis = null,
-        penalty = post.battleInfo?.penalty.orEmpty()
-    )
+/**
+ * 게시글에 달린 링크로 실제 생성된 햄배틀 챌린지를 찾아 그 정보를 그대로 보여준다.
+ * 매칭되는 챌린지가 없으면(예: 링크를 잘못 입력한 경우) 게시글에 적힌 값으로 대신한다.
+ */
+private fun battleChallengeRequestFrom(
+    post: TipPost,
+    durationLabel: String,
+    capacityLabel: String,
+    linkedChallenge: HamBattleChallenge? = null
+) = HamBattleChallengeRequest(
+    challengeName = linkedChallenge?.title ?: post.title,
+    participantCount = capacityLabel,
+    durationDays = durationLabel,
+    startDateMillis = linkedChallenge?.startDate
+        ?.atStartOfDay(ZoneOffset.UTC)
+        ?.toInstant()
+        ?.toEpochMilli(),
+    penalty = linkedChallenge?.penalty ?: post.battleInfo?.penalty.orEmpty()
+)
 
 @Composable
 private fun HamTipsBattleInfoCard(
@@ -83,18 +102,22 @@ private fun HamTipsBattleInfoCard(
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(6.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = stringResource(R.string.hamtips_battle_penalty_label),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = HPText
             )
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = summaryRequest.penalty,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = HPMain
+                color = HPMain,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         if (showActionButton) {
@@ -116,21 +139,31 @@ fun HamTipsBattleDetailScreen(
     onBackClick: () -> Unit,
     onDeleted: () -> Unit,
     onNavigateToBattleLink: (String) -> Unit,
+    onNavigateToHamBattleTab: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var showJoinConfirm by remember { mutableStateOf(false) }
+    var showRoomFull by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
+    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
 
-    val isAuthor = post.authorId == HamTipsRepository.CURRENT_USER_ID
+    val isAuthor = post.authorId == UserSession.currentUser.id
+    val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleInfo = post.battleInfo
+    val linkedChallenge = battleInfo?.link?.let { link ->
+        HamBattleMockData.challenges.find { it.link == link }
+    }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
-    val capacityLabel = stringResource(R.string.hamtips_battle_capacity_format, battleInfo?.capacity ?: 0)
-    val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel)
+    val capacityLabel = stringResource(
+        R.string.hamtips_battle_capacity_format,
+        linkedChallenge?.totalCount ?: battleInfo?.capacity ?: 0
+    )
+    val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel, linkedChallenge)
 
     Scaffold(
         modifier = modifier,
@@ -138,7 +171,7 @@ fun HamTipsBattleDetailScreen(
         topBar = {
             HamTipsPostDetailTopBar(
                 title = stringResource(titleRes),
-                showMoreButton = isAuthor,
+                showMoreButton = canDeletePost,
                 onBackClick = onBackClick,
                 onMoreClick = { showPostMenu = true }
             )
@@ -174,7 +207,7 @@ fun HamTipsBattleDetailScreen(
                     HamTipsBattleInfoCard(
                         summaryRequest = summaryRequest,
                         showActionButton = !isAuthor,
-                        isFull = battleInfo.isFull,
+                        isFull = linkedChallenge?.isFull ?: battleInfo.isFull,
                         onActionClick = { showJoinConfirm = true }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -189,7 +222,8 @@ fun HamTipsBattleDetailScreen(
             HamTipsCommentListColumn(
                 post = post,
                 onReplyClick = { replyTarget = it },
-                onMoreClick = { commentMenuTarget = it }
+                onMoreClick = { commentMenuTarget = it },
+                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -201,23 +235,38 @@ fun HamTipsBattleDetailScreen(
         onDismiss = { commentMenuTarget = null }
     )
 
+    HamTipsReplyMoreMenuHost(
+        post = post,
+        target = replyMenuTarget,
+        onDismiss = { replyMenuTarget = null }
+    )
+
     if (showPostMenu) {
         HamTipsMoreMenuSheet(
-            items = listOf(
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_delete),
-                    isDestructive = true,
-                    onClick = {
-                        showPostMenu = false
-                        HamTipsRepository.deletePost(post.id)
-                        onDeleted()
-                    }
-                ),
-                HamTipsMenuSheetItem(
-                    label = stringResource(R.string.hamtips_more_menu_close),
-                    onClick = { showPostMenu = false }
+            items = if (canDeletePost) {
+                listOf(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_delete),
+                        isDestructive = true,
+                        onClick = {
+                            showPostMenu = false
+                            HamTipsRepository.deletePost(post.id)
+                            onDeleted()
+                        }
+                    ),
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_close),
+                        onClick = { showPostMenu = false }
+                    )
                 )
-            ),
+            } else {
+                listOf(
+                    HamTipsMenuSheetItem(
+                        label = stringResource(R.string.hamtips_more_menu_close),
+                        onClick = { showPostMenu = false }
+                    )
+                )
+            },
             onDismiss = { showPostMenu = false }
         )
     }
@@ -229,11 +278,36 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    HamTipsRepository.joinBattle(post.id)
-                    onNavigateToBattleLink(battleInfo.link)
+                    val joinedChallenge = HamBattleMockData.joinChallengeFromCommunityPost(
+                        authorName = post.authorName,
+                        title = post.title,
+                        penalty = battleInfo.penalty,
+                        link = battleInfo.link,
+                        totalCount = battleInfo.capacity
+                    )
+                    if (joinedChallenge == null) {
+                        showRoomFull = true
+                    } else {
+                        HamTipsRepository.joinBattle(post.id)
+                        if (joinedChallenge.isFull) {
+                            // 내가 참가하면서 정원이 다 찼으면 이 챌린지는 더 이상 "대기중"이
+                            // 아니라 진행중(또는 시작일 전이면 대기중) 목록으로 넘어가므로,
+                            // 대기중 상세화면 대신 햄배틀 탭으로 보낸다.
+                            onNavigateToHamBattleTab()
+                        } else {
+                            onNavigateToBattleLink(joinedChallenge.id)
+                        }
+                    }
                 }
             )
         }
+    }
+
+    if (showRoomFull) {
+        HamBattleRoomFullDialog(
+            challengeTitle = summaryRequest.challengeName,
+            onConfirmClick = { showRoomFull = false }
+        )
     }
 }
 

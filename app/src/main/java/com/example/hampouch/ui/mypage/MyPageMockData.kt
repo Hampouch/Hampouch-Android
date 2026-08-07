@@ -4,48 +4,55 @@ import com.example.hampouch.data.model.ChallengeRecord
 import com.example.hampouch.data.model.ChallengeStatus
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.hamtips.HamTipsRepository
+import com.example.hampouch.ui.session.UserSession
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object MyPageMockData {
 
-    fun defaultProfile(): MyPageProfile = MyPageProfile(
-        name = "민준",
-        handle = "hampochi_minjun",
-        email = "hampouch@example.com"
-    )
+    private val takenNicknames = listOf("햄포치")
+    private val challengeHistoryPeriodFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd.")
 
-    fun challengeHistory(): List<ChallengeRecord> = listOf(
-        ChallengeRecord(
-            id = "challenge_ongoing",
-            status = ChallengeStatus.IN_PROGRESS,
-            totalDays = 14,
-            achievedDays = 2,
-            startDateLabel = "2026.05.15.",
-            endDateLabel = null,
-            dailyLimit = 27_000,
-            totalSaved = 5_400
-        ),
-        ChallengeRecord(
-            id = "challenge_success",
-            status = ChallengeStatus.SUCCESS,
-            totalDays = 14,
-            achievedDays = 14,
-            startDateLabel = "2026.05.01.",
-            endDateLabel = "2026.05.14.",
-            dailyLimit = 25_000,
-            totalSaved = 21_400
-        ),
-        ChallengeRecord(
-            id = "challenge_fail",
-            status = ChallengeStatus.FAIL,
-            totalDays = 14,
-            achievedDays = 3,
-            startDateLabel = "2026.04.01.",
-            endDateLabel = "2026.04.14.",
-            dailyLimit = 30_000,
-            totalSaved = 2_400
+    fun defaultProfile(): MyPageProfile {
+        val user = UserSession.currentUser
+        return MyPageProfile(
+            name = user.name,
+            handle = "hampochi_${user.id}",
+            email = user.email
         )
-    )
+    }
+
+    fun isNicknameTaken(name: String): Boolean = name in takenNicknames
+
+    fun challengeHistory(): List<ChallengeRecord> {
+        val referenceToday = LocalDate.now()
+        return ChallengeRepository.challenges
+            .sortedByDescending { it.periodStart }
+            .map { challenge ->
+                val isOngoing = challenge.id == ChallengeRepository.activeChallenge.id &&
+                    !referenceToday.isAfter(challenge.periodEnd)
+                val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+                val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
+                    .takeWhile { !it.isAfter(trackedEnd) }
+                    .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
+                ChallengeRecord(
+                    id = challenge.id,
+                    status = when {
+                        isOngoing -> ChallengeStatus.IN_PROGRESS
+                        actualAmount <= challenge.targetAmount -> ChallengeStatus.SUCCESS
+                        else -> ChallengeStatus.FAIL
+                    },
+                    totalDays = challenge.totalDays,
+                    startDateLabel = challenge.periodStart.format(challengeHistoryPeriodFormatter),
+                    endDateLabel = challenge.periodEnd.format(challengeHistoryPeriodFormatter),
+                    targetAmount = challenge.targetAmount,
+                    actualAmount = actualAmount
+                )
+            }
+    }
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 

@@ -84,7 +84,7 @@ fun rememberImageBitmapFromUri(uriString: String): ImageBitmap? {
 @Composable
 private fun rememberPhotoPickerLauncher(maxItems: Int, onPhotosPicked: (List<String>) -> Unit): () -> Unit {
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = maxItems.coerceAtLeast(1))
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = maxItems.coerceAtLeast(2))
     ) { uris -> if (uris.isNotEmpty()) onPhotosPicked(uris.map { it.toString() }) }
     return { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
 }

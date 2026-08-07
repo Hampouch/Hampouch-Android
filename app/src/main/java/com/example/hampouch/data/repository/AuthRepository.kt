@@ -361,7 +361,7 @@ class AuthRepository private constructor(private val context: Context) {
     // 서버 없이 화면/네비게이션을 확인할 때 쓰는 더미 구현. LoginMockData의 고정 계정으로만 동작하며,
     // signUp/checkNicknameAvailability 등은 실제로 계정을 만들거나 저장하지 않는다(단순 성공 흉내).
 
-    private fun mockLogin(email: String, password: String): Result<AuthSession> {
+    private suspend fun mockLogin(email: String, password: String): Result<AuthSession> {
         val account = LoginMockData.findAccount(email, password)
             ?: return Result.failure(
                 ApiException(code = "INVALID_CREDENTIALS", message = "이메일 및 비밀번호를 다시 확인해주세요.")
@@ -369,13 +369,17 @@ class AuthRepository private constructor(private val context: Context) {
         return mockSignIn(AuthProvider.LOCAL, account)
     }
 
-    private fun mockLoginWithSocial(credential: SocialCredential): Result<AuthSession> {
+    private suspend fun mockLoginWithSocial(credential: SocialCredential): Result<AuthSession> {
         val account = LoginMockData.accounts.find { it.email == credential.email }
             ?: LoginMockData.normalUser
         return mockSignIn(credential.provider, account)
     }
 
-    private fun mockSignIn(provider: AuthProvider, account: User): Result<AuthSession> {
+    /**
+     * 목데이터 세션을 만들고 [saveSession]으로 DataStore에 저장한다(서버 로그인과 동일하게 영속화해야
+     * 다음 앱 실행 때도 로그인 상태로 시작 화면이 Home으로 잡힌다).
+     */
+    private suspend fun mockSignIn(provider: AuthProvider, account: User): Result<AuthSession> {
         val session = AuthSession(
             provider = provider,
             userId = account.id.hashCode().toLong(),
@@ -388,6 +392,7 @@ class AuthRepository private constructor(private val context: Context) {
             email = account.email,
             profileImageUrl = null
         )
+        saveSession(session)
         return Result.success(session)
     }
 

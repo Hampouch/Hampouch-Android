@@ -36,16 +36,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleActiveChallenge
+import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.data.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -57,8 +60,8 @@ private val StatusBadgeBackground = Color(0xFFECF2E0)
 private val StatusBadgeText = Color(0xFF729739)
 
 @Composable
-fun HamBattleOneVsOneResultScreen(
-    challenge: HamBattleActiveChallenge,
+fun HamBattleChallengesResultScreen(
+    challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
     onStartNewChallengeClick: () -> Unit = {}
 ) {
@@ -80,20 +83,20 @@ fun HamBattleOneVsOneResultScreen(
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             RankingCard(
                 type = challenge.type,
-                dDay = challenge.dDay,
-                periodLabel = challenge.periodLabel,
+                dDay = challenge.dDayLabel(),
+                periodLabel = challenge.periodLabel(),
                 ranked = ranked,
                 disqualified = disqualified
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             OneVsOnePenaltyBox(penalty = challenge.penalty, lastPlaceName = lastPlaceName)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             Button(
                 onClick = onStartNewChallengeClick,
                 modifier = Modifier
@@ -141,7 +144,7 @@ private fun RankingCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(HPSub4)
-            .padding(20.dp)
+            .padding(15.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -183,8 +186,13 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (highlighted) HPSub2 else HPWhite)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .border(
+                width = if (highlighted) 1.dp else 0.dp,
+                color = if (highlighted) HPSub else Color.Transparent,
+                shape = RoundedCornerShape(14.dp)
+            )
+            .background(if (highlighted) HPSub2.copy(alpha = 0.4f) else HPWhite)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -205,11 +213,15 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
                 participant.name,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = if (highlighted) HPMain else HPText
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = HPMain
             )
             Text(
                 formatWon(participant.amount),
-                style = Body16Bold,
+                fontSize = 16.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = HPBlack
             )
         }
@@ -226,7 +238,7 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(HPGray4)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -245,8 +257,11 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,
+            modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             color = HPText
         )
     }
@@ -256,15 +271,16 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
 private fun MissedLogBadge() {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(30))
             .background(HPSub3)
             .padding(horizontal = 10.dp, vertical = 5.dp)
     ) {
         Text(
-            "연속 지출 미기록",
-            style = MaterialTheme.typography.labelSmall,
+            "연속 지출\n미기록",
+            style = MaterialTheme.typography.labelSmall.copy(lineHeight = 14.sp),
             fontWeight = FontWeight.Bold,
-            color = HPMain
+            color = HPMain,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -293,7 +309,7 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .border(1.dp, HPText, RoundedCornerShape(20.dp))
-            .padding(horizontal = 20.dp, vertical = 15.dp)
+            .padding(horizontal = 20.dp, vertical = 10.dp)
     ) {
         Text("벌칙", style = Body16Bold, color = HPBlack)
         Spacer(modifier = Modifier.height(6.dp))
@@ -308,10 +324,41 @@ private fun OneVsOnePenaltyBox(penalty: String, lastPlaceName: String) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun RankingCardPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            RankingCard(
+                type = "개인전",
+                dDay = "D-3",
+                periodLabel = "2024.03.01 ~ 2024.03.07",
+                ranked = listOf(
+                    HamBattleParticipantSpending("나", 15000),
+                    HamBattleParticipantSpending("친구1", 20000, HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS)
+                ),
+                disqualified = listOf(
+                    HamBattleParticipantSpending("친구2", 50000, HamBattleParticipantStatus.DISQUALIFIED)
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OneVsOnePenaltyBoxPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            OneVsOnePenaltyBox(penalty = "커피 사기", lastPlaceName = "친구1")
+        }
+    }
+}
+
 @Preview
 @Composable
-private fun HamBattleOneVsOneResultScreenPreview() {
+private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleOneVsOneResultScreen(challenge = HamBattleMockData.activeChallenges[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
     }
 }

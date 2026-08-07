@@ -61,3 +61,12 @@ val HPTipEtcText = Color(0xFF6B6B6B)
 val HPStar = Color(0xFFFFC53D)
 
 val HPReplyTag = Color(0xFF3B82F6)
+
+val HPAnalysisDelivery = Color(0xFFE8637E)
+val HPAnalysisSnack = Color(0xFFF2C94C)
+val HPAnalysisDiningOut = Color(0xFF1E3A5F)
+val HPAnalysisMart = Color(0xFF4FC1D0)
+val HPAnalysisConvenience = Color(0xFF4F9A3C)
+val HPAnalysisDrink = Color(0xFFF2994A)
+val HPAnalysisCafe = Color(0xFF9B6FCE)
+val HPAnalysisEtc = Color(0xFFC4C4C4)

@@ -62,12 +62,12 @@ fun LoginScreen(
     onNavigateToSignUp: () -> Unit = {},
     onNavigateToResetPassword: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     var loginErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var visibleCompleteDialogMessage by remember { mutableStateOf(completeDialogMessage) }
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
 

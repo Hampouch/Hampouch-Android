@@ -3,51 +3,50 @@
     <string name="cd_hampouch_logo">햄파우치 로고</string>
     <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
     <string name="cd_loading_text">로딩 중</string>
+    <string name="onboarding_loading_label">LOADING</string>
 
     <string name="onboarding_won_suffix">원</string>
+    <string name="onboarding_day_suffix">일</string>
     <string name="onboarding_direct_input">직접 입력</string>
     <string name="onboarding_confirm">확인</string>
-    <string name="onboarding_next">다음</string>
-    <string name="onboarding_button_next">다음으로</string>
+    <string name="onboarding_button_next">다음</string>
     <string name="onboarding_step_format">STEP %1$d</string>
+    <string name="onboarding_skip">건너뛰기</string>
+    <string name="onboarding_existing_login">기존 회원 로그인</string>
 
     <string name="onboarding_step1_badge">식비 현실 진단</string>
-    <string name="onboarding_step2_title">지난달 식비가 얼마였나요?</string>
-    <string name="onboarding_step2_caption">솔직하게 입력할수록\n더 정확한 진단이 돼요.</string>
-    <string name="onboarding_last_month_expense_label">지난달 식비</string>
-    <string name="onboarding_step2_footnote">배달,카페, 외식 모두 포함해서\n입력값은 분석에만 쓰이고 저장되지 않아요</string>
-    <string name="onboarding_amount_placeholder">금액을 입력해주세요</string>
-    <string name="onboarding_skip">건너뛰기</string>
+    <string name="onboarding_step1_title">지난달 식비가 얼마였나요?</string>
+    <string name="onboarding_step1_caption">솔직하게 입력할수록\n더 정확한 진단이 돼요.</string>
+    <string name="onboarding_last_month_expense_label">지난 달 식비</string>
+    <string name="onboarding_step1_bullet1">배달, 카페, 외식 모두 포함해서 적어주세요.</string>
+    <string name="onboarding_step1_bullet2">입력 값은 분석에만 쓰이고 저장되지 않아요.</string>
 
-    <string name="onboarding_step3_field_placeholder">식비 입력</string>
-
-    <string name="onboarding_step2_badge">챌린지 목표 설정</string>
-    <string name="onboarding_step4_title">챌린지 기간을 선택해주세요</string>
-    <string name="onboarding_step4_caption">짧게 시작할수록 성공률이 높아요.</string>
+    <string name="onboarding_step2_badge">챌린지 기간 설정</string>
+    <string name="onboarding_step2_title">챌린지 기간을 선택해주세요</string>
+    <string name="onboarding_step2_caption">짧게 시작할수록 성공 확률이 높아져요.</string>
     <string name="onboarding_period_label">기간</string>
-    <string name="onboarding_period_3days">3일</string>
     <string name="onboarding_period_7days">7일</string>
     <string name="onboarding_period_14days">14일</string>
-    <string name="onboarding_period_31days">31일</string>
-    <string name="onboarding_period_custom_placeholder">기간 입력</string>
-    <string name="onboarding_day_suffix">일</string>
-    <string name="onboarding_target_amount_label">기간 내 식비 목표</string>
-    <string name="onboarding_step6_field_placeholder">목표 입력</string>
-    <string name="onboarding_salary_day_label">월급날</string>
-    <string name="onboarding_salary_day_recurring_format">매월 %1$d일</string>
-    <string name="onboarding_salary_reset_label">월급날 기준으로 리셋</string>
-    <string name="onboarding_salary_reset_description">월급날 기준으로 목표를 다시 설정해요</string>
-    <string name="onboarding_current_daily_limit_label">현재 하루 한도</string>
-    <string name="onboarding_skip_goal">건너뛰기 (기록만 할게요)</string>
+    <string name="onboarding_period_30days">30일</string>
+    <string name="onboarding_date_fixed_label">날짜 고정</string>
+    <string name="onboarding_date_fixed_description">자동 갱신 챌린지를 원하나요?</string>
+    <string name="onboarding_date_fixed_bullet1">매월 선택한 날짜에 새로운 챌린지를 자동으로 시작해요.</string>
+    <string name="onboarding_date_fixed_bullet2">챌린지는 한 달 동안 진행돼요.</string>
+    <string name="onboarding_start_date_label">시작일</string>
+    <string name="onboarding_start_date_format">%1$d년 %2$d월 %3$d일</string>
 
-    <string name="onboarding_step7_title">월급날 선택</string>
+    <string name="onboarding_step3_badge">챌린지 목표 설정</string>
+    <string name="onboarding_step3_title">목표 금액을 입력해주세요</string>
+    <string name="onboarding_daily_target_label">하루 식비 목표</string>
+    <string name="onboarding_total_target_label">챌린지 전체 식비 목표</string>
+    <string name="onboarding_total_target_bullet">추천 금액은 지난 달 식비가 반영된 금액이에요.</string>
 
-    <string name="onboarding_step3_badge">나의 약간 카테고리</string>
-    <string name="onboarding_step8_title">어디서 가장 많이\n새나가나요?</string>
-    <string name="onboarding_step8_caption">선택한 카테고리 소비 시 개입이 강해져요</string>
+    <string name="onboarding_step4_badge">약한 카테고리 설정</string>
+    <string name="onboarding_step4_title">어느 지출이 가장 많나요?</string>
+    <string name="onboarding_step4_caption">선택한 카테고리 소비 시 개입이 강해져요.</string>
     <string name="onboarding_category_section_label">카테고리</string>
-    <string name="onboarding_category_footnote">중복 선택 가능\n나중에 언제든 수정할 수 있어요</string>
+    <string name="onboarding_category_duplicate_hint">중복 선택 가능</string>
     <string name="onboarding_start_bytecut">햄포치 시작하기</string>
 
-    <string name="category_add_custom">직접추가</string>
+    <string name="category_other">기타</string>
 </resources>

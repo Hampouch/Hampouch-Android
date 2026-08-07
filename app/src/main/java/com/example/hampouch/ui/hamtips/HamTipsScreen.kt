@@ -1,6 +1,11 @@
 package com.example.hampouch.ui.hamtips
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,9 +88,20 @@ fun HamTipsScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToHamBattleLink: (String) -> Unit = {}
+    onNavigateToHamBattleLink: (String) -> Unit = {},
+    onNavigateToHamBattleTab: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    openWriteBattleOnStart: Boolean = false,
+    initialWriteBattleLink: String = "",
+    onExitWriteBattle: () -> Unit = {}
 ) {
-    var route by remember { mutableStateOf(HamTipsRoute.MAIN) }
+    var route by remember {
+        mutableStateOf(if (openWriteBattleOnStart) HamTipsRoute.WRITE_BATTLE else HamTipsRoute.MAIN)
+    }
+    // True only while the very write-battle screen we were deep-linked into (e.g. from the
+    // HamBattle "공유하기" flow) is still showing. Once the user leaves it, back should behave
+    // like any other in-app HamTips screen instead of exiting all the way out.
+    var isExternalWriteBattleEntry by remember { mutableStateOf(openWriteBattleOnStart) }
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
@@ -94,7 +110,7 @@ fun HamTipsScreen(
     var editingPostId by remember { mutableStateOf<String?>(null) }
 
     val allPosts = HamTipsRepository.allPosts
-    val popularPosts = allPosts.sortedByDescending { it.likeCount }
+    val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }
     val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
     val onCategoryTabSelected: (HamTipsCategoryTab) -> Unit = { tab ->
@@ -104,13 +120,19 @@ fun HamTipsScreen(
     val onBackToMain: () -> Unit = {
         route = HamTipsRoute.MAIN
         selectedCategoryTab = HamTipsCategoryTab.ALL
+        isExternalWriteBattleEntry = false
     }
     val onPostClick: (TipPost) -> Unit = { post ->
         selectedPostId = post.id
         route = if (post.type == TipPostType.BATTLE) HamTipsRoute.BATTLE_DETAIL else HamTipsRoute.DETAIL
     }
 
-    when (route) {
+    AnimatedContent(
+        targetState = route,
+        transitionSpec = { fadeIn(tween(300)).togetherWith(fadeOut(tween(300))) },
+        label = "hamtips_route_transition"
+    ) { currentRoute ->
+    when (currentRoute) {
         HamTipsRoute.WRITE_TIP -> {
             BackHandler(onBack = onBackToMain)
             HamTipsWriteTipScreen(
@@ -128,10 +150,12 @@ fun HamTipsScreen(
         }
 
         HamTipsRoute.WRITE_BATTLE -> {
-            BackHandler(onBack = onBackToMain)
+            val onWriteBattleBack = if (isExternalWriteBattleEntry) onExitWriteBattle else onBackToMain
+            BackHandler(onBack = onWriteBattleBack)
             HamTipsWriteBattleScreen(
-                onBackClick = onBackToMain,
-                onSubmitted = onBackToMain
+                onBackClick = onWriteBattleBack,
+                onSubmitted = onBackToMain,
+                initialLink = if (isExternalWriteBattleEntry) initialWriteBattleLink else ""
             )
         }
 
@@ -168,7 +192,8 @@ fun HamTipsScreen(
                     post = post,
                     onBackClick = onBackToMain,
                     onDeleted = onBackToMain,
-                    onNavigateToBattleLink = onNavigateToHamBattleLink
+                    onNavigateToBattleLink = onNavigateToHamBattleLink,
+                    onNavigateToHamBattleTab = onNavigateToHamBattleTab
                 )
             }
         }
@@ -184,7 +209,7 @@ fun HamTipsScreen(
                     HamTipsFab(onClick = { showFabMenu = true })
                 }
             ) { innerPadding ->
-                when (route) {
+                when (currentRoute) {
                     HamTipsRoute.MAIN -> HamTipsMainContent(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
@@ -195,7 +220,7 @@ fun HamTipsScreen(
                         allPosts = filteredSortedPosts(allPosts, null, searchQuery, sortOrder),
                         sortOrder = sortOrder,
                         onSortOrderChange = { sortOrder = it },
-                        onNotificationClick = {},
+                        onNotificationClick = onNotificationClick,
                         onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
                         onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
                         onPostClick = onPostClick,
@@ -214,7 +239,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -232,7 +257,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -250,7 +275,7 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = {},
+                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -273,6 +298,7 @@ fun HamTipsScreen(
                 onDismiss = { showFabMenu = false }
             )
         }
+    }
     }
 }
 

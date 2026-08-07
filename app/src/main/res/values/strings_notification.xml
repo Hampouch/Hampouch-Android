@@ -1,3 +1,28 @@
 <resources>
     <!-- 알림 -->
+    <string name="notification_title">알림</string>
+    <string name="notification_mark_all_read">모두 읽음</string>
+    <string name="notification_empty_message">아직 알림이 없어요.</string>
+
+    <string name="notification_section_today">오늘</string>
+    <string name="notification_section_yesterday">어제</string>
+    <string name="notification_section_last_7_days">지난 7일</string>
+
+    <string name="notification_category_challenge">챌린지</string>
+    <string name="notification_category_hambattle">햄배틀</string>
+    <string name="notification_category_community">커뮤니티</string>
+
+    <!-- 잠금화면 알림 팝업 예시 -->
+    <string name="notification_cd_app_icon">앱 아이콘</string>
+    <string name="notification_lock_preview_title">오늘 식비, 기록하셨나요?</string>
+    <string name="notification_lock_preview_body">잊기 전에 오늘 쓴 식비를 남겨보세요. 하루만 놓쳐도 연속 기록이 끊겨요.</string>
+    <string name="notification_lock_preview_time_now">지금</string>
+    <string name="notification_lock_preview_placeholder_title">제목</string>
+    <string name="notification_lock_preview_placeholder_body">내용</string>
+    <string name="notification_lock_preview_placeholder_time">시간</string>
+
+    <!-- 실기기 테스트용 시스템 알림 -->
+    <string name="notification_channel_name">햄포치 알림</string>
+    <string name="notification_channel_description">챌린지, 햄배틀, 커뮤니티 알림을 보내드려요.</string>
+    <string name="notification_test_send_button">테스트 알림 보내기</string>
 </resources>

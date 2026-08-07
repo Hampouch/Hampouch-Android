@@ -26,14 +26,7 @@ object MiniChallengeStore {
     fun toggle(date: LocalDate, id: String) {
         val updated = challengesFor(date).map { entry ->
             if (entry.id != id) return@map entry
-            val nowChecked = !entry.isChecked
-            val totalDays = entry.totalDays
-            val newAchievedDays = if (totalDays == null) {
-                entry.achievedDays
-            } else {
-                (entry.achievedDays + if (nowChecked) 1 else -1).coerceIn(0, totalDays)
-            }
-            entry.copy(isChecked = nowChecked, achievedDays = newAchievedDays)
+            entry.copy(isChecked = !entry.isChecked)
         }
         challengesByDate = challengesByDate + (date to updated)
     }
@@ -56,5 +49,13 @@ object MiniChallengeStore {
 
     fun removeChallenge(date: LocalDate, id: String) {
         challengesByDate = challengesByDate + (date to challengesFor(date).filterNot { it.id == id })
+    }
+
+    fun resetForAccount() {
+        challengesByDate = mapOf(
+            LocalDate.now().minusDays(1) to MiniChallengeMockData.yesterdayChallenges(),
+            LocalDate.now() to MiniChallengeMockData.todayChallenges()
+        )
+        recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
     }
 }

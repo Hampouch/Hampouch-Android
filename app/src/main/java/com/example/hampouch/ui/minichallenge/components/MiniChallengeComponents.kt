@@ -31,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,6 +63,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.RecommendedMiniChallenge
 import com.example.hampouch.ui.theme.HPBlack
@@ -110,13 +110,7 @@ fun MiniChallengeTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onNotificationClick) {
-                Icon(
-                    Icons.Filled.Notifications,
-                    contentDescription = stringResource(R.string.cd_notification),
-                    tint = HPBlack
-                )
-            }
+            NotificationBellIcon(onClick = onNotificationClick)
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
     )
@@ -497,7 +491,6 @@ fun MiniChallengeNameField(
             focusedContainerColor = HPWhite,
             unfocusedContainerColor = HPWhite,
             focusedIndicatorColor = Color.Transparent,
-//            unfocusedIndicatorColor = Color.Transparent,
             focusedTextColor = HPBlack,
             unfocusedTextColor = HPBlack
         )
