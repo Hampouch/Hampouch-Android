@@ -74,6 +74,9 @@ fun HomeScreen(
     openHamTipsWriteBattleOnStart: Boolean = false,
     initialHamTipsWriteBattleLink: String = "",
     onExitHamTipsWriteBattle: () -> Unit = {},
+    initialMyTipDetailPostId: String? = null,
+    initialMyTipDetailScrollToComments: Boolean = false,
+    initialPopularPostId: String? = null,
     onStartChallengeClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
     onChallengeSummaryClick: (String) -> Unit = {},
@@ -99,6 +102,8 @@ fun HomeScreen(
     val referenceToday = remember { LocalDate.now() }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
+    var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
+    var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
@@ -215,19 +220,24 @@ fun HomeScreen(
                 onViewEndedChallengeDetailClick = onHamBattleViewEndedChallengeDetailClick,
             )
 
-            BottomNavItem.MY_PAGE -> MyPageScreen(
-                selectedBottomTab = selectedBottomTab,
-                onItemSelected = { selectedBottomTab = it },
-                onAddClick = onAddExpenseClick,
-                modifier = Modifier.padding(innerPadding),
-                onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
-                onNotificationClick = onNotificationClick,
-                onLoggedOut = onLoggedOut,
-                onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
-                onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
-                onNavigateToTakeABreak = onNavigateToTakeABreak,
-                onStartNewChallengeClick = { onStartChallengeClick() }
-            )
+            BottomNavItem.MY_PAGE -> {
+                MyPageScreen(
+                    selectedBottomTab = selectedBottomTab,
+                    onItemSelected = { selectedBottomTab = it },
+                    onAddClick = onAddExpenseClick,
+                    modifier = Modifier.padding(innerPadding),
+                    onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
+                    onNotificationClick = onNotificationClick,
+                    onLoggedOut = onLoggedOut,
+                    onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
+                    onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
+                    onNavigateToTakeABreak = onNavigateToTakeABreak,
+                    onStartNewChallengeClick = { onStartChallengeClick() },
+                    initialTipDetailPostId = pendingMyTipDetailPostId,
+                    initialTipDetailScrollToComments = initialMyTipDetailScrollToComments
+                )
+                LaunchedEffect(Unit) { pendingMyTipDetailPostId = null }
+            }
 
             BottomNavItem.COMMUNITY -> {
                 HamTipsScreen(
@@ -240,9 +250,13 @@ fun HomeScreen(
                     onNotificationClick = onNotificationClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle,
                     initialWriteBattleLink = initialHamTipsWriteBattleLink,
-                    onExitWriteBattle = onExitHamTipsWriteBattle
+                    onExitWriteBattle = onExitHamTipsWriteBattle,
+                    initialPopularPostId = pendingPopularPostId
                 )
-                LaunchedEffect(Unit) { pendingOpenHamTipsWriteBattle = false }
+                LaunchedEffect(Unit) {
+                    pendingOpenHamTipsWriteBattle = false
+                    pendingPopularPostId = null
+                }
             }
         }
     }

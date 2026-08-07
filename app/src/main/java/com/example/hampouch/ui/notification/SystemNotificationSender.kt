@@ -3,15 +3,20 @@ package com.example.hampouch.ui.notification
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.example.hampouch.MainActivity
 import com.example.hampouch.R
+import com.example.hampouch.data.model.NotificationItem
 
 private const val TEST_CHANNEL_ID = "hampouch_test_channel"
-private const val TEST_NOTIFICATION_ID = 1001
+
+const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
 
 // TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면 알림 팝업 디자인을 실기기에서 확인하기 위한 임시 목데이터 알림 발송기.
 object SystemNotificationSender {
@@ -28,7 +33,7 @@ object SystemNotificationSender {
         manager.createNotificationChannel(channel)
     }
 
-    fun sendTestLockScreenNotification(context: Context) {
+    fun sendNotification(context: Context, item: NotificationItem) {
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -39,19 +44,29 @@ object SystemNotificationSender {
 
         ensureChannel(context)
 
-        val title = context.getString(R.string.notification_lock_preview_title)
-        val body = context.getString(R.string.notification_lock_preview_body)
+        val contentIntent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_NOTIFICATION_ID, item.id)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            item.id.hashCode(),
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val notification = NotificationCompat.Builder(context, TEST_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(title)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentTitle(item.title)
+            .setContentText(item.message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(item.message))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
-        NotificationManagerCompat.from(context).notify(TEST_NOTIFICATION_ID, notification)
+        NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification)
     }
 }

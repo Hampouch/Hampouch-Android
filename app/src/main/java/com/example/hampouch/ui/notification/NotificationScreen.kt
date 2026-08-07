@@ -73,8 +73,8 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        // TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면 알림 팝업 디자인 실기기 테스트용 임시 버튼.
-        TestNotificationTriggerButton(modifier = Modifier.padding(horizontal = 20.dp))
+        // TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
+        TestNotificationTriggerButton(notifications = notifications, modifier = Modifier.padding(horizontal = 20.dp))
         Spacer(modifier = Modifier.height(12.dp))
         if (notifications.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -114,13 +114,14 @@ fun NotificationScreen(
     }
 }
 
-// TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면 알림 팝업 디자인 실기기 테스트용 임시 버튼.
+// TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
 @Composable
-private fun TestNotificationTriggerButton(modifier: Modifier = Modifier) {
+private fun TestNotificationTriggerButton(notifications: List<NotificationItem>, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val sendAll = { notifications.forEach { SystemNotificationSender.sendNotification(context, it) } }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) SystemNotificationSender.sendTestLockScreenNotification(context) }
+    ) { granted -> if (granted) sendAll() }
 
     Button(
         onClick = {
@@ -130,7 +131,7 @@ private fun TestNotificationTriggerButton(modifier: Modifier = Modifier) {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             if (permissionGranted) {
-                SystemNotificationSender.sendTestLockScreenNotification(context)
+                sendAll()
             } else {
                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }

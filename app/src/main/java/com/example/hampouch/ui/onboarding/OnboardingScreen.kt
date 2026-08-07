@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.onboarding
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -58,6 +59,15 @@ fun OnboardingRoute(
     var uiState by remember { mutableStateOf(OnboardingUiState()) }
     var showSkipConfirmDialog by remember { mutableStateOf(false) }
 
+    BackHandler(enabled = step != OnboardingStep.SPLASH) {
+        when (step) {
+            OnboardingStep.PERIOD_SETTING -> step = OnboardingStep.EXPENSE_DIAGNOSIS
+            OnboardingStep.GOAL_SETTING -> step = OnboardingStep.PERIOD_SETTING
+            OnboardingStep.CATEGORY_SELECT -> step = OnboardingStep.GOAL_SETTING
+            else -> Unit
+        }
+    }
+
     if (showSkipConfirmDialog) {
         OnboardingSkipConfirmDialog(
             onCancel = { showSkipConfirmDialog = false },
@@ -85,7 +95,7 @@ fun OnboardingRoute(
                 onNext = { step = OnboardingStep.PERIOD_SETTING },
                 onBack = {},
                 onSkipClick = { showSkipConfirmDialog = true },
-                onNavigateToLogin = onNavigateToLogin
+                onNavigateToLogin = { showSkipConfirmDialog = true }
             )
 
             OnboardingStep.PERIOD_SETTING -> PeriodStep(

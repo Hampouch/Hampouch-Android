@@ -29,6 +29,7 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.data.model.ExpenseChallengePeriod
+import com.example.hampouch.data.model.NotificationTarget
 import com.example.hampouch.data.repository.AccountDataCoordinator
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.OnboardingDataStore
@@ -68,7 +69,9 @@ private const val TAG = "AppNavHost"
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    pendingNotificationId: String? = null,
+    onPendingNotificationConsumed: () -> Unit = {}
 ) {
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
@@ -89,12 +92,64 @@ fun AppNavHost(
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
+    var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         pendingHomeTab = item
         navController.navigate(Screen.Home.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
         }
+    }
+
+    val handleNotificationTarget: (NotificationTarget) -> Unit = { target ->
+        when (target) {
+            is NotificationTarget.Home -> {
+                pendingHomeTab = BottomNavItem.HOME
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+            is NotificationTarget.ExpenseInput -> {
+                navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
+            }
+            is NotificationTarget.ChallengeSummary -> {
+                navController.navigate(Screen.ChallengeSummary.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleDetail -> {
+                navController.navigate(Screen.ChallengeResult.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleEndedDetail -> {
+                navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleWaitingDetail -> {
+                navController.navigate(Screen.HamBattleWaitingChallengeDetail.createRoute(target.challengeId))
+            }
+            is NotificationTarget.MyTipDetail -> {
+                pendingMyTipDetail = target.postId to target.scrollToComments
+                pendingHomeTab = BottomNavItem.MY_PAGE
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+            is NotificationTarget.CommunityPopularPost -> {
+                pendingCommunityPopularPostId = target.postId
+                pendingHomeTab = BottomNavItem.COMMUNITY
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(pendingNotificationId) {
+        val id = pendingNotificationId ?: return@LaunchedEffect
+        val item = NotificationStore.items.find { it.id == id }
+        if (item != null) {
+            NotificationStore.markRead(item.id)
+            handleNotificationTarget(item.target)
+        }
+        onPendingNotificationConsumed()
     }
 
     val onBottomNavAddClick: () -> Unit = {
@@ -199,16 +254,23 @@ fun AppNavHost(
                 ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
             val writeBattleLink = pendingWriteBattleLink
+            val myTipDetail = pendingMyTipDetail
+            val popularPostId = pendingCommunityPopularPostId
             LaunchedEffect(Unit) {
                 openCommunityWriteBattle = false
                 pendingHomeTab = null
                 pendingWriteBattleLink = ""
+                pendingMyTipDetail = null
+                pendingCommunityPopularPostId = null
             }
             HomeScreen(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
                 initialHamTipsWriteBattleLink = writeBattleLink,
                 onExitHamTipsWriteBattle = { navController.popBackStack() },
+                initialMyTipDetailPostId = myTipDetail?.first,
+                initialMyTipDetailScrollToComments = myTipDetail?.second ?: false,
+                initialPopularPostId = popularPostId,
                 onStartChallengeClick = {
                     navController.navigate(Screen.NextChallengeTakeABreak.route)
                 },
@@ -688,7 +750,9 @@ fun AppNavHost(
                 challenge = AmountAdjustmentMockData.challenge(),
                 onBackClick = { navController.popBackStack() },
                 onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
-                    navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount))
+                    navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -698,7 +762,10 @@ fun AppNavHost(
                 notifications = NotificationStore.items,
                 onBackClick = { navController.popBackStack() },
                 onMarkAllReadClick = { NotificationStore.markAllRead() },
-                onNotificationClick = { item -> NotificationStore.markRead(item.id) }
+                onNotificationClick = { item ->
+                    NotificationStore.markRead(item.id)
+                    handleNotificationTarget(item.target)
+                }
             )
         }
     }

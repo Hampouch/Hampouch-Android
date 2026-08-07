@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,12 +27,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -93,10 +97,17 @@ fun HamTipsScreen(
     onNotificationClick: () -> Unit = {},
     openWriteBattleOnStart: Boolean = false,
     initialWriteBattleLink: String = "",
-    onExitWriteBattle: () -> Unit = {}
+    onExitWriteBattle: () -> Unit = {},
+    initialPopularPostId: String? = null
 ) {
     var route by remember {
-        mutableStateOf(if (openWriteBattleOnStart) HamTipsRoute.WRITE_BATTLE else HamTipsRoute.MAIN)
+        mutableStateOf(
+            when {
+                initialPopularPostId != null -> HamTipsRoute.POPULAR_ALL
+                openWriteBattleOnStart -> HamTipsRoute.WRITE_BATTLE
+                else -> HamTipsRoute.MAIN
+            }
+        )
     }
     // True only while the very write-battle screen we were deep-linked into (e.g. from the
     // HamBattle "공유하기" flow) is still showing. Once the user leaves it, back should behave
@@ -259,6 +270,7 @@ fun HamTipsScreen(
                             onBackClick = onBackToMain,
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
+                            scrollToPostId = initialPopularPostId,
                             modifier = Modifier.padding(innerPadding)
                         )
                     }
@@ -309,8 +321,22 @@ private fun HamTipsFeedSection(
     onSortOrderChange: (HamTipsSortOrder) -> Unit,
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
-    onPostClick: (TipPost) -> Unit = {}
+    onPostClick: (TipPost) -> Unit = {},
+    scrollToPostId: String? = null,
+    scrollState: ScrollState? = null,
+    containerRootY: Float? = null
 ) {
+    var targetOffset by remember(scrollToPostId) { mutableStateOf<Int?>(null) }
+    var hasScrolled by remember(scrollToPostId) { mutableStateOf(false) }
+
+    LaunchedEffect(targetOffset) {
+        val offset = targetOffset
+        if (scrollState != null && offset != null && !hasScrolled) {
+            hasScrolled = true
+            scrollState.animateScrollTo(offset)
+        }
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -324,7 +350,20 @@ private fun HamTipsFeedSection(
         }
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            posts.forEach { post -> HamTipsFeedPostCard(post = post, onClick = { onPostClick(post) }) }
+            posts.forEach { post ->
+                val isScrollTarget = scrollState != null && containerRootY != null && post.id == scrollToPostId
+                HamTipsFeedPostCard(
+                    post = post,
+                    onClick = { onPostClick(post) },
+                    modifier = if (isScrollTarget) {
+                        Modifier.onGloballyPositioned { coordinates ->
+                            targetOffset = (coordinates.positionInRoot().y - containerRootY!! + scrollState!!.value).toInt()
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+            }
         }
     }
 }
@@ -404,13 +443,17 @@ private fun HamTipsFeedRouteContent(
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
-    onPostClick: (TipPost) -> Unit = {}
+    onPostClick: (TipPost) -> Unit = {},
+    scrollToPostId: String? = null
 ) {
+    val scrollState = rememberScrollState()
+    var containerRootY by remember { mutableStateOf<Float?>(null) }
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 20.dp)
+            .onGloballyPositioned { coordinates -> containerRootY = coordinates.positionInRoot().y }
     ) {
         HamTipsDetailTopBar(title = title, onBackClick = onBackClick, onNotificationClick = onNotificationClick)
         Spacer(modifier = Modifier.height(12.dp))
@@ -423,7 +466,10 @@ private fun HamTipsFeedRouteContent(
             sortOrder = sortOrder,
             onSortOrderChange = onSortOrderChange,
             initialSortExpanded = initialSortExpanded,
-            onPostClick = onPostClick
+            onPostClick = onPostClick,
+            scrollToPostId = scrollToPostId,
+            scrollState = scrollState,
+            containerRootY = containerRootY
         )
         Spacer(modifier = Modifier.height(96.dp))
     }
