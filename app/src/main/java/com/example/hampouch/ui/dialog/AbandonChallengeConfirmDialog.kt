@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -16,24 +15,22 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
-fun AmountAdjustmentConfirmDialog(
+fun AbandonChallengeConfirmDialog(
     onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-    subtext: String? = null
+    onConfirm: () -> Unit
 ) {
     Dialog(
         onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        AmountAdjustmentConfirmDialogCard(onCancel = onCancel, onConfirm = onConfirm, subtext = subtext)
+        AbandonChallengeConfirmDialogCard(onCancel = onCancel, onConfirm = onConfirm)
     }
 }
 
 @Composable
-private fun AmountAdjustmentConfirmDialogCard(
+private fun AbandonChallengeConfirmDialogCard(
     onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-    subtext: String? = null
+    onConfirm: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -41,33 +38,23 @@ private fun AmountAdjustmentConfirmDialogCard(
             .padding(horizontal = 20.dp)
     ) {
         ConfirmActionCard(
-            question = stringResource(R.string.amountadjustment_confirm_question),
-            confirmLabel = stringResource(R.string.amountadjustment_confirm_button),
+            question = stringResource(R.string.amountadjustment_abandon_confirm_title),
+            confirmLabel = stringResource(R.string.amountadjustment_abandon_confirm_button),
             onCancel = onCancel,
             onConfirm = onConfirm,
-            subtext = subtext,
-            subtextColor = HPText,
-            subtextTextAlign = TextAlign.Start
+            subtextLines = listOf(
+                stringResource(R.string.amountadjustment_abandon_confirm_bullet1),
+                stringResource(R.string.amountadjustment_abandon_confirm_bullet2)
+            ),
+            subtextColor = HPText
         )
     }
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFFB0B0B0)
 @Composable
-private fun AmountAdjustmentConfirmDialogPreview() {
+private fun AbandonChallengeConfirmDialogPreview() {
     HampouchTheme {
-        AmountAdjustmentConfirmDialogCard(onCancel = {}, onConfirm = {})
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFB0B0B0)
-@Composable
-private fun AmountAdjustmentConfirmDialogLastEditPreview() {
-    HampouchTheme {
-        AmountAdjustmentConfirmDialogCard(
-            onCancel = {},
-            onConfirm = {},
-            subtext = stringResource(R.string.amountadjustment_last_edit_warning)
-        )
+        AbandonChallengeConfirmDialogCard(onCancel = {}, onConfirm = {})
     }
 }

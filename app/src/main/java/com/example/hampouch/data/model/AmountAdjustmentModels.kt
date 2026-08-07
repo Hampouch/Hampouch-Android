@@ -3,6 +3,7 @@ package com.example.hampouch.data.model
 import java.time.LocalDate
 
 data class AmountAdjustmentChallenge(
+    val id: String,
     val totalDays: Int,
     val dDay: Int,
     val periodStart: LocalDate,

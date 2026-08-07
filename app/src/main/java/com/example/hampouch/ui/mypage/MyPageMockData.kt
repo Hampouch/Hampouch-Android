@@ -33,14 +33,15 @@ object MyPageMockData {
             .sortedByDescending { it.periodStart }
             .map { challenge ->
                 val isOngoing = challenge.id == ChallengeRepository.activeChallenge.id &&
-                    !referenceToday.isAfter(challenge.periodEnd)
-                val trackedEnd = if (referenceToday.isBefore(challenge.periodEnd)) referenceToday else challenge.periodEnd
+                    !referenceToday.isAfter(challenge.effectivePeriodEnd)
+                val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
                 val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
                     .takeWhile { !it.isAfter(trackedEnd) }
                     .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
                 ChallengeRecord(
                     id = challenge.id,
                     status = when {
+                        challenge.abandonedDate != null -> ChallengeStatus.FAIL
                         isOngoing -> ChallengeStatus.IN_PROGRESS
                         actualAmount <= challenge.targetAmount -> ChallengeStatus.SUCCESS
                         else -> ChallengeStatus.FAIL

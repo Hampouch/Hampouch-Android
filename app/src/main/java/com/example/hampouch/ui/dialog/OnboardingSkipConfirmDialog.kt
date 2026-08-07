@@ -16,24 +16,22 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
-fun AmountAdjustmentConfirmDialog(
+fun OnboardingSkipConfirmDialog(
     onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-    subtext: String? = null
+    onConfirm: () -> Unit
 ) {
     Dialog(
         onDismissRequest = onCancel,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        AmountAdjustmentConfirmDialogCard(onCancel = onCancel, onConfirm = onConfirm, subtext = subtext)
+        OnboardingSkipConfirmDialogCard(onCancel = onCancel, onConfirm = onConfirm)
     }
 }
 
 @Composable
-private fun AmountAdjustmentConfirmDialogCard(
+private fun OnboardingSkipConfirmDialogCard(
     onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-    subtext: String? = null
+    onConfirm: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -41,11 +39,11 @@ private fun AmountAdjustmentConfirmDialogCard(
             .padding(horizontal = 20.dp)
     ) {
         ConfirmActionCard(
-            question = stringResource(R.string.amountadjustment_confirm_question),
-            confirmLabel = stringResource(R.string.amountadjustment_confirm_button),
+            question = stringResource(R.string.onboarding_skip_confirm_title),
+            confirmLabel = stringResource(R.string.onboarding_skip),
             onCancel = onCancel,
             onConfirm = onConfirm,
-            subtext = subtext,
+            subtext = stringResource(R.string.onboarding_skip_confirm_subtitle),
             subtextColor = HPText,
             subtextTextAlign = TextAlign.Start
         )
@@ -54,20 +52,8 @@ private fun AmountAdjustmentConfirmDialogCard(
 
 @Preview(showBackground = true, backgroundColor = 0xFFB0B0B0)
 @Composable
-private fun AmountAdjustmentConfirmDialogPreview() {
+private fun OnboardingSkipConfirmDialogPreview() {
     HampouchTheme {
-        AmountAdjustmentConfirmDialogCard(onCancel = {}, onConfirm = {})
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFB0B0B0)
-@Composable
-private fun AmountAdjustmentConfirmDialogLastEditPreview() {
-    HampouchTheme {
-        AmountAdjustmentConfirmDialogCard(
-            onCancel = {},
-            onConfirm = {},
-            subtext = stringResource(R.string.amountadjustment_last_edit_warning)
-        )
+        OnboardingSkipConfirmDialogCard(onCancel = {}, onConfirm = {})
     }
 }

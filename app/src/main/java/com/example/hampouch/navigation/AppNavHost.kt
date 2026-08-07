@@ -34,8 +34,10 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.data.model.ExpenseChallengePeriod
+import com.example.hampouch.data.model.NotificationTarget
 import com.example.hampouch.data.repository.AccountDataCoordinator
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -75,7 +77,9 @@ private const val TAG = "AppNavHost"
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    pendingNotificationId: String? = null,
+    onPendingNotificationConsumed: () -> Unit = {}
 ) {
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
@@ -86,16 +90,24 @@ fun AppNavHost(
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
+    var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
 
     // DataStore에 저장된 인증 세션(서버/목데이터 공용)을 확인해 시작 화면을 정한다.
-    // 로그인 상태라면 화면 전역에서 참조하는 UserSession도 함께 복원한다.
+    // 로그인 상태라면 화면 전역에서 참조하는 UserSession도 함께 복원하고 계정별 데이터를 동기화한다.
+    // 로그인 상태가 아니면 온보딩을 이미 완료(또는 건너뛰기)한 적이 있는지에 따라 로그인/온보딩 화면으로 보낸다.
     LaunchedEffect(Unit) {
+        OnboardingDataStore.restorePendingIfNeeded(context)
         val session = authRepository.userSession.first()
-        if (session != null) {
+        startDestination = if (session != null) {
             UserSession.restore(context)
-            AccountDataCoordinator.syncIfNeeded(UserSession.currentUser.id)
+            AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id)
+            Screen.Home.route
+        } else if (OnboardingDataStore.hasCompletedOnboarding(context)) {
+            Screen.Login.route
+        } else {
+            Screen.Onboarding.route
         }
-        startDestination = if (session != null) Screen.Home.route else Screen.Onboarding.route
     }
 
     val resolvedStartDestination = startDestination
@@ -110,6 +122,56 @@ fun AppNavHost(
         navController.navigate(Screen.Home.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
         }
+    }
+
+    val handleNotificationTarget: (NotificationTarget) -> Unit = { target ->
+        when (target) {
+            is NotificationTarget.Home -> {
+                pendingHomeTab = BottomNavItem.HOME
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+            is NotificationTarget.ExpenseInput -> {
+                navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
+            }
+            is NotificationTarget.ChallengeSummary -> {
+                navController.navigate(Screen.ChallengeSummary.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleDetail -> {
+                navController.navigate(Screen.ChallengeResult.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleEndedDetail -> {
+                navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(target.challengeId))
+            }
+            is NotificationTarget.HamBattleWaitingDetail -> {
+                navController.navigate(Screen.HamBattleWaitingChallengeDetail.createRoute(target.challengeId))
+            }
+            is NotificationTarget.MyTipDetail -> {
+                pendingMyTipDetail = target.postId to target.scrollToComments
+                pendingHomeTab = BottomNavItem.MY_PAGE
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+            is NotificationTarget.CommunityPopularPost -> {
+                pendingCommunityPopularPostId = target.postId
+                pendingHomeTab = BottomNavItem.COMMUNITY
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(pendingNotificationId) {
+        val id = pendingNotificationId ?: return@LaunchedEffect
+        val item = NotificationStore.items.find { it.id == id }
+        if (item != null) {
+            NotificationStore.markRead(item.id)
+            handleNotificationTarget(item.target)
+        }
+        onPendingNotificationConsumed()
     }
 
     val onBottomNavAddClick: () -> Unit = {
@@ -140,13 +202,18 @@ fun AppNavHost(
         }
     ) {
         composable(Screen.Onboarding.route) {
+            val goToLogin: () -> Unit = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                }
+            }
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
-                    ChallengeRepository.startNewChallenge(request)
-                    navController.navigate(Screen.Login.route)
+                    OnboardingDataStore.captureOnboardingComplete(context, request)
+                    goToLogin()
                 },
-                onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+                onNavigateToLogin = goToLogin
             )
         }
 
@@ -198,7 +265,7 @@ fun AppNavHost(
             LoadingStep(
                 onTimeout = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        popUpTo(Screen.Loading.route) { inclusive = true }
                     }
                 }
             )
@@ -209,16 +276,23 @@ fun AppNavHost(
                 ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
             val writeBattleLink = pendingWriteBattleLink
+            val myTipDetail = pendingMyTipDetail
+            val popularPostId = pendingCommunityPopularPostId
             LaunchedEffect(Unit) {
                 openCommunityWriteBattle = false
                 pendingHomeTab = null
                 pendingWriteBattleLink = ""
+                pendingMyTipDetail = null
+                pendingCommunityPopularPostId = null
             }
             HomeScreen(
                 initialBottomTab = startTab,
                 openHamTipsWriteBattleOnStart = openWriteBattle,
                 initialHamTipsWriteBattleLink = writeBattleLink,
                 onExitHamTipsWriteBattle = { navController.popBackStack() },
+                initialMyTipDetailPostId = myTipDetail?.first,
+                initialMyTipDetailScrollToComments = myTipDetail?.second ?: false,
+                initialPopularPostId = popularPostId,
                 onStartChallengeClick = {
                     navController.navigate(Screen.NextChallengeTakeABreak.route)
                 },
@@ -296,6 +370,12 @@ fun AppNavHost(
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onChallengeEndedFinishClick = {
+                    val challenge = ChallengeRepository.activeChallenge
+                    val actualAmount = ChallengeResultMockData.forChallenge(challenge).actualAmount
+                    val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
+                    navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
                 }
             )
         }
@@ -693,7 +773,12 @@ fun AppNavHost(
         composable(Screen.AmountAdjustment.route) {
             AmountAdjustmentRoute(
                 challenge = AmountAdjustmentMockData.challenge(),
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
+                    navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -702,7 +787,10 @@ fun AppNavHost(
                 notifications = NotificationStore.items,
                 onBackClick = { navController.popBackStack() },
                 onMarkAllReadClick = { NotificationStore.markAllRead() },
-                onNotificationClick = { item -> NotificationStore.markRead(item.id) }
+                onNotificationClick = { item ->
+                    NotificationStore.markRead(item.id)
+                    handleNotificationTarget(item.target)
+                }
             )
         }
     }

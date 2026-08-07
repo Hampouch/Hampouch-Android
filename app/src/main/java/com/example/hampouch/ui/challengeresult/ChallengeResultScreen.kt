@@ -71,9 +71,6 @@ import kotlinx.coroutines.launch
 
 private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 ${date.dayOfMonth}일"
 
-private fun recommendedTightenedTarget(actualAmount: Int): Int =
-    ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
-
 @Composable
 fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
@@ -192,7 +189,7 @@ fun ChallengeResultScreen(
                             if (state.status == ChallengeResultStatus.FAIL) {
                                 showGoalAdjustmentDialog = true
                             } else {
-                                onStartNewChallengeClick(recommendedTightenedTarget(state.actualAmount))
+                                onStartNewChallengeClick(ChallengeResultMockData.recommendedTightenedTarget(state.actualAmount))
                             }
                         },
                         onTakeABreakClick = onTakeABreakClick
@@ -362,7 +359,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
                     label = state.amountLabel,
                     value = formatWon(state.amountValue),
                     highlighted = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.3f)
                 )
                 StatBox(
                     label = "연속 달성",
