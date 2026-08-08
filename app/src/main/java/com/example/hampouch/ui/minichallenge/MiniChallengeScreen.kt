@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,21 +61,25 @@ fun MiniChallengeScreen(
     when (step) {
         MiniChallengeStep.CREATE -> MiniChallengeCreateScreen(
             modifier = modifier,
+            existingNames = MiniChallengeStore.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onAddChallengeClick = { name, totalDays ->
-                MiniChallengeStore.addChallenge(selectedDate, name, totalDays)
-                step = MiniChallengeStep.DASHBOARD
+                if (MiniChallengeStore.addChallenge(selectedDate, name, totalDays)) {
+                    step = MiniChallengeStep.DASHBOARD
+                }
             }
         )
 
         MiniChallengeStep.RECOMMENDED_LIST -> MiniChallengeRecommendedListScreen(
             modifier = modifier,
             recommendedChallenges = MiniChallengeStore.recommendedChallenges,
+            existingNames = MiniChallengeStore.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onNotificationClick = onNotificationClick,
             onAddChallenge = { recommended: RecommendedMiniChallenge ->
-                MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)
-                step = MiniChallengeStep.DASHBOARD
+                if (MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)) {
+                    step = MiniChallengeStep.DASHBOARD
+                }
             }
         )
 
@@ -114,6 +120,8 @@ private fun MiniChallengeDashboardScreen(
     onViewAllRecommendedClick: () -> Unit = {}
 ) {
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
+    val context = LocalContext.current
+    val duplicateNameMessage = stringResource(R.string.minichallenge_name_duplicate_error)
 
     Scaffold(
         modifier = modifier,
@@ -187,7 +195,12 @@ private fun MiniChallengeDashboardScreen(
                     RecommendedMiniChallengeRow(
                         items = recommendedChallenges,
                         onAddClick = { id ->
-                            pendingChallenge = recommendedChallenges.find { it.id == id }
+                            val recommended = recommendedChallenges.find { it.id == id }
+                            if (recommended != null && todayChallenges.any { MiniChallengeStore.normalizeName(it.name) == MiniChallengeStore.normalizeName(recommended.name) }) {
+                                Toast.makeText(context, duplicateNameMessage, Toast.LENGTH_SHORT).show()
+                            } else {
+                                pendingChallenge = recommended
+                            }
                         }
                     )
                 }

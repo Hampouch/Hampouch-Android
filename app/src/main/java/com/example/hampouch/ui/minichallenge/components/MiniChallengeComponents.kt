@@ -502,7 +502,7 @@ fun MiniChallengeNameField(
 @Composable
 fun MiniChallengeDurationRow(
     options: List<String>,
-    selectedIndex: Int,
+    selectedIndex: Int?,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {

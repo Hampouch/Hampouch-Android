@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun MiniChallengeRecommendedListScreen(
     recommendedChallenges: List<RecommendedMiniChallenge>,
     modifier: Modifier = Modifier,
+    existingNames: List<String> = emptyList(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onAddChallenge: (RecommendedMiniChallenge) -> Unit = {}
@@ -44,6 +47,8 @@ fun MiniChallengeRecommendedListScreen(
     )
     var selectedDurationIndex by remember { mutableStateOf(0) }
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
+    val context = LocalContext.current
+    val duplicateNameMessage = stringResource(R.string.minichallenge_name_duplicate_error)
 
     val filteredChallenges = remember(selectedDurationIndex, recommendedChallenges) {
         val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
@@ -86,7 +91,13 @@ fun MiniChallengeRecommendedListScreen(
                     items(items = filteredChallenges, key = { it.id }) { item ->
                         RecommendedMiniChallengeListCard(
                             item = item,
-                            onAddClick = { pendingChallenge = item }
+                            onAddClick = {
+                                if (existingNames.any { MiniChallengeStore.normalizeName(it) == MiniChallengeStore.normalizeName(item.name) }) {
+                                    Toast.makeText(context, duplicateNameMessage, Toast.LENGTH_SHORT).show()
+                                } else {
+                                    pendingChallenge = item
+                                }
+                            }
                         )
                     }
                 }
