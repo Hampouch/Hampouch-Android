@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,6 +36,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
@@ -59,6 +61,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -85,9 +88,9 @@ import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
+import com.example.hampouch.ui.onboarding.components.FocusHandoffDelayMillis
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
 import com.example.hampouch.ui.onboarding.components.OnboardingBulletList
-import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.PeriodPresetRow
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -107,6 +110,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -115,6 +119,9 @@ import java.time.temporal.ChronoUnit
 
 private val NextChallengePeriodFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy.MM.dd")
+
+internal const val MinPeriodDays = 1
+internal const val MaxPeriodDays = 365
 
 internal val PeriodPresetDayOptions: List<Pair<Int, String>> =
     listOf(7 to "7일", 14 to "14일", 30 to "30일")
@@ -212,7 +219,11 @@ fun NextChallengeRoute(
         dateFixed -> startDate != null
         else -> false
     }
+    val currentCustomPeriodDays = customPeriodDays
+    val customPeriodDaysOutOfRange = periodEnabled && currentCustomPeriodDays != null &&
+            (currentCustomPeriodDays < MinPeriodDays || currentCustomPeriodDays > MaxPeriodDays)
     val canStartChallenge = isPeriodOrDateSelected &&
+            !customPeriodDaysOutOfRange &&
             (targetAmount ?: 0) > 0 &&
             selectedCategoryIds.isNotEmpty()
 
@@ -227,7 +238,7 @@ fun NextChallengeRoute(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            OnboardingTopBar(onBack = onBackClick)
+            NextChallengeTopBar(onBack = onBackClick)
 
             val (heroTitle, heroSubtitle) = if (previousResult.status == ChallengeResultStatus.FAIL) {
                 "괜찮아요!" to "조금 더 쉽게 도전해봐요."
@@ -261,14 +272,11 @@ fun NextChallengeRoute(
                     },
                     customPeriodDays = customPeriodDays,
                     onCustomPeriodDaysChange = { value ->
-                        if (PeriodPresetDayOptions.any { it.first == value }) {
-                            periodDays = value
-                            customPeriodDays = null
-                        } else {
-                            customPeriodDays = value
-                            periodDays = null
-                        }
+                        customPeriodDays = value
+                        periodDays = null
                     },
+                    onCustomPeriodEditingStart = { periodDays = null },
+                    customPeriodDaysOutOfRange = customPeriodDaysOutOfRange,
                     dateFixed = dateFixed,
                     onDateFixedChange = { enabled ->
                         dateFixed = enabled
@@ -414,6 +422,25 @@ fun NextChallengeRoute(
                 onStartChallengeClick()
             }
         )
+    }
+}
+
+@Composable
+internal fun NextChallengeTopBar(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .offset(x = (-12).dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back),
+                tint = HPBlack
+            )
+        }
     }
 }
 
@@ -659,12 +686,14 @@ internal fun RowScope.CategoryIconChip(
 internal fun CustomPeriodDaysInput(
     value: Int?,
     onValueChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onStartEditing: () -> Unit = {}
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var hasFocusedOnce by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(value) {
@@ -677,7 +706,11 @@ internal fun CustomPeriodDaysInput(
     LaunchedEffect(isEditing) {
         if (isEditing) {
             hasFocusedOnce = false
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+            delay(FocusHandoffDelayMillis)
             focusRequester.requestFocus()
+            delay(FocusHandoffDelayMillis)
             keyboardController?.show()
         }
     }
@@ -688,10 +721,10 @@ internal fun CustomPeriodDaysInput(
         modifier = modifier
             .fillMaxWidth()
             .height(43.dp)
-            .background(if (confirmed) HPMain else HPWhite, RoundedCornerShape(9.5.dp))
+            .background(HPWhite, RoundedCornerShape(9.5.dp))
             .border(
-                width = if (confirmed) 0.dp else 1.dp,
-                color = if (isEditing) HPMain else HPGray5,
+                width = 1.dp,
+                color = HPGray5,
                 shape = RoundedCornerShape(9.5.dp)
             )
             .then(
@@ -700,6 +733,7 @@ internal fun CustomPeriodDaysInput(
                 } else {
                     Modifier.clickable {
                         hasFocusedOnce = false
+                        onStartEditing()
                         isEditing = true
                     }
                 }
@@ -725,6 +759,7 @@ internal fun CustomPeriodDaysInput(
                                 selection = TextRange(digitsOnly.length)
                             )
                         }
+                        digitsOnly.toIntOrNull()?.let(onValueChange)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -744,7 +779,6 @@ internal fun CustomPeriodDaysInput(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(onDone = {
-                        textFieldValue.text.toIntOrNull()?.takeIf { it > 0 }?.let(onValueChange)
                         isEditing = false
                         keyboardController?.hide()
                     })
@@ -756,7 +790,7 @@ internal fun CustomPeriodDaysInput(
                 text = if (confirmed) "${value}일" else "직접 입력",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (confirmed) FontWeight.Bold else FontWeight.Normal,
-                color = if (confirmed) HPWhite else HPText,
+                color = if (confirmed) HPMain else HPText,
                 modifier = Modifier.weight(1f)
             )
             if (!confirmed) {
@@ -774,6 +808,8 @@ internal fun ChallengeSettingsSection(
     onPeriodDaysChange: (Int) -> Unit,
     customPeriodDays: Int?,
     onCustomPeriodDaysChange: (Int) -> Unit,
+    onCustomPeriodEditingStart: () -> Unit,
+    customPeriodDaysOutOfRange: Boolean,
     dateFixed: Boolean,
     onDateFixedChange: (Boolean) -> Unit,
     startDateText: String,
@@ -789,7 +825,9 @@ internal fun ChallengeSettingsSection(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onPeriodEnabledChange(!periodEnabled) },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -801,7 +839,7 @@ internal fun ChallengeSettingsSection(
             )
             Switch(
                 checked = periodEnabled,
-                onCheckedChange = onPeriodEnabledChange,
+                onCheckedChange = null,
                 colors = switchColors()
             )
         }
@@ -813,14 +851,24 @@ internal fun ChallengeSettingsSection(
             )
             CustomPeriodDaysInput(
                 value = customPeriodDays,
-                onValueChange = onCustomPeriodDaysChange
+                onValueChange = onCustomPeriodDaysChange,
+                onStartEditing = onCustomPeriodEditingStart
             )
+            if (customPeriodDaysOutOfRange) {
+                Text(
+                    text = stringResource(R.string.onboarding_period_range_error),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = HPSub
+                )
+            }
         }
 
         DashedDivider(color = HPSub2)
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onDateFixedChange(!dateFixed) },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -840,7 +888,7 @@ internal fun ChallengeSettingsSection(
             }
             Switch(
                 checked = dateFixed,
-                onCheckedChange = onDateFixedChange,
+                onCheckedChange = null,
                 colors = switchColors()
             )
         }
