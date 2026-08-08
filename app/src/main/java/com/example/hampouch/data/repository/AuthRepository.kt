@@ -239,7 +239,7 @@ class AuthRepository private constructor(private val context: Context) {
         purpose: EmailVerificationPurpose
     ): Result<EmailSendData> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return mockSendEmailVerificationCode()
+            return mockSendEmailVerificationCode(email, purpose)
         }
         return try {
             val response = NetworkModule.apiService.sendEmailVerificationCode(
@@ -459,8 +459,25 @@ class AuthRepository private constructor(private val context: Context) {
         return Result.success(session)
     }
 
-    private fun mockSendEmailVerificationCode(): Result<EmailSendData> =
-        Result.success(EmailSendData(expiresInSeconds = 180))
+    private fun mockSendEmailVerificationCode(
+        email: String,
+        purpose: EmailVerificationPurpose
+    ): Result<EmailSendData> {
+        val isRegistered = LoginMockData.accounts.any { it.email == email }
+        when (purpose) {
+            EmailVerificationPurpose.SIGNUP -> if (isRegistered) {
+                return Result.failure(
+                    ApiException(code = "EMAIL_ALREADY_EXISTS", message = "이미 가입된 이메일입니다.")
+                )
+            }
+            EmailVerificationPurpose.PASSWORD_RESET -> if (!isRegistered) {
+                return Result.failure(
+                    ApiException(code = "EMAIL_NOT_FOUND", message = "사용자를 찾을 수 없습니다.")
+                )
+            }
+        }
+        return Result.success(EmailSendData(expiresInSeconds = 180))
+    }
 
     private fun mockVerifyEmailCode(
         email: String,
