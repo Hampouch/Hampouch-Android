@@ -190,7 +190,7 @@ fun NextChallengeRoute(
     onStartChallengeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var periodEnabled by remember(previousResult) { mutableStateOf(false) }
+    var periodEnabled by remember(previousResult) { mutableStateOf(true) }
     var periodDays by remember(previousResult) { mutableStateOf<Int?>(previousResult.totalDays) }
     var customPeriodDays by remember(previousResult) { mutableStateOf<Int?>(null) }
     var dateFixed by remember(previousResult) { mutableStateOf(false) }
