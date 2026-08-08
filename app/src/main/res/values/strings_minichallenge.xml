@@ -24,7 +24,7 @@
     <string name="minichallenge_duration_3days">3일</string>
     <string name="minichallenge_duration_7days">7일</string>
     <string name="minichallenge_duration_14days">14일</string>
-    <string name="minichallenge_duration_31days">31일</string>
+    <string name="minichallenge_duration_31days">30일</string>
     <string name="minichallenge_add_challenge_button">미니 챌린지 추가하기</string>
     <string name="minichallenge_name_duplicate_error">이미 있는 미니챌린지입니다.</string>
 </resources>

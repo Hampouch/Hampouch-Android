@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.data.repository.ChallengeRepository
 import java.time.LocalDate
 
 object ExpenseDetailStore {
@@ -18,6 +19,7 @@ object ExpenseDetailStore {
 
     fun upsert(record: ExpenseRecord) {
         recordsById = recordsById + (record.id to record)
+        ChallengeRepository.clearNoRecord(record.date)
     }
 
     fun delete(id: String) {

@@ -54,8 +54,8 @@
     <string name="expenseanalysis_monthly_month_format">%1$d월</string>
     <string name="expenseanalysis_monthly_month_axis_format">%1$d월</string>
 
-    <string name="expenseanalysis_category_detail_spent_format">%1$s로 쓴 식비</string>
-    <string name="expenseanalysis_reason_detail_spent_format">%1$s로 쓴 식비</string>
+    <string name="expenseanalysis_category_detail_spent_format">%1$s 쓴 식비</string>
+    <string name="expenseanalysis_reason_detail_spent_format">%1$s 쓴 식비</string>
     <string name="expenseanalysis_date_short_format">%1$02d.%2$02d</string>
 
     <string name="cd_expense_analysis_monthly_link">월별 지출 보기</string>

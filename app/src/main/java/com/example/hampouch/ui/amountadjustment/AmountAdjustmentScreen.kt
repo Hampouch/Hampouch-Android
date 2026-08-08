@@ -86,7 +86,8 @@ fun AmountAdjustmentRoute(
     challenge: AmountAdjustmentChallenge,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> }
+    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> },
+    onGoalAmountUpdated: () -> Unit = {}
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
@@ -240,6 +241,7 @@ fun AmountAdjustmentRoute(
                 showConfirmDialog = false
                 editCount = (editCount + 1).coerceAtMost(challenge.maxEditCount)
                 ChallengeRepository.updateTargetAmount(selectedAmount)
+                onGoalAmountUpdated()
             },
             subtext = if (isLastEdit) stringResource(R.string.amountadjustment_last_edit_warning) else null
         )
