@@ -120,16 +120,20 @@ fun ResetPasswordScreen(
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
-                        coroutineScope.launch {
-                            authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.PASSWORD_RESET)
-                                .onSuccess { data ->
-                                    emailSendMessage = "인증번호가 발송되었습니다."
-                                    emailCodeExpiresAtMillis =
-                                        System.currentTimeMillis() + data.expiresInSeconds * 1000L
-                                }
-                                .onFailure { error ->
-                                    emailSendMessage = error.message ?: "인증번호 발송에 실패했습니다."
-                                }
+                        if (email.isBlank()) {
+                            emailSendMessage = "이메일을 입력해주세요."
+                        } else {
+                            coroutineScope.launch {
+                                authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.PASSWORD_RESET)
+                                    .onSuccess { data ->
+                                        emailSendMessage = "인증번호가 발송되었습니다."
+                                        emailCodeExpiresAtMillis =
+                                            System.currentTimeMillis() + data.expiresInSeconds * 1000L
+                                    }
+                                    .onFailure { error ->
+                                        emailSendMessage = error.message ?: "인증번호 발송에 실패했습니다."
+                                    }
+                            }
                         }
                     }
                 )

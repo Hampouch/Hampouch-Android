@@ -239,7 +239,7 @@ class AuthRepository private constructor(private val context: Context) {
         purpose: EmailVerificationPurpose
     ): Result<EmailSendData> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return mockSendEmailVerificationCode()
+            return mockSendEmailVerificationCode(email, purpose)
         }
         return try {
             val response = NetworkModule.apiService.sendEmailVerificationCode(
@@ -459,14 +459,42 @@ class AuthRepository private constructor(private val context: Context) {
         return Result.success(session)
     }
 
-    private fun mockSendEmailVerificationCode(): Result<EmailSendData> =
-        Result.success(EmailSendData(expiresInSeconds = 180))
+    /**
+     * 목데이터 모드에서 이메일 인증번호 발송/확인 양쪽에서 공통으로 쓰는 이메일 자격 검증.
+     * SIGNUP인데 이미 등록된 이메일이거나, PASSWORD_RESET인데 등록되지 않은 이메일이면 실패를 돌려준다.
+     * 인증번호 발송을 건너뛰고 알려진 목데이터 코드(123456)로 바로 확인을 시도하는 우회를 막기 위해
+     * mockVerifyEmailCode에서도 동일하게 검증한다.
+     */
+    private fun checkEmailEligibility(email: String, purpose: EmailVerificationPurpose): ApiException? {
+        val isRegistered = LoginMockData.accounts.any { it.email == email }
+        return when (purpose) {
+            EmailVerificationPurpose.SIGNUP -> if (isRegistered) {
+                ApiException(code = "EMAIL_ALREADY_EXISTS", message = "이미 가입된 이메일입니다.")
+            } else {
+                null
+            }
+            EmailVerificationPurpose.PASSWORD_RESET -> if (!isRegistered) {
+                ApiException(code = "EMAIL_NOT_FOUND", message = "사용자를 찾을 수 없습니다.")
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun mockSendEmailVerificationCode(
+        email: String,
+        purpose: EmailVerificationPurpose
+    ): Result<EmailSendData> {
+        checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
+        return Result.success(EmailSendData(expiresInSeconds = 180))
+    }
 
     private fun mockVerifyEmailCode(
         email: String,
         code: String,
         purpose: EmailVerificationPurpose
     ): Result<EmailVerifyData> {
+        checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
         return if (code == "123456") {
             Result.success(EmailVerifyData(email = email, purpose = purpose.name, verified = true))
         } else {

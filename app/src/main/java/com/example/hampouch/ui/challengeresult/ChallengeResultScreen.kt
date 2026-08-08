@@ -75,6 +75,7 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
     onBackClick: () -> Unit = {},
+    showBackButton: Boolean = true,
     onExpenseAnalysisClick: () -> Unit = {},
     onAdjustGoalClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
@@ -98,7 +99,7 @@ fun ChallengeResultScreen(
     }
 
     Scaffold(
-        topBar = { ChallengeResultTopBar(onBackClick = onBackClick) },
+        topBar = { ChallengeResultTopBar(onBackClick = onBackClick, showBackButton = showBackButton) },
         containerColor = HPWhite
     ) { innerPadding ->
         Column(
@@ -246,18 +247,20 @@ fun ChallengeResultScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChallengeResultTopBar(onBackClick: () -> Unit) {
+private fun ChallengeResultTopBar(onBackClick: () -> Unit, showBackButton: Boolean = true) {
     CenterAlignedTopAppBar(
         title = {
             Text("챌린지 결과", style = MaterialTheme.typography.titleSmall, color = HPBlack)
         },
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "뒤로가기",
-                    tint = HPBlack
-                )
+            if (showBackButton) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "뒤로가기",
+                        tint = HPBlack
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = HPWhite)
