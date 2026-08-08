@@ -57,6 +57,16 @@ object ChallengeRepository {
 
     private val challengesState = mutableStateOf(buildSeedChallenges(LocalDate.now()))
 
+    private var noRecordDates: Set<LocalDate> by mutableStateOf(emptySet())
+
+    fun markNoRecord(date: LocalDate) {
+        noRecordDates = noRecordDates + date
+    }
+
+    fun clearNoRecord(date: LocalDate) {
+        noRecordDates = noRecordDates - date
+    }
+
     val challenges: List<ActiveChallenge>
         get() = challengesState.value
 
@@ -173,14 +183,15 @@ object ChallengeRepository {
     ): ChallengeProgress {
         val days = elapsedDays(referenceToday, challenge)
         fun balanceOn(date: LocalDate) = challenge.dailyLimitOn(date) - spentOnDate(date)
+        fun isSuccess(date: LocalDate) = date !in noRecordDates && balanceOn(date) >= 0
 
         val savedAmount = days.sumOf { balanceOn(it) }
         var streakDays = 0
         for (day in days.asReversed()) {
-            if (balanceOn(day) >= 0) streakDays++ else break
+            if (isSuccess(day)) streakDays++ else break
         }
         val dailyRecords = days.associateWith { day ->
-            if (balanceOn(day) >= 0) DailyRecordStatus.SUCCESS else DailyRecordStatus.FAIL
+            if (isSuccess(day)) DailyRecordStatus.SUCCESS else DailyRecordStatus.FAIL
         }
         return ChallengeProgress(savedAmount = savedAmount, streakDays = streakDays, dailyRecords = dailyRecords)
     }
@@ -189,11 +200,13 @@ object ChallengeRepository {
         challengesState.value = buildSeedChallenges(referenceToday)
         challengeEndAcknowledged = false
         hasVisitedExpenseEditAfterEnd = false
+        noRecordDates = emptySet()
     }
 
     fun resetEmpty() {
         challengesState.value = emptyList()
         challengeEndAcknowledged = false
         hasVisitedExpenseEditAfterEnd = false
+        noRecordDates = emptySet()
     }
 }

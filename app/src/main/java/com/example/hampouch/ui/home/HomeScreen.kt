@@ -119,6 +119,7 @@ fun HomeScreen(
     val uiState = baseUiState.copy(expenses = storeExpenses)
     val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
+        val liveDailyLimit = resolvedChallenge?.dailyLimitOn(selectedDate) ?: challenge.dailyLimit
         val todaySpent = uiState.expenses.sumOf { it.amount }
         val progress = resolvedChallenge?.let { rc ->
             ChallengeRepository.computeProgress(referenceToday, rc) { date ->
@@ -126,7 +127,8 @@ fun HomeScreen(
             }
         }
         challenge.copy(
-            todayBalance = challenge.dailyLimit - todaySpent,
+            dailyLimit = liveDailyLimit,
+            todayBalance = liveDailyLimit - todaySpent,
             savedAmount = progress?.savedAmount ?: challenge.savedAmount,
             streakDays = progress?.streakDays ?: challenge.streakDays
         )
@@ -202,7 +204,10 @@ fun HomeScreen(
                                 )
                                 RecordAlarmStore.dismissForToday(referenceToday)
                             },
-                            onLaterClick = { RecordAlarmStore.dismissForToday(referenceToday) }
+                            onLaterClick = {
+                                RecordAlarmStore.dismissForToday(referenceToday)
+                                ChallengeRepository.markNoRecord(referenceToday)
+                            }
                         )
                 }
             }

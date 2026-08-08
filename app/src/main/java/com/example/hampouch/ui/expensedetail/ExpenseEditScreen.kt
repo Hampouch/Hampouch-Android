@@ -120,8 +120,8 @@ fun ExpenseEditRoute(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPWhite)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(22.dp)
+                    .padding(15.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_date)) {
                     ExpenseDateField(label = date.format(editDateFormatter), onClick = { showDatePicker = true })
