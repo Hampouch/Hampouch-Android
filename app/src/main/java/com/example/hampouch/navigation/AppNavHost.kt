@@ -748,7 +748,7 @@ fun AppNavHost(
 
         composable(Screen.TakeABreak.route) {
             TakeABreakScreen(
-                onClose = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
                 onKeepChallenge = { navController.popBackStack() },
                 onStartBreak = { duration, customDays ->
                     TakeABreakStore.startBreak(duration, customDays)

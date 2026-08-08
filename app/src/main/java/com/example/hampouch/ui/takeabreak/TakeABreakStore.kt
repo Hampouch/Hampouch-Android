@@ -16,14 +16,15 @@ object TakeABreakStore {
         return referenceToday.isAfter(endDate)
     }
 
-    fun startBreak(duration: BreakDuration, customDays: Int?, referenceToday: LocalDate = LocalDate.now()) {
+    fun startBreak(duration: BreakDuration?, customDays: Int?, referenceToday: LocalDate = LocalDate.now()) {
         val totalDays = when (duration) {
             BreakDuration.THREE_DAYS -> 3
             BreakDuration.ONE_WEEK -> 7
             BreakDuration.TWO_WEEKS -> 14
-            BreakDuration.CUSTOM -> (customDays ?: 7).coerceAtLeast(1)
+            BreakDuration.CONTINUOUS -> null
+            null -> (customDays ?: 7).coerceAtLeast(1)
         }
-        breakEndDate = referenceToday.plusDays((totalDays - 1).toLong())
+        breakEndDate = totalDays?.let { referenceToday.plusDays((it - 1).toLong()) }
     }
 
     fun postponeOneDay() {
