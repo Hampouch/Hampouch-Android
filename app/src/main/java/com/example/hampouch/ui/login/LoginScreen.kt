@@ -7,11 +7,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -73,7 +77,6 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
 
-    // 소셜 로그인 결과 서버에 아직 닉네임이 없는 신규 유저일 때만 채워지며, 닉네임 다이얼로그를 띄우는 트리거로 쓰인다.
     var pendingSocialSignUp by remember { mutableStateOf<AuthSession?>(null) }
     var socialNickname by rememberSaveable { mutableStateOf("") }
     var isSocialNicknameAvailable by remember { mutableStateOf(false) }
@@ -133,12 +136,18 @@ fun LoginScreen(
         )
     }
 
-    Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize().imePadding(),
+        topBar = {},
+        bottomBar = {},
+        containerColor = HPSub3
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(start = 20.dp, end = 20.dp, top = 60.dp)
-                .fillMaxWidth(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, top = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(

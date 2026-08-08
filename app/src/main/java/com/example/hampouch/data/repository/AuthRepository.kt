@@ -137,7 +137,6 @@ class AuthRepository private constructor(private val context: Context) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // 네트워크 오류, BASE_URL 미설정 등은 사용자에게 원문 메시지 대신 안내 문구로 통일해 보여준다.
             Log.e(TAG, "소셜 로그인 네트워크 오류", e)
             Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
         }
@@ -151,10 +150,7 @@ class AuthRepository private constructor(private val context: Context) {
     suspend fun completeSocialSignUp(session: AuthSession, nickname: String): Result<AuthSession> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             val updatedSession = session.copy(nickname = nickname)
-            // 이메일+비밀번호 회원가입과 마찬가지로 목데이터 계정 목록에 등록해서, 같은 테스트 이메일로
-            // 다시 소셜 로그인하면 신규 유저가 아닌 기존 유저로 곧바로 로그인되도록 한다.
             LoginMockData.register(email = updatedSession.email ?: "", password = "", nickname = nickname)
-            // 방금 완료한 회원가입이므로, 이 이메일에 예약된 온보딩 값이 있으면 이 계정 전용으로 확정해둔다.
             updatedSession.email?.let { OnboardingDataStore.reserveForNewAccount(context, it) }
             saveSession(updatedSession)
             return Result.success(updatedSession)
@@ -357,8 +353,6 @@ class AuthRepository private constructor(private val context: Context) {
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                // 방금 완료한 회원가입이므로, 이 이메일에 예약된 온보딩 값이 있으면 이 계정 전용으로 확정해둔다.
-                // (실제 로그인은 이 화면이 아니라 로그인 화면에서 별도로 하므로, 그때 소비된다.)
                 OnboardingDataStore.reserveForNewAccount(context, email)
                 Result.success(body)
             } else {
@@ -414,10 +408,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    // region 목데이터 모드 (AuthConfig.USE_SERVER_AUTH == false)
-    // 서버 없이 화면/네비게이션을 확인할 때 쓰는 더미 구현. LoginMockData의 고정 계정으로만 동작하며,
-    // signUp/checkNicknameAvailability 등은 실제로 계정을 만들거나 저장하지 않는다(단순 성공 흉내).
-
     private suspend fun mockLogin(email: String, password: String): Result<AuthSession> {
         val account = LoginMockData.findAccount(email, password)
             ?: return Result.failure(
@@ -429,13 +419,10 @@ class AuthRepository private constructor(private val context: Context) {
     private suspend fun mockLoginWithSocial(credential: SocialCredential): Result<SocialLoginOutcome> {
         val account = LoginMockData.accounts.find { it.email == credential.email }
         if (account != null) {
-            // 이미 목데이터 모드에서 가입된(닉네임 등록까지 마친) 이메일이면 곧바로 로그인 처리한다.
             return mockSignIn(credential.provider, account).map { session ->
                 SocialLoginOutcome(session = session, isNewUser = false)
             }
         }
-        // 처음 보는 이메일(예: SocialAuthManager의 목데이터 테스트 이메일)이면 실제 서버처럼 신규 유저로 취급해
-        // 닉네임 입력 다이얼로그부터 띄운다. 세션은 아직 저장하지 않고 [completeSocialSignUp]에서 마무리한다.
         val session = AuthSession(
             provider = credential.provider,
             userId = (credential.email ?: credential.providerToken).hashCode().toLong(),
@@ -480,7 +467,6 @@ class AuthRepository private constructor(private val context: Context) {
         code: String,
         purpose: EmailVerificationPurpose
     ): Result<EmailVerifyData> {
-        // 목데이터 모드에서는 인증번호를 실제로 발송하지 않으므로 고정 코드(123456)만 통과시킨다.
         return if (code == "123456") {
             Result.success(EmailVerifyData(email = email, purpose = purpose.name, verified = true))
         } else {
@@ -494,9 +480,7 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     private fun mockSignUp(email: String, password: String, nickname: String): Result<SignUpData> {
-        // 실제 회원가입처럼 로그인 화면에서 곧바로 로그인할 수 있도록 목데이터 계정 목록에 등록한다.
         LoginMockData.register(email = email, password = password, nickname = nickname)
-        // 방금 완료한 회원가입이므로, 이 이메일에 예약된 온보딩 값이 있으면 이 계정 전용으로 확정해둔다.
         OnboardingDataStore.reserveForNewAccount(context, email)
         return Result.success(
             SignUpData(
@@ -507,7 +491,6 @@ class AuthRepository private constructor(private val context: Context) {
             )
         )
     }
-    // endregion
 
     /**
      * 세션을 DataStore에 저장하고, 역할 기반 화면들이 참조하는 [UserSession]도 함께 갱신한다.
@@ -528,9 +511,6 @@ class AuthRepository private constructor(private val context: Context) {
             } ?: preferences.remove(Keys.PROFILE_IMAGE_URL)
         }
         UserSession.login(context, sessionToUser(session))
-        // 로그인/회원가입이 실제로 일어나는 이 시점에 계정별 목데이터 스토어(마이페이지 프로필 등)를 동기화한다.
-        // AppNavHost의 콜드 스타트 동기화는 "이미 로그인된 채로 앱을 재시작한 경우"만 커버하고,
-        // 앱을 껐다 켜지 않고 로그인/로그아웃만 반복하는 경우는 여기서 처리해야 한다.
         AccountDataCoordinator.syncIfNeeded(context, session.userId.toString(), session.email)
     }
 

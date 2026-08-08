@@ -426,6 +426,10 @@ fun HamTipsDetailScreen(
         }
     }
 
+    LaunchedEffect(post.id) {
+        HamTipsRepository.incrementViewCount(post.id)
+    }
+
     val isAuthor = post.authorId == UserSession.currentUser.id
     val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title

@@ -57,7 +57,7 @@ object MyPageMockData {
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 
-    fun myTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.authorId == HamTipsRepository.CURRENT_USER_ID }
+    fun myTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.authorId == UserSession.currentUser.id }
 
     fun savedTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.isSaved }
 

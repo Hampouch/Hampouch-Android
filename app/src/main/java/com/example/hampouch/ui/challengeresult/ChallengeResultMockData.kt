@@ -79,7 +79,6 @@ object ChallengeResultMockData {
         )
     }
 
-    // 프리뷰/기본값 용도로만 쓰인다(실제 화면은 항상 특정 challengeId로 조회한 챌린지를 전달한다).
     fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
         forChallenge(ChallengeRepository.activeChallenge!!, referenceToday)
 

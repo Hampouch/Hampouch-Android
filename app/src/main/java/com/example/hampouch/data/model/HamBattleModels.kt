@@ -73,8 +73,6 @@ data class HamBattleChallenge(
 
     fun status(referenceToday: LocalDate = LocalDate.now()): HamBattleStatus {
         if (cancelled) return HamBattleStatus.ENDED
-        // 정원이 다 안 찼으면 시작일이 지났든 말든 진행중이 될 수 없다 — 계속 대기중이고,
-        // 시작일까지 못 채웠으면 isExpired로 자동 취소 대상이 될 뿐이다.
         if (!isFull) return HamBattleStatus.WAITING
         val start = effectiveStartDate(referenceToday) ?: return HamBattleStatus.WAITING
         if (referenceToday.isBefore(start)) return HamBattleStatus.WAITING

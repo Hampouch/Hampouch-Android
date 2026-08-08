@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -79,13 +81,18 @@ fun ResetPasswordScreen(
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
 
-    Scaffold(topBar = {}, bottomBar = {}, containerColor = HPSub3) { innerPadding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize().imePadding(),
+        topBar = {},
+        bottomBar = {},
+        containerColor = HPSub3
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 20.dp)
-                .fillMaxWidth(),
+                .padding(start = 20.dp, end = 20.dp, top = 60.dp, bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(

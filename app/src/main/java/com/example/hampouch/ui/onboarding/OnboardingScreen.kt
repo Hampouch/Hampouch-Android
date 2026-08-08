@@ -8,7 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,11 +55,11 @@ fun OnboardingRoute(
     onNavigateToLogin: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var step by remember { mutableStateOf(OnboardingStep.SPLASH) }
-    var uiState by remember { mutableStateOf(OnboardingUiState()) }
-    var showSkipConfirmDialog by remember { mutableStateOf(false) }
+    var step by rememberSaveable { mutableStateOf(OnboardingStep.SPLASH) }
+    var uiState by rememberSaveable(stateSaver = OnboardingUiStateSaver) { mutableStateOf(OnboardingUiState()) }
+    var showSkipConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    BackHandler(enabled = step != OnboardingStep.SPLASH) {
+    BackHandler(enabled = step != OnboardingStep.SPLASH && step != OnboardingStep.EXPENSE_DIAGNOSIS) {
         when (step) {
             OnboardingStep.PERIOD_SETTING -> step = OnboardingStep.EXPENSE_DIAGNOSIS
             OnboardingStep.GOAL_SETTING -> step = OnboardingStep.PERIOD_SETTING
@@ -72,7 +72,6 @@ fun OnboardingRoute(
         OnboardingSkipConfirmDialog(
             onCancel = { showSkipConfirmDialog = false },
             onConfirm = {
-                // 건너뛰기는 입력값이 없으므로 챌린지를 만들지 않는다 — 로그인 화면으로만 이동한다.
                 showSkipConfirmDialog = false
                 onNavigateToLogin()
             }
@@ -96,7 +95,8 @@ fun OnboardingRoute(
                 onNext = { step = OnboardingStep.PERIOD_SETTING },
                 onBack = {},
                 onSkipClick = { showSkipConfirmDialog = true },
-                onNavigateToLogin = { showSkipConfirmDialog = true }
+                onNavigateToLogin = { showSkipConfirmDialog = true },
+                onExistingMemberLogin = onNavigateToLogin
             )
 
             OnboardingStep.PERIOD_SETTING -> PeriodStep(

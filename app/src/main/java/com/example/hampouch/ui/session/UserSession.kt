@@ -50,8 +50,10 @@ object UserSession {
             .apply()
     }
 
-    // TODO: 서버팀 회원 탈퇴 API 연동 시 실제 계정 삭제 요청으로 교체. 현재는 로그아웃과 동일하게 로컬 세션만 정리한다.
+    // TODO: 서버팀 회원 탈퇴 API 연동 시 실제 계정 삭제 요청으로 교체. 현재는 목데이터 계정 목록에서
+    // 제거해 같은 이메일/비밀번호로 다시 로그인할 수 없게 만드는 것으로 탈퇴를 흉내낸다.
     fun withdraw(context: Context) {
+        LoginMockData.removeAccount(currentUserState.value.id)
         logout(context)
     }
 }

@@ -15,7 +15,6 @@ import java.time.temporal.ChronoUnit
 object ChallengeRepository {
 
     private const val CHALLENGE_TOTAL_DAYS = 14
-    private const val CHALLENGE_DAY_OF_PROGRESS = 7
     private const val CHALLENGE_DAILY_LIMIT = 20_000
     private const val CHALLENGE_SAVED_AMOUNT = 21_400
     private const val CHALLENGE_STREAK_DAYS = 4
@@ -26,8 +25,8 @@ object ChallengeRepository {
     private const val DEFAULT_ONE_OFF_DAYS = 30
 
     private fun buildSeedChallenges(referenceToday: LocalDate): List<ActiveChallenge> {
-        val activeStart = referenceToday.minusDays((CHALLENGE_DAY_OF_PROGRESS - 1).toLong())
-        val activeEnd = activeStart.plusDays((CHALLENGE_TOTAL_DAYS - 1).toLong())
+        val activeEnd = referenceToday.minusDays(1)
+        val activeStart = activeEnd.minusDays((CHALLENGE_TOTAL_DAYS - 1).toLong())
         val previousEnd = activeStart.minusDays(1)
         val previousStart = previousEnd.minusDays((PREVIOUS_CHALLENGE_TOTAL_DAYS - 1).toLong())
 
@@ -61,7 +60,6 @@ object ChallengeRepository {
     val challenges: List<ActiveChallenge>
         get() = challengesState.value
 
-    // 온보딩을 건너뛴 신규 계정 등, 진행중인 챌린지가 아예 없는 상태([resetEmpty])도 있을 수 있어 nullable이다.
     val activeChallenge: ActiveChallenge?
         get() = challenges.lastOrNull()
 

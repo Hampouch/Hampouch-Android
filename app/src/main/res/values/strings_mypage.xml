@@ -19,6 +19,7 @@
     <string name="profile_edit_section_user_info">사용자 정보</string>
     <string name="profile_edit_nickname_label">닉네임</string>
     <string name="profile_edit_nickname_placeholder">닉네임을 입력해주세요.</string>
+    <string name="profile_edit_nickname_empty">닉네임을 입력해주세요.</string>
     <string name="profile_edit_nickname_duplicate">이미 존재하는 닉네임입니다.</string>
     <string name="profile_edit_complete">완료</string>
     <string name="profile_edit_success_message">프로필이 수정되었습니다.</string>
@@ -45,6 +46,7 @@
     <string name="settings_section_support">고객 지원</string>
     <string name="settings_customer_center">고객센터</string>
     <string name="settings_terms">약관</string>
+    <string name="settings_coming_soon_message">준비 중이에요</string>
 
     <string name="settings_logout">로그아웃</string>
     <string name="settings_withdraw">회원 탈퇴</string>

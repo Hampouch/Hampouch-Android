@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -102,10 +101,6 @@ fun ExpenseCalendarRoute(
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
     challengePeriod: ExpenseChallengePeriod? = ExpenseDetailMockData.activeChallengePeriod(),
-    monthlyTotal: Int = ExpenseDetailMockData.monthlyTotal(),
-    monthlyDailyAverage: Int = ExpenseDetailMockData.monthlyDailyAverage(),
-    weeklyTotal: Int = ExpenseDetailMockData.weeklyTotal(),
-    weeklyDailyAverage: Int = ExpenseDetailMockData.weeklyDailyAverage(),
     onExpenseAnalysisClick: () -> Unit = {},
     onAddExpenseClick: (LocalDate) -> Unit = {},
     restrictToChallengePeriod: Boolean = false
@@ -127,19 +122,41 @@ fun ExpenseCalendarRoute(
     val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
     val editableRange = challengePeriod.takeIf { restrictToChallengePeriod }
 
+    val monthlyRecordsTotal = ExpenseDetailStore.recordsById.values
+        .filter { it.date.year == displayedMonth.year && it.date.monthValue == displayedMonth.monthValue }
+        .sumOf { it.amount }
+    val monthlyTotal = monthlyRecordsTotal
+    val monthlyDailyAverage = monthlyRecordsTotal / displayedMonth.lengthOfMonth()
+
+    val weeklyWeekEnd = displayedWeekStart.plusDays(6)
+    val weeklyRecordsTotal = ExpenseDetailStore.recordsById.values
+        .filter { !it.date.isBefore(displayedWeekStart) && !it.date.isAfter(weeklyWeekEnd) }
+        .sumOf { it.amount }
+    val weeklyTotal = weeklyRecordsTotal
+    val weeklyDailyAverage = weeklyRecordsTotal / 7
+
+    val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) displayedWeekStart else displayedMonth
+
     Scaffold(
         modifier = modifier,
         topBar = {
             ExpenseCalendarTopBar(
                 title = stringResource(
                     R.string.expensedetail_calendar_year_month_format,
-                    displayedMonth.year,
-                    displayedMonth.monthValue
+                    topBarYearMonth.year,
+                    topBarYearMonth.monthValue
                 ),
                 onBackClick = onBackClick,
                 onAnalysisClick = onExpenseAnalysisClick,
-                onPreviousMonth = { displayedMonth = displayedMonth.minusMonths(1) },
-                onNextMonth = { displayedMonth = displayedMonth.plusMonths(1) },
+                onPreviousMonth = {
+                    displayedMonth = displayedMonth.minusMonths(1)
+                    selectedDate = displayedMonth
+                },
+                onNextMonth = {
+                    displayedMonth = displayedMonth.plusMonths(1)
+                    selectedDate = displayedMonth
+                },
+                monthNavEnabled = viewMode == ExpenseCalendarViewMode.MONTHLY,
                 showAnalysisAction = !restrictToChallengePeriod
             )
         },
@@ -187,8 +204,19 @@ fun ExpenseCalendarRoute(
                         editableRange = editableRange
                     )
                 } else {
+                    val isCurrentWeek = displayedWeekStart == weekGridStart(referenceToday)
+                    val weekOrdinals = stringArrayResource(R.array.expensedetail_week_ordinals)
+                    val weekOrdinalIndex = (weekOfMonthOrdinal(displayedWeekStart) - 1).coerceIn(0, weekOrdinals.size - 1)
                     CalendarStatCard(
-                        totalLabel = stringResource(R.string.expensedetail_calendar_weekly_total),
+                        totalLabel = if (isCurrentWeek) {
+                            stringResource(R.string.expensedetail_calendar_weekly_total)
+                        } else {
+                            stringResource(
+                                R.string.expensedetail_calendar_weekly_total_format,
+                                displayedWeekStart.monthValue,
+                                weekOrdinals[weekOrdinalIndex]
+                            )
+                        },
                         totalAmount = weeklyTotal,
                         dailyAverage = weeklyDailyAverage
                     )
@@ -267,6 +295,7 @@ private fun ExpenseCalendarTopBar(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     modifier: Modifier = Modifier,
+    monthNavEnabled: Boolean = true,
     showAnalysisAction: Boolean = true
 ) {
     Row(
@@ -290,20 +319,19 @@ private fun ExpenseCalendarTopBar(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onPreviousMonth) {
+            IconButton(onClick = onPreviousMonth, enabled = monthNavEnabled) {
                 Icon(
                     Icons.Filled.ChevronLeft,
                     contentDescription = stringResource(R.string.cd_calendar_month_prev),
-                    tint = HPBlack
+                    tint = if (monthNavEnabled) HPBlack else HPGray4
                 )
             }
             Text(title, style = MaterialTheme.typography.titleSmall, color = HPBlack)
-            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = HPBlack)
-            IconButton(onClick = onNextMonth) {
+            IconButton(onClick = onNextMonth, enabled = monthNavEnabled) {
                 Icon(
                     Icons.Filled.ChevronRight,
                     contentDescription = stringResource(R.string.cd_calendar_month_next),
-                    tint = HPBlack
+                    tint = if (monthNavEnabled) HPBlack else HPGray4
                 )
             }
         }

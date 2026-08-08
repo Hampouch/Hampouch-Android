@@ -141,8 +141,6 @@ fun HamBattleScreen(
         waitingChallenges.firstOrNull { it.isExpired() }
     }
 
-    // 3일 연속 지출 미입력이면 그 자리에서 바로 탈락 처리(그 시점까지의 지출 금액으로 고정)하고,
-    // 그 결과 남은(탈락하지 않은) 참가자가 1명 이하로 줄면 챌린지 자체를 강제 종료시킨다.
     LaunchedEffect(activeChallenges) {
         activeChallenges.forEach { challenge ->
             val me = challenge.participants.find { it.name == "나" }

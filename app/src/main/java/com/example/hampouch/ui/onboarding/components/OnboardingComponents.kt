@@ -269,7 +269,7 @@ fun EditableAmountRow(
 
     LaunchedEffect(isEditing) {
         if (isEditing) {
-            val seedText = editSeedValue?.toString().orEmpty()
+            val seedText = editSeedValue?.toWonText().orEmpty()
             textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
             hasFocusedOnce = false
             focusRequester.requestFocus()
@@ -307,12 +307,25 @@ fun EditableAmountRow(
                         value = textFieldValue,
                         onValueChange = { newValue ->
                             val digitsOnly = newValue.text.filter(Char::isDigit)
-                            textFieldValue = if (digitsOnly == newValue.text) {
-                                newValue
-                            } else {
-                                TextFieldValue(text = digitsOnly, selection = TextRange(digitsOnly.length))
+                            val normalizedDigits = digitsOnly.trimStart('0')
+                                .ifEmpty { if (digitsOnly.isEmpty()) "" else "0" }
+                            val strippedLeadingZeros = digitsOnly.length - normalizedDigits.length
+                            val digitsBeforeCursor = newValue.text.take(newValue.selection.end).count(Char::isDigit)
+                            val normalizedCursorDigits = (digitsBeforeCursor - strippedLeadingZeros).coerceAtLeast(0)
+                            val formattedText = normalizedDigits.toLongOrNull()
+                                ?.let { NumberFormat.getNumberInstance(Locale.KOREA).format(it) }
+                                ?: normalizedDigits
+                            var digitsSeen = 0
+                            var cursorIndex = formattedText.length
+                            for ((index, char) in formattedText.withIndex()) {
+                                if (digitsSeen == normalizedCursorDigits) {
+                                    cursorIndex = index
+                                    break
+                                }
+                                if (char.isDigit()) digitsSeen++
                             }
-                            digitsOnly.toIntOrNull()?.let(onValueChange)
+                            textFieldValue = TextFieldValue(text = formattedText, selection = TextRange(cursorIndex))
+                            normalizedDigits.toIntOrNull()?.let(onValueChange)
                         },
                         modifier = Modifier
                             .fillMaxWidth()

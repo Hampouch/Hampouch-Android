@@ -35,12 +35,10 @@ object AccountDataCoordinator {
 
         val account = email?.let { e -> LoginMockData.accounts.find { it.email == e } }
         if (account == null || account.isExistingMember) {
-            // 기존/고정 계정(또는 목데이터에 없는 서버 모드 계정) → 항상 원래 목데이터.
             ChallengeRepository.resetForAccount()
             return
         }
 
-        // 신규 계정의 첫 로그인: 온보딩을 다 채웠으면 그 값으로, 건너뛰었으면(예약된 값 없음) 빈 상태로.
         val request = OnboardingDataStore.takeReservedRequest(account.email)
         ChallengeRepository.resetEmpty()
         if (request != null) {

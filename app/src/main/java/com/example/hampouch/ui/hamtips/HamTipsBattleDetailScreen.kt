@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -149,6 +150,10 @@ fun HamTipsBattleDetailScreen(
     var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
+
+    LaunchedEffect(post.id) {
+        HamTipsRepository.incrementViewCount(post.id)
+    }
 
     val isAuthor = post.authorId == UserSession.currentUser.id
     val canDeletePost = HamTipsRepository.canDeletePost(post)
@@ -290,9 +295,6 @@ fun HamTipsBattleDetailScreen(
                     } else {
                         HamTipsRepository.joinBattle(post.id)
                         if (joinedChallenge.isFull) {
-                            // 내가 참가하면서 정원이 다 찼으면 이 챌린지는 더 이상 "대기중"이
-                            // 아니라 진행중(또는 시작일 전이면 대기중) 목록으로 넘어가므로,
-                            // 대기중 상세화면 대신 햄배틀 탭으로 보낸다.
                             onNavigateToHamBattleTab()
                         } else {
                             onNavigateToBattleLink(joinedChallenge.id)

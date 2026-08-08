@@ -136,8 +136,6 @@ fun ChallengeSummaryCard(request: HamBattleChallengeRequest) {
     }
 }
 
-// 아직 실제로 만들어진 챌린지가 아니라 시작일을 모를 때(커뮤니티 참가 확인 등)는
-// 챌린지 시작일이 기본값인 오늘로 잡힌다는 걸 그대로 보여준다.
 private fun challengeStartDateLabel(startDateMillis: Long?): String {
     val date = startDateMillis?.let {
         Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()

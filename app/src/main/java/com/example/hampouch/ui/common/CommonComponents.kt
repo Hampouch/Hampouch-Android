@@ -54,8 +54,6 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import kotlinx.coroutines.delay
 
-// 화면에서 공통으로 쓰는 컴포저블 모음.
-
 /**
  * [expiresAtMillis] 시각까지 남은 초를 1초마다 갱신해서 돌려준다. null이면 타이머를 돌리지 않는다.
  */
@@ -83,7 +81,6 @@ fun formatRemainingTime(totalSeconds: Int): String {
     return "%d:%02d".format(minutes, seconds)
 }
 
-// 로그인 / 회원가입 화면에서 사용
 @Composable
 fun OrDivider(text: String) {
     Row(

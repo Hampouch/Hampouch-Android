@@ -40,6 +40,7 @@
     <string name="expensedetail_calendar_weekly_tab">주간</string>
     <string name="expensedetail_calendar_monthly_total_format">%1$d월 총 지출</string>
     <string name="expensedetail_calendar_weekly_total">이번주 총 지출</string>
+    <string name="expensedetail_calendar_weekly_total_format">%1$d월 %2$s주 총 지출</string>
     <string name="expensedetail_calendar_daily_average_format">하루 평균 %1$s원</string>
     <string name="expensedetail_calendar_year_month_format">%1$d년 %2$d월</string>
     <string name="expensedetail_calendar_week_label_format">%1$d월 %2$s주</string>
