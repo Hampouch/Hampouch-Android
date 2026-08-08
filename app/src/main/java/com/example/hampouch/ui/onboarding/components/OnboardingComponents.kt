@@ -43,6 +43,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -61,10 +62,13 @@ import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.util.Locale
 
 fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).format(this)
+
+internal const val FocusHandoffDelayMillis: Long = 60L
 
 @Composable
 fun OnboardingTopBar(
@@ -265,6 +269,7 @@ fun EditableAmountRow(
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var hasFocusedOnce by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(isEditing) {
@@ -272,7 +277,11 @@ fun EditableAmountRow(
             val seedText = editSeedValue?.toWonText().orEmpty()
             textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
             hasFocusedOnce = false
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+            delay(FocusHandoffDelayMillis)
             focusRequester.requestFocus()
+            delay(FocusHandoffDelayMillis)
             keyboardController?.show()
         }
     }
@@ -289,7 +298,14 @@ fun EditableAmountRow(
                 .background(HPWhite, RoundedCornerShape(9.5.dp))
                 .border(1.dp, if (isEditing) HPMain else HPGray5, RoundedCornerShape(9.5.dp))
                 .then(
-                    if (isEditing) Modifier else Modifier.clickable { isEditing = true }
+                    if (isEditing) {
+                        Modifier
+                    } else {
+                        Modifier.clickable {
+                            hasFocusedOnce = false
+                            isEditing = true
+                        }
+                    }
                 )
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,

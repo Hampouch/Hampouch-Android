@@ -86,7 +86,11 @@ fun NextChallengeTakeABreakRoute(
         dateFixed -> startDate != null
         else -> false
     }
+    val currentCustomPeriodDays = customPeriodDays
+    val customPeriodDaysOutOfRange = periodEnabled && currentCustomPeriodDays != null &&
+        (currentCustomPeriodDays < MinPeriodDays || currentCustomPeriodDays > MaxPeriodDays)
     val canStartChallenge = isPeriodOrDateSelected &&
+        !customPeriodDaysOutOfRange &&
         (targetAmount ?: 0) > 0 &&
         selectedCategoryIds.isNotEmpty()
 
@@ -124,14 +128,11 @@ fun NextChallengeTakeABreakRoute(
                     },
                     customPeriodDays = customPeriodDays,
                     onCustomPeriodDaysChange = { value ->
-                        if (PeriodPresetDayOptions.any { it.first == value }) {
-                            periodDays = value
-                            customPeriodDays = null
-                        } else {
-                            customPeriodDays = value
-                            periodDays = null
-                        }
+                        customPeriodDays = value
+                        periodDays = null
                     },
+                    onCustomPeriodEditingStart = { periodDays = null },
+                    customPeriodDaysOutOfRange = customPeriodDaysOutOfRange,
                     dateFixed = dateFixed,
                     onDateFixedChange = { enabled ->
                         dateFixed = enabled
