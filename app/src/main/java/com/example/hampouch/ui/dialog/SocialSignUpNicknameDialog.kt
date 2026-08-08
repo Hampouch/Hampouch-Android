@@ -2,7 +2,9 @@ package com.example.hampouch.ui.dialog
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,8 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,13 +45,13 @@ import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HampouchTheme
 
 /**
  * 소셜 로그인 결과 서버에 아직 닉네임이 없는 신규 유저([com.example.hampouch.data.model.SocialLoginOutcome.isNewUser]
- * == true)에게 최초 닉네임을 입력받는 다이얼로그. 닉네임을 등록해야만 로그인이 완료되는 흐름이라
- * 뒤로가기/바깥 클릭으로는 닫히지 않는다.
+ * == true)에게 최초 닉네임을 입력받는 다이얼로그. 좌상단 뒤로가기 아이콘 또는 시스템 뒤로가기로 닫을 수 있다.
  */
 @Composable
 fun SocialSignUpNicknameDialog(
@@ -53,12 +60,13 @@ fun SocialSignUpNicknameDialog(
     onCheckNickname: () -> Unit,
     nicknameCheckMessage: String?,
     isSignUpEnabled: Boolean,
-    onSignUp: () -> Unit
+    onSignUp: () -> Unit,
+    onBack: () -> Unit
 ) {
     Dialog(
-        onDismissRequest = {},
+        onDismissRequest = onBack,
         properties = DialogProperties(
-            dismissOnBackPress = false,
+            dismissOnBackPress = true,
             dismissOnClickOutside = false,
             usePlatformDefaultWidth = false
         )
@@ -69,7 +77,8 @@ fun SocialSignUpNicknameDialog(
             onCheckNickname = onCheckNickname,
             nicknameCheckMessage = nicknameCheckMessage,
             isSignUpEnabled = isSignUpEnabled,
-            onSignUp = onSignUp
+            onSignUp = onSignUp,
+            onBack = onBack
         )
     }
 }
@@ -81,7 +90,8 @@ private fun SocialSignUpNicknameDialogCard(
     onCheckNickname: () -> Unit,
     nicknameCheckMessage: String?,
     isSignUpEnabled: Boolean,
-    onSignUp: () -> Unit
+    onSignUp: () -> Unit,
+    onBack: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -94,6 +104,18 @@ private fun SocialSignUpNicknameDialogCard(
             .padding(horizontal = 15.dp, vertical = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cd_back),
+                    tint = HPSub1
+                )
+            }
+        }
         Image(
             painter = painterResource(id = R.drawable.logo_app),
             contentDescription = "app_logo",
@@ -153,7 +175,8 @@ private fun SocialSignUpNicknameDialogCardPreview() {
             onCheckNickname = {},
             nicknameCheckMessage = "사용 가능한 닉네임입니다.",
             isSignUpEnabled = true,
-            onSignUp = {}
+            onSignUp = {},
+            onBack = {}
         )
     }
 }

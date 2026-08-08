@@ -116,6 +116,12 @@ fun LoginScreen(
             },
             nicknameCheckMessage = socialNicknameCheckMessage,
             isSignUpEnabled = isSocialNicknameAvailable,
+            onBack = {
+                pendingSocialSignUp = null
+                socialNickname = ""
+                isSocialNicknameAvailable = false
+                socialNicknameCheckMessage = null
+            },
             onSignUp = {
                 coroutineScope.launch {
                     authRepository.completeSocialSignUp(session, socialNickname)
