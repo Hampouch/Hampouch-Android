@@ -93,9 +93,6 @@ fun AppNavHost(
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
 
-    // DataStore에 저장된 인증 세션(서버/목데이터 공용)을 확인해 시작 화면을 정한다.
-    // 로그인 상태라면 화면 전역에서 참조하는 UserSession도 함께 복원하고 계정별 데이터를 동기화한다.
-    // 로그인 상태가 아니면 온보딩을 이미 완료(또는 건너뛰기)한 적이 있는지에 따라 로그인/온보딩 화면으로 보낸다.
     LaunchedEffect(Unit) {
         OnboardingDataStore.restorePendingIfNeeded(context)
         val session = authRepository.userSession.first()
@@ -116,7 +113,6 @@ fun AppNavHost(
         return
     }
 
-    // 하단 네비바가 있는 화면에서 탭을 눌렀을 때: 햄배틀 탭이면 기존 홈 인스턴스로(탭 상태 보존), 그 외에는 홈을 새로 연다.
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
         pendingHomeTab = item
         navController.navigate(Screen.Home.route) {
@@ -214,8 +210,6 @@ fun AppNavHost(
                     goToLogin()
                 },
                 onNavigateToLogin = {
-                    // 건너뛰기: 다음 콜드 스타트 때 온보딩을 다시 보여주지 않도록만 기록하고,
-                    // 챌린지 생성에 쓰일 대기값은 만들지 않는다.
                     OnboardingDataStore.markOnboardingSkipped(context)
                     goToLogin()
                 }
@@ -328,8 +322,6 @@ fun AppNavHost(
                     )
                 },
                 onHamBattleJoinedFromCommunityClick = { challengeId ->
-                    // 커뮤니티에서 참가하기로 들어온 경우, 뒤로가기 하면 원래 보던 게시글이 아니라
-                    // 햄배틀 탭(방금 참가한 챌린지가 보이는 화면)으로 돌아가도록 백스택을 새로 짠다.
                     pendingHomeTab = BottomNavItem.HAM_BATTLE
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -339,8 +331,6 @@ fun AppNavHost(
                     )
                 },
                 onHamBattleJoinedFullFromCommunityClick = {
-                    // 참가하면서 정원이 다 찼으면 더 이상 "대기중 상세"가 아니라 햄배틀 탭
-                    // (진행중/대기중 목록)으로 보낸다.
                     pendingHomeTab = BottomNavItem.HAM_BATTLE
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -369,15 +359,12 @@ fun AppNavHost(
                 },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {
-                    // MyPageScreen에서 이미 UserSession.logout()을 호출했으니, 여기서는 DataStore에 저장된
-                    // 인증 세션(서버/목데이터 공용)도 함께 비워서 다음 실행 시 다시 로그인 화면으로 가게 한다.
                     coroutineScope.launch { authRepository.clearSession() }
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onChallengeEndedFinishClick = {
-                    // 이 콜백은 방금 끝난 챌린지가 있을 때만(ChallengeEndedDialog) 눌릴 수 있어 null이면 아무 것도 안 한다.
                     val challenge = ChallengeRepository.activeChallenge ?: return@HomeScreen
                     val actualAmount = ChallengeResultMockData.forChallenge(challenge).actualAmount
                     val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
@@ -439,7 +426,6 @@ fun AppNavHost(
         }
 
         composable(Screen.ChallengeEndExpenseCalendar.route) {
-            // 방금 끝난 챌린지가 있을 때만(홈 화면의 "지출 입력하기") 진입할 수 있는 화면이라 null이면 그냥 빠져나간다.
             val active = ChallengeRepository.activeChallenge ?: return@composable
             ExpenseCalendarRoute(
                 onBackClick = {
@@ -463,7 +449,6 @@ fun AppNavHost(
         ) { backStackEntry ->
             val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
             val initialDate = LocalDate.ofEpochDay(epochDay)
-            // 진행중인 챌린지가 없어도(하단 "+" 버튼은 항상 열려있다) 지출은 입력할 수 있어야 하므로 0으로 대체한다.
             val dailyLimit = ChallengeRepository.activeChallenge?.dailyLimitOn(initialDate) ?: 0
             val alreadySpent = ExpenseDetailStore.recordsForDate(initialDate).sumOf { it.amount }
             ExpenseInputRoute(
@@ -688,9 +673,6 @@ fun AppNavHost(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
                         onShareToCommunityClick = {
-                            // pendingHomeTab이 이전에 넘겼던(하지만 실제로 화면에 그려지지 않아
-                            // 아직 소비되지 않았을 수 있는) 값을 그대로 들고 있으면 커뮤니티 탭이
-                            // 아니라 그 탭으로 잘못 열리므로, 여기서 명시적으로 지워준다.
                             pendingHomeTab = null
                             openCommunityWriteBattle = true
                             pendingWriteBattleLink = challenge.link

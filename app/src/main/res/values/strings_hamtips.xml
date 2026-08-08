@@ -118,7 +118,7 @@
     <string name="hamtips_reply_deleted">삭제된 답글입니다.</string>
     <string name="hamtips_cd_comment_more">댓글 더보기</string>
     <string name="hamtips_reply_target_tag_format">@%1$s</string>
-    <string name="hamtips_detail_meta_suffix_format"> · %1$s · 조회 %2$s</string>
+    <string name="hamtips_detail_meta_suffix_format">" · %1$s · 조회 %2$s"</string>
     <string name="hamtips_detail_menu_name_row">메뉴</string>
     <string name="hamtips_detail_menu_place_row">장소</string>
     <string name="hamtips_detail_menu_price_row">가격</string>

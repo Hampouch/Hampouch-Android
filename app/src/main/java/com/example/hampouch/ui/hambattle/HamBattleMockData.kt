@@ -82,7 +82,6 @@ object HamBattleMockData {
         }
     }
 
-    // "참가가 무효됐어요" 다이얼로그를 이미 확인한 챌린지(계속 다시 뜨지 않도록).
     private val acknowledgedDisqualifications = mutableStateOf(setOf<String>())
 
     fun isDisqualificationAcknowledged(challengeId: String): Boolean =
@@ -92,7 +91,6 @@ object HamBattleMockData {
         acknowledgedDisqualifications.value = acknowledgedDisqualifications.value + challengeId
     }
 
-    // "이틀 연속 미입력" 경고를 오늘 이미 보여준 챌린지(하루에 한 번만 뜨도록).
     private val missedWarningShownDates = mutableStateOf(mapOf<String, LocalDate>())
 
     fun wasMissedWarningShownToday(challengeId: String, referenceToday: LocalDate = LocalDate.now()): Boolean =
@@ -109,7 +107,6 @@ object HamBattleMockData {
         }
     }
 
-    // "챌린지가 취소됐어요" 다이얼로그를 이미 확인한 챌린지(계속 다시 뜨지 않도록).
     private val acknowledgedCancellations = mutableStateOf(setOf<String>())
 
     fun isCancellationAcknowledged(challengeId: String): Boolean =
@@ -159,7 +156,6 @@ object HamBattleMockData {
      */
     private fun buildSeedChallenges(): List<HamBattleChallenge> =
         listOf(
-            // 진행중 — 오늘(참조일) 기준으로 진행중이 되도록 날짜를 잡아둔 목데이터.
             HamBattleChallenge(
                 id = "1",
                 type = "1 vs 1",
@@ -199,7 +195,6 @@ object HamBattleMockData {
                 startDate = LocalDate.now().minusDays(3)
             ),
 
-            // 종료 — 과거에 이미 끝난 날짜.
             HamBattleChallenge(
                 id = "e1",
                 type = "1 vs 1",
@@ -232,22 +227,7 @@ object HamBattleMockData {
                 totalCount = 5,
                 durationDays = 14,
                 startDate = LocalDate.of(2026, 5, 1)
-            ),
-
-            // 대기중 — 이미 시작일이 지났는데 인원이 안 차서 자동 취소 대상이 되는 예시.
-//            HamBattleChallenge(
-//                id = "3",
-//                type = "그룹",
-//                title = "식비 내기",
-//                penalty = "간식 사기",
-//                participants = listOf(
-//                    HamBattleParticipantSpending("나", 0)
-//                ),
-//                totalCount = 10,
-//                durationDays = 7,
-//                startDate = LocalDate.of(2026, 5, 1),
-//                link = "hampouch.app/battle/f3k9j2a1"
-//            )
+            )
         )
 
     private val challengesState = mutableStateOf(buildSeedChallenges())

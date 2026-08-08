@@ -29,13 +29,13 @@
     <string name="expenseanalysis_ai_section_title">포치의 식비 분석</string>
     <string name="expenseanalysis_ai_placeholder_message">챌린지가 끝나면 포치가 이번 지출 내역을 꼼꼼히 분석해줄 거예요. 지출을 기록하면서 조금만 기다려주세요!</string>
 
-    <string name="expenseanalysis_ai_intro_prefix_format">%1$s 식비는 </string>
-    <string name="expenseanalysis_ai_intro_suffix">이에요.\n그중 </string>
-    <string name="expenseanalysis_ai_category_middle">카테고리 소비가 </string>
-    <string name="expenseanalysis_ai_category_suffix">를 차지했고, </string>
-    <string name="expenseanalysis_ai_reason_middle">의 지출 이유가 </string>
-    <string name="expenseanalysis_ai_reason_suffix">로 가장 컸어요. </string>
-    <string name="expenseanalysis_ai_weekday_suffix">에 지출이 가장 많았어요. </string>
+    <string name="expenseanalysis_ai_intro_prefix_format">"%1$s 식비는 "</string>
+    <string name="expenseanalysis_ai_intro_suffix">"이에요.\n그중 "</string>
+    <string name="expenseanalysis_ai_category_middle">"카테고리 소비가 "</string>
+    <string name="expenseanalysis_ai_category_suffix">"를 차지했고, "</string>
+    <string name="expenseanalysis_ai_reason_middle">"의 지출 이유가 "</string>
+    <string name="expenseanalysis_ai_reason_suffix">"로 가장 컸어요. "</string>
+    <string name="expenseanalysis_ai_weekday_suffix">"에 지출이 가장 많았어요. "</string>
     <string name="expenseanalysis_ai_closing">다음 챌린지에서 식비를 살짝만 줄여보는 것도 추천해요.</string>
 
     <string name="expenseanalysis_custom_category_label">직접입력한 카테고리</string>

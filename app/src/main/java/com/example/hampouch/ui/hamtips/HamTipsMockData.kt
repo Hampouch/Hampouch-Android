@@ -7,12 +7,14 @@ import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.ui.login.LoginMockData
 
 object HamTipsMockData {
 
     private const val HERO_AUTHOR_ID = HamTipsRepository.CURRENT_USER_ID
     private const val HERO_AUTHOR_NAME = HamTipsRepository.CURRENT_USER_NAME
-    private const val BATTLE_AUTHOR_ID = "user_minjun_battle"
+    private val EDITOR_AUTHOR_ID = LoginMockData.editorUser.id
+    private val EDITOR_AUTHOR_NAME = LoginMockData.editorUser.name
 
     fun allPosts(): List<TipPost> = listOf(
         TipPost(
@@ -27,7 +29,7 @@ object HamTipsMockData {
                 "이렇게 한 달을 지내보니 배달비까지 합쳐서 8만원 정도 아낄 수 있었어요.",
             authorId = HERO_AUTHOR_ID,
             authorName = HERO_AUTHOR_NAME,
-            isEditorAuthor = true,
+            isEditorAuthor = false,
             postedMinutesAgo = 5,
             viewCount = 8721,
             commentCount = 5,
@@ -91,8 +93,9 @@ object HamTipsMockData {
             category = TipCategory.DISCOUNT,
             title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
             subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요",
-            authorName = "절약왕 민준",
-            isEditorAuthor = true,
+            authorId = HERO_AUTHOR_ID,
+            authorName = HERO_AUTHOR_NAME,
+            isEditorAuthor = false,
             postedMinutesAgo = 12,
             viewCount = 7658,
             commentCount = 35,
@@ -101,10 +104,11 @@ object HamTipsMockData {
         ),
         TipPost(
             id = "hamtip_4",
-            category = TipCategory.COOKING,
-            title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요",
-            authorName = "절약왕 민준",
+            category = TipCategory.DISCOUNT,
+            title = "포치가 직접 써보고 고른 자취생 필수 조미료 3종",
+            subtitle = "이 세 개만 있으면 웬만한 집밥 맛은 다 나와요",
+            authorId = EDITOR_AUTHOR_ID,
+            authorName = EDITOR_AUTHOR_NAME,
             isEditorAuthor = true,
             postedMinutesAgo = 40,
             viewCount = 4432,
@@ -115,10 +119,10 @@ object HamTipsMockData {
         TipPost(
             id = "hamtip_5",
             category = TipCategory.COOKING,
-            title = "식비에 진짜 좋은 체크카드 비교 TOP3 알려드릴게요",
-            subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요",
-            authorName = "절약왕 민준",
-            isEditorAuthor = true,
+            title = "국물 요리 육수 한번에 왕창 내려서 소분하는 법",
+            subtitle = "멸치육수 한 번 내릴 때 8팩 소분해두면 한 달이 편해요",
+            authorName = "냉장고사수대",
+            isEditorAuthor = false,
             postedMinutesAgo = 125,
             viewCount = 512,
             commentCount = 4,
@@ -232,9 +236,9 @@ object HamTipsMockData {
             title = "챌린지 같이 하실 분",
             subtitle = "3명 더 모집해요.",
             content = "3명 더 모집해요.",
-            authorId = BATTLE_AUTHOR_ID,
+            authorId = HERO_AUTHOR_ID,
             authorName = HERO_AUTHOR_NAME,
-            isEditorAuthor = true,
+            isEditorAuthor = false,
             postedMinutesAgo = 2,
             viewCount = 2965,
             commentCount = 0,
@@ -314,6 +318,44 @@ object HamTipsMockData {
             place = "학교앞 백반집",
             price = 7_000,
             menuRating = MenuRatingInfo(taste = 4, costEffectiveness = 5, mood = 3)
+        ),
+        TipPost(
+            id = "hamtip_17",
+            type = TipPostType.TIP,
+            category = TipCategory.RECORD,
+            title = "포치가 실제로 3개월 써본 가계부 앱 비교",
+            subtitle = "자동 분류 정확도랑 잔소리 강도까지 솔직하게 비교했어요",
+            content = "가계부 앱 세 개를 3개월씩 돌려가며 써봤어요. 자동 분류 정확도, " +
+                "챌린지 미달 시 알림 강도, 카드사 연동 안정성까지 꼼꼼히 비교했으니 " +
+                "본인 소비 습관에 맞는 앱 고르실 때 참고해보세요.",
+            authorId = EDITOR_AUTHOR_ID,
+            authorName = EDITOR_AUTHOR_NAME,
+            isEditorAuthor = true,
+            postedMinutesAgo = 15,
+            viewCount = 6320,
+            commentCount = 18,
+            likeCount = 430,
+            hasImage = true
+        ),
+        TipPost(
+            id = "hamtip_18",
+            type = TipPostType.MENU,
+            category = TipCategory.WHAT_TO_EAT,
+            title = "김치볶음밥 · 학식당 분식 · 4,500원",
+            subtitle = "포치가 직접 먹어보고 인증한 가성비 맛집이에요.",
+            content = "포치가 직접 먹어보고 인증한 가성비 맛집이에요.",
+            authorId = EDITOR_AUTHOR_ID,
+            authorName = EDITOR_AUTHOR_NAME,
+            isEditorAuthor = true,
+            postedMinutesAgo = 60,
+            viewCount = 2890,
+            commentCount = 3,
+            likeCount = 210,
+            hasImage = true,
+            menuName = "김치볶음밥",
+            place = "학식당 분식",
+            price = 4_500,
+            menuRating = MenuRatingInfo(taste = 5, costEffectiveness = 5, mood = 4)
         )
     )
 

@@ -67,13 +67,6 @@ object ExpenseDetailMockData {
                 reasonId = "stress"
             ),
             ExpenseRecord(
-                id = "e6",
-                date = referenceToday,
-                amount = 0,
-                expenseName = "지출내역",
-                customReason = "감정태깅"
-            ),
-            ExpenseRecord(
                 id = "e7",
                 date = referenceToday.minusDays(6),
                 amount = 15_000,
@@ -237,13 +230,4 @@ object ExpenseDetailMockData {
             endDate = referenceToday.minusDays(6)
         )
 
-    private const val MONTHLY_TOTAL = 889_483
-    private const val MONTHLY_DAILY_AVERAGE = 29_649
-    private const val WEEKLY_TOTAL = 171_400
-    private const val WEEKLY_DAILY_AVERAGE = 24_486
-
-    fun monthlyTotal(): Int = MONTHLY_TOTAL
-    fun monthlyDailyAverage(): Int = MONTHLY_DAILY_AVERAGE
-    fun weeklyTotal(): Int = WEEKLY_TOTAL
-    fun weeklyDailyAverage(): Int = WEEKLY_DAILY_AVERAGE
 }

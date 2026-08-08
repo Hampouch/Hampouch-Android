@@ -61,4 +61,12 @@ object LoginMockData {
         if (index == -1) return
         registeredAccounts[index] = registeredAccounts[index].copy(isExistingMember = true)
     }
+
+    /**
+     * 회원탈퇴 시 호출한다. 계정을 목록에서 제거해 같은 이메일/비밀번호로는 다시 로그인할 수 없게 한다.
+     * (앱 프로세스를 새로 시작하면 데모 계정 목록이 초기 상태로 되돌아간다.)
+     */
+    fun removeAccount(userId: String) {
+        registeredAccounts.removeAll { it.id == userId }
+    }
 }

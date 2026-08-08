@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +38,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -75,9 +80,19 @@ fun ProfileEditScreen(
     var avatarUri by remember { mutableStateOf(currentAvatarUri) }
     var showPhotoSheet by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
+    val nicknameFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
+    val emptyNicknameMessage = stringResource(R.string.profile_edit_nickname_empty)
     val duplicateErrorMessage = stringResource(R.string.profile_edit_nickname_duplicate)
-    val isCompleteEnabled = errorMessage == null
+    val isCompleteEnabled = errorMessage == null && !(isEditingName && nicknameInput.trim().isEmpty())
+
+    LaunchedEffect(isEditingName) {
+        if (isEditingName) {
+            nicknameFocusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -103,6 +118,7 @@ fun ProfileEditScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             OrDivider(text = stringResource(R.string.profile_edit_section_user_info))
@@ -163,7 +179,9 @@ fun ProfileEditScreen(
                                 nicknameInput = it
                                 errorMessage = null
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(nicknameFocusRequester),
                             textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPBlack),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -195,10 +213,10 @@ fun ProfileEditScreen(
             Button(
                 onClick = {
                     val finalName = if (isEditingName) nicknameInput.trim() else currentName
-                    if (isEditingName && finalName.isNotEmpty() && isNicknameTaken(finalName)) {
-                        errorMessage = duplicateErrorMessage
-                    } else {
-                        showCompleteDialog = true
+                    when {
+                        isEditingName && finalName.isEmpty() -> errorMessage = emptyNicknameMessage
+                        isEditingName && isNicknameTaken(finalName) -> errorMessage = duplicateErrorMessage
+                        else -> showCompleteDialog = true
                     }
                 },
                 enabled = isCompleteEnabled,

@@ -45,6 +45,7 @@ object HamTipsRepository {
             content = content,
             authorId = activeUserId,
             authorName = activeUserName,
+            isEditorAuthor = UserSession.isEditor,
             hasImage = imageUris.isNotEmpty(),
             imageUris = imageUris
         )
@@ -83,6 +84,7 @@ object HamTipsRepository {
             content = comment,
             authorId = activeUserId,
             authorName = activeUserName,
+            isEditorAuthor = UserSession.isEditor,
             hasImage = imageUris.isNotEmpty(),
             imageUris = imageUris,
             menuName = menuName,
@@ -117,6 +119,10 @@ object HamTipsRepository {
 
     fun deletePost(postId: String) {
         posts.removeAll { it.id == postId }
+    }
+
+    fun incrementViewCount(postId: String) {
+        mutate(postId) { it.copy(viewCount = it.viewCount + 1) }
     }
 
     fun toggleLike(postId: String) {

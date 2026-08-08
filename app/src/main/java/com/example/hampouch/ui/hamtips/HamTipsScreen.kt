@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
@@ -109,9 +111,6 @@ fun HamTipsScreen(
             }
         )
     }
-    // True only while the very write-battle screen we were deep-linked into (e.g. from the
-    // HamBattle "공유하기" flow) is still showing. Once the user leaves it, back should behave
-    // like any other in-app HamTips screen instead of exiting all the way out.
     var isExternalWriteBattleEntry by remember { mutableStateOf(openWriteBattleOnStart) }
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
@@ -235,7 +234,7 @@ fun HamTipsScreen(
                         onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
                         onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
                         onPostClick = onPostClick,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                     )
 
                     HamTipsRoute.CATEGORY -> {
@@ -252,7 +251,7 @@ fun HamTipsScreen(
                             onBackClick = onBackToMain,
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
 
@@ -271,7 +270,7 @@ fun HamTipsScreen(
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             scrollToPostId = initialPopularPostId,
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
 
@@ -289,7 +288,7 @@ fun HamTipsScreen(
                             onBackClick = onBackToMain,
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
 
@@ -389,6 +388,7 @@ private fun HamTipsMainContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(horizontal = 20.dp)
     ) {
         HamTipsMainTopBar(onNotificationClick = onNotificationClick)
@@ -452,6 +452,7 @@ private fun HamTipsFeedRouteContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
+            .imePadding()
             .padding(horizontal = 20.dp)
             .onGloballyPositioned { coordinates -> containerRootY = coordinates.positionInRoot().y }
     ) {

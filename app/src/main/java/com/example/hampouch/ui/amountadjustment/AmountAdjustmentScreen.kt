@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -102,7 +103,7 @@ fun AmountAdjustmentRoute(
     val dailyFoodGoal = if (challenge.totalDays > 0) selectedAmount / challenge.totalDays else 0
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.imePadding(),
         topBar = {
             AmountAdjustmentTopBar(onBackClick = onBackClick)
         },
@@ -250,7 +251,6 @@ fun AmountAdjustmentRoute(
             onConfirm = {
                 showAbandonConfirmDialog = false
                 ChallengeRepository.abandonChallenge()
-                // abandonChallenge()는 챌린지를 목록에서 지우지 않고 abandonedDate만 채우므로 여전히 non-null이다.
                 val actualAmount =
                     ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
                 val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)

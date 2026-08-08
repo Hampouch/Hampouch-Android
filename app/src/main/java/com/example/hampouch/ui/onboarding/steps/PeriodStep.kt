@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +50,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -59,6 +61,9 @@ import java.time.ZoneOffset
 
 private fun LocalDate.toEpochMillisUtc(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+
+private const val MinPeriodDays = 1
+private const val MaxPeriodDays = 365
 
 @Composable
 fun PeriodStep(
@@ -74,28 +79,25 @@ fun PeriodStep(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val daySuffix = stringResource(R.string.onboarding_day_suffix)
+    val periodDaysOutOfRange = state.periodEnabled && state.challengePeriodDays != null &&
+        (state.challengePeriodDays < MinPeriodDays || state.challengePeriodDays > MaxPeriodDays)
 
     val startDateText = state.startDate?.let { date ->
         stringResource(R.string.onboarding_start_date_format, date.year, date.monthValue, date.dayOfMonth)
     } ?: stringResource(R.string.onboarding_start_date_label)
 
     Scaffold(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().imePadding()
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                OnboardingTopBar(onBack = onBack)
+            OnboardingTopBar(onBack = onBack)
 
                 OnboardingProgressBar(currentStep = 2, totalSteps = 4)
 
@@ -149,6 +151,13 @@ fun PeriodStep(
                             placeholder = stringResource(R.string.onboarding_direct_input),
                             suffix = daySuffix
                         )
+                        if (periodDaysOutOfRange) {
+                            Text(
+                                text = stringResource(R.string.onboarding_period_range_error),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = HPSub
+                            )
+                        }
                     }
                 }
 
@@ -204,13 +213,12 @@ fun PeriodStep(
                         )
                     }
                 }
-            }
 
             SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
 
             OnboardingPrimaryButton(
                 text = stringResource(R.string.onboarding_button_next),
-                enabled = (state.periodEnabled && state.challengePeriodDays != null) ||
+                enabled = (state.periodEnabled && state.challengePeriodDays != null && !periodDaysOutOfRange) ||
                     (state.dateFixed && state.startDate != null),
                 onClick = onNext
             )

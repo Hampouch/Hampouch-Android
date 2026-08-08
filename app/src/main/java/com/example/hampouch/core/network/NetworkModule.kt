@@ -25,9 +25,6 @@ object NetworkModule {
             .build()
     }
 
-    // baseUrl()이 BuildConfig.BASE_URL 미설정 시 즉시 예외를 던지므로,
-    // 클래스 초기화(<clinit>) 시점이 아니라 실제 호출 시점에 예외가 나도록 지연 생성한다.
-    // <clinit>에서 던지면 ExceptionInInitializerError(Error)로 감싸져 호출부의 catch(Exception)에 잡히지 않는다.
     private val retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)

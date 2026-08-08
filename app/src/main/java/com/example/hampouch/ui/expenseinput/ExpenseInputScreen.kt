@@ -12,10 +12,15 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -204,16 +209,17 @@ fun ExpenseInputRoute(
             return@Scaffold
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                    .padding(horizontal = 20.dp)
             ) {
                 when (step) {
                     2 -> ExpenseInputCategoryStep(
@@ -263,34 +269,44 @@ fun ExpenseInputRoute(
                         }
                     )
                 }
+                Spacer(modifier = Modifier.height(120.dp))
             }
-            ExpenseInputSkipRestLink(
-                onClick = {
-                    when (step) {
-                        2 -> showCategorySkipPromptDialog = true
-                        3 -> showReasonSkipPromptDialog = true
-                        4 -> showMemoSkipPromptDialog = true
-                        else -> showSaveConfirmDialog = true
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(HPWhite)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(horizontal = 20.dp)
+            ) {
+                ExpenseInputSkipRestLink(
+                    onClick = {
+                        when (step) {
+                            2 -> showCategorySkipPromptDialog = true
+                            3 -> showReasonSkipPromptDialog = true
+                            4 -> showMemoSkipPromptDialog = true
+                            else -> showSaveConfirmDialog = true
+                        }
                     }
-                }
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            ExpenseInputPrimaryButton(
-                label = stringResource(R.string.expenseinput_next_button),
-                enabled = when (step) {
-                    2 -> isCategoryStepValid
-                    3 -> hasReasonSelected
-                    else -> true
-                },
-                onClick = {
-                    when {
-                        step == 3 -> showReasonNextConfirmDialog = true
-                        step < ExpenseInputTotalSteps -> step++
-                        else -> showSaveConfirmDialog = true
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                ExpenseInputPrimaryButton(
+                    label = stringResource(R.string.expenseinput_next_button),
+                    enabled = when (step) {
+                        2 -> isCategoryStepValid
+                        3 -> hasReasonSelected
+                        else -> true
+                    },
+                    onClick = {
+                        when {
+                            step == 3 -> showReasonNextConfirmDialog = true
+                            step < ExpenseInputTotalSteps -> step++
+                            else -> showSaveConfirmDialog = true
+                        }
                     }
-                }
-            )
-            Spacer(modifier = Modifier.height(20.dp))
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
     }
 

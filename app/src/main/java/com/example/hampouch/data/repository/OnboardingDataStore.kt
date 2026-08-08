@@ -23,13 +23,8 @@ private const val KEY_CATEGORY_IDS = "category_ids"
 // TODO: 서버팀 회원가입/로그인 API 연동 시, 계정별 첫 온보딩 데이터 저장을 서버 응답 기반으로 교체.
 object OnboardingDataStore {
 
-    // 온보딩을 끝냈지만 아직 어떤 계정에도 귀속되지 않은 "임시 보관함". 여기 있는 동안은 누구의 것도 아니다.
-    // "건너뛰기"는 이 값을 만들지 않으므로(=null로 남음), 신규 계정이 예약된 값을 못 찾으면 자연히 빈 상태가 된다.
     private var pendingRequest: OnboardingRequest? by mutableStateOf(null)
 
-    // 회원가입이 완료된 계정의 이메일에 실제로 예약된 온보딩 값. 신규 계정([User.isExistingMember] == false)이
-    // 첫 로그인할 때만 [AccountDataCoordinator]가 조회한다 — 그 뒤로는 계정 자체가 "기존 회원"으로 바뀌어서
-    // 다시 조회되지 않는다.
     private val reservedByEmail = mutableMapOf<String, OnboardingRequest>()
     private var restoredFromPrefs = false
 
