@@ -508,7 +508,7 @@ fun MiniChallengeDurationRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         options.forEachIndexed { index, label ->
             MiniChallengeDurationChip(

@@ -140,7 +140,7 @@ private fun MiniChallengeDashboardScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             MiniChallengeDateRow(
                 dates = listOf(
                     anchorDate.minusDays(1),
@@ -156,7 +156,7 @@ private fun MiniChallengeDashboardScreen(
                 totalCount = todayChallenges.size,
                 streakDays = todayChallenges.maxOfOrNull { it.achievedDays } ?: 0
             )
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Column {
                 Text(
@@ -181,14 +181,14 @@ private fun MiniChallengeDashboardScreen(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Column {
                 SectionHeader(
                     title = stringResource(R.string.minichallenge_recommended_title),
                     onViewAllClick = onViewAllRecommendedClick
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(5.dp))
                 if (recommendedChallenges.isEmpty()) {
                     EmptyStateBlock(title = stringResource(R.string.minichallenge_recommended_empty))
                 } else {
@@ -205,7 +205,7 @@ private fun MiniChallengeDashboardScreen(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = onStartNewChallengeClick,

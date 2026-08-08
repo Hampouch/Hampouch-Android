@@ -96,6 +96,15 @@ private val analysisCategoryColors: Map<String, Color> = mapOf(
 
 fun analysisCategoryColor(categoryId: String): Color = analysisCategoryColors[categoryId] ?: HPAnalysisEtc
 
+private fun withRoParticle(word: String): String {
+    val lastChar = word.lastOrNull() ?: return word
+    val syllableIndex = lastChar.code - 0xAC00
+    if (syllableIndex !in 0..11171) return "${word}로"
+    val hasFinalConsonant = syllableIndex % 28 != 0
+    val isRieulFinal = syllableIndex % 28 == 8
+    return if (hasFinalConsonant && !isRieulFinal) "${word}으로" else "${word}로"
+}
+
 @Composable
 fun analysisCategoryLabel(categoryId: String): String =
     if (categoryId == ExpenseAnalysisEtcId) {
@@ -484,7 +493,7 @@ fun DetailSpentSummaryCard(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(titleFormatResId, label), style = MaterialTheme.typography.bodyMedium, color = HPText)
+            Text(stringResource(titleFormatResId, withRoParticle(label)), style = MaterialTheme.typography.bodyMedium, color = HPText)
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 stringResource(R.string.expensedetail_amount_won_format, formatWon(amount)),

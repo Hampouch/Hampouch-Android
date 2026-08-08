@@ -139,7 +139,7 @@ fun MiniChallengeCreateScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .background(HPSub4)
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
+                    .padding(horizontal = 12.dp, vertical = 20.dp)
             ) {
                 Text(
                     text = stringResource(R.string.minichallenge_name_label),

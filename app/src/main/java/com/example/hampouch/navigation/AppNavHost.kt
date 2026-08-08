@@ -773,6 +773,12 @@ fun AppNavHost(
                     navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onGoalAmountUpdated = {
+                    pendingHomeTab = null
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 }
             )
         }

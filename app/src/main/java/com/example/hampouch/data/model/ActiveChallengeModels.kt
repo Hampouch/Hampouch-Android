@@ -34,9 +34,19 @@ data class ActiveChallenge(
     fun dDayFrom(referenceToday: LocalDate): Int =
         ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt()
 
-    fun dailyLimitOn(date: LocalDate): Int =
-        dailyLimitOverrides.filter { !it.effectiveFrom.isAfter(date) }.maxByOrNull { it.effectiveFrom }?.dailyLimit
-            ?: dailyLimit
+    fun dailyLimitOn(date: LocalDate): Int {
+        var result = dailyLimit
+        var bestEffectiveFrom: LocalDate? = null
+        for (override in dailyLimitOverrides) {
+            if (!override.effectiveFrom.isAfter(date) &&
+                (bestEffectiveFrom == null || !override.effectiveFrom.isBefore(bestEffectiveFrom))
+            ) {
+                bestEffectiveFrom = override.effectiveFrom
+                result = override.dailyLimit
+            }
+        }
+        return result
+    }
 }
 
 data class ChallengeProgress(
