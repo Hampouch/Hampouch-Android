@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 
 val HPMain = Color(0xFF935C21)
 
-val HPSub1 = Color(0x4D5F3C16)
+val HPSub1 = Color(0xFF5F3C16)
 
-val HPSub2 = Color(0x77AD865C)
+val HPSub2 = Color(0xFFAD865C)
 
 val HPSub3 = Color(0xFFF7EFD8)
 
