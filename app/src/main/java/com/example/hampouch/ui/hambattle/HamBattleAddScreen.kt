@@ -30,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -404,20 +405,44 @@ private fun StartDatePickerDialog(
             }
         }
     )
+    val datePickerColors = DatePickerDefaults.colors(
+        containerColor = HPWhite,
+        titleContentColor = HPText,
+        headlineContentColor = HPBlack,
+        weekdayContentColor = HPText,
+        subheadContentColor = HPText,
+        navigationContentColor = HPBlack,
+        yearContentColor = HPBlack,
+        currentYearContentColor = HPMain,
+        selectedYearContentColor = HPWhite,
+        selectedYearContainerColor = HPMain,
+        dayContentColor = HPBlack,
+        disabledDayContentColor = HPGray5,
+        selectedDayContentColor = HPWhite,
+        disabledSelectedDayContentColor = HPWhite.copy(alpha = 0.38f),
+        selectedDayContainerColor = HPMain,
+        disabledSelectedDayContainerColor = HPMain.copy(alpha = 0.38f),
+        todayContentColor = HPMain,
+        todayDateBorderColor = HPMain,
+        dayInSelectionRangeContainerColor = HPSub4,
+        dayInSelectionRangeContentColor = HPBlack,
+        dividerColor = HPGray5
+    )
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = { onConfirm(datePickerState.selectedDateMillis) }) {
-                Text("확인")
+                Text("확인", color = HPMain)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("취소")
+                Text("취소", color = HPText)
             }
-        }
+        },
+        colors = datePickerColors
     ) {
-        DatePicker(state = datePickerState)
+        DatePicker(state = datePickerState, colors = datePickerColors)
     }
 }
 
