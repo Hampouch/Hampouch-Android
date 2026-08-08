@@ -25,8 +25,9 @@ sealed class Screen(val route: String) {
     data object HamBattleWaitingChallengeDetail : Screen("hambattle_waiting_challenge_detail/{challengeId}") {
         fun createRoute(challengeId: String) = "hambattle_waiting_challenge_detail/$challengeId"
     }
-    data object ChallengeSummary : Screen("challenge_summary/{challengeId}") {
-        fun createRoute(challengeId: String) = "challenge_summary/$challengeId"
+    data object ChallengeSummary : Screen("challenge_summary/{challengeId}?locked={locked}") {
+        fun createRoute(challengeId: String, locked: Boolean = false) =
+            "challenge_summary/$challengeId?locked=$locked"
     }
     data object NextChallenge : Screen("next_challenge/{challengeId}/{suggestedTargetAmount}") {
         fun createRoute(challengeId: String, suggestedTargetAmount: Int) =

@@ -1,6 +1,7 @@
 package com.example.hampouch.navigation
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -366,9 +367,7 @@ fun AppNavHost(
                 },
                 onChallengeEndedFinishClick = {
                     val challenge = ChallengeRepository.activeChallenge ?: return@HomeScreen
-                    val actualAmount = ChallengeResultMockData.forChallenge(challenge).actualAmount
-                    val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
-                    navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
+                    navController.navigate(Screen.ChallengeSummary.createRoute(challenge.id, locked = true))
                 }
             )
         }
@@ -685,15 +684,21 @@ fun AppNavHost(
 
         composable(
             route = Screen.ChallengeSummary.route,
-            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("challengeId") { type = NavType.StringType },
+                navArgument("locked") { type = NavType.BoolType; defaultValue = false }
+            )
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
+            val locked = backStackEntry.arguments?.getBoolean("locked") ?: false
             val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
             if (challenge != null) {
+                BackHandler(enabled = locked) {}
                 val state = ChallengeResultMockData.forChallenge(challenge)
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
+                    showBackButton = !locked,
                     onExpenseAnalysisClick = {
                         navController.navigate(
                             Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
