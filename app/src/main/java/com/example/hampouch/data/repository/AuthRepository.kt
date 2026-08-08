@@ -380,7 +380,13 @@ class AuthRepository private constructor(private val context: Context) {
      */
     suspend fun resetPassword(email: String, newPassword: String): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return Result.success(Unit)
+            return if (LoginMockData.updatePassword(email, newPassword)) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    ApiException(code = "EMAIL_NOT_FOUND", message = "사용자를 찾을 수 없습니다.")
+                )
+            }
         }
         return try {
             val response = NetworkModule.apiService.resetPassword(

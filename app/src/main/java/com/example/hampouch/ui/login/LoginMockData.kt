@@ -78,4 +78,15 @@ object LoginMockData {
     fun removeAccount(userId: String) {
         registeredAccounts.removeAll { it.id == userId }
     }
+
+    /**
+     * 목데이터 비밀번호 재설정([AuthRepository.resetPassword])이 성공하면 호출해, 저장된 비밀번호를
+     * 실제로 갱신한다. 대상 계정이 없으면 아무 것도 하지 않고 false를 반환한다.
+     */
+    fun updatePassword(email: String, newPassword: String): Boolean {
+        val index = registeredAccounts.indexOfFirst { normalize(it.email) == normalize(email) }
+        if (index == -1) return false
+        registeredAccounts[index] = registeredAccounts[index].copy(password = newPassword)
+        return true
+    }
 }
