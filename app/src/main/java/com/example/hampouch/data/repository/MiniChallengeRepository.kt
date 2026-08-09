@@ -2,7 +2,7 @@ package com.example.hampouch.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.example.hampouch.core.config.AuthConfig
+import com.example.hampouch.core.config.MiniChallengeConfig
 import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.data.model.MiniChallengeDaySummary
 import com.example.hampouch.data.model.MiniChallengeEntry
@@ -28,7 +28,7 @@ private const val TAG = "MiniChallengeRepository"
 /**
  * 미니 챌린지(/api/mini-challenges*) 서버 연동.
  *
- * 목데이터 모드([AuthConfig.USE_SERVER_AUTH] == false)에서는 [MiniChallengeStore]의 기존 로컬 로직을
+ * 목데이터 모드([MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE] == false)에서는 [MiniChallengeStore]의 기존 로컬 로직을
  * 그대로 쓰고, 서버 모드에서는 API 응답으로 [MiniChallengeStore]를 갱신한다. 화면단은 이 리포지토리만
  * 호출하면 되고 지금이 어느 모드인지는 신경 쓰지 않아도 된다.
  */
@@ -38,7 +38,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
 
     /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
     suspend fun loadChallenges(date: LocalDate): Result<Unit> {
-        if (!AuthConfig.USE_SERVER_AUTH) return Result.success(Unit)
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getMiniChallenges(authorization, date.toString())
@@ -57,7 +57,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
 
     /** 추천 카탈로그를 조회해 [MiniChallengeStore]에 반영한다. [durationDays]가 null이면 전체 기간. */
     suspend fun loadRecommended(durationDays: Int? = null): Result<Unit> {
-        if (!AuthConfig.USE_SERVER_AUTH) return Result.success(Unit)
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getRecommendedMiniChallenges(authorization, durationDays)
@@ -76,7 +76,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      * 중복 이름 등으로 추가되지 않았으면 null.
      */
     suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
-        if (!AuthConfig.USE_SERVER_AUTH) {
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = MiniChallengeStore.addRecommendedChallenge(date, recommended)
             return Result.success(if (added) date else null)
         }
@@ -101,7 +101,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      * 생성되므로 [date]가 아니라 실제 반영된 날짜를 반환한다. 중복 이름 등으로 추가되지 않았으면 null.
      */
     suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
-        if (!AuthConfig.USE_SERVER_AUTH) {
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = MiniChallengeStore.addChallenge(date, name, totalDays)
             return Result.success(if (added) date else null)
         }
@@ -122,7 +122,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
 
     /** [id]의 미니 챌린지를 삭제한다. */
     suspend fun remove(date: LocalDate, id: String): Result<Unit> {
-        if (!AuthConfig.USE_SERVER_AUTH) {
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             MiniChallengeStore.removeChallenge(date, id)
             return Result.success(Unit)
         }
@@ -138,7 +138,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
 
     /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다(PUT은 멱등이라 재시도해도 안전). */
     suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
-        if (!AuthConfig.USE_SERVER_AUTH) {
+        if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             MiniChallengeStore.toggle(date, id)
             return Result.success(Unit)
         }

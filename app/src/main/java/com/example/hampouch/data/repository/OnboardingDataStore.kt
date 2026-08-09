@@ -55,7 +55,6 @@ object OnboardingDataStore {
         )
     }
 
-    /** 온보딩을 실제로 끝까지 완료했을 때(=시작하기)만 호출한다. */
     fun captureOnboardingComplete(context: Context, request: OnboardingRequest) {
         pendingRequest = request
         prefs(context).edit()
@@ -72,11 +71,6 @@ object OnboardingDataStore {
             .apply()
     }
 
-    /**
-     * 온보딩을 "건너뛰기"로 넘어갈 때 호출한다. 다음 콜드 스타트 때 온보딩 화면을 다시 보여주지 않도록
-     * [hasCompletedOnboarding]만 true로 남기고, 대기 중이던 값은 비운다(=건너뛴 계정은 예약된 값이 없는 것으로
-     * 취급되어 [AccountDataCoordinator]에서 빈 상태로 처리된다).
-     */
     fun markOnboardingSkipped(context: Context) {
         pendingRequest = null
         prefs(context).edit()
@@ -85,10 +79,6 @@ object OnboardingDataStore {
             .apply()
     }
 
-    /**
-     * 회원가입(이메일/소셜)이 실제로 완료된 [email] 계정에 현재 대기 중인 온보딩 값을 예약해둔다.
-     * 대기 중인 값이 없으면(=건너뛴 경우) 아무 일도 하지 않는다.
-     */
     fun reserveForNewAccount(context: Context, email: String) {
         val pending = pendingRequest ?: return
         pendingRequest = null
@@ -96,9 +86,5 @@ object OnboardingDataStore {
         reservedByEmail[email] = pending
     }
 
-    /**
-     * [email]에 예약된 온보딩 값을 꺼내 쓴다(있으면 제거). 신규 계정인데 예약된 값이 없으면(=건너뛴 경우)
-     * null을 반환하며, 호출한 쪽에서 "챌린지 없음" 상태로 처리하면 된다.
-     */
     fun takeReservedRequest(email: String): OnboardingRequest? = reservedByEmail.remove(email)
 }

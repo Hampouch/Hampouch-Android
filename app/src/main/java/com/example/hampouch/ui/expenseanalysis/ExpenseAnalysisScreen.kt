@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.formatWon
@@ -107,14 +109,40 @@ fun ExpenseAnalysisRoute(
         }
     }
 
-    val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val totalAmount = periodRecords.sumOf { it.amount }
-    val categoryItems = remember(periodRecords) { periodRecords.categoryBreakdown() }
-    val reasonItemsSorted = remember(periodRecords) {
-        periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder).sortedByDescending { it.amount }
+    var serverSummary by remember { mutableStateOf<ExpenseAnalysisSummary?>(null) }
+    LaunchedEffect(periodStart, periodEnd) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            serverSummary = ExpenseDetailStore.loadAnalysis(periodStart, periodEnd).getOrNull()
+        }
     }
-    val weekdayItems = remember(periodRecords) { periodRecords.weekdayBreakdown() }
-    val peakDays = remember(periodRecords) { periodRecords.peakWeekdays().toSet() }
+
+    val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
+    val totalAmount = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverSummary?.totalAmount ?: 0
+    } else {
+        periodRecords.sumOf { it.amount }
+    }
+    val categoryItems = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverSummary?.categoryBreakdown ?: emptyList()
+    } else {
+        remember(periodRecords) { periodRecords.categoryBreakdown() }
+    }
+    val reasonItemsSorted = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverSummary?.reasonBreakdown?.sortedByDescending { it.amount } ?: emptyList()
+    } else {
+        remember(periodRecords) {
+            periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder).sortedByDescending { it.amount }
+        }
+    }
+    val weekdayItems = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverSummary?.weekdayBreakdown ?: ExpenseAnalysisWeekdayOrder.map { WeekdayAmount(it, 0) }
+    } else {
+        remember(periodRecords) { periodRecords.weekdayBreakdown() }
+    }
+    val peakDays = remember(weekdayItems) {
+        val maxAmount = weekdayItems.maxOfOrNull { it.amount } ?: 0
+        if (maxAmount <= 0) emptySet() else weekdayItems.filter { it.amount == maxAmount }.map { it.dayOfWeek }.take(2).toSet()
+    }
 
     val topCategoryAmount = categoryItems.maxOfOrNull { it.amount } ?: 0
     val topCategoryItems = categoryItems.filter { it.amount == topCategoryAmount && topCategoryAmount > 0 }.take(2)
@@ -193,7 +221,8 @@ fun ExpenseAnalysisRoute(
                 topCategoryPercent = topCategoryItems.firstOrNull()?.percent ?: 0,
                 topReasonLabel = topReasonItem?.let { analysisReasonTabLabel(it.id) }.orEmpty(),
                 topReasonPercent = topReasonItem?.percent ?: 0,
-                peakWeekdayLabels = peakWeekdayNames.joinToString(", ").ifEmpty { null }
+                peakWeekdayLabels = peakWeekdayNames.joinToString(", ").ifEmpty { null },
+                serverInsight = serverSummary?.pouchInsight
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
@@ -420,12 +449,30 @@ fun MonthlyExpenseRoute(
     referenceToday: LocalDate = LocalDate.now(),
     allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
-    val totals = remember(allRecords, referenceToday) { allRecords.monthlyTotals(referenceToday) }
     val currentMonth = YearMonth.from(referenceToday)
-    val currentTotal = totals.lastOrNull()?.amount ?: 0
-    val average = if (totals.isNotEmpty()) totals.sumOf { it.amount } / totals.size else 0
-    val previousTotal = if (totals.size >= 2) totals[totals.size - 2].amount else 0
-    val changePercent = if (previousTotal > 0) Math.round((currentTotal - previousTotal) * 100f / previousTotal) else 0
+    var serverTrend by remember { mutableStateOf<ExpenseTrendResult?>(null) }
+    LaunchedEffect(currentMonth) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            serverTrend = ExpenseDetailStore.loadTrend(currentMonth).getOrNull()
+        }
+    }
+    val totals = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverTrend?.trend ?: emptyList()
+    } else {
+        remember(allRecords, referenceToday) { allRecords.monthlyTotals(referenceToday) }
+    }
+    val currentTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) serverTrend?.totalAmount ?: 0 else totals.lastOrNull()?.amount ?: 0
+    val average = when {
+        ExpenseConfig.USE_SERVER_EXPENSE -> serverTrend?.monthlyAverage ?: 0
+        totals.isNotEmpty() -> totals.sumOf { it.amount } / totals.size
+        else -> 0
+    }
+    val changePercent = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        serverTrend?.diffRateFromLastMonth ?: 0
+    } else {
+        val previousTotal = if (totals.size >= 2) totals[totals.size - 2].amount else 0
+        if (previousTotal > 0) Math.round((currentTotal - previousTotal) * 100f / previousTotal) else 0
+    }
     val maxTotal = totals.maxOfOrNull { it.amount } ?: 0
 
     Scaffold(
@@ -585,10 +632,27 @@ fun CategoryDetailRoute(
     allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
     var selectedId by remember { mutableStateOf(initialCategoryId) }
+    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    LaunchedEffect(selectedId, periodStart, periodEnd) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            serverResult = ExpenseDetailStore.loadCategoryAnalysis(selectedId, periodStart, periodEnd).getOrNull()
+        }
+    }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val breakdown = remember(periodRecords) { periodRecords.categoryBreakdown(order = ExpenseAnalysisCategoryTabOrder) }
-    val selectedItem = breakdown.first { it.id == selectedId }
-    val records = remember(periodRecords, selectedId) { periodRecords.recordsForCategory(selectedId) }
+    val selectedAmount: Int
+    val selectedPercent: Int
+    val records: List<ExpenseRecord>
+    if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        selectedAmount = serverResult?.totalAmount ?: 0
+        selectedPercent = serverResult?.percent ?: 0
+        records = serverResult?.records ?: emptyList()
+    } else {
+        val breakdown = remember(periodRecords) { periodRecords.categoryBreakdown(order = ExpenseAnalysisCategoryTabOrder) }
+        val selectedItem = breakdown.first { it.id == selectedId }
+        selectedAmount = selectedItem.amount
+        selectedPercent = selectedItem.percent
+        records = remember(periodRecords, selectedId) { periodRecords.recordsForCategory(selectedId) }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -611,9 +675,9 @@ fun CategoryDetailRoute(
             DetailSpentSummaryCard(
                 titleFormatResId = R.string.expenseanalysis_category_detail_spent_format,
                 label = analysisCategoryLabel(selectedId),
-                amount = selectedItem.amount,
+                amount = selectedAmount,
                 count = records.size,
-                percent = selectedItem.percent
+                percent = selectedPercent
             )
             Spacer(modifier = Modifier.height(16.dp))
             Column(
@@ -643,10 +707,27 @@ fun ReasonDetailRoute(
     allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
 ) {
     var selectedId by remember { mutableStateOf(initialReasonId) }
+    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    LaunchedEffect(selectedId, periodStart, periodEnd) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            serverResult = ExpenseDetailStore.loadEmotionAnalysis(selectedId, periodStart, periodEnd).getOrNull()
+        }
+    }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val breakdown = remember(periodRecords) { periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder) }
-    val selectedItem = breakdown.first { it.id == selectedId }
-    val records = remember(periodRecords, selectedId) { periodRecords.recordsForReason(selectedId) }
+    val selectedAmount: Int
+    val selectedPercent: Int
+    val records: List<ExpenseRecord>
+    if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        selectedAmount = serverResult?.totalAmount ?: 0
+        selectedPercent = serverResult?.percent ?: 0
+        records = serverResult?.records ?: emptyList()
+    } else {
+        val breakdown = remember(periodRecords) { periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder) }
+        val selectedItem = breakdown.first { it.id == selectedId }
+        selectedAmount = selectedItem.amount
+        selectedPercent = selectedItem.percent
+        records = remember(periodRecords, selectedId) { periodRecords.recordsForReason(selectedId) }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -669,9 +750,9 @@ fun ReasonDetailRoute(
             DetailSpentSummaryCard(
                 titleFormatResId = R.string.expenseanalysis_reason_detail_spent_format,
                 label = analysisReasonTabLabel(selectedId),
-                amount = selectedItem.amount,
+                amount = selectedAmount,
                 count = records.size,
-                percent = selectedItem.percent
+                percent = selectedPercent
             )
             Spacer(modifier = Modifier.height(16.dp))
             Column(

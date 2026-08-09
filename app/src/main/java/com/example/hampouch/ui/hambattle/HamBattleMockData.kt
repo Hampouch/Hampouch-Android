@@ -18,7 +18,6 @@ object HamBattleMockData {
     private const val ME_NAME = "나"
     private val linkTokenChars = ('a'..'z') + ('0'..'9')
 
-    /** [start]부터 [endInclusive]까지 실제 입력된 지출(ExpenseDetailStore) 합계. */
     private fun mySpentInRange(start: LocalDate, endInclusive: LocalDate): Int {
         if (endInclusive.isBefore(start)) return 0
         var date = start
@@ -30,10 +29,6 @@ object HamBattleMockData {
         return total
     }
 
-    /**
-     * 진행중인 챌린지의 "나" 참가자 지출 금액을, 실제 입력한 지출 데이터를 합산한 값으로 갈아끼운다.
-     * 이미 탈락 처리된 챌린지는 [disqualifyMe]가 확정해둔 금액을 그대로 두고 더 갱신하지 않는다.
-     */
     private fun withLiveMySpending(challenge: HamBattleChallenge, referenceToday: LocalDate): HamBattleChallenge {
         if (challenge.status(referenceToday) != HamBattleStatus.ACTIVE) return challenge
         val me = challenge.participants.find { it.name == ME_NAME } ?: return challenge
@@ -48,7 +43,6 @@ object HamBattleMockData {
         return challenge.copy(participants = updatedParticipants)
     }
 
-    /** 챌린지 시작일부터 어제까지, "나"의 지출 입력이 며칠 연속으로 비어있는지. */
     fun myMissedStreakDays(challenge: HamBattleChallenge, referenceToday: LocalDate = LocalDate.now()): Int {
         if (challenge.status(referenceToday) != HamBattleStatus.ACTIVE) return 0
         val start = challenge.effectiveStartDate(referenceToday) ?: return 0
@@ -62,7 +56,6 @@ object HamBattleMockData {
         return missed
     }
 
-    /** 3일 연속 지출 미입력 시 해당 챌린지에서 "나"를 탈락 처리한다 (그 시점까지의 지출 금액으로 고정). */
     fun disqualifyMe(challengeId: String, referenceToday: LocalDate = LocalDate.now()) {
         challengesState.value = challengesState.value.map { challenge ->
             if (challenge.id != challengeId) return@map challenge
@@ -100,7 +93,6 @@ object HamBattleMockData {
         missedWarningShownDates.value = missedWarningShownDates.value + (challengeId to referenceToday)
     }
 
-    /** 지출 미입력 탈락자가 늘어 남은 참가자가 1명 이하가 되면 챌린지를 강제로 종료시킨다. */
     fun cancelChallenge(challengeId: String) {
         challengesState.value = challengesState.value.map { challenge ->
             if (challenge.id == challengeId) challenge.copy(cancelled = true) else challenge
@@ -116,7 +108,6 @@ object HamBattleMockData {
         acknowledgedCancellations.value = acknowledgedCancellations.value + challengeId
     }
 
-    /** 진행중인 챌린지에서 오늘 하루치만 본 "나" 참가자 지출 금액으로 갈아끼운다. */
     fun participantsForToday(
         challenge: HamBattleChallenge,
         referenceToday: LocalDate = LocalDate.now()
@@ -149,11 +140,6 @@ object HamBattleMockData {
         return "hampouch.app/battle/$token"
     }
 
-    /**
-     * 진행중/대기중/종료 전부 같은 [HamBattleChallenge] 형태를 쓴다. 어느 상태인지는
-     * 저장된 값이 아니라 이 리스트를 읽는 쪽(activeChallenges/waitingChallenges/endedChallenges)에서
-     * 날짜·인원을 기준으로 매번 계산한다.
-     */
     private fun buildSeedChallenges(): List<HamBattleChallenge> =
         listOf(
             HamBattleChallenge(
@@ -232,10 +218,6 @@ object HamBattleMockData {
 
     private val challengesState = mutableStateOf(buildSeedChallenges())
 
-    /**
-     * 계정이 바뀔 때 호출한다. 다른 스토어들과 마찬가지로 실제 계정별 서버 데이터가 없으므로
-     * "빈 상태"가 아니라 초기 시드 목데이터로 되돌리고, 확인/경고 표시 이력도 함께 초기화한다.
-     */
     fun resetForAccount() {
         challengesState.value = buildSeedChallenges()
         acknowledgedDisqualifications.value = emptySet()
@@ -258,9 +240,6 @@ object HamBattleMockData {
     fun endedChallenges(referenceToday: LocalDate = LocalDate.now()): List<HamBattleChallenge> =
         challenges.filter { it.status(referenceToday) == HamBattleStatus.ENDED }
 
-    /**
-     * 햄배틀 새 챌린지를 대기중인 챌린지 목록에 추가한다.
-     */
     fun startNewChallenge(
         request: HamBattleChallengeRequest,
         referenceToday: LocalDate = LocalDate.now()
@@ -284,12 +263,6 @@ object HamBattleMockData {
         return newChallenge
     }
 
-    /**
-     * 커뮤니티에서 다른 사람이 모집한 햄배틀 글의 "참가하기"를 누르면 그 챌린지를
-     * 나의 대기중인 챌린지 목록에 추가한다. 글을 쓴 사람도 참가자로 함께 추가된다.
-     * 이미 참가한(같은 링크) 챌린지면 그대로 반환하고, 정원이 이미 다 찼으면 null을 반환한다
-     * (호출한 쪽에서 "방이 다 찼습니다" 안내를 띄우면 된다).
-     */
     fun joinChallengeFromCommunityPost(
         authorName: String,
         title: String,
@@ -321,9 +294,6 @@ object HamBattleMockData {
         return newChallenge
     }
 
-    /**
-     * 시작일까지 참여한 사람이 없어 자동으로 사라진 챌린지 등, 대기중인 챌린지를 목록에서 제거한다.
-     */
     fun removeWaitingChallenge(challengeId: String) {
         challengesState.value = challengesState.value.filterNot { it.id == challengeId }
     }

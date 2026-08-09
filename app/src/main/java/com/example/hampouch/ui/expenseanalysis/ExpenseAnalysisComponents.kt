@@ -616,27 +616,32 @@ fun PochiAnalysisCard(
     topReasonLabel: String,
     topReasonPercent: Int,
     peakWeekdayLabels: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    serverInsight: String? = null
 ) {
     val highlight = SpanStyle(color = HPMain, fontWeight = FontWeight.Bold)
-    val message = buildAnnotatedString {
-        append(stringResource(R.string.expenseanalysis_ai_intro_prefix_format, periodLabel))
-        withStyle(highlight) { append(stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount))) }
-        append(stringResource(R.string.expenseanalysis_ai_intro_suffix))
-        withStyle(highlight) { append(topCategoryLabels) }
-        append(" ")
-        append(stringResource(R.string.expenseanalysis_ai_category_middle))
-        withStyle(highlight) { append(stringResource(R.string.expenseanalysis_percent_format, topCategoryPercent)) }
-        append(stringResource(R.string.expenseanalysis_ai_category_suffix))
-        withStyle(highlight) { append(topReasonLabel) }
-        append(stringResource(R.string.expenseanalysis_ai_reason_middle))
-        withStyle(highlight) { append(stringResource(R.string.expenseanalysis_percent_format, topReasonPercent)) }
-        append(stringResource(R.string.expenseanalysis_ai_reason_suffix))
-        if (!peakWeekdayLabels.isNullOrEmpty()) {
-            append(peakWeekdayLabels)
-            append(stringResource(R.string.expenseanalysis_ai_weekday_suffix))
+    val message = if (serverInsight != null) {
+        buildAnnotatedString { append(serverInsight) }
+    } else {
+        buildAnnotatedString {
+            append(stringResource(R.string.expenseanalysis_ai_intro_prefix_format, periodLabel))
+            withStyle(highlight) { append(stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount))) }
+            append(stringResource(R.string.expenseanalysis_ai_intro_suffix))
+            withStyle(highlight) { append(topCategoryLabels) }
+            append(" ")
+            append(stringResource(R.string.expenseanalysis_ai_category_middle))
+            withStyle(highlight) { append(stringResource(R.string.expenseanalysis_percent_format, topCategoryPercent)) }
+            append(stringResource(R.string.expenseanalysis_ai_category_suffix))
+            withStyle(highlight) { append(topReasonLabel) }
+            append(stringResource(R.string.expenseanalysis_ai_reason_middle))
+            withStyle(highlight) { append(stringResource(R.string.expenseanalysis_percent_format, topReasonPercent)) }
+            append(stringResource(R.string.expenseanalysis_ai_reason_suffix))
+            if (!peakWeekdayLabels.isNullOrEmpty()) {
+                append(peakWeekdayLabels)
+                append(stringResource(R.string.expenseanalysis_ai_weekday_suffix))
+            }
+            append(stringResource(R.string.expenseanalysis_ai_closing))
         }
-        append(stringResource(R.string.expenseanalysis_ai_closing))
     }
     Column(
         modifier = modifier

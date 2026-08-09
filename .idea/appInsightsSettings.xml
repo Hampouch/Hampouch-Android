@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.hampouch" />
+                  <option name="mobileSdkAppId" value="1:184318651920:android:01fec4f80bd1099ee06495" />
+                  <option name="projectId" value="hampouch-a1" />
+                  <option name="projectNumber" value="184318651920" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

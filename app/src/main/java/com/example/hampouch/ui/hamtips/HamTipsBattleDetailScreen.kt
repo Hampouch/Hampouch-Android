@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hamtips
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,10 +21,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +40,7 @@ import com.example.hampouch.data.model.HamBattleChallenge
 import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.dialog.HamBattleRoomFullDialog
@@ -53,11 +57,8 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.ZoneOffset
+import kotlinx.coroutines.launch
 
-/**
- * 게시글에 달린 링크로 실제 생성된 햄배틀 챌린지를 찾아 그 정보를 그대로 보여준다.
- * 매칭되는 챌린지가 없으면(예: 링크를 잘못 입력한 경우) 게시글에 적힌 값으로 대신한다.
- */
 private fun battleChallengeRequestFrom(
     post: TipPost,
     durationLabel: String,
@@ -141,6 +142,7 @@ fun HamTipsBattleDetailScreen(
     onDeleted: () -> Unit,
     onNavigateToBattleLink: (String) -> Unit,
     onNavigateToHamBattleTab: () -> Unit = {},
+    onEditClick: (TipPost) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
@@ -150,9 +152,11 @@ fun HamTipsBattleDetailScreen(
     var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
     var replyTarget by remember { mutableStateOf<TipComment?>(null) }
     var commentInput by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(post.id) {
-        HamTipsRepository.incrementViewCount(post.id)
+        HamTipsRepository.loadPostDetail(post.id)
     }
 
     val isAuthor = post.authorId == UserSession.currentUser.id
@@ -187,9 +191,14 @@ fun HamTipsBattleDetailScreen(
                 commentInput = commentInput,
                 onCommentInputChange = { commentInput = it },
                 onSubmit = {
-                    submitHamTipsComment(post, replyTarget, commentInput)
+                    val submittedInput = commentInput
+                    val submittedReplyTarget = replyTarget
                     commentInput = ""
                     replyTarget = null
+                    coroutineScope.launch {
+                        submitHamTipsComment(post, submittedReplyTarget, submittedInput)
+                            .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
+                    }
                 }
             )
         }
@@ -219,8 +228,8 @@ fun HamTipsBattleDetailScreen(
                 }
                 HamTipsEngagementRow(
                     post = post,
-                    onLikeClick = { HamTipsRepository.toggleLike(post.id) },
-                    onScrapClick = { HamTipsRepository.toggleSave(post.id) }
+                    onLikeClick = { coroutineScope.launch { HamTipsRepository.toggleLike(post.id) } },
+                    onScrapClick = { coroutineScope.launch { HamTipsRepository.toggleSave(post.id) } }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -248,24 +257,35 @@ fun HamTipsBattleDetailScreen(
 
     if (showPostMenu) {
         HamTipsMoreMenuSheet(
-            items = if (canDeletePost) {
-                listOf(
-                    HamTipsMenuSheetItem(
-                        label = stringResource(R.string.hamtips_more_menu_delete),
-                        isDestructive = true,
-                        onClick = {
-                            showPostMenu = false
-                            HamTipsRepository.deletePost(post.id)
-                            onDeleted()
-                        }
-                    ),
-                    HamTipsMenuSheetItem(
-                        label = stringResource(R.string.hamtips_more_menu_close),
-                        onClick = { showPostMenu = false }
+            items = buildList {
+                if (canDeletePost) {
+                    add(
+                        HamTipsMenuSheetItem(
+                            label = stringResource(R.string.hamtips_more_menu_delete),
+                            isDestructive = true,
+                            onClick = {
+                                showPostMenu = false
+                                coroutineScope.launch {
+                                    HamTipsRepository.deletePost(post.id)
+                                        .onSuccess { onDeleted() }
+                                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
+                                }
+                            }
+                        )
                     )
-                )
-            } else {
-                listOf(
+                }
+                if (isAuthor) {
+                    add(
+                        HamTipsMenuSheetItem(
+                            label = stringResource(R.string.hamtips_more_menu_edit),
+                            onClick = {
+                                showPostMenu = false
+                                onEditClick(post)
+                            }
+                        )
+                    )
+                }
+                add(
                     HamTipsMenuSheetItem(
                         label = stringResource(R.string.hamtips_more_menu_close),
                         onClick = { showPostMenu = false }

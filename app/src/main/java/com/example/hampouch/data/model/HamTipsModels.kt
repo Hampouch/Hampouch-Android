@@ -29,9 +29,10 @@ data class BattleRecruitInfo(
     val durationDays: Int,
     val capacity: Int,
     val penalty: String,
-    val participantIds: List<String> = emptyList()
+    val participantIds: List<String> = emptyList(),
+    val currentMemberCount: Int? = null
 ) {
-    val isFull: Boolean get() = participantIds.size >= capacity
+    val isFull: Boolean get() = (currentMemberCount ?: participantIds.size) >= capacity
 }
 
 data class TipReply(
@@ -69,6 +70,7 @@ data class TipPost(
     val likeCount: Int = 0,
     val hasImage: Boolean = false,
     val imageUris: List<String> = emptyList(),
+    val imageKeys: List<String> = emptyList(),
     val menuName: String = "",
     val place: String = "",
     val price: Int = 0,

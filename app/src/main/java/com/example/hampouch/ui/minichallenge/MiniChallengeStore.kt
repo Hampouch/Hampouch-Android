@@ -51,7 +51,6 @@ object MiniChallengeStore {
         challengesByDate = challengesByDate + (date to updated)
     }
 
-    /** Adds a mini challenge for [date]. Returns false without adding if the name already exists for that date. */
     fun addChallenge(date: LocalDate, name: String, totalDays: Int?): Boolean {
         val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
         if (isNameTaken(date, trimmedName)) return false
@@ -67,7 +66,6 @@ object MiniChallengeStore {
         return true
     }
 
-    /** Adds [recommended] as a mini challenge for [date]. Returns false without adding if the name already exists for that date. */
     fun addRecommendedChallenge(date: LocalDate, recommended: RecommendedMiniChallenge): Boolean {
         val added = addChallenge(date, recommended.name, recommended.totalDays)
         if (added) {

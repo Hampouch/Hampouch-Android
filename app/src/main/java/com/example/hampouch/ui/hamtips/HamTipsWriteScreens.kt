@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hamtips
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +44,7 @@ import com.example.hampouch.data.model.MenuRatingInfo
 import com.example.hampouch.data.model.MenuRatingType
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipShareCategory
+import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
@@ -60,6 +64,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 fun formatMenuTitle(menuName: String, place: String, price: Int): String {
     val priceText = if (price > 0) "%,d원".format(price) else ""
@@ -162,7 +167,10 @@ fun HamTipsWriteTipScreen(
     var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
     var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
     var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
+    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank()
 
@@ -200,8 +208,15 @@ fun HamTipsWriteTipScreen(
             Spacer(modifier = Modifier.height(10.dp))
             PhotoAttachGrid(
                 photoUris = photoUris,
-                onPhotosAdded = { added -> photoUris = (photoUris + added).take(HamTipsMaxPhotoCount) },
-                onPhotoRemoved = { removed -> photoUris = photoUris - removed }
+                onPhotosAdded = { added ->
+                    photoUris = (photoUris + added).take(HamTipsMaxPhotoCount)
+                    photoKeys = (photoKeys + added.map { "" }).take(HamTipsMaxPhotoCount)
+                },
+                onPhotoRemoved = { removed ->
+                    val index = photoUris.indexOf(removed)
+                    photoUris = photoUris - removed
+                    if (index != -1) photoKeys = photoKeys.filterIndexed { i, _ -> i != index }
+                }
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -220,12 +235,15 @@ fun HamTipsWriteTipScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                if (editingPost != null) {
-                    HamTipsRepository.updateTipPost(editingPost.id, category.category, title, content, photoUris)
-                } else {
-                    HamTipsRepository.createTipPost(category.category, title, content, photoUris)
+                coroutineScope.launch {
+                    val result = if (editingPost != null) {
+                        HamTipsRepository.updateTipPost(editingPost.id, category.category, title, content, photoUris, photoKeys)
+                    } else {
+                        HamTipsRepository.createTipPost(category.category, title, content, photoUris)
+                    }
+                    result.onSuccess { onSubmitted() }
+                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
                 }
-                onSubmitted()
             }
         )
     }
@@ -233,18 +251,22 @@ fun HamTipsWriteTipScreen(
 
 @Composable
 fun HamTipsWriteMenuScreen(
+    editingPost: TipPost? = null,
     onBackClick: () -> Unit,
     onSubmitted: () -> Unit
 ) {
-    var menuName by remember { mutableStateOf("") }
-    var place by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf(0) }
-    var taste by remember { mutableStateOf(0) }
-    var costEffectiveness by remember { mutableStateOf(0) }
-    var mood by remember { mutableStateOf(0) }
-    var comment by remember { mutableStateOf("") }
-    var photoUris by remember { mutableStateOf(emptyList<String>()) }
+    var menuName by remember { mutableStateOf(editingPost?.menuName.orEmpty()) }
+    var place by remember { mutableStateOf(editingPost?.place.orEmpty()) }
+    var price by remember { mutableStateOf(editingPost?.price ?: 0) }
+    var taste by remember { mutableStateOf(editingPost?.menuRating?.taste ?: 0) }
+    var costEffectiveness by remember { mutableStateOf(editingPost?.menuRating?.costEffectiveness ?: 0) }
+    var mood by remember { mutableStateOf(editingPost?.menuRating?.mood ?: 0) }
+    var comment by remember { mutableStateOf(editingPost?.content.orEmpty()) }
+    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
+    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val previewTitle = formatMenuTitle(menuName, place, price)
     val isSubmitEnabled = menuName.isNotBlank() && place.isNotBlank() && price > 0
@@ -325,8 +347,15 @@ fun HamTipsWriteMenuScreen(
             Spacer(modifier = Modifier.height(5.dp))
             PhotoAttachGrid(
                 photoUris = photoUris,
-                onPhotosAdded = { added -> photoUris = (photoUris + added).take(HamTipsMaxPhotoCount) },
-                onPhotoRemoved = { removed -> photoUris = photoUris - removed }
+                onPhotosAdded = { added ->
+                    photoUris = (photoUris + added).take(HamTipsMaxPhotoCount)
+                    photoKeys = (photoKeys + added.map { "" }).take(HamTipsMaxPhotoCount)
+                },
+                onPhotoRemoved = { removed ->
+                    val index = photoUris.indexOf(removed)
+                    photoUris = photoUris - removed
+                    if (index != -1) photoKeys = photoKeys.filterIndexed { i, _ -> i != index }
+                }
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -343,16 +372,22 @@ fun HamTipsWriteMenuScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                HamTipsRepository.createMenuPost(
-                    title = previewTitle,
-                    menuName = menuName,
-                    place = place,
-                    price = price,
-                    rating = MenuRatingInfo(taste = taste, costEffectiveness = costEffectiveness, mood = mood),
-                    comment = comment,
-                    imageUris = photoUris
-                )
-                onSubmitted()
+                val rating = MenuRatingInfo(taste = taste, costEffectiveness = costEffectiveness, mood = mood)
+                coroutineScope.launch {
+                    val result = if (editingPost != null) {
+                        HamTipsRepository.updateMenuPost(
+                            postId = editingPost.id, title = previewTitle, menuName = menuName, place = place,
+                            price = price, rating = rating, comment = comment, imageUris = photoUris, imageKeys = photoKeys
+                        )
+                    } else {
+                        HamTipsRepository.createMenuPost(
+                            title = previewTitle, menuName = menuName, place = place, price = price,
+                            rating = rating, comment = comment, imageUris = photoUris
+                        )
+                    }
+                    result.onSuccess { onSubmitted() }
+                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
+                }
             }
         )
     }
@@ -360,16 +395,19 @@ fun HamTipsWriteMenuScreen(
 
 @Composable
 fun HamTipsWriteBattleScreen(
+    editingPost: TipPost? = null,
     onBackClick: () -> Unit,
     onSubmitted: () -> Unit,
     initialLink: String = "",
     waitingChallengeLinks: List<String> = HamBattleMockData.waitingChallenges().map { it.link }
 ) {
-    var title by remember { mutableStateOf("") }
-    var content by remember { mutableStateOf("") }
-    var link by remember { mutableStateOf(initialLink) }
+    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
+    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
+    var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }
     var showLinkNotFoundError by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
 
@@ -442,8 +480,15 @@ fun HamTipsWriteBattleScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                HamTipsRepository.createBattlePost(title = title, content = content, link = link.trim())
-                onSubmitted()
+                coroutineScope.launch {
+                    val result = if (editingPost != null) {
+                        HamTipsRepository.updateBattlePost(editingPost.id, title = title, content = content, link = link.trim())
+                    } else {
+                        HamTipsRepository.createBattlePost(title = title, content = content, link = link.trim())
+                    }
+                    result.onSuccess { onSubmitted() }
+                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
+                }
             }
         )
     }

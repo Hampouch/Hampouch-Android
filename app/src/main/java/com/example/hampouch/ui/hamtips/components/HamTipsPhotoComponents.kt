@@ -1,7 +1,6 @@
 package com.example.hampouch.ui.hamtips.components
 
-import android.graphics.ImageDecoder
-import android.net.Uri
+import android.graphics.drawable.BitmapDrawable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -53,14 +52,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPWhite
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 const val HamTipsMaxPhotoCount = 5
 
@@ -70,10 +69,12 @@ fun rememberImageBitmapFromUri(uriString: String): ImageBitmap? {
     var bitmap by remember(uriString) { mutableStateOf<ImageBitmap?>(null) }
     LaunchedEffect(uriString) {
         bitmap = try {
-            withContext(Dispatchers.IO) {
-                val source = ImageDecoder.createSource(context.contentResolver, Uri.parse(uriString))
-                ImageDecoder.decodeBitmap(source).asImageBitmap()
-            }
+            val request = ImageRequest.Builder(context)
+                .data(uriString)
+                .allowHardware(false)
+                .build()
+            val result = context.imageLoader.execute(request)
+            (result.drawable as? BitmapDrawable)?.bitmap?.asImageBitmap()
         } catch (error: Exception) {
             null
         }
