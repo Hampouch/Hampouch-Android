@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,10 +50,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.model.ExpenseCalendarViewMode
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
+import com.example.hampouch.ui.expenseanalysis.ExpensePeriodSummary
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -64,6 +67,7 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -114,9 +118,33 @@ fun ExpenseCalendarRoute(
     var selectedDate by remember { mutableStateOf(initialSelectedDate) }
     var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
     var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
-    val summaryByDate = ExpenseDetailStore.recordsById.values
-        .groupBy { it.date }
-        .mapValues { (_, records) -> records.sumOf { it.amount } }
+
+    var monthSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
+    var weekSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
+    LaunchedEffect(displayedMonth) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            monthSummary = ExpenseDetailStore.loadMonthSummary(YearMonth.from(displayedMonth)).getOrNull()
+        }
+    }
+    LaunchedEffect(displayedWeekStart) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            weekSummary = ExpenseDetailStore.loadWeekSummary(displayedWeekStart).getOrNull()
+        }
+    }
+    LaunchedEffect(selectedDate) {
+        if (ExpenseConfig.USE_SERVER_EXPENSE) {
+            ExpenseDetailStore.loadDay(selectedDate)
+        }
+    }
+
+    val summaryByDate = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
+        activeSummary?.dailyBreakdown?.associate { it.date to it.amount } ?: emptyMap()
+    } else {
+        ExpenseDetailStore.recordsById.values
+            .groupBy { it.date }
+            .mapValues { (_, records) -> records.sumOf { it.amount } }
+    }
     val dayRecords = ExpenseDetailStore.recordsForDate(selectedDate)
     val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate, restrictToChallengePeriod)
     val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
@@ -125,15 +153,19 @@ fun ExpenseCalendarRoute(
     val monthlyRecordsTotal = ExpenseDetailStore.recordsById.values
         .filter { it.date.year == displayedMonth.year && it.date.monthValue == displayedMonth.monthValue }
         .sumOf { it.amount }
-    val monthlyTotal = monthlyRecordsTotal
-    val monthlyDailyAverage = monthlyRecordsTotal / displayedMonth.lengthOfMonth()
+    val monthlyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) monthSummary?.totalAmount ?: 0 else monthlyRecordsTotal
+    val monthlyDailyAverage = if (ExpenseConfig.USE_SERVER_EXPENSE) {
+        monthSummary?.dailyAverage ?: 0
+    } else {
+        monthlyRecordsTotal / displayedMonth.lengthOfMonth()
+    }
 
     val weeklyWeekEnd = displayedWeekStart.plusDays(6)
     val weeklyRecordsTotal = ExpenseDetailStore.recordsById.values
         .filter { !it.date.isBefore(displayedWeekStart) && !it.date.isAfter(weeklyWeekEnd) }
         .sumOf { it.amount }
-    val weeklyTotal = weeklyRecordsTotal
-    val weeklyDailyAverage = weeklyRecordsTotal / 7
+    val weeklyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) weekSummary?.totalAmount ?: 0 else weeklyRecordsTotal
+    val weeklyDailyAverage = if (ExpenseConfig.USE_SERVER_EXPENSE) weekSummary?.dailyAverage ?: 0 else weeklyRecordsTotal / 7
 
     val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) displayedWeekStart else displayedMonth
 

@@ -8,7 +8,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.core.network.NetworkModule
-import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.remote.ApiException
 import com.example.hampouch.data.remote.dto.ApiErrorBody
