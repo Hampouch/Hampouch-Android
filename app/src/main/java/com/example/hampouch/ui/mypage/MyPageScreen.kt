@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +47,9 @@ import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
 import com.example.hampouch.ui.hamtips.HamTipsDetailScreen
-import com.example.hampouch.ui.hamtips.HamTipsRepository
+import com.example.hampouch.data.repository.HamTipsRepository
+import com.example.hampouch.ui.hamtips.HamTipsWriteBattleScreen
+import com.example.hampouch.ui.hamtips.HamTipsWriteMenuScreen
 import com.example.hampouch.ui.hamtips.HamTipsWriteTipScreen
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.MyPageMenuRow
@@ -60,7 +63,7 @@ import java.time.LocalDate
 
 private enum class MyPageRoute {
     MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY,
-    CHALLENGE_RESULT, MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP
+    CHALLENGE_RESULT, MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP, EDIT_MENU, EDIT_BATTLE
 }
 
 @Composable
@@ -254,6 +257,7 @@ fun MyPageScreen(
 
         MyPageRoute.MY_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
+            LaunchedEffect(Unit) { HamTipsRepository.loadMyPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_my_tips),
                 emptyMessage = stringResource(R.string.my_tips_empty_message),
@@ -267,6 +271,7 @@ fun MyPageScreen(
 
         MyPageRoute.SAVED_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
+            LaunchedEffect(Unit) { HamTipsRepository.loadSavedPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_saved_tips),
                 emptyMessage = stringResource(R.string.saved_tips_empty_message),
@@ -285,7 +290,7 @@ fun MyPageScreen(
                 HamTipsDetailScreen(
                     post = post,
                     onBackClick = { route = previousListRoute },
-                    onEditClick = { route = MyPageRoute.EDIT_TIP },
+                    onEditClick = { route = if (it.type == TipPostType.MENU) MyPageRoute.EDIT_MENU else MyPageRoute.EDIT_TIP },
                     onDeleted = { route = previousListRoute },
                     scrollToComments = post.id == initialTipDetailPostId && initialTipDetailScrollToComments
                 )
@@ -299,6 +304,7 @@ fun MyPageScreen(
                 HamTipsBattleDetailScreen(
                     post = post,
                     onBackClick = { route = previousListRoute },
+                    onEditClick = { route = MyPageRoute.EDIT_BATTLE },
                     onDeleted = { route = previousListRoute },
                     onNavigateToBattleLink = onNavigateToHamBattleLink
                 )
@@ -313,6 +319,30 @@ fun MyPageScreen(
                     editingPost = post,
                     onBackClick = { route = MyPageRoute.TIP_DETAIL },
                     onSubmitted = { route = MyPageRoute.TIP_DETAIL }
+                )
+            }
+        }
+
+        MyPageRoute.EDIT_MENU -> {
+            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler { route = MyPageRoute.TIP_DETAIL }
+                HamTipsWriteMenuScreen(
+                    editingPost = post,
+                    onBackClick = { route = MyPageRoute.TIP_DETAIL },
+                    onSubmitted = { route = MyPageRoute.TIP_DETAIL }
+                )
+            }
+        }
+
+        MyPageRoute.EDIT_BATTLE -> {
+            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            if (post != null) {
+                BackHandler { route = MyPageRoute.BATTLE_DETAIL }
+                HamTipsWriteBattleScreen(
+                    editingPost = post,
+                    onBackClick = { route = MyPageRoute.BATTLE_DETAIL },
+                    onSubmitted = { route = MyPageRoute.BATTLE_DETAIL }
                 )
             }
         }

@@ -29,9 +29,6 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-/**
- * 이미 정원이 다 찬 햄배틀 챌린지에 참가를 시도했을 때 보여주는 다이얼로그.
- */
 @Composable
 fun HamBattleRoomFullDialog(
     challengeTitle: String,

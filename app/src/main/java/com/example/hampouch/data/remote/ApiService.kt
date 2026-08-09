@@ -2,6 +2,33 @@ package com.example.hampouch.data.remote
 
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
+import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
+import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
+import com.example.hampouch.data.remote.dto.ExpenseCategoryAnalysisData
+import com.example.hampouch.data.remote.dto.ExpenseCreateRequest
+import com.example.hampouch.data.remote.dto.ExpenseDaySummaryData
+import com.example.hampouch.data.remote.dto.ExpenseDetailData
+import com.example.hampouch.data.remote.dto.ExpenseEmotionAnalysisData
+import com.example.hampouch.data.remote.dto.ExpenseIdData
+import com.example.hampouch.data.remote.dto.ExpensePeriodSummaryData
+import com.example.hampouch.data.remote.dto.ExpensePhotoConfirmRequest
+import com.example.hampouch.data.remote.dto.ExpensePhotoPresignData
+import com.example.hampouch.data.remote.dto.ExpensePhotoPresignRequest
+import com.example.hampouch.data.remote.dto.ExpenseTrendData
+import com.example.hampouch.data.remote.dto.ExpenseUpdateRequest
+import com.example.hampouch.data.remote.dto.CommunityCommentWriteData
+import com.example.hampouch.data.remote.dto.CommunityCommentWriteRequest
+import com.example.hampouch.data.remote.dto.CommunityFoodWriteRequest
+import com.example.hampouch.data.remote.dto.CommunityHomeData
+import com.example.hampouch.data.remote.dto.CommunityImagePresignData
+import com.example.hampouch.data.remote.dto.CommunityImagePresignRequest
+import com.example.hampouch.data.remote.dto.CommunityLikeToggleData
+import com.example.hampouch.data.remote.dto.CommunityPostDetailData
+import com.example.hampouch.data.remote.dto.CommunityPostIdData
+import com.example.hampouch.data.remote.dto.CommunityPostPageData
+import com.example.hampouch.data.remote.dto.CommunityPostSummaryData
+import com.example.hampouch.data.remote.dto.CommunityRecruitWriteRequest
+import com.example.hampouch.data.remote.dto.CommunityTipWriteRequest
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.data.remote.dto.EmailVerifyData
@@ -18,10 +45,13 @@ import com.example.hampouch.data.remote.dto.SocialLoginData
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -47,10 +77,6 @@ interface ApiService {
     @PATCH("api/auth/password/reset")
     suspend fun resetPassword(@Body request: PasswordResetRequest): Response<ApiResponse<Unit>>
 
-    /**
-     * 소셜 회원가입 온보딩 마지막 단계: 신규 유저의 최초 닉네임을 설정한다.
-     * 이미 닉네임이 설정된 계정으로 다시 호출하면 서버가 409(USER_NICKNAME_ALREADY_SET)를 내려준다.
-     */
     @PATCH("api/auth/nickname")
     suspend fun setNickname(
         @Header("Authorization") authorization: String,
@@ -61,4 +87,227 @@ interface ApiService {
     suspend fun getMe(
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<AuthMeData>>
+
+    @GET("api/community/home")
+    suspend fun getCommunityHome(
+        @Header("Authorization") authorization: String,
+        @Query("sortType") sortType: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityHomeData>>
+
+    @GET("api/community/posts")
+    suspend fun getCommunityPosts(
+        @Header("Authorization") authorization: String,
+        @Query("category") category: String,
+        @Query("sortType") sortType: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
+
+    @GET("api/community/posts/{postId}")
+    suspend fun getCommunityPostDetail(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long
+    ): Response<ApiResponse<CommunityPostDetailData>>
+
+    @DELETE("api/community/posts/{postId}")
+    suspend fun deleteCommunityPost(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long
+    ): Response<ApiResponse<Unit>>
+
+    @POST("api/community/posts/tips")
+    suspend fun createCommunityTipPost(
+        @Header("Authorization") authorization: String,
+        @Body request: CommunityTipWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @PATCH("api/community/posts/tips/{postId}")
+    suspend fun updateCommunityTipPost(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long,
+        @Body request: CommunityTipWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @POST("api/community/posts/foods")
+    suspend fun createCommunityFoodPost(
+        @Header("Authorization") authorization: String,
+        @Body request: CommunityFoodWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @PATCH("api/community/posts/foods/{postId}")
+    suspend fun updateCommunityFoodPost(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long,
+        @Body request: CommunityFoodWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @POST("api/community/posts/recruits")
+    suspend fun createCommunityRecruitPost(
+        @Header("Authorization") authorization: String,
+        @Body request: CommunityRecruitWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @PATCH("api/community/posts/recruits/{postId}")
+    suspend fun updateCommunityRecruitPost(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long,
+        @Body request: CommunityRecruitWriteRequest
+    ): Response<ApiResponse<CommunityPostIdData>>
+
+    @POST("api/community/posts/{postId}/comments")
+    suspend fun createCommunityComment(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long,
+        @Body request: CommunityCommentWriteRequest
+    ): Response<ApiResponse<CommunityCommentWriteData>>
+
+    @DELETE("api/community/comments/{commentId}")
+    suspend fun deleteCommunityComment(
+        @Header("Authorization") authorization: String,
+        @Path("commentId") commentId: Long
+    ): Response<ApiResponse<Unit>>
+
+    @POST("api/community/posts/{postId}/likes")
+    suspend fun toggleCommunityLike(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long
+    ): Response<ApiResponse<CommunityLikeToggleData>>
+
+    @POST("api/community/posts/{postId}/bookmarks")
+    suspend fun toggleCommunityBookmark(
+        @Header("Authorization") authorization: String,
+        @Path("postId") postId: Long
+    ): Response<ApiResponse<CommunityBookmarkToggleData>>
+
+    @GET("api/community/me/posts")
+    suspend fun getMyCommunityPosts(
+        @Header("Authorization") authorization: String,
+        @Query("sortType") sortType: String,
+        @Query("cursor") cursor: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
+
+    @GET("api/community/me/bookmarks")
+    suspend fun getMyCommunityBookmarks(
+        @Header("Authorization") authorization: String,
+        @Query("sortType") sortType: String,
+        @Query("cursor") cursor: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
+
+    @GET("api/community/posts/popular")
+    suspend fun getCommunityPopularPosts(
+        @Header("Authorization") authorization: String,
+        @Query("sortType") sortType: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
+
+    @GET("api/community/posts/pochi-picks")
+    suspend fun getCommunityPochiPicks(
+        @Header("Authorization") authorization: String,
+        @Query("sortType") sortType: String,
+        @Query("page") page: Int,
+        @Query("size") size: Int
+    ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
+
+    @POST("api/community/images/presign")
+    suspend fun presignCommunityImages(
+        @Header("Authorization") authorization: String,
+        @Body request: CommunityImagePresignRequest
+    ): Response<ApiResponse<CommunityImagePresignData>>
+
+    @POST("api/expenses")
+    suspend fun createExpense(
+        @Header("Authorization") authorization: String,
+        @Body request: ExpenseCreateRequest
+    ): Response<ApiResponse<ExpenseIdData>>
+
+    @PUT("api/expenses/{expenseId}")
+    suspend fun updateExpense(
+        @Header("Authorization") authorization: String,
+        @Path("expenseId") expenseId: Long,
+        @Body request: ExpenseUpdateRequest
+    ): Response<ApiResponse<ExpenseIdData>>
+
+    @GET("api/expenses/{expenseId}")
+    suspend fun getExpenseDetail(
+        @Header("Authorization") authorization: String,
+        @Path("expenseId") expenseId: Long
+    ): Response<ApiResponse<ExpenseDetailData>>
+
+    @DELETE("api/expenses/{expenseId}")
+    suspend fun deleteExpense(
+        @Header("Authorization") authorization: String,
+        @Path("expenseId") expenseId: Long
+    ): Response<ApiResponse<Unit>>
+
+    @POST("api/expenses/photos/presigned")
+    suspend fun presignExpensePhoto(
+        @Header("Authorization") authorization: String,
+        @Query("expenseId") expenseId: Long?,
+        @Body request: ExpensePhotoPresignRequest
+    ): Response<ApiResponse<ExpensePhotoPresignData>>
+
+    @PATCH("api/expenses/{expenseId}/photos")
+    suspend fun confirmExpensePhoto(
+        @Header("Authorization") authorization: String,
+        @Path("expenseId") expenseId: Long,
+        @Body request: ExpensePhotoConfirmRequest
+    ): Response<ApiResponse<Unit>>
+
+    @DELETE("api/expenses/{expenseId}/photos")
+    suspend fun deleteExpensePhoto(
+        @Header("Authorization") authorization: String,
+        @Path("expenseId") expenseId: Long
+    ): Response<ApiResponse<Unit>>
+
+    @GET("api/expenses/day")
+    suspend fun getExpenseDay(
+        @Header("Authorization") authorization: String,
+        @Query("date") date: String
+    ): Response<ApiResponse<ExpenseDaySummaryData>>
+
+    @GET("api/expenses/summary/week")
+    suspend fun getExpenseWeekSummary(
+        @Header("Authorization") authorization: String,
+        @Query("standardDate") standardDate: String
+    ): Response<ApiResponse<ExpensePeriodSummaryData>>
+
+    @GET("api/expenses/summary/month")
+    suspend fun getExpenseMonthSummary(
+        @Header("Authorization") authorization: String,
+        @Query("standardMonth") standardMonth: String
+    ): Response<ApiResponse<ExpensePeriodSummaryData>>
+
+    @GET("api/expenses/analysis")
+    suspend fun getExpenseAnalysis(
+        @Header("Authorization") authorization: String,
+        @Query("periodStart") periodStart: String,
+        @Query("periodEnd") periodEnd: String
+    ): Response<ApiResponse<ExpenseAnalysisData>>
+
+    @GET("api/expenses/analysis/category/{category}")
+    suspend fun getExpenseCategoryAnalysis(
+        @Header("Authorization") authorization: String,
+        @Path("category") category: String,
+        @Query("periodStart") periodStart: String,
+        @Query("periodEnd") periodEnd: String
+    ): Response<ApiResponse<ExpenseCategoryAnalysisData>>
+
+    @GET("api/expenses/analysis/emotion/{emotion}")
+    suspend fun getExpenseEmotionAnalysis(
+        @Header("Authorization") authorization: String,
+        @Path("emotion") emotion: String,
+        @Query("periodStart") periodStart: String,
+        @Query("periodEnd") periodEnd: String
+    ): Response<ApiResponse<ExpenseEmotionAnalysisData>>
+
+    @GET("api/expenses/analysis/trend")
+    suspend fun getExpenseTrend(
+        @Header("Authorization") authorization: String,
+        @Query("month") month: String
+    ): Response<ApiResponse<ExpenseTrendData>>
 }

@@ -23,7 +23,6 @@ object MiniChallengeStore {
 
     fun challengesFor(date: LocalDate): List<MiniChallengeEntry> = challengesByDate[date].orEmpty()
 
-    /** Normalizes a challenge name for duplicate comparison: ignores surrounding/inner whitespace and case. */
     fun normalizeName(name: String): String = name.replace(Regex("\\s+"), "").lowercase()
 
     fun isNameTaken(date: LocalDate, name: String): Boolean {
@@ -39,7 +38,6 @@ object MiniChallengeStore {
         challengesByDate = challengesByDate + (date to updated)
     }
 
-    /** Adds a mini challenge for [date]. Returns false without adding if the name already exists for that date. */
     fun addChallenge(date: LocalDate, name: String, totalDays: Int?): Boolean {
         val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
         if (isNameTaken(date, trimmedName)) return false
@@ -55,7 +53,6 @@ object MiniChallengeStore {
         return true
     }
 
-    /** Adds [recommended] as a mini challenge for [date]. Returns false without adding if the name already exists for that date. */
     fun addRecommendedChallenge(date: LocalDate, recommended: RecommendedMiniChallenge): Boolean {
         val added = addChallenge(date, recommended.name, recommended.totalDays)
         if (added) {

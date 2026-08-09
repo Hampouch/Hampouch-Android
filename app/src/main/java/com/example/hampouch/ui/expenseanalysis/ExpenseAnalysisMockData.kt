@@ -25,6 +25,47 @@ data class MonthlyTotal(
     val amount: Int
 )
 
+data class DailyAmount(
+    val date: LocalDate,
+    val amount: Int
+)
+
+data class ExpensePeriodSummary(
+    val periodStart: LocalDate,
+    val periodEnd: LocalDate,
+    val totalAmount: Int,
+    val dailyAverage: Int,
+    val dailyBreakdown: List<DailyAmount>
+)
+
+data class ExpenseAnalysisSummary(
+    val periodStart: LocalDate,
+    val periodEnd: LocalDate,
+    val totalAmount: Int,
+    val categoryBreakdown: List<AmountBreakdownItem>,
+    val reasonBreakdown: List<AmountBreakdownItem>,
+    val weekdayBreakdown: List<WeekdayAmount>,
+    val weekdayInsight: String?,
+    val pouchInsight: String?
+)
+
+data class ExpenseTagAnalysisResult(
+    val id: String,
+    val totalAmount: Int,
+    val count: Int,
+    val percent: Int,
+    val records: List<ExpenseRecord>
+)
+
+data class ExpenseTrendResult(
+    val month: YearMonth,
+    val totalAmount: Int,
+    val monthlyAverage: Int,
+    val diffRateFromLastMonth: Int?,
+    val trend: List<MonthlyTotal>,
+    val trendInsight: String?
+)
+
 val ExpenseAnalysisCategoryLegendOrder: List<String> =
     listOf("delivery", "snack", "dining_out", "mart", "convenience", "drink", "cafe", ExpenseAnalysisEtcId)
 

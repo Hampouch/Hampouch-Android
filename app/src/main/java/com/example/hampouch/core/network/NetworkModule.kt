@@ -19,7 +19,7 @@ object NetworkModule {
         }
     }
 
-    private val okHttpClient by lazy {
+    val okHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .build()

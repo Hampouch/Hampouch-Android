@@ -36,6 +36,7 @@ import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.model.NotificationTarget
 import com.example.hampouch.data.repository.AccountDataCoordinator
@@ -400,15 +401,23 @@ fun AppNavHost(
             arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
         ) { backStackEntry ->
             val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
-            val record = ExpenseDetailStore.byId(expenseId)
-            if (record != null) {
+            var record by remember(expenseId) { mutableStateOf(ExpenseDetailStore.byId(expenseId)) }
+            LaunchedEffect(expenseId) {
+                if (ExpenseConfig.USE_SERVER_EXPENSE) {
+                    ExpenseDetailStore.loadExpenseDetail(expenseId).onSuccess { record = it }
+                }
+            }
+            record?.let { current ->
                 ExpenseDetailRoute(
-                    record = record,
+                    record = current,
                     onBackClick = { navController.popBackStack() },
                     onEditClick = { navController.navigate(Screen.ExpenseEdit.createRoute(expenseId)) },
                     onDeleted = {
-                        ExpenseDetailStore.delete(expenseId)
-                        navController.popBackStack()
+                        coroutineScope.launch {
+                            if (ExpenseDetailStore.deleteExpense(expenseId).isSuccess) {
+                                navController.popBackStack()
+                            }
+                        }
                     }
                 )
             }
@@ -419,14 +428,22 @@ fun AppNavHost(
             arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
         ) { backStackEntry ->
             val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
-            val record = ExpenseDetailStore.byId(expenseId)
-            if (record != null) {
+            var record by remember(expenseId) { mutableStateOf(ExpenseDetailStore.byId(expenseId)) }
+            LaunchedEffect(expenseId) {
+                if (ExpenseConfig.USE_SERVER_EXPENSE) {
+                    ExpenseDetailStore.loadExpenseDetail(expenseId).onSuccess { record = it }
+                }
+            }
+            record?.let { current ->
                 ExpenseEditRoute(
-                    record = record,
+                    record = current,
                     onBackClick = { navController.popBackStack() },
                     onSaved = { updated ->
-                        ExpenseDetailStore.upsert(updated)
-                        navController.popBackStack()
+                        coroutineScope.launch {
+                            if (ExpenseDetailStore.updateExpense(updated).isSuccess) {
+                                navController.popBackStack()
+                            }
+                        }
                     }
                 )
             }
@@ -480,8 +497,11 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onNoSpendingToday = { navController.popBackStack() },
                 onComplete = { record ->
-                    ExpenseDetailStore.upsert(record)
-                    navController.popBackStack()
+                    coroutineScope.launch {
+                        if (ExpenseDetailStore.createExpense(record).isSuccess) {
+                            navController.popBackStack()
+                        }
+                    }
                 }
             )
         }

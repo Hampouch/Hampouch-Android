@@ -6,7 +6,7 @@ import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
-import com.example.hampouch.ui.hamtips.HamTipsRepository
+import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.session.UserSession
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

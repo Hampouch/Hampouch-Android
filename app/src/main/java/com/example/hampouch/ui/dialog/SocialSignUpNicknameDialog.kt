@@ -49,10 +49,6 @@ import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HampouchTheme
 
-/**
- * 소셜 로그인 결과 서버에 아직 닉네임이 없는 신규 유저([com.example.hampouch.data.model.SocialLoginOutcome.isNewUser]
- * == true)에게 최초 닉네임을 입력받는 다이얼로그. 좌상단 뒤로가기 아이콘 또는 시스템 뒤로가기로 닫을 수 있다.
- */
 @Composable
 fun SocialSignUpNicknameDialog(
     nickname: String,
