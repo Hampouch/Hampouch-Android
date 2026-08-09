@@ -11,3 +11,7 @@ object AuthConfig {
 object CommunityConfig {
     const val USE_SERVER_COMMUNITY: Boolean = AppConfig.USE_SERVER
 }
+
+object ExpenseConfig {
+    const val USE_SERVER_EXPENSE: Boolean = AppConfig.USE_SERVER
+}
