@@ -2,6 +2,7 @@ package com.example.hampouch.ui.common
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -124,7 +125,8 @@ fun LoginTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     onCheckClick: (() -> Unit)? = null,
     isCheckEnabled: Boolean = true,
-    isValid: Boolean = false
+    isValid: Boolean = false,
+    enabled: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val colors = if (isValid) {
@@ -147,6 +149,7 @@ fun LoginTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
+            enabled = enabled,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
@@ -159,7 +162,7 @@ fun LoginTextField(
                 OutlinedTextFieldDefaults.DecorationBox(
                     value = value,
                     innerTextField = innerTextField,
-                    enabled = true,
+                    enabled = enabled,
                     singleLine = true,
                     visualTransformation = visualTransformation,
                     interactionSource = interactionSource,
@@ -180,7 +183,7 @@ fun LoginTextField(
                     ),
                     container = {
                         OutlinedTextFieldDefaults.Container(
-                            enabled = true,
+                            enabled = enabled,
                             isError = false,
                             interactionSource = interactionSource,
                             colors = colors,
@@ -220,6 +223,17 @@ fun CheckButton(onClick: () -> Unit, enabled: Boolean = true) {
 fun FieldMessage(text: String) {
     Spacer(modifier = Modifier.size(8.dp))
     Text(text, style = MaterialTheme.typography.bodyMedium, color = HPSub)
+}
+
+@Composable
+fun FieldLinkMessage(text: String, onClick: () -> Unit) {
+    Spacer(modifier = Modifier.size(8.dp))
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = HPSub,
+        modifier = Modifier.clickable(onClick = onClick)
+    )
 }
 
 @Composable

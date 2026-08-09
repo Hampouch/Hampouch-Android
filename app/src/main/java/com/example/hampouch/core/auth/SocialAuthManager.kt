@@ -7,6 +7,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.example.hampouch.BuildConfig
+import kotlinx.coroutines.CancellationException
 import com.example.hampouch.core.config.AuthConfig
 import com.example.hampouch.data.model.AuthProvider
 import com.example.hampouch.data.model.SocialCredential
@@ -55,6 +56,11 @@ object SocialAuthManager {
                 Result.failure(IllegalStateException("지원하지 않는 인증 정보입니다."))
             }
         } catch (e: GetCredentialException) {
+            Log.e(TAG, "구글 로그인 실패", e)
+            Result.failure(e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Log.e(TAG, "구글 로그인 실패", e)
             Result.failure(e)
         }

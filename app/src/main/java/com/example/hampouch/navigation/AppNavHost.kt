@@ -26,7 +26,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.hampouch.data.model.AuthSession
 import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
@@ -88,6 +90,7 @@ fun AppNavHost(
     val authRepository = remember { AuthRepository.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     var startDestination by remember { mutableStateOf<String?>(null) }
+    var pendingNicknameSession by remember { mutableStateOf<AuthSession?>(null) }
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
@@ -98,9 +101,27 @@ fun AppNavHost(
         OnboardingDataStore.restorePendingIfNeeded(context)
         val session = authRepository.userSession.first()
         startDestination = if (session != null) {
-            UserSession.restore(context)
-            AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
-            Screen.Home.route
+            when (val status = authRepository.checkSessionStatus(session)) {
+                is SessionStatus.Valid -> {
+                    if (status.needsNickname) {
+                        pendingNicknameSession = session
+                        Screen.Login.route
+                    } else {
+                        UserSession.restore(context)
+                        AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
+                        Screen.Home.route
+                    }
+                }
+                SessionStatus.Invalid -> {
+                    authRepository.clearSession()
+                    if (OnboardingDataStore.hasCompletedOnboarding(context)) Screen.Login.route else Screen.Onboarding.route
+                }
+                SessionStatus.Unknown -> {
+                    UserSession.restore(context)
+                    AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
+                    Screen.Home.route
+                }
+            }
         } else if (OnboardingDataStore.hasCompletedOnboarding(context)) {
             Screen.Login.route
         } else {
@@ -226,7 +247,9 @@ fun AppNavHost(
             }
             LoginScreen(
                 completeDialogMessage = message,
+                pendingNicknameSession = pendingNicknameSession,
                 onLoginSuccess = {
+                    pendingNicknameSession = null
                     navController.navigate(Screen.Loading.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }

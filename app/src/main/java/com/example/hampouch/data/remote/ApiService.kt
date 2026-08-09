@@ -1,6 +1,7 @@
 package com.example.hampouch.data.remote
 
 import com.example.hampouch.data.remote.dto.ApiResponse
+import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.data.remote.dto.EmailVerifyData
@@ -55,4 +56,9 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Body request: SetNicknameRequest
     ): Response<ApiResponse<SetNicknameData>>
+
+    @GET("api/auth/me")
+    suspend fun getMe(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<AuthMeData>>
 }
