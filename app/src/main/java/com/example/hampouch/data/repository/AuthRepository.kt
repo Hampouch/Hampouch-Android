@@ -16,6 +16,7 @@ import com.example.hampouch.data.model.User
 import com.example.hampouch.data.model.UserRole
 import com.example.hampouch.data.remote.ApiException
 import com.example.hampouch.data.remote.dto.ApiErrorBody
+import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
@@ -38,6 +39,12 @@ import kotlinx.coroutines.flow.map
 private const val TAG = "AuthRepository"
 
 private val Context.authDataStore by preferencesDataStore(name = "auth_session")
+
+sealed class SessionStatus {
+    data class Valid(val needsNickname: Boolean) : SessionStatus()
+    object Invalid : SessionStatus()
+    object Unknown : SessionStatus()
+}
 
 /**
  * 로그인 세션을 DataStore에 저장/조회하는 앱 전역 저장소.
@@ -107,6 +114,7 @@ class AuthRepository private constructor(private val context: Context) {
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
+                val me = if (!body.isNewUser) fetchAuthMe(body.tokenType, body.accessToken) else null
                 val session = AuthSession(
                     provider = credential.provider,
                     userId = body.user.userId,
@@ -115,7 +123,7 @@ class AuthRepository private constructor(private val context: Context) {
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    nickname = if (body.isNewUser) null else credential.nickname,
+                    nickname = if (body.isNewUser) null else (me?.nickname ?: credential.nickname),
                     email = credential.email,
                     profileImageUrl = credential.profileImageUrl
                 )
@@ -130,7 +138,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "소셜 로그인에 실패했습니다."
+                        message = error?.message ?: "소셜 로그인에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -174,7 +183,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "닉네임 설정에 실패했습니다."
+                        message = error?.message ?: "닉네임 설정에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -198,6 +208,7 @@ class AuthRepository private constructor(private val context: Context) {
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
+                val me = fetchAuthMe(body.tokenType, body.accessToken)
                 val session = AuthSession(
                     provider = AuthProvider.LOCAL,
                     userId = body.user.userId,
@@ -206,7 +217,7 @@ class AuthRepository private constructor(private val context: Context) {
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    nickname = null,
+                    nickname = me?.nickname,
                     email = email,
                     profileImageUrl = null
                 )
@@ -219,7 +230,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "로그인에 실패했습니다."
+                        message = error?.message ?: "로그인에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -256,7 +268,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "인증번호 발송에 실패했습니다."
+                        message = error?.message ?: "인증번호 발송에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -294,7 +307,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "인증번호를 다시 확인해주세요."
+                        message = error?.message ?: "인증번호를 다시 확인해주세요.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -326,7 +340,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "닉네임 확인에 실패했습니다."
+                        message = error?.message ?: "닉네임 확인에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -362,7 +377,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "회원가입에 실패했습니다."
+                        message = error?.message ?: "회원가입에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -402,7 +418,8 @@ class AuthRepository private constructor(private val context: Context) {
                 Result.failure(
                     ApiException(
                         code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "비밀번호 재설정에 실패했습니다."
+                        message = error?.message ?: "비밀번호 재설정에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
                     )
                 )
             }
@@ -411,6 +428,45 @@ class AuthRepository private constructor(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "비밀번호 재설정 네트워크 오류", e)
             Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
+        }
+    }
+
+    private suspend fun fetchAuthMe(tokenType: String, accessToken: String): AuthMeData? {
+        return try {
+            val response = NetworkModule.apiService.getMe(authorization = "$tokenType $accessToken")
+            if (response.isSuccessful) response.body()?.data else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "인증/계정 상태 조회 네트워크 오류", e)
+            null
+        }
+    }
+
+    suspend fun checkSessionStatus(session: AuthSession): SessionStatus {
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return SessionStatus.Valid(needsNickname = false)
+        }
+        return try {
+            val response = NetworkModule.apiService.getMe(
+                authorization = "${session.tokenType} ${session.accessToken}"
+            )
+            val data = response.body()?.data
+            when {
+                response.isSuccessful && data != null -> {
+                    if (data.nickname != session.nickname) {
+                        saveSession(session.copy(nickname = data.nickname))
+                    }
+                    SessionStatus.Valid(needsNickname = data.needsNickname)
+                }
+                response.code() == 401 || response.code() == 403 -> SessionStatus.Invalid
+                else -> SessionStatus.Unknown
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "세션 상태 확인 네트워크 오류", e)
+            SessionStatus.Unknown
         }
     }
 

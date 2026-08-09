@@ -11,5 +11,5 @@ package com.example.hampouch.core.config
  * 값은 로컬에서만 바꿔서 테스트하고, 커밋 시에는 팀에서 합의한 기본값을 유지한다.
  */
 object AuthConfig {
-    const val USE_SERVER_AUTH: Boolean = false
+    const val USE_SERVER_AUTH: Boolean = true
 }

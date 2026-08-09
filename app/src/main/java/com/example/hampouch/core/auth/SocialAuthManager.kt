@@ -7,6 +7,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.example.hampouch.BuildConfig
+import kotlinx.coroutines.CancellationException
 import com.example.hampouch.core.config.AuthConfig
 import com.example.hampouch.data.model.AuthProvider
 import com.example.hampouch.data.model.SocialCredential
@@ -57,6 +58,11 @@ object SocialAuthManager {
         } catch (e: GetCredentialException) {
             Log.e(TAG, "구글 로그인 실패", e)
             Result.failure(e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "구글 로그인 실패", e)
+            Result.failure(e)
         }
     }
 
@@ -66,26 +72,36 @@ object SocialAuthManager {
             return
         }
         val onKakaoAccountLogin: (OAuthToken?, Throwable?) -> Unit = { token, error ->
-            when {
-                token != null -> fetchKakaoUserSession(token.accessToken, onResult)
-                error != null -> {
-                    Log.e(TAG, "카카오 로그인 실패", error)
-                    onResult(Result.failure(error))
+            try {
+                when {
+                    token != null -> fetchKakaoUserSession(token.accessToken, onResult)
+                    error != null -> {
+                        Log.e(TAG, "카카오 로그인 실패", error)
+                        onResult(Result.failure(error))
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "카카오 로그인 실패", e)
+                onResult(Result.failure(e))
             }
         }
 
-        if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
-            UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
-                val userCancelled = error is ClientError && error.reason == ClientErrorCause.Cancelled
-                when {
-                    token != null -> onKakaoAccountLogin(token, null)
-                    userCancelled -> onResult(Result.failure(error!!))
-                    else -> UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+        try {
+            if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
+                UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
+                    val userCancelled = error is ClientError && error.reason == ClientErrorCause.Cancelled
+                    when {
+                        token != null -> onKakaoAccountLogin(token, null)
+                        userCancelled -> onResult(Result.failure(error!!))
+                        else -> UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+                    }
                 }
+            } else {
+                UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
             }
-        } else {
-            UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+        } catch (e: Exception) {
+            Log.e(TAG, "카카오 로그인 실패", e)
+            onResult(Result.failure(e))
         }
     }
 
