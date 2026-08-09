@@ -1,5 +1,7 @@
 package com.example.hampouch.data.remote
 
+import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
+import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendData
@@ -8,8 +10,13 @@ import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginData
 import com.example.hampouch.data.remote.dto.LoginRequest
+import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
+import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
+import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
+import com.example.hampouch.data.remote.dto.MiniChallengeDayData
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
+import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
 import com.example.hampouch.data.remote.dto.SetNicknameData
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
@@ -18,10 +25,13 @@ import com.example.hampouch.data.remote.dto.SocialLoginData
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -61,4 +71,47 @@ interface ApiService {
     suspend fun getMe(
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<AuthMeData>>
+
+    /**
+     * date를 생략하면 서버가 오늘 날짜로 조회한다. 형식은 yyyy-MM-dd.
+     */
+    @GET("api/mini-challenges")
+    suspend fun getMiniChallenges(
+        @Header("Authorization") authorization: String,
+        @Query("date") date: String? = null
+    ): Response<ApiResponse<MiniChallengeDayData>>
+
+    /**
+     * durationDays를 생략하면 전체 기간의 추천 목록을 돌려준다.
+     */
+    @GET("api/mini-challenges/recommended")
+    suspend fun getRecommendedMiniChallenges(
+        @Header("Authorization") authorization: String,
+        @Query("durationDays") durationDays: Int? = null
+    ): Response<ApiResponse<RecommendedMiniChallengeListData>>
+
+    @POST("api/mini-challenges")
+    suspend fun addRecommendedMiniChallenge(
+        @Header("Authorization") authorization: String,
+        @Body request: AddRecommendedMiniChallengeRequest
+    ): Response<ApiResponse<MiniChallengeCreatedData>>
+
+    @POST("api/mini-challenges")
+    suspend fun addCustomMiniChallenge(
+        @Header("Authorization") authorization: String,
+        @Body request: AddCustomMiniChallengeRequest
+    ): Response<ApiResponse<MiniChallengeCreatedData>>
+
+    @DELETE("api/mini-challenges/{miniChallengeId}")
+    suspend fun deleteMiniChallenge(
+        @Header("Authorization") authorization: String,
+        @Path("miniChallengeId") miniChallengeId: Long
+    ): Response<Unit>
+
+    @PUT("api/mini-challenges/{miniChallengeId}/check")
+    suspend fun checkMiniChallenge(
+        @Header("Authorization") authorization: String,
+        @Path("miniChallengeId") miniChallengeId: Long,
+        @Body request: MiniChallengeCheckRequest
+    ): Response<ApiResponse<MiniChallengeCheckData>>
 }

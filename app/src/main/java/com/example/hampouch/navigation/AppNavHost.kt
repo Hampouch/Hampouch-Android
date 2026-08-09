@@ -38,7 +38,6 @@ import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.data.model.ExpenseChallengePeriod
 import com.example.hampouch.data.model.NotificationTarget
-import com.example.hampouch.data.repository.AccountDataCoordinator
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
@@ -64,7 +63,6 @@ import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationStore
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
@@ -107,8 +105,8 @@ fun AppNavHost(
                         pendingNicknameSession = session
                         Screen.Login.route
                     } else {
-                        UserSession.restore(context)
-                        AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
+                        // checkSessionStatus가 nickname을 갱신했을 수 있으니 최신 세션을 다시 읽어서 동기화한다.
+                        authRepository.saveSession(authRepository.userSession.first() ?: session)
                         Screen.Home.route
                     }
                 }
@@ -117,8 +115,7 @@ fun AppNavHost(
                     if (OnboardingDataStore.hasCompletedOnboarding(context)) Screen.Login.route else Screen.Onboarding.route
                 }
                 SessionStatus.Unknown -> {
-                    UserSession.restore(context)
-                    AccountDataCoordinator.syncIfNeeded(context, UserSession.currentUser.id, UserSession.currentUser.email)
+                    authRepository.saveSession(session)
                     Screen.Home.route
                 }
             }

@@ -17,10 +17,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.MiniChallengeEntry
 import com.example.hampouch.data.model.RecommendedMiniChallenge
+import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.ui.dialog.MiniChallengeAddConfirmDialog
 import com.example.hampouch.ui.home.components.EmptyStateBlock
 import com.example.hampouch.ui.home.components.SectionHeader
@@ -44,6 +48,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 private enum class MiniChallengeStep { DASHBOARD, CREATE, RECOMMENDED_LIST }
 
@@ -55,8 +60,24 @@ fun MiniChallengeScreen(
     onNotificationClick: () -> Unit = {}
 ) {
     var step by remember { mutableStateOf(MiniChallengeStep.DASHBOARD) }
-    val anchorDate = remember(initialDate) { initialDate }
     var selectedDate by remember(initialDate) { mutableStateOf(initialDate) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val repository = remember { MiniChallengeRepository.getInstance(context) }
+    val genericErrorMessage = stringResource(R.string.minichallenge_action_failed)
+    val futureDateMessage = stringResource(R.string.minichallenge_future_date_blocked)
+
+    fun showError(error: Throwable) {
+        Toast.makeText(context, error.toUserMessage(genericErrorMessage), Toast.LENGTH_SHORT).show()
+    }
+
+    LaunchedEffect(selectedDate) {
+        repository.loadChallenges(selectedDate).onFailure(::showError)
+    }
+    LaunchedEffect(Unit) {
+        repository.loadRecommended().onFailure(::showError)
+    }
 
     when (step) {
         MiniChallengeStep.CREATE -> MiniChallengeCreateScreen(
@@ -64,8 +85,15 @@ fun MiniChallengeScreen(
             existingNames = MiniChallengeStore.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onAddChallengeClick = { name, totalDays ->
-                if (MiniChallengeStore.addChallenge(selectedDate, name, totalDays)) {
-                    step = MiniChallengeStep.DASHBOARD
+                coroutineScope.launch {
+                    repository.addCustom(selectedDate, name, totalDays)
+                        .onSuccess { addedDate ->
+                            if (addedDate != null) {
+                                selectedDate = addedDate
+                                step = MiniChallengeStep.DASHBOARD
+                            }
+                        }
+                        .onFailure(::showError)
                 }
             }
         )
@@ -77,23 +105,51 @@ fun MiniChallengeScreen(
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onNotificationClick = onNotificationClick,
             onAddChallenge = { recommended: RecommendedMiniChallenge ->
-                if (MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)) {
-                    step = MiniChallengeStep.DASHBOARD
+                coroutineScope.launch {
+                    repository.addRecommended(selectedDate, recommended)
+                        .onSuccess { addedDate ->
+                            if (addedDate != null) {
+                                selectedDate = addedDate
+                                step = MiniChallengeStep.DASHBOARD
+                            }
+                        }
+                        .onFailure(::showError)
                 }
             }
         )
 
         MiniChallengeStep.DASHBOARD -> MiniChallengeDashboardScreen(
             modifier = modifier,
-            anchorDate = anchorDate,
             selectedDate = selectedDate,
-            onDateSelected = { selectedDate = it },
+            onDateSelected = { date ->
+                if (date.isAfter(LocalDate.now())) {
+                    Toast.makeText(context, futureDateMessage, Toast.LENGTH_SHORT).show()
+                } else {
+                    selectedDate = date
+                }
+            },
             todayChallenges = MiniChallengeStore.challengesFor(selectedDate),
             recommendedChallenges = MiniChallengeStore.recommendedChallenges,
-            onToggleChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
-            onDeleteChallenge = { id -> MiniChallengeStore.removeChallenge(selectedDate, id) },
+            streakDaysOverride = MiniChallengeStore.summaryFor(selectedDate)?.streakDays,
+            onToggleChallenge = { id ->
+                val target = MiniChallengeStore.challengesFor(selectedDate).find { it.id == id }
+                if (target != null) {
+                    coroutineScope.launch {
+                        repository.setChecked(selectedDate, id, !target.isChecked).onFailure(::showError)
+                    }
+                }
+            },
+            onDeleteChallenge = { id ->
+                coroutineScope.launch {
+                    repository.remove(selectedDate, id).onFailure(::showError)
+                }
+            },
             onAddRecommendedChallenge = { recommended ->
-                MiniChallengeStore.addRecommendedChallenge(selectedDate, recommended)
+                coroutineScope.launch {
+                    repository.addRecommended(selectedDate, recommended)
+                        .onSuccess { addedDate -> if (addedDate != null) selectedDate = addedDate }
+                        .onFailure(::showError)
+                }
             },
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
@@ -106,11 +162,11 @@ fun MiniChallengeScreen(
 @Composable
 private fun MiniChallengeDashboardScreen(
     modifier: Modifier = Modifier,
-    anchorDate: LocalDate,
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     todayChallenges: List<MiniChallengeEntry>,
     recommendedChallenges: List<RecommendedMiniChallenge>,
+    streakDaysOverride: Int? = null,
     onToggleChallenge: (String) -> Unit,
     onDeleteChallenge: (String) -> Unit,
     onAddRecommendedChallenge: (RecommendedMiniChallenge) -> Unit,
@@ -122,6 +178,7 @@ private fun MiniChallengeDashboardScreen(
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
     val context = LocalContext.current
     val duplicateNameMessage = stringResource(R.string.minichallenge_name_duplicate_error)
+    val today = remember { LocalDate.now() }
 
     Scaffold(
         modifier = modifier,
@@ -143,18 +200,19 @@ private fun MiniChallengeDashboardScreen(
             Spacer(modifier = Modifier.height(10.dp))
             MiniChallengeDateRow(
                 dates = listOf(
-                    anchorDate.minusDays(1),
-                    anchorDate,
-                    anchorDate.plusDays(1)
+                    selectedDate.minusDays(1),
+                    selectedDate,
+                    selectedDate.plusDays(1)
                 ),
                 selectedDate = selectedDate,
+                today = today,
                 onDateSelected = onDateSelected
             )
             Spacer(modifier = Modifier.height(20.dp))
             MiniChallengeSummaryCard(
                 completedCount = todayChallenges.count { it.isChecked },
                 totalCount = todayChallenges.size,
-                streakDays = todayChallenges.maxOfOrNull { it.achievedDays } ?: 0
+                streakDays = streakDaysOverride ?: (todayChallenges.maxOfOrNull { it.achievedDays } ?: 0)
             )
             Spacer(modifier = Modifier.height(20.dp))
 
