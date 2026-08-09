@@ -29,8 +29,17 @@ object LoginMockData {
 
     val accounts: List<User> get() = registeredAccounts
 
+    /**
+     * 이메일 대소문자·앞뒤 공백 차이로 같은 계정을 다른 이메일로 오인하지 않도록 비교 전에 정규화한다.
+     * 텍스트 필드를 지웠다가 다시 입력하는 등의 편집 후에도 중복/존재 여부 검사가 우회되지 않게 하기 위함.
+     */
+    private fun normalize(email: String): String = email.trim().lowercase()
+
+    fun isRegistered(email: String): Boolean =
+        accounts.any { normalize(it.email) == normalize(email) }
+
     fun findAccount(email: String, password: String): User? =
-        accounts.find { it.email == email && it.password == password }
+        accounts.find { normalize(it.email) == normalize(email) && it.password == password }
 
     /**
      * 목데이터 회원가입([AuthRepository.signUp], [AuthRepository.completeSocialSignUp])이 성공하면 호출해,
@@ -47,7 +56,7 @@ object LoginMockData {
             role = UserRole.NORMAL,
             isExistingMember = false
         )
-        registeredAccounts.removeAll { it.email == email }
+        registeredAccounts.removeAll { normalize(it.email) == normalize(email) }
         registeredAccounts.add(newUser)
         return newUser
     }
@@ -57,7 +66,7 @@ object LoginMockData {
      * 동일하게 취급되어, 다시 로그인해도 온보딩 값이 재적용되지 않고 항상 원래 목데이터를 보여준다.
      */
     fun markAsExistingMember(email: String) {
-        val index = registeredAccounts.indexOfFirst { it.email == email }
+        val index = registeredAccounts.indexOfFirst { normalize(it.email) == normalize(email) }
         if (index == -1) return
         registeredAccounts[index] = registeredAccounts[index].copy(isExistingMember = true)
     }
@@ -68,5 +77,16 @@ object LoginMockData {
      */
     fun removeAccount(userId: String) {
         registeredAccounts.removeAll { it.id == userId }
+    }
+
+    /**
+     * 목데이터 비밀번호 재설정([AuthRepository.resetPassword])이 성공하면 호출해, 저장된 비밀번호를
+     * 실제로 갱신한다. 대상 계정이 없으면 아무 것도 하지 않고 false를 반환한다.
+     */
+    fun updatePassword(email: String, newPassword: String): Boolean {
+        val index = registeredAccounts.indexOfFirst { normalize(it.email) == normalize(email) }
+        if (index == -1) return false
+        registeredAccounts[index] = registeredAccounts[index].copy(password = newPassword)
+        return true
     }
 }

@@ -380,7 +380,13 @@ class AuthRepository private constructor(private val context: Context) {
      */
     suspend fun resetPassword(email: String, newPassword: String): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return Result.success(Unit)
+            return if (LoginMockData.updatePassword(email, newPassword)) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    ApiException(code = "EMAIL_NOT_FOUND", message = "사용자를 찾을 수 없습니다.")
+                )
+            }
         }
         return try {
             val response = NetworkModule.apiService.resetPassword(
@@ -466,7 +472,7 @@ class AuthRepository private constructor(private val context: Context) {
      * mockVerifyEmailCode에서도 동일하게 검증한다.
      */
     private fun checkEmailEligibility(email: String, purpose: EmailVerificationPurpose): ApiException? {
-        val isRegistered = LoginMockData.accounts.any { it.email == email }
+        val isRegistered = LoginMockData.isRegistered(email)
         return when (purpose) {
             EmailVerificationPurpose.SIGNUP -> if (isRegistered) {
                 ApiException(code = "EMAIL_ALREADY_EXISTS", message = "이미 가입된 이메일입니다.")
