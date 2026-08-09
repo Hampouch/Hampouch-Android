@@ -44,7 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.ui.common.FieldLinkMessage
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
@@ -74,6 +76,9 @@ fun SignUpScreen(
     var emailSendMessage by remember { mutableStateOf<String?>(null) }
     var emailVerifyMessage by remember { mutableStateOf<String?>(null) }
     var isEmailVerified by remember { mutableStateOf(false) }
+    var isSendingEmailCode by remember { mutableStateOf(false) }
+    var hasSentEmailCode by remember { mutableStateOf(false) }
+    var isVerifyingEmailCode by remember { mutableStateOf(false) }
     var emailCodeExpiresAtMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     var nicknameCheckMessage by remember { mutableStateOf<String?>(null) }
     var isNicknameAvailable by remember { mutableStateOf(false) }
@@ -89,6 +94,8 @@ fun SignUpScreen(
     val isSignUpEnabled = isEmailVerified && isNicknameAvailable && isPasswordValid && areRequiredTermsChecked
     val emailCodeRemainingSeconds = rememberCountdownSeconds(emailCodeExpiresAtMillis)
     val isEmailCodeExpired = emailCodeRemainingSeconds == 0
+    val isEmailFieldEnabled = !isSendingEmailCode && !isEmailVerified && (!hasSentEmailCode || isEmailCodeExpired)
+    val isCodeFieldEnabled = hasSentEmailCode && !isEmailCodeExpired && !isVerifyingEmailCode && !isEmailVerified
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
@@ -125,6 +132,7 @@ fun SignUpScreen(
                     onValueChange = {
                         email = it
                         isEmailVerified = false
+                        hasSentEmailCode = false
                     },
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
@@ -135,21 +143,36 @@ fun SignUpScreen(
                         if (email.isBlank()) {
                             emailSendMessage = "이메일을 입력해주세요."
                         } else {
+                            isSendingEmailCode = true
                             coroutineScope.launch {
                                 authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.SIGNUP)
                                     .onSuccess { data ->
                                         emailSendMessage = "인증번호가 발송되었습니다."
+                                        hasSentEmailCode = true
+                                        emailCode = ""
                                         emailCodeExpiresAtMillis =
                                             System.currentTimeMillis() + data.expiresInSeconds * 1000L
                                     }
                                     .onFailure { error ->
-                                        emailSendMessage = error.message ?: "인증번호 발송에 실패했습니다."
+                                        emailSendMessage = error.toUserMessage("인증번호 발송에 실패했습니다.")
                                     }
+                                isSendingEmailCode = false
                             }
                         }
-                    }
+                    },
+                    isCheckEnabled = isEmailFieldEnabled,
+                    enabled = isEmailFieldEnabled
                 )
                 emailSendMessage?.let { FieldMessage(it) }
+                if (hasSentEmailCode && !isEmailVerified) {
+                    FieldLinkMessage("이메일을 잘못 입력하셨나요?") {
+                        hasSentEmailCode = false
+                        emailCode = ""
+                        emailSendMessage = null
+                        emailVerifyMessage = null
+                        emailCodeExpiresAtMillis = null
+                    }
+                }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
                     label = if (emailCodeRemainingSeconds != null && !isEmailCodeExpired) {
@@ -168,6 +191,7 @@ fun SignUpScreen(
                         imeAction = ImeAction.Next
                     ),
                     onCheckClick = {
+                        isVerifyingEmailCode = true
                         coroutineScope.launch {
                             authRepository.verifyEmailCode(email, emailCode, EmailVerificationPurpose.SIGNUP)
                                 .onSuccess {
@@ -177,11 +201,13 @@ fun SignUpScreen(
                                 }
                                 .onFailure { error ->
                                     isEmailVerified = false
-                                    emailVerifyMessage = error.message ?: "인증번호를 다시 확인해주세요."
+                                    emailVerifyMessage = error.toUserMessage("인증번호를 다시 확인해주세요.")
                                 }
+                            isVerifyingEmailCode = false
                         }
                     },
-                    isCheckEnabled = !isEmailCodeExpired
+                    isCheckEnabled = isCodeFieldEnabled,
+                    enabled = isCodeFieldEnabled
                 )
                 if (isEmailCodeExpired) {
                     FieldMessage("인증번호가 만료되었습니다.")
@@ -249,7 +275,7 @@ fun SignUpScreen(
                                 }
                                 .onFailure { error ->
                                     isNicknameAvailable = false
-                                    nicknameCheckMessage = error.message ?: "닉네임 확인에 실패했습니다."
+                                    nicknameCheckMessage = error.toUserMessage("닉네임 확인에 실패했습니다.")
                                 }
                         }
                     }
@@ -279,7 +305,7 @@ fun SignUpScreen(
                                 onSignUpSuccess()
                             }
                             .onFailure { error ->
-                                signUpErrorMessage = error.message ?: "회원가입에 실패했습니다."
+                                signUpErrorMessage = error.toUserMessage("회원가입에 실패했습니다.")
                             }
                     }
                 },

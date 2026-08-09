@@ -1,6 +1,7 @@
 package com.example.hampouch.data.remote
 
 import com.example.hampouch.data.remote.dto.ApiResponse
+import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
 import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
 import com.example.hampouch.data.remote.dto.ExpenseCategoryAnalysisData
@@ -81,6 +82,11 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Body request: SetNicknameRequest
     ): Response<ApiResponse<SetNicknameData>>
+
+    @GET("api/auth/me")
+    suspend fun getMe(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<AuthMeData>>
 
     @GET("api/community/home")
     suspend fun getCommunityHome(

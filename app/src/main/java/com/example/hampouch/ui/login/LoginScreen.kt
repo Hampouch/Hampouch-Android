@@ -40,9 +40,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.hampouch.R
 import com.example.hampouch.core.auth.SocialAuthManager
 import com.example.hampouch.data.model.AuthSession
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
@@ -60,10 +63,21 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "LoginScreen"
 
+/**
+ * 구글 로그인 실패를 사용자에게 보여줄 메시지로 변환한다.
+ * 계정 선택창을 취소한 경우는 오류가 아니므로 null을 돌려주고 아무 메시지도 띄우지 않는다.
+ */
+private fun googleSignInErrorMessage(error: Throwable): String? = when (error) {
+    is GetCredentialCancellationException -> null
+    is NoCredentialException -> "기기에 로그인된 구글 계정이 없습니다."
+    else -> "구글 로그인에 실패했습니다."
+}
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen(
     completeDialogMessage: String? = null,
+    pendingNicknameSession: AuthSession? = null,
     onLoginSuccess: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
     onNavigateToResetPassword: () -> Unit = {}
@@ -77,7 +91,7 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
     val authRepository = remember { AuthRepository.getInstance(context) }
 
-    var pendingSocialSignUp by remember { mutableStateOf<AuthSession?>(null) }
+    var pendingSocialSignUp by remember { mutableStateOf(pendingNicknameSession) }
     var socialNickname by rememberSaveable { mutableStateOf("") }
     var isSocialNicknameAvailable by remember { mutableStateOf(false) }
     var socialNicknameCheckMessage by remember { mutableStateOf<String?>(null) }
@@ -110,7 +124,7 @@ fun LoginScreen(
                         }
                         .onFailure { error ->
                             isSocialNicknameAvailable = false
-                            socialNicknameCheckMessage = error.message ?: "닉네임 확인에 실패했습니다."
+                            socialNicknameCheckMessage = error.toUserMessage("닉네임 확인에 실패했습니다.")
                         }
                 }
             },
@@ -135,7 +149,7 @@ fun LoginScreen(
                         }
                         .onFailure { error ->
                             Log.e(TAG, "소셜 회원가입 닉네임 설정 실패", error)
-                            socialNicknameCheckMessage = error.message ?: "닉네임 설정에 실패했습니다."
+                            socialNicknameCheckMessage = error.toUserMessage("닉네임 설정에 실패했습니다.")
                         }
                 }
             }
@@ -184,7 +198,7 @@ fun LoginScreen(
                                     }
                                     .onFailure { error ->
                                         Log.e(TAG, "카카오 로그인 실패", error)
-                                        loginErrorMessage = error.message ?: "카카오 로그인에 실패했습니다."
+                                        loginErrorMessage = error.toUserMessage("카카오 로그인에 실패했습니다.")
                                     }
                             }
                         }.onFailure { error ->
@@ -214,12 +228,12 @@ fun LoginScreen(
                                     }
                                     .onFailure { error ->
                                         Log.e(TAG, "구글 로그인 실패", error)
-                                        loginErrorMessage = error.message ?: "구글 로그인에 실패했습니다."
+                                        loginErrorMessage = error.toUserMessage("구글 로그인에 실패했습니다.")
                                     }
                             }
                             .onFailure { error ->
                                 Log.e(TAG, "구글 로그인 실패", error)
-                                loginErrorMessage = "구글 로그인에 실패했습니다."
+                                googleSignInErrorMessage(error)?.let { loginErrorMessage = it }
                             }
                     }
                 }
@@ -291,7 +305,7 @@ fun LoginScreen(
                             }
                             .onFailure { error ->
                                 Log.e(TAG, "이메일 로그인 실패", error)
-                                loginErrorMessage = error.message ?: "로그인에 실패했습니다."
+                                loginErrorMessage = error.toUserMessage("로그인에 실패했습니다.")
                             }
                     }
                 },
