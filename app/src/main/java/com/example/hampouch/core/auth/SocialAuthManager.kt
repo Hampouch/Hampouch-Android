@@ -72,26 +72,36 @@ object SocialAuthManager {
             return
         }
         val onKakaoAccountLogin: (OAuthToken?, Throwable?) -> Unit = { token, error ->
-            when {
-                token != null -> fetchKakaoUserSession(token.accessToken, onResult)
-                error != null -> {
-                    Log.e(TAG, "카카오 로그인 실패", error)
-                    onResult(Result.failure(error))
+            try {
+                when {
+                    token != null -> fetchKakaoUserSession(token.accessToken, onResult)
+                    error != null -> {
+                        Log.e(TAG, "카카오 로그인 실패", error)
+                        onResult(Result.failure(error))
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "카카오 로그인 실패", e)
+                onResult(Result.failure(e))
             }
         }
 
-        if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
-            UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
-                val userCancelled = error is ClientError && error.reason == ClientErrorCause.Cancelled
-                when {
-                    token != null -> onKakaoAccountLogin(token, null)
-                    userCancelled -> onResult(Result.failure(error!!))
-                    else -> UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+        try {
+            if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
+                UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
+                    val userCancelled = error is ClientError && error.reason == ClientErrorCause.Cancelled
+                    when {
+                        token != null -> onKakaoAccountLogin(token, null)
+                        userCancelled -> onResult(Result.failure(error!!))
+                        else -> UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+                    }
                 }
+            } else {
+                UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
             }
-        } else {
-            UserApiClient.instance.loginWithKakaoAccount(context, callback = onKakaoAccountLogin)
+        } catch (e: Exception) {
+            Log.e(TAG, "카카오 로그인 실패", e)
+            onResult(Result.failure(e))
         }
     }
 
