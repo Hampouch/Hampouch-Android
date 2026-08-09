@@ -33,16 +33,13 @@ import com.example.hampouch.ui.session.UserSession
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private const val TAG = "AuthRepository"
 
 private val Context.authDataStore by preferencesDataStore(name = "auth_session")
 
-/**
- * 로그인 세션을 DataStore에 저장/조회하는 앱 전역 저장소.
- * [getInstance]로 어느 파일에서든 같은 인스턴스를 얻어 세션을 읽거나 갱신할 수 있다.
- */
 class AuthRepository private constructor(private val context: Context) {
 
     private object Keys {
@@ -86,13 +83,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 소셜 SDK에서 받은 [credential]을 서버(/api/auth/social)로 전달해 로그인 검증을 수행한다.
-     *
-     * 신규 유저([SocialLoginOutcome.isNewUser] == true)는 서버에 닉네임이 아직 없으므로 SDK가 돌려준
-     * 프로필 닉네임은 쓰지 않고 세션도 저장하지 않는다 — 화면단에서 닉네임 입력 다이얼로그를 띄운 뒤
-     * [completeSocialSignUp]까지 마쳐야 로그인이 완료된다. 기존 유저는 곧바로 세션을 저장하고 로그인 처리한다.
-     */
     suspend fun loginWithSocial(credential: SocialCredential): Result<SocialLoginOutcome> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockLoginWithSocial(credential)
@@ -142,11 +132,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 소셜 회원가입 온보딩 마지막 단계: [loginWithSocial]에서 받은 (아직 저장되지 않은) [session]의
-     * accessToken으로 서버(/api/auth/nickname)에 최초 닉네임을 등록하고, 성공하면 세션을 저장해
-     * 로그인을 완료한다.
-     */
     suspend fun completeSocialSignUp(session: AuthSession, nickname: String): Result<AuthSession> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             val updatedSession = session.copy(nickname = nickname)
@@ -186,9 +171,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 이메일+비밀번호로 일반 로그인을 서버(/api/auth/login)에 요청하고, 성공 시 세션을 저장한다.
-     */
     suspend fun login(email: String, password: String): Result<AuthSession> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockLogin(email, password)
@@ -231,9 +213,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 회원가입/비밀번호 재설정용 이메일 인증번호 발송을 서버(/api/auth/email/send)에 요청한다.
-     */
     suspend fun sendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
@@ -268,9 +247,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 발송된 이메일 인증번호를 서버(/api/auth/email/verify)로 검증한다.
-     */
     suspend fun verifyEmailCode(
         email: String,
         code: String,
@@ -306,9 +282,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 닉네임 중복 여부를 서버(/api/auth/nickname/check)에 확인한다.
-     */
     suspend fun checkNicknameAvailability(nickname: String): Result<NicknameCheckData> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockCheckNicknameAvailability(nickname)
@@ -338,10 +311,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 이메일+비밀번호로 일반 회원가입을 서버(/api/auth/signup)에 요청한다.
-     * 성공해도 로그인 토큰은 내려오지 않으므로, 이어서 로그인 화면에서 별도로 로그인해야 한다.
-     */
     suspend fun signUp(email: String, password: String, nickname: String): Result<SignUpData> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockSignUp(email, password, nickname)
@@ -374,10 +343,6 @@ class AuthRepository private constructor(private val context: Context) {
         }
     }
 
-    /**
-     * 이메일 인증을 마친 뒤 새 비밀번호로 재설정한다(/api/auth/password/reset).
-     * 응답에 data가 없으므로 HTTP 성공 여부만으로 판단한다.
-     */
     suspend fun resetPassword(email: String, newPassword: String): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return if (LoginMockData.updatePassword(email, newPassword)) {
@@ -444,10 +409,6 @@ class AuthRepository private constructor(private val context: Context) {
         return Result.success(SocialLoginOutcome(session = session, isNewUser = true))
     }
 
-    /**
-     * 목데이터 세션을 만들고 [saveSession]으로 DataStore에 저장한다(서버 로그인과 동일하게 영속화해야
-     * 다음 앱 실행 때도 로그인 상태로 시작 화면이 Home으로 잡힌다).
-     */
     private suspend fun mockSignIn(provider: AuthProvider, account: User): Result<AuthSession> {
         val session = AuthSession(
             provider = provider,
@@ -465,12 +426,6 @@ class AuthRepository private constructor(private val context: Context) {
         return Result.success(session)
     }
 
-    /**
-     * 목데이터 모드에서 이메일 인증번호 발송/확인 양쪽에서 공통으로 쓰는 이메일 자격 검증.
-     * SIGNUP인데 이미 등록된 이메일이거나, PASSWORD_RESET인데 등록되지 않은 이메일이면 실패를 돌려준다.
-     * 인증번호 발송을 건너뛰고 알려진 목데이터 코드(123456)로 바로 확인을 시도하는 우회를 막기 위해
-     * mockVerifyEmailCode에서도 동일하게 검증한다.
-     */
     private fun checkEmailEligibility(email: String, purpose: EmailVerificationPurpose): ApiException? {
         val isRegistered = LoginMockData.isRegistered(email)
         return when (purpose) {
@@ -526,9 +481,6 @@ class AuthRepository private constructor(private val context: Context) {
         )
     }
 
-    /**
-     * 세션을 DataStore에 저장하고, 역할 기반 화면들이 참조하는 [UserSession]도 함께 갱신한다.
-     */
     suspend fun saveSession(session: AuthSession) {
         context.authDataStore.edit { preferences ->
             preferences[Keys.PROVIDER] = session.provider.name
@@ -555,6 +507,11 @@ class AuthRepository private constructor(private val context: Context) {
         password = "",
         role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
     )
+
+    suspend fun currentAuthHeader(): String? {
+        val session = userSession.first() ?: return null
+        return "${session.tokenType} ${session.accessToken}"
+    }
 
     suspend fun clearSession() {
         context.authDataStore.edit { it.clear() }

@@ -29,9 +29,6 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-/**
- * 대기중인 챌린지의 시작일이 지났는데도 참여자가 없어 자동으로 취소됐을 때 보여주는 다이얼로그.
- */
 @Composable
 fun HamBattleWaitingChallengeExpiredDialog(
     challengeTitle: String,

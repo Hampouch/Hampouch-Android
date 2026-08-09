@@ -54,9 +54,6 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import kotlinx.coroutines.delay
 
-/**
- * [expiresAtMillis] 시각까지 남은 초를 1초마다 갱신해서 돌려준다. null이면 타이머를 돌리지 않는다.
- */
 @Composable
 fun rememberCountdownSeconds(expiresAtMillis: Long?): Int? {
     var remainingSeconds by remember { mutableStateOf<Int?>(null) }

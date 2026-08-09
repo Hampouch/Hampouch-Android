@@ -89,11 +89,6 @@ object SocialAuthManager {
         }
     }
 
-    /**
-     * 목데이터 모드([AuthConfig.USE_SERVER_AUTH] == false)에서는 실제 카카오/구글 SDK를 호출하지 않고
-     * 이 가짜 자격 증명으로 바로 로그인 흐름을 이어간다. 서버/SDK 설정 없이도 소셜 회원가입(닉네임 다이얼로그)
-     * 화면을 테스트할 수 있도록 하기 위함이다. 이메일은 provider별로 고정된 테스트 이메일을 쓴다.
-     */
     private fun mockCredential(provider: AuthProvider): SocialCredential {
         val testEmail = when (provider) {
             AuthProvider.KAKAO -> "kakao.test@test.com"

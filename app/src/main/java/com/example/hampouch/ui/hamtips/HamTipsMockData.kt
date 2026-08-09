@@ -7,6 +7,7 @@ import com.example.hampouch.data.model.TipComment
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
 import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.login.LoginMockData
 
 object HamTipsMockData {
