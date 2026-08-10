@@ -141,11 +141,20 @@ object ChallengeRepository {
 
     private fun weakCategoryLabelFor(id: String): String = weakCategoryLabels[id] ?: id
 
+    /**
+     * 날짜 고정 모드에서는 지정한 날짜가 "다음 시작점"의 기준일 뿐, 챌린지는 항상 오늘 즉시 시작한다.
+     * 기준일이 아직 오지 않았다면 그 전날까지를 첫 주기로 잡고, 이후 acknowledge 시점마다
+     * (직전 종료일 + 1일)을 다음 시작일로 삼아 매월 같은 날짜로 반복한다.
+     */
     private fun resolvePeriod(request: OnboardingRequest, referenceToday: LocalDate): Triple<LocalDate, LocalDate, Boolean> {
         return if (request.dateFixed) {
             val anchor = request.startDate ?: referenceToday
-            val start = if (anchor.isBefore(referenceToday)) referenceToday else anchor
-            Triple(start, start.plusMonths(1).minusDays(1), true)
+            val end = if (anchor.isAfter(referenceToday)) {
+                anchor.minusDays(1)
+            } else {
+                referenceToday.plusMonths(1).minusDays(1)
+            }
+            Triple(referenceToday, end, true)
         } else {
             val days = (request.customPeriodDays ?: DEFAULT_ONE_OFF_DAYS).coerceAtLeast(1)
             Triple(referenceToday, referenceToday.plusDays((days - 1).toLong()), false)
@@ -342,7 +351,7 @@ object ChallengeRepository {
                     budgetTotal = budgetTotal,
                     startDate = periodStart.toString(),
                     resetByPayday = repeatMonthly,
-                    paydayDay = if (repeatMonthly) periodStart.dayOfMonth else null,
+                    paydayDay = if (repeatMonthly) periodEnd.plusDays(1).dayOfMonth else null,
                     weakCategories = request.topSpendingCategoryIds.map { weakCategoryLabelFor(it) }
                 )
             )
@@ -410,7 +419,7 @@ object ChallengeRepository {
     /** 목데이터 모드에서만: 월간 반복 챌린지는 확인 즉시 다음 달 챌린지를 로컬로 이어 붙인다(서버에 대응 API 없음). */
     private fun applyAcknowledge(ended: ActiveChallenge) {
         if (ended.repeatMonthly && !ChallengeConfig.USE_SERVER_CHALLENGE) {
-            val nextStart = ended.periodStart.plusMonths(1)
+            val nextStart = ended.periodEnd.plusDays(1)
             val nextEnd = nextStart.plusMonths(1).minusDays(1)
             val nextTotalDays = ChronoUnit.DAYS.between(nextStart, nextEnd).toInt() + 1
             val nextChallenge = ActiveChallenge(

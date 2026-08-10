@@ -149,9 +149,12 @@ internal fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 internal fun monthlyTotalDays(startDate: LocalDate, referenceToday: LocalDate = LocalDate.now()): Int {
-    val effectiveStart = if (startDate.isBefore(referenceToday)) referenceToday else startDate
-    val periodEnd = effectiveStart.plusMonths(1).minusDays(1)
-    return ChronoUnit.DAYS.between(effectiveStart, periodEnd).toInt() + 1
+    val periodEnd = if (startDate.isAfter(referenceToday)) {
+        startDate.minusDays(1)
+    } else {
+        referenceToday.plusMonths(1).minusDays(1)
+    }
+    return ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt() + 1
 }
 
 private fun buildRecommendationMessage(
@@ -907,8 +910,8 @@ internal fun ChallengeSettingsSection(
         if (dateFixed) {
             OnboardingBulletList(
                 lines = listOf(
-                    "매월 선택한 날짜에 새로운 챌린지를 자동으로 시작해요.",
-                    "챌린지는 한 달 동안 진행돼요."
+                    stringResource(R.string.onboarding_date_fixed_bullet1),
+                    stringResource(R.string.onboarding_date_fixed_bullet2)
                 )
             )
             LabeledInputRow(

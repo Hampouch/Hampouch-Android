@@ -45,7 +45,7 @@ import com.example.hampouch.R
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray5
@@ -61,7 +61,8 @@ fun ChangePasswordScreen(
     email: String,
     onBackClick: () -> Unit,
     onSubmitSuccess: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {}
 ) {
     var emailInput by rememberSaveable { mutableStateOf(email) }
     var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
@@ -94,11 +95,11 @@ fun ChangePasswordScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.change_password_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier

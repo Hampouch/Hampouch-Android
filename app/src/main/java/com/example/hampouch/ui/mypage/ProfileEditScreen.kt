@@ -53,7 +53,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ProfileAvatar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
@@ -72,7 +72,8 @@ fun ProfileEditScreen(
     isNicknameTaken: (String) -> Boolean,
     onBackClick: () -> Unit,
     onSubmit: (newName: String, newAvatarUri: String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {}
 ) {
     var isEditingName by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
@@ -108,11 +109,11 @@ fun ProfileEditScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.profile_edit_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier

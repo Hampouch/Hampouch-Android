@@ -1,7 +1,7 @@
 package com.example.hampouch.core.config
 
 object AppConfig {
-    const val USE_SERVER: Boolean = true
+    const val USE_SERVER: Boolean = false
 }
 
 object AuthConfig {

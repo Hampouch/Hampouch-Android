@@ -23,7 +23,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.ui.dialog.ConfirmActionCard
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ProfileCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
@@ -40,7 +40,8 @@ fun AccountSettingsScreen(
     onProfileEditClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onLoggedOut: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showWithdrawConfirm by remember { mutableStateOf(false) }
@@ -50,11 +51,11 @@ fun AccountSettingsScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.account_settings_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier

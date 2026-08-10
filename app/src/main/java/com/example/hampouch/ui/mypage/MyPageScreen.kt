@@ -171,6 +171,7 @@ fun MyPageScreen(
                     onProfileEditClick = { route = MyPageRoute.PROFILE_EDIT },
                     onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
                     onLoggedOut = onLoggedOut,
+                    onNotificationClick = onNotificationClick,
                     modifier = Modifier.fillMaxSize()
                 )
                 if (showPasswordChangedDialog) {
@@ -196,6 +197,7 @@ fun MyPageScreen(
                     MyPageProfileStore.update(newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -205,6 +207,7 @@ fun MyPageScreen(
             AllSettingsScreen(
                 onBackClick = { route = MyPageRoute.MAIN },
                 onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -213,6 +216,7 @@ fun MyPageScreen(
             BackHandler { route = MyPageRoute.ALL_SETTINGS }
             RecordAlarmScreen(
                 onBackClick = { route = MyPageRoute.ALL_SETTINGS },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -226,6 +230,7 @@ fun MyPageScreen(
                     showPasswordChangedDialog = true
                     route = MyPageRoute.ACCOUNT_SETTINGS
                 },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -381,48 +386,50 @@ private fun MyPageMainContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        ProfileCard(
-            name = profile.name,
-            handle = profile.handle,
-            avatarUri = profile.avatarUri,
-            onClick = onProfileCardClick
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_challenge_history),
-                onClick = onChallengeHistoryClick
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+            ProfileCard(
+                name = profile.name,
+                handle = profile.handle,
+                avatarUri = profile.avatarUri,
+                onClick = onProfileCardClick
             )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_my_tips),
-                onClick = onMyTipsClick
-            )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_saved_tips),
-                onClick = onSavedTipsClick
-            )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_all_settings),
-                onClick = onAllSettingsClick
-            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_challenge_history),
+                    onClick = onChallengeHistoryClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_my_tips),
+                    onClick = onMyTipsClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_saved_tips),
+                    onClick = onSavedTipsClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_all_settings),
+                    onClick = onAllSettingsClick
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            SettingsMenuCard {
+                SettingsMenuRow(
+                    label = stringResource(R.string.settings_logout),
+                    onClick = onLogoutClick,
+                    showChevron = false
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
-        Spacer(modifier = Modifier.height(20.dp))
-        SettingsMenuCard {
-            SettingsMenuRow(
-                label = stringResource(R.string.settings_logout),
-                onClick = onLogoutClick,
-                showChevron = false
-            )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
