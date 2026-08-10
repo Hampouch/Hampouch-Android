@@ -124,6 +124,11 @@ fun HomeScreen(
             Toast.makeText(context, error.toUserMessage("챌린지 현황 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
         }
     }
+    LaunchedEffect(selectedDate) {
+        ExpenseDetailStore.loadDay(selectedDate).onFailure { error ->
+            Toast.makeText(context, error.toUserMessage("지출 내역 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
     val baseUiState = remember(selectedDate, ChallengeRepository.activeChallenge?.id) {
         mockStateForDate(selectedDate, referenceToday)
     }
