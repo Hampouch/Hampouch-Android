@@ -37,6 +37,7 @@ import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginData
 import com.example.hampouch.data.remote.dto.LoginRequest
+import com.example.hampouch.data.remote.dto.LogoutRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
@@ -44,6 +45,8 @@ import com.example.hampouch.data.remote.dto.MiniChallengeDayData
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
+import com.example.hampouch.data.remote.dto.RefreshTokenData
+import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.SetNicknameData
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
@@ -94,6 +97,20 @@ interface ApiService {
     suspend fun getMe(
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<AuthMeData>>
+
+    @POST("api/auth/refresh")
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<ApiResponse<RefreshTokenData>>
+
+    @POST("api/auth/logout")
+    suspend fun logout(
+        @Header("Authorization") authorization: String,
+        @Body request: LogoutRequest
+    ): Response<ApiResponse<Unit>>
+
+    @DELETE("api/auth/me")
+    suspend fun withdraw(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<Unit>>
 
     /**
      * date를 생략하면 서버가 오늘 날짜로 조회한다. 형식은 yyyy-MM-dd.

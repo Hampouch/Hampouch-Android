@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -25,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -38,6 +40,8 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
+import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
@@ -56,9 +60,9 @@ import com.example.hampouch.ui.mypage.components.MyPageMenuRow
 import com.example.hampouch.ui.mypage.components.ProfileCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private enum class MyPageRoute {
@@ -83,6 +87,8 @@ fun MyPageScreen(
     initialTipDetailScrollToComments: Boolean = false
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val authRepository = remember { AuthRepository.getInstance(context) }
     var route by rememberSaveable {
         mutableStateOf(if (initialTipDetailPostId != null) MyPageRoute.TIP_DETAIL else MyPageRoute.MAIN)
     }
@@ -146,8 +152,18 @@ fun MyPageScreen(
                             onCancel = { showLogoutConfirm = false },
                             onConfirm = {
                                 showLogoutConfirm = false
-                                UserSession.logout(context)
-                                onLoggedOut()
+                                coroutineScope.launch {
+                                    authRepository.logout()
+                                        .onFailure { error ->
+                                            Toast.makeText(
+                                                context,
+                                                error.toUserMessage("로그아웃에 실패했습니다."),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    // 서버 호출 성공 여부와 무관하게 로컬 세션은 항상 정리된다.
+                                    onLoggedOut()
+                                }
                             }
                         )
                     }

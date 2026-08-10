@@ -23,8 +23,10 @@ import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
 import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
+import com.example.hampouch.data.remote.dto.LogoutRequest
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
+import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
@@ -436,6 +438,140 @@ class AuthRepository private constructor(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "세션 상태 확인 네트워크 오류", e)
             SessionStatus.Unknown
+        }
+    }
+
+    /**
+     * access token이 만료됐을 때 refresh token으로 새 토큰 쌍을 발급받아 세션에 반영한다.
+     * refresh token 자체가 무효/만료/폐기됐거나 탈퇴한 회원이면(401/403) 로컬 세션을 지워
+     * 다시 로그인하도록 한다.
+     */
+    suspend fun refreshAccessToken(): Result<AuthSession> {
+        val session = userSession.first()
+            ?: return Result.failure(ApiException(code = "NO_SESSION", message = "로그인 정보가 없습니다."))
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            return Result.success(session)
+        }
+        return try {
+            val response = NetworkModule.apiService.refreshToken(
+                RefreshTokenRequest(refreshToken = session.refreshToken)
+            )
+
+            val body = response.body()?.data
+            if (response.isSuccessful && body != null) {
+                // refresh 요청이 서버를 왕복하는 사이 로그아웃/회원탈퇴로 세션이 지워지거나
+                // 다른 요청이 먼저 재발급을 마쳤을 수 있다. 그 사이 바뀌었다면 방금 받은 새
+                // 토큰으로 되살리지 않고 실패로 처리한다(로그아웃 상태가 되살아나는 것을 방지).
+                val latestSession = userSession.first()
+                if (latestSession == null || latestSession.refreshToken != session.refreshToken) {
+                    return Result.failure(
+                        ApiException(code = "SESSION_CHANGED", message = "세션이 이미 변경되었습니다.")
+                    )
+                }
+                val updatedSession = latestSession.copy(
+                    accessToken = body.accessToken,
+                    refreshToken = body.refreshToken,
+                    tokenType = body.tokenType
+                )
+                saveSession(updatedSession)
+                Result.success(updatedSession)
+            } else {
+                val error = response.errorBody()?.string()?.let {
+                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
+                }
+                if (response.code() == 401 || response.code() == 403) {
+                    clearSession()
+                }
+                Result.failure(
+                    ApiException(
+                        code = error?.code ?: "UNKNOWN",
+                        message = error?.message ?: "토큰 재발급에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "토큰 재발급 네트워크 오류", e)
+            Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
+        }
+    }
+
+    /**
+     * 서버에 refresh token 폐기를 요청한 뒤 로컬 세션을 지운다. 서버 호출이 실패하더라도
+     * (access token 만료, 네트워크 오류 등) 사용자 의도대로 기기에서는 로그아웃 상태로 만든다.
+     */
+    suspend fun logout(): Result<Unit> {
+        val session = userSession.first()
+        if (!AuthConfig.USE_SERVER_AUTH || session == null) {
+            clearSession()
+            return Result.success(Unit)
+        }
+        return try {
+            val response = NetworkModule.apiService.logout(
+                authorization = "${session.tokenType} ${session.accessToken}",
+                request = LogoutRequest(refreshToken = session.refreshToken)
+            )
+            clearSession()
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val error = response.errorBody()?.string()?.let {
+                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
+                }
+                Result.failure(
+                    ApiException(
+                        code = error?.code ?: "UNKNOWN",
+                        message = error?.message ?: "로그아웃에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "로그아웃 네트워크 오류", e)
+            clearSession()
+            Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
+        }
+    }
+
+    /**
+     * 회원 탈퇴. 서버에서 계정 삭제가 성공했을 때만 로컬 세션을 지운다.
+     * (탈퇴 실패 시 계정이 남아있으므로 로그인 상태를 유지해야 한다.)
+     */
+    suspend fun withdraw(): Result<Unit> {
+        val session = userSession.first()
+            ?: return Result.failure(ApiException(code = "NO_SESSION", message = "로그인 정보가 없습니다."))
+        if (!AuthConfig.USE_SERVER_AUTH) {
+            clearSession()
+            return Result.success(Unit)
+        }
+        return try {
+            val response = NetworkModule.apiService.withdraw(
+                authorization = "${session.tokenType} ${session.accessToken}"
+            )
+            if (response.isSuccessful) {
+                clearSession()
+                Result.success(Unit)
+            } else {
+                val error = response.errorBody()?.string()?.let {
+                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
+                }
+                Result.failure(
+                    ApiException(
+                        code = error?.code ?: "UNKNOWN",
+                        message = error?.message ?: "회원 탈퇴에 실패했습니다.",
+                        fieldErrors = error?.fieldErrors
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "회원 탈퇴 네트워크 오류", e)
+            Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
         }
     }
 
