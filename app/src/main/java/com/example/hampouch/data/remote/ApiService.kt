@@ -2,6 +2,7 @@ package com.example.hampouch.data.remote
 
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
+import com.example.hampouch.data.remote.dto.ChallengeCurrentStatusData
 import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
 import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
 import com.example.hampouch.data.remote.dto.ExpenseCategoryAnalysisData
@@ -37,6 +38,10 @@ import com.example.hampouch.data.remote.dto.LoginData
 import com.example.hampouch.data.remote.dto.LoginRequest
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
+import com.example.hampouch.data.remote.dto.RestResumeData
+import com.example.hampouch.data.remote.dto.RestResumeRequest
+import com.example.hampouch.data.remote.dto.RestStartData
+import com.example.hampouch.data.remote.dto.RestStartRequest
 import com.example.hampouch.data.remote.dto.SetNicknameData
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
@@ -310,4 +315,22 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Query("month") month: String
     ): Response<ApiResponse<ExpenseTrendData>>
+
+    // 도메인: challenge — 휴식 상태(rest 블록)를 알아내기 위해서만 최소로 사용한다. ChallengeCurrentStatusData 참고.
+    @GET("api/challenges/current")
+    suspend fun getCurrentChallengeStatus(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<ChallengeCurrentStatusData>>
+
+    @POST("api/rests")
+    suspend fun startRest(
+        @Header("Authorization") authorization: String,
+        @Body request: RestStartRequest
+    ): Response<ApiResponse<RestStartData>>
+
+    @POST("api/rests/resume")
+    suspend fun resumeRest(
+        @Header("Authorization") authorization: String,
+        @Body request: RestResumeRequest
+    ): Response<ApiResponse<RestResumeData>>
 }

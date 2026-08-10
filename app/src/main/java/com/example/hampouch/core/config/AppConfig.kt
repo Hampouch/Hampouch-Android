@@ -15,3 +15,7 @@ object CommunityConfig {
 object ExpenseConfig {
     const val USE_SERVER_EXPENSE: Boolean = AppConfig.USE_SERVER
 }
+
+object RestConfig {
+    const val USE_SERVER_REST: Boolean = AppConfig.USE_SERVER
+}
