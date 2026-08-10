@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -212,7 +211,7 @@ fun HamBattleEndedChallengesDetailScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain)
             ) {
                 Text(
-                    "새 챌린지 시작하기",
+                    "새 햄배틀 시작하기",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = HPWhite
@@ -329,12 +328,7 @@ private fun SummaryCard(
                 contentDescription = "1등",
             )
             Spacer(modifier = Modifier.height(6.dp))
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(HPGray4)
-            )
+            ParticipantAvatar(size = 56.dp, avatarUrl = winner.avatarUrl)
             Spacer(modifier = Modifier.height(8.dp))
             Text(winner.name, style = Body16Bold, color = HPBlack, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(2.dp))
@@ -392,12 +386,7 @@ private fun EndedRankRow(
             color = if (isMe) HPMain else HPBlack,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(HPGray4)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -447,12 +436,7 @@ private fun EndedDisqualifiedRow(participant: HamBattleParticipantSpending) {
             fontSize = 14.sp,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(HPWhite)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,

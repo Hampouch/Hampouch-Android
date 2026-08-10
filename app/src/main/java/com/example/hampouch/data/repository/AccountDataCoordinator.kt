@@ -3,6 +3,7 @@ package com.example.hampouch.data.repository
 import android.content.Context
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleStore
 import com.example.hampouch.ui.login.LoginMockData
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.AllSettingsStore
@@ -26,6 +27,7 @@ object AccountDataCoordinator {
         MyPageProfileStore.resetForAccount()
         AllSettingsStore.resetForAccount()
         HamBattleMockData.resetForAccount()
+        HamBattleStore.resetForAccount()
         HamTipsRepository.resetForAccount()
 
         val account = email?.let { e -> LoginMockData.accounts.find { it.email == e } }

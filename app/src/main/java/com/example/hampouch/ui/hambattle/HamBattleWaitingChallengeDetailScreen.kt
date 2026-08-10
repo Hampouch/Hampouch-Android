@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -48,7 +47,6 @@ import com.example.hampouch.data.model.HamBattleParticipantSpending
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
-import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
@@ -202,12 +200,7 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
             color = if (isMe) HPWhite else HPText,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(if (isMe) HPWhite else HPGray4)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -218,7 +211,7 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
                 overflow = TextOverflow.Ellipsis,
                 color = if (isMe) HPMain else HPBlack
             )
-            Text("0", style = Body16Bold, color = if (isMe) HPMain else HPBlack)
+            Text(formatWon(participant.amount), style = Body16Bold, color = if (isMe) HPMain else HPBlack)
         }
     }
 }

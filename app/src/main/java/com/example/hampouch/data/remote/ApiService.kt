@@ -4,6 +4,8 @@ import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
+import com.example.hampouch.data.remote.dto.BattleDetailData
+import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
 import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
 import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
 import com.example.hampouch.data.remote.dto.ExpenseCategoryAnalysisData
@@ -31,12 +33,16 @@ import com.example.hampouch.data.remote.dto.CommunityPostPageData
 import com.example.hampouch.data.remote.dto.CommunityPostSummaryData
 import com.example.hampouch.data.remote.dto.CommunityRecruitWriteRequest
 import com.example.hampouch.data.remote.dto.CommunityTipWriteRequest
+import com.example.hampouch.data.remote.dto.CreateBattleData
+import com.example.hampouch.data.remote.dto.CreateBattleRequest
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
+import com.example.hampouch.data.remote.dto.JoinBattleData
 import com.example.hampouch.data.remote.dto.LoginData
 import com.example.hampouch.data.remote.dto.LoginRequest
+import com.example.hampouch.data.remote.dto.MyBattlesData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
@@ -94,6 +100,45 @@ interface ApiService {
     suspend fun getMe(
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<AuthMeData>>
+
+    /**
+     * 로그인한 사용자가 참가 중인 햄배틀을 상태별로 조회한다. status를 생략하면 전체 상태를 조회한다.
+     */
+    @GET("api/battles")
+    suspend fun getMyBattles(
+        @Header("Authorization") authorization: String,
+        @Query("status") status: String? = null
+    ): Response<ApiResponse<MyBattlesData>>
+
+    @POST("api/battles")
+    suspend fun createBattle(
+        @Header("Authorization") authorization: String,
+        @Body request: CreateBattleRequest
+    ): Response<ApiResponse<CreateBattleData>>
+
+    /**
+     * battleCode로 참가 전 미리보기를 조회한다. battleId는 참가자 전용 리소스라 응답에 포함되지 않는다.
+     */
+    @GET("api/battles/invitations/{battleCode}")
+    suspend fun getBattleInvitation(
+        @Header("Authorization") authorization: String,
+        @Path("battleCode") battleCode: String
+    ): Response<ApiResponse<BattleInvitationPreviewData>>
+
+    @POST("api/battles/invitations/{battleCode}")
+    suspend fun joinBattle(
+        @Header("Authorization") authorization: String,
+        @Path("battleCode") battleCode: String
+    ): Response<ApiResponse<JoinBattleData>>
+
+    /**
+     * 참가자 전용 상세 조회. READY/ONGOING/TERMINATED 모두 이 응답 하나로 표현된다.
+     */
+    @GET("api/battles/{battleId}")
+    suspend fun getBattleDetail(
+        @Header("Authorization") authorization: String,
+        @Path("battleId") battleId: Long
+    ): Response<ApiResponse<BattleDetailData>>
 
     /**
      * date를 생략하면 서버가 오늘 날짜로 조회한다. 형식은 yyyy-MM-dd.

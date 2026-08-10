@@ -32,7 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.data.repository.BattleRepository
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
@@ -42,7 +44,9 @@ import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
+import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
+import com.example.hampouch.ui.hambattle.HamBattleStore
 import com.example.hampouch.ui.hamtips.HamTipsScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
 import com.example.hampouch.ui.home.components.CharacterGaugeSection
@@ -114,9 +118,17 @@ fun HomeScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val miniChallengeRepository = remember { MiniChallengeRepository.getInstance(context) }
+    val battleRepository = remember { BattleRepository.getInstance(context) }
     LaunchedEffect(selectedDate) {
         miniChallengeRepository.loadChallenges(selectedDate).onFailure { error ->
             Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(selectedBottomTab) {
+        if (selectedBottomTab == BottomNavItem.HAM_BATTLE) {
+            battleRepository.loadMyBattles().onFailure { error ->
+                Toast.makeText(context, error.toUserMessage("햄배틀 목록 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+            }
         }
     }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
@@ -245,6 +257,16 @@ fun HomeScreen(
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
+                activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
+                    HamBattleStore.ongoingBattles
+                } else {
+                    HamBattleMockData.activeChallenges()
+                },
+                waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
+                    HamBattleStore.readyBattles
+                } else {
+                    HamBattleMockData.waitingChallenges()
+                },
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
                 onNotificationClick = onNotificationClick,
                 onChallengeClick = onHamBattleChallengeClick,
