@@ -68,6 +68,7 @@ import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
 import java.time.YearMonth
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.ui.takeabreak.TakeABreakScreen
 import com.example.hampouch.ui.takeabreak.TakeABreakStore
 import com.example.hampouch.ui.theme.HPGray2
@@ -371,7 +372,10 @@ fun AppNavHost(
                     navController.navigate(Screen.ExpenseAnalysisChallenge.createRoute(totalDays, start, end))
                 },
                 onNavigateToTakeABreak = {
-                    navController.navigate(Screen.TakeABreak.route)
+                    navController.navigate(Screen.TakeABreak.createRoute())
+                },
+                onExtendBreak = {
+                    navController.navigate(Screen.TakeABreak.createRoute(extend = true))
                 },
                 onAddExpenseClick = {
                     navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
@@ -748,7 +752,7 @@ fun AppNavHost(
                     onStartNewChallengeClick = { suggestedTargetAmount ->
                         navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
                     },
-                    onTakeABreakClick = { navController.navigate(Screen.TakeABreak.route) }
+                    onTakeABreakClick = { navController.navigate(Screen.TakeABreak.createRoute()) }
                 )
             }
         }
@@ -791,15 +795,38 @@ fun AppNavHost(
             )
         }
 
-        composable(Screen.TakeABreak.route) {
+        composable(
+            route = Screen.TakeABreak.route,
+            arguments = listOf(
+                navArgument("extend") { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
+            val isExtending = backStackEntry.arguments?.getBoolean("extend") ?: false
+            var breakActionErrorMessage by remember { mutableStateOf<String?>(null) }
             TakeABreakScreen(
+                errorMessage = breakActionErrorMessage,
                 onBack = { navController.popBackStack() },
                 onKeepChallenge = { navController.popBackStack() },
                 onStartBreak = { duration, customDays ->
-                    TakeABreakStore.startBreak(duration, customDays)
-                    pendingHomeTab = null
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+                    coroutineScope.launch {
+                        // isExtending=true면 이미 휴식 중(팝업의 "더 쉬기")이라 시작이 아니라 연장을 호출한다.
+                        val result = if (isExtending) {
+                            TakeABreakStore.extendBreak(duration, customDays)
+                        } else {
+                            TakeABreakStore.startBreak(duration, customDays)
+                        }
+                        result
+                            .onSuccess {
+                                breakActionErrorMessage = null
+                                pendingHomeTab = null
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                }
+                            }
+                            .onFailure { error ->
+                                Log.e(TAG, "휴식 시작/연장 실패", error)
+                                breakActionErrorMessage = error.toUserMessage("휴식 처리에 실패했습니다.")
+                            }
                     }
                 }
             )
