@@ -124,6 +124,7 @@ private val dateLabelFormatter = DateTimeFormatter.ofPattern("MM.dd")
 fun MiniChallengeDateRow(
     dates: List<LocalDate>,
     selectedDate: LocalDate,
+    today: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -135,6 +136,7 @@ fun MiniChallengeDateRow(
             MiniChallengeDateChip(
                 label = date.format(dateLabelFormatter),
                 selected = date == selectedDate,
+                enabled = !date.isAfter(today),
                 onClick = { onDateSelected(date) }
             )
         }
@@ -145,6 +147,7 @@ fun MiniChallengeDateRow(
 private fun MiniChallengeDateChip(
     label: String,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -160,7 +163,11 @@ private fun MiniChallengeDateChip(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) HPWhite else HPText
+            color = when {
+                selected -> HPWhite
+                !enabled -> HPGray5
+                else -> HPText
+            }
         )
     }
 }
