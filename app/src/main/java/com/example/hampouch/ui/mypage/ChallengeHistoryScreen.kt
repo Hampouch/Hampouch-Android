@@ -41,7 +41,7 @@ fun ChallengeHistoryScreen(
             title = stringResource(R.string.challenge_history_title),
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(horizontal = 20.dp)
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         if (records.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

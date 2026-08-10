@@ -31,16 +31,3 @@ data class RestResumeData(
     val resumeDate: String? = null,
     val plannedResumeDate: String? = null
 )
-
-/**
- * GET /api/challenges/current(도메인: challenge)의 응답 중 "휴식 중"일 때만 채워지는 rest 블록.
- * challenge 도메인 자체는 아직 서버 연동 전이라 challenge/progress/consumption 등 나머지 필드는 다루지 않는다.
- * rest 도메인에는 상태 조회 API가 없어, 앱을 재시작한 뒤 현재 휴식 상태(복귀 예정일)를 알아낼 유일한
- * 방법이 이 API라서 필요한 rest 블록만 최소로 반영했다.
- */
-data class ChallengeCurrentStatusData(val rest: RestStatusData? = null)
-
-data class RestStatusData(
-    val restStartDate: String,
-    val plannedResumeDate: String
-)

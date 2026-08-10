@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -38,6 +39,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
@@ -92,7 +94,12 @@ fun MyPageScreen(
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }
     var selectedChallengeId by rememberSaveable { mutableStateOf<String?>(null) }
-    val challengeRecords = remember { MyPageMockData.challengeHistory() }
+    LaunchedEffect(Unit) {
+        ChallengeRepository.loadHistory().onFailure { error ->
+            Toast.makeText(context, error.toUserMessage("지난 챌린지 목록을 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
+    val challengeRecords = MyPageMockData.challengeHistory()
     val myTips = MyPageMockData.myTips()
     val savedTips = MyPageMockData.savedTips()
 
@@ -164,6 +171,7 @@ fun MyPageScreen(
                     onProfileEditClick = { route = MyPageRoute.PROFILE_EDIT },
                     onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
                     onLoggedOut = onLoggedOut,
+                    onNotificationClick = onNotificationClick,
                     modifier = Modifier.fillMaxSize()
                 )
                 if (showPasswordChangedDialog) {
@@ -189,6 +197,7 @@ fun MyPageScreen(
                     MyPageProfileStore.update(newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -198,6 +207,7 @@ fun MyPageScreen(
             AllSettingsScreen(
                 onBackClick = { route = MyPageRoute.MAIN },
                 onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -206,6 +216,7 @@ fun MyPageScreen(
             BackHandler { route = MyPageRoute.ALL_SETTINGS }
             RecordAlarmScreen(
                 onBackClick = { route = MyPageRoute.ALL_SETTINGS },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -219,6 +230,7 @@ fun MyPageScreen(
                     showPasswordChangedDialog = true
                     route = MyPageRoute.ACCOUNT_SETTINGS
                 },
+                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -239,6 +251,13 @@ fun MyPageScreen(
 
         MyPageRoute.CHALLENGE_RESULT -> {
             BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
+            LaunchedEffect(selectedChallengeId) {
+                selectedChallengeId?.let { id ->
+                    ChallengeRepository.loadResult(id).onFailure { error ->
+                        Toast.makeText(context, error.toUserMessage("챌린지 결과를 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             val challenge = selectedChallengeId?.let { id -> ChallengeRepository.challenges.find { it.id == id } }
             if (challenge != null) {
                 val state = ChallengeResultMockData.forChallenge(challenge)
@@ -367,48 +386,50 @@ private fun MyPageMainContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        ProfileCard(
-            name = profile.name,
-            handle = profile.handle,
-            avatarUri = profile.avatarUri,
-            onClick = onProfileCardClick
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_challenge_history),
-                onClick = onChallengeHistoryClick
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+            ProfileCard(
+                name = profile.name,
+                handle = profile.handle,
+                avatarUri = profile.avatarUri,
+                onClick = onProfileCardClick
             )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_my_tips),
-                onClick = onMyTipsClick
-            )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_saved_tips),
-                onClick = onSavedTipsClick
-            )
-            MyPageMenuRow(
-                label = stringResource(R.string.mypage_menu_all_settings),
-                onClick = onAllSettingsClick
-            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_challenge_history),
+                    onClick = onChallengeHistoryClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_my_tips),
+                    onClick = onMyTipsClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_saved_tips),
+                    onClick = onSavedTipsClick
+                )
+                MyPageMenuRow(
+                    label = stringResource(R.string.mypage_menu_all_settings),
+                    onClick = onAllSettingsClick
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            SettingsMenuCard {
+                SettingsMenuRow(
+                    label = stringResource(R.string.settings_logout),
+                    onClick = onLogoutClick,
+                    showChevron = false
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
-        Spacer(modifier = Modifier.height(20.dp))
-        SettingsMenuCard {
-            SettingsMenuRow(
-                label = stringResource(R.string.settings_logout),
-                onClick = onLogoutClick,
-                showChevron = false
-            )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

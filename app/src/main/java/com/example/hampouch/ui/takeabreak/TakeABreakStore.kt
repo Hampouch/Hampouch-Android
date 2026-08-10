@@ -25,7 +25,7 @@ private const val MAX_REST_DAYS = 3650
 
 object TakeABreakStore {
 
-    /** 휴식 도메인엔 상태 조회 API가 없어, 생성/복귀 응답으로만 채워진다. syncStatus()가 GET /api/challenges/current로 보정. */
+    /** 휴식 도메인엔 상태 조회 API가 없어, 생성/복귀 응답으로만 채워진다. syncStatus()가 challenge 도메인의 GET /api/challenges/current(rest 블록)로 보정. */
     var restId: Long? by mutableStateOf(null)
         private set
 
@@ -58,7 +58,7 @@ object TakeABreakStore {
         if (!RestConfig.USE_SERVER_REST) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCurrentChallengeStatus(header)
+            val response = NetworkModule.apiService.getCurrentChallenge(header)
             when {
                 response.isSuccessful -> {
                     plannedResumeDate = response.body()?.data?.rest?.plannedResumeDate?.let(LocalDate::parse)

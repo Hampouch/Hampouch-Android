@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -104,48 +103,6 @@ fun MyPageMainTopBar(
             modifier = Modifier.weight(1f)
         )
         NotificationBellIcon(onClick = onNotificationClick)
-    }
-}
-
-@Composable
-fun MyPageDetailTopBar(
-    title: String,
-    onBackClick: () -> Unit,
-    showMoreMenu: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_back),
-                tint = HPBlack
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = HPBlack,
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f)
-        )
-        if (showMoreMenu) {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = stringResource(R.string.mypage_cd_more),
-                    tint = HPBlack
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.width(48.dp))
-        }
     }
 }
 

@@ -43,7 +43,7 @@ fun TipListScreen(
             title = title,
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(horizontal = 20.dp)
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         if (tips.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

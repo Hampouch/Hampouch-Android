@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.nextchallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +61,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
@@ -82,6 +85,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.ChallengeResultStatus
 import com.example.hampouch.data.model.ChallengeResultUiState
 import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -111,6 +115,7 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -144,9 +149,12 @@ internal fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 internal fun monthlyTotalDays(startDate: LocalDate, referenceToday: LocalDate = LocalDate.now()): Int {
-    val effectiveStart = if (startDate.isBefore(referenceToday)) referenceToday else startDate
-    val periodEnd = effectiveStart.plusMonths(1).minusDays(1)
-    return ChronoUnit.DAYS.between(effectiveStart, periodEnd).toInt() + 1
+    val periodEnd = if (startDate.isAfter(referenceToday)) {
+        startDate.minusDays(1)
+    } else {
+        referenceToday.plusMonths(1).minusDays(1)
+    }
+    return ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt() + 1
 }
 
 private fun buildRecommendationMessage(
@@ -199,6 +207,8 @@ fun NextChallengeRoute(
     var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val recommendationMessage = remember(previousResult, suggestedTargetAmount) {
         buildRecommendationMessage(previousResult, suggestedTargetAmount)
@@ -418,8 +428,13 @@ fun NextChallengeRoute(
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
-                ChallengeRepository.startNewChallenge(request)
-                onStartChallengeClick()
+                coroutineScope.launch {
+                    ChallengeRepository.startNewChallenge(request)
+                        .onSuccess { onStartChallengeClick() }
+                        .onFailure { error ->
+                            Toast.makeText(context, error.toUserMessage("챌린지 시작에 실패했습니다."), Toast.LENGTH_SHORT).show()
+                        }
+                }
             }
         )
     }
@@ -895,8 +910,8 @@ internal fun ChallengeSettingsSection(
         if (dateFixed) {
             OnboardingBulletList(
                 lines = listOf(
-                    "매월 선택한 날짜에 새로운 챌린지를 자동으로 시작해요.",
-                    "챌린지는 한 달 동안 진행돼요."
+                    stringResource(R.string.onboarding_date_fixed_bullet1),
+                    stringResource(R.string.onboarding_date_fixed_bullet2)
                 )
             )
             LabeledInputRow(

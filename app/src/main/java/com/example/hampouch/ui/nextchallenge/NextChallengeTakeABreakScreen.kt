@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.nextchallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -51,6 +55,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private const val DefaultTakeABreakTotalDays = 14
@@ -70,6 +75,8 @@ fun NextChallengeTakeABreakRoute(
     var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val explicitPeriodDays = customPeriodDays?.takeIf { it > 0 } ?: periodDays?.takeIf { it > 0 }
     val effectivePeriodDays = explicitPeriodDays ?: DefaultTakeABreakTotalDays
@@ -274,8 +281,13 @@ fun NextChallengeTakeABreakRoute(
                     totalTargetAmount = targetAmount ?: 0,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
-                ChallengeRepository.startNewChallenge(request)
-                onStartChallengeClick()
+                coroutineScope.launch {
+                    ChallengeRepository.startNewChallenge(request)
+                        .onSuccess { onStartChallengeClick() }
+                        .onFailure { error ->
+                            Toast.makeText(context, error.toUserMessage("챌린지 시작에 실패했습니다."), Toast.LENGTH_SHORT).show()
+                        }
+                }
             }
         )
     }

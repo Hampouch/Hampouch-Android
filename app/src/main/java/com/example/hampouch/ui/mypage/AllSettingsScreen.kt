@@ -22,7 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
@@ -36,7 +36,8 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun AllSettingsScreen(
     onBackClick: () -> Unit,
     onRecordAlarmClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {}
 ) {
     val notificationState = AllSettingsStore.state
     var showComingSoonDialog by remember { mutableStateOf(false) }
@@ -46,11 +47,11 @@ fun AllSettingsScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.settings_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier

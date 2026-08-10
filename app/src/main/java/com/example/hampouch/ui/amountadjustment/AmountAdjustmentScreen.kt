@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.amountadjustment
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,11 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.AmountAdjustmentChallenge
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.dialog.AbandonChallengeConfirmDialog
@@ -69,6 +73,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 private val AmountAdjustmentPeriodFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
@@ -96,6 +101,8 @@ fun AmountAdjustmentRoute(
     var customAmount by remember(challenge) { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showAbandonConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
     val selectedAmount = customAmount
@@ -252,11 +259,18 @@ fun AmountAdjustmentRoute(
             onCancel = { showAbandonConfirmDialog = false },
             onConfirm = {
                 showAbandonConfirmDialog = false
-                ChallengeRepository.abandonChallenge()
-                val actualAmount =
-                    ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
-                val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
-                onChallengeAbandoned(challenge.id, suggestedTargetAmount)
+                coroutineScope.launch {
+                    ChallengeRepository.abandonChallenge()
+                        .onSuccess {
+                            val actualAmount =
+                                ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
+                            val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
+                            onChallengeAbandoned(challenge.id, suggestedTargetAmount)
+                        }
+                        .onFailure { error ->
+                            Toast.makeText(context, error.toUserMessage("중도 포기 처리에 실패했습니다."), Toast.LENGTH_SHORT).show()
+                        }
+                }
             }
         )
     }
