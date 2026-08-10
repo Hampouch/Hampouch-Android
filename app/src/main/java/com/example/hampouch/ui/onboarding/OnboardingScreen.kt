@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.onboarding
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -11,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.data.model.ChallengePeriodType
 import com.example.hampouch.data.model.OnboardingRequest
@@ -58,9 +60,11 @@ fun OnboardingRoute(
     var step by rememberSaveable { mutableStateOf(OnboardingStep.SPLASH) }
     var uiState by rememberSaveable(stateSaver = OnboardingUiStateSaver) { mutableStateOf(OnboardingUiState()) }
     var showSkipConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    val activity = LocalContext.current as? Activity
 
-    BackHandler(enabled = step != OnboardingStep.SPLASH && step != OnboardingStep.EXPENSE_DIAGNOSIS) {
+    BackHandler(enabled = step != OnboardingStep.SPLASH) {
         when (step) {
+            OnboardingStep.EXPENSE_DIAGNOSIS -> activity?.finish()
             OnboardingStep.PERIOD_SETTING -> step = OnboardingStep.EXPENSE_DIAGNOSIS
             OnboardingStep.GOAL_SETTING -> step = OnboardingStep.PERIOD_SETTING
             OnboardingStep.CATEGORY_SELECT -> step = OnboardingStep.GOAL_SETTING
