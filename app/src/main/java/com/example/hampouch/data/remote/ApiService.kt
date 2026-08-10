@@ -53,6 +53,10 @@ import com.example.hampouch.data.remote.dto.MiniChallengeDayData
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
+import com.example.hampouch.data.remote.dto.RestResumeData
+import com.example.hampouch.data.remote.dto.RestResumeRequest
+import com.example.hampouch.data.remote.dto.RestStartData
+import com.example.hampouch.data.remote.dto.RestStartRequest
 import com.example.hampouch.data.remote.dto.SetNicknameData
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
@@ -410,4 +414,16 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Path("challengeId") challengeId: Long
     ): Response<ApiResponse<ChallengeCloseData>>
+
+    @POST("api/rests")
+    suspend fun startRest(
+        @Header("Authorization") authorization: String,
+        @Body request: RestStartRequest
+    ): Response<ApiResponse<RestStartData>>
+
+    @POST("api/rests/resume")
+    suspend fun resumeRest(
+        @Header("Authorization") authorization: String,
+        @Body request: RestResumeRequest
+    ): Response<ApiResponse<RestResumeData>>
 }

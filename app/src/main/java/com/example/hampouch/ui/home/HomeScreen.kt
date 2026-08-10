@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.home
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +62,7 @@ import com.example.hampouch.ui.takeabreak.TakeABreakStore
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -99,6 +101,7 @@ fun HomeScreen(
     onNavigateToChallengeEndExpenseCalendar: () -> Unit = {},
     onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
     onNavigateToTakeABreak: () -> Unit = {},
+    onExtendBreak: () -> Unit = {},
     onAddExpenseClick: () -> Unit = {},
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
@@ -106,13 +109,17 @@ fun HomeScreen(
     onChallengeEndedFinishClick: () -> Unit = {}
 ) {
     val referenceToday = remember { LocalDate.now() }
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        // 휴식 도메인엔 상태 조회 API가 없어, GET /api/challenges/current의 rest 블록으로 앱 재시작 후 상태를 보정한다.
+        TakeABreakStore.syncStatus()
+    }
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
     var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val miniChallengeRepository = remember { MiniChallengeRepository.getInstance(context) }
     LaunchedEffect(selectedDate) {
         miniChallengeRepository.loadChallenges(selectedDate).onFailure { error ->
@@ -215,11 +222,19 @@ fun HomeScreen(
                 when {
                     TakeABreakStore.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
                         onStartNowClick = {
-                            TakeABreakStore.endBreakNow()
-                            onStartChallengeClick()
+                            coroutineScope.launch {
+                                TakeABreakStore.resumeNow()
+                                    .onSuccess { onStartChallengeClick() }
+                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(지금 바로) 실패", it) }
+                            }
                         },
-                        onStartTomorrowClick = { TakeABreakStore.postponeOneDay() },
-                        onRestMoreClick = onNavigateToTakeABreak
+                        onStartTomorrowClick = {
+                            coroutineScope.launch {
+                                TakeABreakStore.postponeOneDay()
+                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(내일부터) 실패", it) }
+                            }
+                        },
+                        onRestMoreClick = onExtendBreak
                     )
 
                     ChallengeRepository.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
