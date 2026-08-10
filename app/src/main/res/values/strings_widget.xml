@@ -1,3 +1,5 @@
 <resources>
     <!-- 위젯 -->
+    <string name="widget_home_label">햄포치 챌린지</string>
+    <string name="widget_home_description">진행 중인 식비 절약 챌린지의 오늘 잔액을 홈 화면에서 바로 확인해요.</string>
 </resources>

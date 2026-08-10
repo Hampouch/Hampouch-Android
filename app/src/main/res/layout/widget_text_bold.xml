@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bold(700) 굵기 전용 TextView. widget_text_medium.xml 설명 참고. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_text"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fontFamily="@font/pretendard_bold"
+    android:includeFontPadding="false"
+    android:gravity="start|center_vertical"
+    android:ellipsize="end" />

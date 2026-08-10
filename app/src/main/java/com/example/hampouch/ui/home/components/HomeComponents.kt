@@ -226,7 +226,8 @@ fun ChallengeBanner(
     }
 }
 
-private fun characterDrawableRes(state: CharacterState): Int = when (state) {
+// 홈 화면 위젯(ui/widget)에서도 동일한 캐릭터 매핑을 재사용한다.
+fun characterDrawableRes(state: CharacterState): Int = when (state) {
     CharacterState.CHUBBY -> R.drawable.img_hamster_chubby
     CharacterState.NORMAL -> R.drawable.img_hamster_normal
     CharacterState.THIN -> R.drawable.img_hamster_thin

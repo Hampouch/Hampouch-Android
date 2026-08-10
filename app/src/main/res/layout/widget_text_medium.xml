@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Glance의 Text()는 시스템 기본 글꼴만 지원해서(androidx.glance.text.FontFamily가
+    android.text.style.TypefaceSpan(String)로만 변환됨) res/font의 커스텀 Pretendard가 반영되지 않는다.
+    그래서 AndroidRemoteViews로 진짜 TextView를 심어 android:fontFamily로 Pretendard를 직접 지정한다.
+    이 파일은 Medium(500) 굵기 전용 TextView 한 장이다.
+
+    width/height는 반드시 match_parent로 둔다. Glance는 AndroidRemoteViews로 심은 뷰의 내용을 측정하지
+    못해서, wrap_content로 두면 호출부(HomeWidget.kt)의 GlanceModifier.width()/height()가 준 실제 칸을
+    못 채우고 글자가 위아래로 잘려 보인다(실제 발생했던 버그). 대신 정렬은 android:gravity로 조절한다.
+-->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_text"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fontFamily="@font/pretendard_medium"
+    android:includeFontPadding="false"
+    android:gravity="start|center_vertical"
+    android:ellipsize="end" />
