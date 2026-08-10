@@ -19,3 +19,7 @@ object ExpenseConfig {
 object MiniChallengeConfig {
     const val USE_SERVER_MINI_CHALLENGE: Boolean = AppConfig.USE_SERVER
 }
+
+object ChallengeConfig {
+    const val USE_SERVER_CHALLENGE: Boolean = AppConfig.USE_SERVER
+}

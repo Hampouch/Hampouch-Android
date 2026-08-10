@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -38,6 +39,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.MyPageProfile
 import com.example.hampouch.data.model.TipPost
 import com.example.hampouch.data.model.TipPostType
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
@@ -92,7 +94,12 @@ fun MyPageScreen(
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }
     var selectedChallengeId by rememberSaveable { mutableStateOf<String?>(null) }
-    val challengeRecords = remember { MyPageMockData.challengeHistory() }
+    LaunchedEffect(Unit) {
+        ChallengeRepository.loadHistory().onFailure { error ->
+            Toast.makeText(context, error.toUserMessage("지난 챌린지 목록을 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
+    val challengeRecords = MyPageMockData.challengeHistory()
     val myTips = MyPageMockData.myTips()
     val savedTips = MyPageMockData.savedTips()
 
@@ -239,6 +246,13 @@ fun MyPageScreen(
 
         MyPageRoute.CHALLENGE_RESULT -> {
             BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
+            LaunchedEffect(selectedChallengeId) {
+                selectedChallengeId?.let { id ->
+                    ChallengeRepository.loadResult(id).onFailure { error ->
+                        Toast.makeText(context, error.toUserMessage("챌린지 결과를 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             val challenge = selectedChallengeId?.let { id -> ChallengeRepository.challenges.find { it.id == id } }
             if (challenge != null) {
                 val state = ChallengeResultMockData.forChallenge(challenge)

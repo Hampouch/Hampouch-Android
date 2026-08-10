@@ -1,6 +1,7 @@
 package com.example.hampouch.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.login.LoginMockData
@@ -13,9 +14,11 @@ import com.example.hampouch.ui.takeabreak.TakeABreakStore
 
 object AccountDataCoordinator {
 
+    private const val TAG = "AccountDataCoordinator"
+
     private var syncedUserId: String? = null
 
-    fun syncIfNeeded(context: Context, userId: String, email: String?) {
+    suspend fun syncIfNeeded(context: Context, userId: String, email: String?) {
         if (userId == syncedUserId) return
         syncedUserId = userId
         ExpenseDetailStore.resetForAccount()
@@ -37,7 +40,9 @@ object AccountDataCoordinator {
         val request = OnboardingDataStore.takeReservedRequest(account.email)
         ChallengeRepository.resetEmpty()
         if (request != null) {
-            ChallengeRepository.startNewChallenge(request)
+            ChallengeRepository.startNewChallenge(request).onFailure { error ->
+                Log.e(TAG, "예약된 온보딩 요청으로 챌린지를 시작하지 못했습니다.", error)
+            }
         }
         LoginMockData.markAsExistingMember(account.email)
     }

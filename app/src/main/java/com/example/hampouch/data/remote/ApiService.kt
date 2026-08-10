@@ -4,6 +4,15 @@ import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
+import com.example.hampouch.data.remote.dto.ChallengeCloseData
+import com.example.hampouch.data.remote.dto.ChallengeCreateData
+import com.example.hampouch.data.remote.dto.ChallengeCreateRequest
+import com.example.hampouch.data.remote.dto.ChallengeCurrentData
+import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesData
+import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesRequest
+import com.example.hampouch.data.remote.dto.ChallengeHistoryListData
+import com.example.hampouch.data.remote.dto.ChallengeResultData
+import com.example.hampouch.data.remote.dto.ChallengeStatusData
 import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
 import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
 import com.example.hampouch.data.remote.dto.ExpenseCategoryAnalysisData
@@ -360,4 +369,45 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Query("month") month: String
     ): Response<ApiResponse<ExpenseTrendData>>
+
+    @POST("api/challenges")
+    suspend fun createChallenge(
+        @Header("Authorization") authorization: String,
+        @Body request: ChallengeCreateRequest
+    ): Response<ApiResponse<ChallengeCreateData>>
+
+    @GET("api/challenges/current")
+    suspend fun getCurrentChallenge(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<ChallengeCurrentData>>
+
+    @GET("api/challenges/history")
+    suspend fun getChallengeHistory(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<ChallengeHistoryListData>>
+
+    @GET("api/challenges/{challengeId}/result")
+    suspend fun getChallengeResult(
+        @Header("Authorization") authorization: String,
+        @Path("challengeId") challengeId: Long
+    ): Response<ApiResponse<ChallengeResultData>>
+
+    @POST("api/challenges/{challengeId}/give-up")
+    suspend fun giveUpChallenge(
+        @Header("Authorization") authorization: String,
+        @Path("challengeId") challengeId: Long
+    ): Response<ApiResponse<ChallengeStatusData>>
+
+    @PUT("api/challenges/{challengeId}/focus-categories")
+    suspend fun updateChallengeFocusCategories(
+        @Header("Authorization") authorization: String,
+        @Path("challengeId") challengeId: Long,
+        @Body request: ChallengeFocusCategoriesRequest
+    ): Response<ApiResponse<ChallengeFocusCategoriesData>>
+
+    @POST("api/challenges/{challengeId}/close")
+    suspend fun closeChallenge(
+        @Header("Authorization") authorization: String,
+        @Path("challengeId") challengeId: Long
+    ): Response<ApiResponse<ChallengeCloseData>>
 }

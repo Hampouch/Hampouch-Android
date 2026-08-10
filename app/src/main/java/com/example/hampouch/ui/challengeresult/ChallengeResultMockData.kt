@@ -48,6 +48,8 @@ object ChallengeResultMockData {
         val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
 
         val status = when {
+            challenge.remoteStatus == "SUCCESS" -> ChallengeResultStatus.COMPLETE
+            challenge.remoteStatus == "FAIL" -> ChallengeResultStatus.FAIL
             challenge.abandonedDate != null -> ChallengeResultStatus.FAIL
             isOngoing -> ChallengeResultStatus.IN_PROGRESS
             actualAmount <= challenge.targetAmount -> ChallengeResultStatus.COMPLETE

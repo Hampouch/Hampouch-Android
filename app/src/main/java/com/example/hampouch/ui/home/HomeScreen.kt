@@ -119,7 +119,14 @@ fun HomeScreen(
             Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
         }
     }
-    val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
+    LaunchedEffect(Unit) {
+        ChallengeRepository.loadCurrentChallenge().onFailure { error ->
+            Toast.makeText(context, error.toUserMessage("챌린지 현황 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
+    val baseUiState = remember(selectedDate, ChallengeRepository.activeChallenge?.id) {
+        mockStateForDate(selectedDate, referenceToday)
+    }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
             id = record.id,
@@ -215,8 +222,12 @@ fun HomeScreen(
                         hasVisitedExpenseEdit = ChallengeRepository.hasVisitedExpenseEditAfterEnd,
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
                         onFinishChallengeClick = {
-                            ChallengeRepository.acknowledgeChallengeEnd()
-                            onChallengeEndedFinishClick()
+                            coroutineScope.launch {
+                                ChallengeRepository.acknowledgeChallengeEnd().onFailure { error ->
+                                    Toast.makeText(context, error.toUserMessage("챌린지 종료 처리에 실패했습니다."), Toast.LENGTH_SHORT).show()
+                                }
+                                onChallengeEndedFinishClick()
+                            }
                         }
                     )
 
