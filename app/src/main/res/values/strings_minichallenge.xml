@@ -27,4 +27,6 @@
     <string name="minichallenge_duration_31days">30일</string>
     <string name="minichallenge_add_challenge_button">미니 챌린지 추가하기</string>
     <string name="minichallenge_name_duplicate_error">이미 있는 미니챌린지입니다.</string>
+    <string name="minichallenge_action_failed">미니 챌린지 처리에 실패했습니다.</string>
+    <string name="minichallenge_future_date_blocked">미래 날짜는 조회할 수 없습니다.</string>
 </resources>

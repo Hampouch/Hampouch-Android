@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -26,12 +27,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.model.ExpenseEntry
 import com.example.hampouch.data.model.ExpenseRecord
 import com.example.hampouch.data.model.HomeUiState
+import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.ChallengeEndedDialog
@@ -62,6 +66,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
+import kotlinx.coroutines.launch
 
 private const val MOCK_USER_NAME = "민준"
 
@@ -114,6 +119,13 @@ fun HomeScreen(
     var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
     var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
+    val context = LocalContext.current
+    val miniChallengeRepository = remember { MiniChallengeRepository.getInstance(context) }
+    LaunchedEffect(selectedDate) {
+        miniChallengeRepository.loadChallenges(selectedDate).onFailure { error ->
+            Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+        }
+    }
     val baseUiState = remember(selectedDate) { mockStateForDate(selectedDate, referenceToday) }
     val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
@@ -167,7 +179,21 @@ fun HomeScreen(
                     uiState = displayedUiState,
                     referenceToday = referenceToday,
                     onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
-                    onToggleMiniChallenge = { id -> MiniChallengeStore.toggle(selectedDate, id) },
+                    onToggleMiniChallenge = { id ->
+                        val target = MiniChallengeStore.challengesFor(selectedDate).find { it.id == id }
+                        if (target != null) {
+                            coroutineScope.launch {
+                                miniChallengeRepository.setChecked(selectedDate, id, !target.isChecked)
+                                    .onFailure { error ->
+                                        Toast.makeText(
+                                            context,
+                                            error.toUserMessage("미니 챌린지 처리에 실패했습니다."),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                            }
+                        }
+                    },
                     onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
                     onSuggestionClick = { onNavigateToAmountAdjustment() },
                     onStartChallengeClick = onStartChallengeClick,
