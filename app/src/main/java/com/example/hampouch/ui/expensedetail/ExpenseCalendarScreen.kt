@@ -130,7 +130,6 @@ fun ExpenseCalendarRoute(
     val records by viewModel.records.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
     val weekSummary by viewModel.weekSummary.collectAsStateWithLifecycle()
-    // 목데이터 모드에서는 Repository가 로컬 캐시로 같은 요약을 만들어 주므로 화면은 분기하지 않는다.
     LaunchedEffect(displayedMonth) { viewModel.loadMonthSummary(YearMonth.from(displayedMonth)) }
     LaunchedEffect(displayedWeekStart) { viewModel.loadWeekSummary(displayedWeekStart) }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }

@@ -7,13 +7,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 
-/**
- * 서버 호출을 감싸는 공통 헬퍼.
- *
- * 예전에는 Repository·Store마다 errorFrom/runCatchingNetwork를 그대로 복붙해 두고 있었다
- * (ChallengeRepository, HamTipsRepository, ExpenseDetailStore, TakeABreakStore 네 벌).
- * 도메인별 Repository 구현이 전부 이 파일을 쓰도록 모았다.
- */
+// 서버 호출을 감싸는 공통 헬퍼. 도메인별 Repository 구현이 공유한다.
 
 private val errorBodyGson = Gson()
 

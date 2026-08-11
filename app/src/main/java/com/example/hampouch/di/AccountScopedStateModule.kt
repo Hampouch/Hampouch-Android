@@ -2,6 +2,7 @@ package com.example.hampouch.di
 
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleStore
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.AllSettingsStore
 import com.example.hampouch.ui.mypage.MyPageProfileStore
@@ -15,10 +16,7 @@ import dagger.multibindings.ElementsIntoSet
 
 /**
  * 계정 전환 시 비워야 하는 상태들을 등록한다.
- *
- * 아직 화면 패키지에 남아 있는 스토어들이 대상이라 이 파일만 ui를 참조한다 —
- * data 레이어는 [AccountScopedState] 인터페이스만 알면 된다. 각 스토어가 Repository로
- * 옮겨지면 여기 목록에서 빼고 해당 Repository를 등록하면 된다.
+ * data 레이어는 [AccountScopedState] 인터페이스만 알면 되도록, ui 참조는 이 파일에만 둔다.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -32,6 +30,7 @@ object AccountScopedStateModule {
         NotificationStore,
         MyPageProfileStore,
         AllSettingsStore,
-        HamBattleMockData
+        HamBattleMockData,
+        HamBattleStore
     )
 }

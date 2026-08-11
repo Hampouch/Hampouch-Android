@@ -14,9 +14,7 @@ private const val TAG = "AccountDataCoordinator"
 
 /**
  * 로그인 계정이 바뀌었을 때 이전 계정의 캐시를 비운다.
- *
- * 무엇을 비울지는 [AccountScopedState] 구현들이 등록으로 알려주므로, 여기서는 화면 쪽 스토어를
- * 하나씩 알 필요가 없다([com.example.hampouch.di.AccountScopedStateModule] 참고).
+ * 무엇을 비울지는 [AccountScopedState] 구현들의 등록으로 정해진다.
  */
 @Singleton
 class AccountDataCoordinator @Inject constructor(

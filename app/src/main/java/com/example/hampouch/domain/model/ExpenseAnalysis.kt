@@ -9,12 +9,12 @@ const val ExpenseAnalysisEtcId = "etc"
 
 /**
  * 지출 카테고리 id 목록. 서버 enum과의 매핑 기준이자 분석 화면 범례 순서다.
- * 아이콘·색·표시 문구는 표현 계층([com.example.hampouch.ui.home.HomeCategoryCatalog])이 갖는다.
+ * 아이콘·색·표시 문구는 [com.example.hampouch.ui.home.HomeCategoryCatalog]에 있다.
  */
 val ExpenseCategoryIds: List<String> =
     listOf("delivery", "snack", "dining_out", "mart", "convenience", "drink", "cafe", ExpenseAnalysisEtcId)
 
-/** 지출 이유 id 목록. 표시 문구는 [com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog]가 갖는다. */
+/** 지출 이유 id 목록. 표시 문구는 [com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog]에 있다. */
 val ExpenseReasonIds: List<String> =
     listOf("stress", "reward", "lazy", "craving", ExpenseAnalysisEtcId)
 

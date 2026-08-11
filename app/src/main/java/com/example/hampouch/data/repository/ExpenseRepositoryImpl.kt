@@ -614,7 +614,7 @@ class ExpenseRepositoryImpl @Inject constructor(
                 ExpenseTrendResult(
                     month = month,
                     totalAmount = currentTotal,
-                    // 값이 0인 달도 분모에 포함한다(이관 전 화면 계산과 동일).
+                    // 값이 0인 달도 분모에 포함한다.
                     monthlyAverage = if (totals.isEmpty()) 0 else totals.sumOf { it.amount } / totals.size,
                     diffRateFromLastMonth = if (previousTotal <= 0) {
                         null

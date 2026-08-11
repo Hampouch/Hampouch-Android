@@ -30,7 +30,7 @@ object ChallengeResultMockData {
         }
     }
 
-    /** @param recordsForDate 해당 날짜의 지출 내역. 지출 저장소는 ViewModel이 들고 있으므로 조회 함수로 받는다. */
+    /** @param recordsForDate 해당 날짜의 지출 내역. */
     fun forChallenge(
         challenge: ActiveChallenge,
         challengeState: ChallengeState,

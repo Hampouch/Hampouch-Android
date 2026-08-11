@@ -75,7 +75,7 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-/** [BreakDuration]의 사용자 노출 문구. 도메인 모델은 표현 문구를 갖지 않는다. */
+/** [BreakDuration]의 사용자 노출 문구. */
 internal val BreakDuration.label: String
     get() = when (this) {
         BreakDuration.THREE_DAYS -> "3일 쉬기"

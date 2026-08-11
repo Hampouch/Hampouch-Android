@@ -5,7 +5,7 @@ import com.example.hampouch.domain.model.ChallengeState
 import java.time.LocalDate
 
 object AmountAdjustmentMockData {
-    /** @param spentOnDate 해당 날짜의 지출 합계. 지출 저장소는 ViewModel이 들고 있으므로 조회 함수로 받는다. */
+    /** @param spentOnDate 해당 날짜의 지출 합계. */
     fun challenge(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): AmountAdjustmentChallenge {
         val active = requireNotNull(challengeState.activeChallenge) {
             "진행중인 챌린지가 없는 상태에서 목표 금액 조정 화면에 진입했습니다."

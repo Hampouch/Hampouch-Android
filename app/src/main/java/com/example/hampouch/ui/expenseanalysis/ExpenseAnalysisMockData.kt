@@ -19,9 +19,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-// 분석 결과 모델과 카테고리·이유 id 목록은 domain/model/ExpenseAnalysis.kt로 옮겼다.
-// 화면에서 쓰던 이름은 아래 별칭으로 유지한다.
-
 val ExpenseAnalysisCategoryLegendOrder: List<String> = ExpenseCategoryIds
 
 val ExpenseAnalysisCategoryTabOrder: List<String> =

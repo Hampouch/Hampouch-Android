@@ -6,9 +6,6 @@ import com.example.hampouch.domain.model.UserRole
 /**
  * 목데이터 모드의 인메모리 계정 목록.
  *
- * 예전에는 화면 패키지(`ui/login`)에 Compose 상태 리스트로 있었다. data 레이어에서 쓰는 값이라
- * 여기로 옮기고 일반 리스트로 바꿨다 — 화면이 이 목록의 변화를 구독하지는 않는다.
- *
  * TODO: 서버팀 회원가입/로그인 API 연동이 끝나면 통째로 삭제.
  */
 object AccountMockDataSource {

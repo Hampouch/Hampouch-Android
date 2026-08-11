@@ -13,7 +13,8 @@ data class HamBattleChallengeRequest(
 )
 
 val HamBattleParticipantOptions = listOf("1 vs 1", "3인", "4인", "5인", "6인", "7인", "8인", "9인", "10인")
-val HamBattleDurationOptions = listOf("3일", "7일", "14일", "30일")
+// 서버(POST /api/battles)가 durationDays로 3/7/14/31만 허용하므로 이 목록도 그대로 맞춘다.
+val HamBattleDurationOptions = listOf("3일", "7일", "14일", "31일")
 val HamBattleDefaultPenaltyOptions = listOf("커피 사기", "밥 사기", "영화 사기")
 
 enum class HamBattleParticipantStatus {
@@ -25,7 +26,11 @@ enum class HamBattleParticipantStatus {
 data class HamBattleParticipantSpending(
     val name: String,
     val amount: Int,
-    val status: HamBattleParticipantStatus = HamBattleParticipantStatus.NORMAL
+    val status: HamBattleParticipantStatus = HamBattleParticipantStatus.NORMAL,
+    val avatarUrl: String? = null,
+    val userId: Long? = null,
+    /** 서버 상세 응답(todayAmount)에서만 채워짐. "오늘/전체" 토글에 쓴다 — null이면 [amount]로 대체. */
+    val todayAmount: Int? = null
 )
 
 enum class HamBattleStatus {
@@ -45,10 +50,21 @@ data class HamBattleChallenge(
     val durationDays: Int,
     val startDate: LocalDate? = null,
     val link: String = "",
-    val cancelled: Boolean = false
+    val cancelled: Boolean = false,
+    /** 서버 연동 시에만 채워짐. battleId/battleCode는 참가자 전용 리소스라 목데이터에는 없다. */
+    val battleId: Long? = null,
+    val battleCode: String? = null,
+    /** 서버가 내려준 상태(READY/ONGOING/TERMINATED)가 있으면 날짜 기반 추정 대신 이 값을 그대로 쓴다. */
+    val serverStatus: String? = null,
+    /** READY 목록 응답처럼 participants가 비어 있어도 실제 참가 인원을 알고 있을 때 쓴다. */
+    val joinedCountOverride: Int? = null,
+    /** TERMINATED 상세 응답의 벌칙 대상자 닉네임(penaltyUserNickname). */
+    val penaltyUserName: String? = null,
+    /** TERMINATED 목록 응답의 winnerNickname. 목록 항목엔 participants가 없어 별도로 들고 있는다. */
+    val winnerName: String? = null
 ) {
     val isOneVsOne: Boolean get() = type == "1 vs 1"
-    val joinedCount: Int get() = participants.size
+    val joinedCount: Int get() = joinedCountOverride ?: participants.size
     val isFull: Boolean get() = totalCount > 0 && joinedCount >= totalCount
 
     fun effectiveStartDate(referenceToday: LocalDate = LocalDate.now()): LocalDate? =
@@ -59,6 +75,11 @@ data class HamBattleChallenge(
 
     fun status(referenceToday: LocalDate = LocalDate.now()): HamBattleStatus {
         if (cancelled) return HamBattleStatus.ENDED
+        when (serverStatus) {
+            "READY" -> return HamBattleStatus.WAITING
+            "ONGOING" -> return HamBattleStatus.ACTIVE
+            "TERMINATED", "FINISHED" -> return HamBattleStatus.ENDED
+        }
         if (!isFull) return HamBattleStatus.WAITING
         val start = effectiveStartDate(referenceToday) ?: return HamBattleStatus.WAITING
         if (referenceToday.isBefore(start)) return HamBattleStatus.WAITING

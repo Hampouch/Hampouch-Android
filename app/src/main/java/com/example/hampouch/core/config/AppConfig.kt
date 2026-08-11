@@ -27,3 +27,7 @@ object MiniChallengeConfig {
 object ChallengeConfig {
     const val USE_SERVER_CHALLENGE: Boolean = AppConfig.USE_SERVER
 }
+
+object BattleConfig {
+    const val USE_SERVER_BATTLE: Boolean = AppConfig.USE_SERVER
+}

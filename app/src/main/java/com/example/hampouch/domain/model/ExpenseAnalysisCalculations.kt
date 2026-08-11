@@ -4,12 +4,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-/**
- * 지출 내역을 분석 결과로 집계하는 순수 계산들.
- *
- * 목데이터 모드에서 서버 응답 대신 쓰이고, 화면에서도 직접 쓴다.
- * 예전에는 화면 패키지에 있었지만 카테고리·이유 분류 기준은 도메인 규칙이라 여기로 옮겼다.
- */
+// 지출 내역을 분석 결과로 집계하는 순수 계산들. 목데이터 모드에서 서버 응답 대신 쓰인다.
 
 private fun categoryBucketOf(record: ExpenseRecord): String =
     record.categoryId?.takeIf { it in ExpenseCategoryIds } ?: ExpenseAnalysisEtcId

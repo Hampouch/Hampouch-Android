@@ -19,7 +19,6 @@ class HampouchApplication : Application() {
         super.onCreate()
         NetworkModule.attach(this)
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
-        // 아직 Hilt 주입으로 옮기지 못한 싱글톤들. 각 도메인이 이관되면 하나씩 사라진다.
         HamTipsRepository.attach(this)
         HamBattleMockData.attach(expenseRepository)
     }

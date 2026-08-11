@@ -3,11 +3,7 @@ package com.example.hampouch.domain.model
 import java.time.LocalDate
 
 /**
- * 챌린지 도메인의 전체 상태.
- *
- * 예전에는 `ChallengeRepository` object가 challenges / challengeEndAcknowledged /
- * hasVisitedExpenseEditAfterEnd / noRecordDates를 각각 Compose 상태로 들고 있었다.
- * 하나의 값으로 묶어 화면은 이 값 하나만 구독하면 되게 했고, 파생 계산도 여기 모았다.
+ * 챌린지 도메인의 전체 상태. 화면은 이 값 하나만 구독하면 되고, 파생 계산도 여기 모여 있다.
  *
  * @property noRecordDates "지출을 기록하지 않은 날"로 표시된 날짜들. 한도를 넘지 않았더라도 실패로 센다.
  */
@@ -45,7 +41,7 @@ data class ChallengeState(
     /**
      * 절약 금액·연속 성공일·일자별 성패를 계산한다.
      *
-     * @param spentOnDate 해당 날짜의 지출 합계. 지출은 별도 도메인이라 조회 함수로 받는다.
+     * @param spentOnDate 해당 날짜의 지출 합계.
      */
     fun computeProgress(
         referenceToday: LocalDate,

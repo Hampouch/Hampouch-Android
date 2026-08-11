@@ -43,7 +43,6 @@ class ExpenseDetailViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
-        // 목데이터 모드에서는 Repository가 로컬 캐시에서 같은 값을 돌려준다.
         viewModelScope.launch {
             expenseRepository.loadExpenseDetail(expenseId).onSuccess { record ->
                 _uiState.value = _uiState.value.copy(record = record)

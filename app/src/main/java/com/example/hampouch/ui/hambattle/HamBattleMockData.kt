@@ -15,11 +15,7 @@ import java.time.ZoneOffset
 // TODO: 서버팀 햄배틀 API 연동 시 목데이터 대신 실제 응답으로 대체.
 object HamBattleMockData : AccountScopedState {
 
-    /**
-     * 햄배틀은 아직 서버 API가 없어 이 목데이터 객체가 상태를 들고 있고, "내 지출"만 실제 기록에서
-     * 가져온다. 화면 패키지끼리 직접 얽히지 않도록 지출 조회는 [HampouchApplication]이 Hilt 그래프에서
-     * 받아 넣어 준다. 햄배틀이 ViewModel로 옮겨지면 이 객체와 함께 사라진다.
-     */
+    /** "내 지출"은 실제 지출 기록에서 가져온다. [HampouchApplication]이 넣어 준다. */
     private var expenseRepository: ExpenseRepository? = null
 
     fun attach(repository: ExpenseRepository) {

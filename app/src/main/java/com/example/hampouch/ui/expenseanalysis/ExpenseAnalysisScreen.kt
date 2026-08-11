@@ -119,7 +119,6 @@ fun ExpenseAnalysisRoute(
         }
     }
 
-    // 목데이터 모드에서는 Repository가 로컬 캐시로 같은 결과를 만들어 주므로 화면은 분기하지 않는다.
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     LaunchedEffect(periodStart, periodEnd) { viewModel.loadSummary(periodStart, periodEnd) }
 

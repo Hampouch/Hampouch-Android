@@ -103,7 +103,9 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
 @Composable
 private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
-    val winnerName = ranked.firstOrNull()?.name.orEmpty()
+    // 목록 조회(/api/battles)는 TERMINATED 항목에 participants 없이 winnerNickname만 내려주므로,
+    // 참가자 상세를 못 받은 경우엔 그 값으로 대체한다.
+    val winnerName = ranked.firstOrNull()?.name ?: challenge.winnerName.orEmpty()
 
     Column(
         modifier = Modifier
@@ -135,7 +137,7 @@ private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         if (challenge.isOneVsOne && challenge.participants.size == 2) {
             OneVsOneRow(first = challenge.participants[0], second = challenge.participants[1])
-        } else {
+        } else if (ranked.isNotEmpty()) {
             RankedParticipantList(participants = ranked)
         }
 

@@ -4,9 +4,7 @@ import java.time.LocalDate
 
 /**
  * 휴식 기간 프리셋. 화면에서 "직접 입력"을 고르면 이 값 없이 일수만 전달된다.
- *
- * 사용자에게 보이는 문구는 표현 계층 관심사라 여기 두지 않는다 —
- * [com.example.hampouch.ui.takeabreak.label] 참고.
+ * 사용자에게 보이는 문구는 [com.example.hampouch.ui.takeabreak.label]에 있다.
  */
 enum class BreakDuration {
     THREE_DAYS,
