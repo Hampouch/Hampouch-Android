@@ -29,6 +29,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.notification.NotificationStore
+import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -281,8 +283,21 @@ fun ReasonTagAndAmountColumn(
     }
 }
 
+/** 읽지 않은 알림 여부. 프리뷰 등에서는 [NotificationBellIcon]의 인자로 직접 넘길 수 있다. */
 @Composable
-fun NotificationBellIcon(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun rememberHasUnreadNotifications(
+    viewModel: NotificationViewModel = hiltViewModel()
+): Boolean {
+    val items by viewModel.items.collectAsStateWithLifecycle()
+    return items.any { !it.isRead }
+}
+
+@Composable
+fun NotificationBellIcon(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    hasUnread: Boolean = rememberHasUnreadNotifications()
+) {
     Box(modifier = modifier) {
         IconButton(onClick = onClick) {
             Icon(
@@ -291,7 +306,7 @@ fun NotificationBellIcon(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 tint = HPBlack
             )
         }
-        if (NotificationStore.hasUnread) {
+        if (hasUnread) {
             Box(
                 modifier = Modifier
                     .padding(top = 8.dp, end = 8.dp)

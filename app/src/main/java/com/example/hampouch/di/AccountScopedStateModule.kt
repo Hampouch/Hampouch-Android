@@ -1,13 +1,13 @@
 package com.example.hampouch.di
 
+import com.example.hampouch.data.repository.MiniChallengeRepositoryImpl
+import com.example.hampouch.data.repository.NotificationRepositoryImpl
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleStore
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.AllSettingsStore
 import com.example.hampouch.ui.mypage.MyPageProfileStore
 import com.example.hampouch.ui.mypage.RecordAlarmStore
-import com.example.hampouch.ui.notification.NotificationStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,10 +24,13 @@ object AccountScopedStateModule {
 
     @Provides
     @ElementsIntoSet
-    fun provideUiScopedStates(): Set<AccountScopedState> = setOf(
-        MiniChallengeStore,
+    fun provideUiScopedStates(
+        notificationRepository: NotificationRepositoryImpl,
+        miniChallengeRepository: MiniChallengeRepositoryImpl
+    ): Set<AccountScopedState> = setOf(
+        notificationRepository,
+        miniChallengeRepository,
         RecordAlarmStore,
-        NotificationStore,
         MyPageProfileStore,
         AllSettingsStore,
         HamBattleMockData,

@@ -2,9 +2,13 @@ package com.example.hampouch.di
 
 import com.example.hampouch.data.repository.ChallengeRepositoryImpl
 import com.example.hampouch.data.repository.ExpenseRepositoryImpl
+import com.example.hampouch.data.repository.MiniChallengeRepositoryImpl
+import com.example.hampouch.data.repository.NotificationRepositoryImpl
 import com.example.hampouch.data.repository.RestRepositoryImpl
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.repository.MiniChallengeRepository
+import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.domain.repository.RestRepository
 import dagger.Binds
 import dagger.Module
@@ -28,4 +32,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMiniChallengeRepository(impl: MiniChallengeRepositoryImpl): MiniChallengeRepository
 }

@@ -1,15 +1,16 @@
 package com.example.hampouch.data.repository
 
-import android.content.Context
 import android.util.Log
 import com.example.hampouch.core.config.MiniChallengeConfig
 import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.domain.model.MiniChallengeDaySummary
+import com.example.hampouch.domain.model.MiniChallengeState
+import com.example.hampouch.domain.repository.AccountScopedState
+import com.example.hampouch.domain.repository.MiniChallengeRepository
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.domain.model.ApiException
-import com.example.hampouch.data.local.MiniChallengeLocalStore
-import com.example.hampouch.di.legacyEntryPoint
+import com.example.hampouch.data.local.MiniChallengeMockDataSource
 import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiErrorBody
@@ -20,33 +21,97 @@ import com.example.hampouch.data.remote.dto.MiniChallengeItemDto
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeDto
 import com.google.gson.Gson
 import java.time.LocalDate
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.first
 import retrofit2.Response
 
 private const val TAG = "MiniChallengeRepository"
 
-/**
- * 미니 챌린지(/api/mini-challenges*) 서버 연동.
- *
- * 목데이터 모드([MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE] == false)에서는 [MiniChallengeStore]의 기존 로컬 로직을
- * 그대로 쓰고, 서버 모드에서는 API 응답으로 [MiniChallengeStore]를 갱신한다. 화면단은 이 리포지토리만
- * 호출하면 되고 지금이 어느 모드인지는 신경 쓰지 않아도 된다.
- */
-class MiniChallengeRepository private constructor(private val context: Context) {
+/** 미니 챌린지(/api/mini-challenges*) 연동. 목데이터 모드에서는 로컬 상태만 갱신한다. */
+@Singleton
+class MiniChallengeRepositoryImpl @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val mockDataSource: MiniChallengeMockDataSource
+) : MiniChallengeRepository, AccountScopedState {
 
-    private val authRepository by lazy { AuthRepository.getInstance(context) }
-    private val store: MiniChallengeLocalStore get() = context.legacyEntryPoint().miniChallengeLocalStore()
+    private val _state = MutableStateFlow(mockDataSource.initialState())
+    override val state: StateFlow<MiniChallengeState> = _state.asStateFlow()
+
+    private fun challengesFor(date: LocalDate) = _state.value.challengesFor(date)
+
+    private fun setChallengesForDate(date: LocalDate, entries: List<MiniChallengeEntry>) {
+        _state.update { it.copy(challengesByDate = it.challengesByDate + (date to entries)) }
+    }
+
+    private fun setSummaryForDate(date: LocalDate, summary: MiniChallengeDaySummary) {
+        _state.update { it.copy(summaryByDate = it.summaryByDate + (date to summary)) }
+    }
+
+    private fun replaceRecommendedChallenges(items: List<RecommendedMiniChallenge>) {
+        _state.update { it.copy(recommendedChallenges = items) }
+    }
+
+    private fun removeRecommended(id: String) {
+        _state.update { it.copy(recommendedChallenges = it.recommendedChallenges.filterNot { r -> r.id == id }) }
+    }
+
+    private fun toggleLocal(date: LocalDate, id: String) {
+        setChallengesForDate(
+            date,
+            challengesFor(date).map { entry ->
+                if (entry.id == id) entry.copy(isChecked = !entry.isChecked) else entry
+            }
+        )
+    }
+
+    private fun removeLocal(date: LocalDate, id: String) {
+        setChallengesForDate(date, challengesFor(date).filterNot { it.id == id })
+    }
+
+    /** 중복 이름이면 추가하지 않고 false. */
+    private fun addLocal(date: LocalDate, name: String, totalDays: Int?): Boolean {
+        val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
+        if (_state.value.isNameTaken(date, trimmedName)) return false
+        setChallengesForDate(
+            date,
+            challengesFor(date) + MiniChallengeEntry(
+                id = UUID.randomUUID().toString(),
+                name = trimmedName,
+                totalDays = totalDays,
+                achievedDays = 0,
+                isChecked = false,
+                startDate = date
+            )
+        )
+        return true
+    }
+
+    private fun addRecommendedLocal(date: LocalDate, recommended: RecommendedMiniChallenge): Boolean {
+        val added = addLocal(date, recommended.name, recommended.totalDays)
+        if (added) removeRecommended(recommended.id)
+        return added
+    }
+
+    override fun resetForAccount() {
+        _state.value = mockDataSource.initialState()
+    }
 
     /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
-    suspend fun loadChallenges(date: LocalDate): Result<Unit> {
+    override suspend fun loadChallenges(date: LocalDate): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getMiniChallenges(authorization, date.toString())
             val body = requireBody(response, "미니 챌린지 조회에 실패했습니다.")
-            store.setChallengesForDate(date, body.items.map { it.toDomain() })
-            store.setSummaryForDate(
+            setChallengesForDate(date, body.items.map { it.toDomain() })
+            setSummaryForDate(
                 date,
                 MiniChallengeDaySummary(
                     checkedCount = body.summary.checkedCount,
@@ -58,13 +123,13 @@ class MiniChallengeRepository private constructor(private val context: Context) 
     }
 
     /** 추천 카탈로그를 조회해 [MiniChallengeStore]에 반영한다. [durationDays]가 null이면 전체 기간. */
-    suspend fun loadRecommended(durationDays: Int? = null): Result<Unit> {
+    override suspend fun loadRecommended(durationDays: Int?): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getRecommendedMiniChallenges(authorization, durationDays)
             val body = requireBody(response, "추천 목록 조회에 실패했습니다.")
-            store.replaceRecommendedChallenges(body.items.map { it.toDomain() })
+            replaceRecommendedChallenges(body.items.map { it.toDomain() })
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
     }
 
@@ -77,9 +142,9 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      * 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
      * 중복 이름 등으로 추가되지 않았으면 null.
      */
-    suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
+    override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = store.addRecommendedChallenge(date, recommended)
+            val added = addRecommendedLocal(date, recommended)
             return Result.success(if (added) date else null)
         }
         return runCatching {
@@ -91,7 +156,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
                 AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
             )
             requireBody(response, "미니 챌린지 추가에 실패했습니다.")
-            store.removeRecommended(recommended.id)
+            removeRecommended(recommended.id)
             val today = LocalDate.now()
             loadChallenges(today).getOrThrow()
             today
@@ -102,9 +167,9 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게, 서버 모드에서는 항상 오늘 날짜부터
      * 생성되므로 [date]가 아니라 실제 반영된 날짜를 반환한다. 중복 이름 등으로 추가되지 않았으면 null.
      */
-    suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
+    override suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = store.addChallenge(date, name, totalDays)
+            val added = addLocal(date, name, totalDays)
             return Result.success(if (added) date else null)
         }
         return runCatching {
@@ -123,9 +188,9 @@ class MiniChallengeRepository private constructor(private val context: Context) 
     }
 
     /** [id]의 미니 챌린지를 삭제한다. */
-    suspend fun remove(date: LocalDate, id: String): Result<Unit> {
+    override suspend fun remove(date: LocalDate, id: String): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            store.removeChallenge(date, id)
+            removeLocal(date, id)
             return Result.success(Unit)
         }
         return runCatching {
@@ -139,9 +204,9 @@ class MiniChallengeRepository private constructor(private val context: Context) 
     }
 
     /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다(PUT은 멱등이라 재시도해도 안전). */
-    suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
+    override suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            store.toggle(date, id)
+            toggleLocal(date, id)
             return Result.success(Unit)
         }
         return runCatching {
@@ -187,15 +252,6 @@ class MiniChallengeRepository private constructor(private val context: Context) 
         Log.e(TAG, "$action 네트워크 오류", error)
     }
 
-    companion object {
-        @Volatile
-        private var instance: MiniChallengeRepository? = null
-
-        fun getInstance(context: Context): MiniChallengeRepository =
-            instance ?: synchronized(this) {
-                instance ?: MiniChallengeRepository(context.applicationContext).also { instance = it }
-            }
-    }
 }
 
 /** 도메인의 "오늘만"(totalDays == null)은 서버에서 durationDays=1로 표현된다. */

@@ -39,7 +39,6 @@ import com.example.hampouch.domain.model.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.data.repository.BattleRepository
-import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.common.previewChallengeState
@@ -60,7 +59,8 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
+import com.example.hampouch.ui.minichallenge.MiniChallengeEvent
+import com.example.hampouch.ui.minichallenge.MiniChallengeViewModel
 import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.mypage.RecordAlarmStore
 import com.example.hampouch.ui.theme.HPGray2
@@ -133,11 +133,15 @@ fun HomeScreen(
     var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val context = LocalContext.current
-    val miniChallengeRepository = remember { MiniChallengeRepository.getInstance(context) }
+    val miniChallengeViewModel: MiniChallengeViewModel = hiltViewModel()
+    val miniChallengeState by miniChallengeViewModel.state.collectAsStateWithLifecycle()
     val battleRepository = remember { BattleRepository.getInstance(context) }
-    LaunchedEffect(selectedDate) {
-        miniChallengeRepository.loadChallenges(selectedDate).onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+    LaunchedEffect(selectedDate) { miniChallengeViewModel.loadChallenges(selectedDate) }
+    LaunchedEffect(miniChallengeViewModel) {
+        miniChallengeViewModel.events.collect { event ->
+            if (event is MiniChallengeEvent.ShowMessage) {
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
@@ -187,7 +191,7 @@ fun HomeScreen(
     }
     val displayedUiState = uiState.copy(
         challenge = liveChallenge,
-        miniChallenges = MiniChallengeStore.challengesFor(selectedDate)
+        miniChallenges = miniChallengeState.challengesFor(selectedDate)
     )
 
     Scaffold(
@@ -211,18 +215,8 @@ fun HomeScreen(
                     referenceToday = referenceToday,
                     onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
                     onToggleMiniChallenge = { id ->
-                        val target = MiniChallengeStore.challengesFor(selectedDate).find { it.id == id }
-                        if (target != null) {
-                            coroutineScope.launch {
-                                miniChallengeRepository.setChecked(selectedDate, id, !target.isChecked)
-                                    .onFailure { error ->
-                                        Toast.makeText(
-                                            context,
-                                            error.toUserMessage("미니 챌린지 처리에 실패했습니다."),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                            }
+                        miniChallengeState.challengesFor(selectedDate).find { it.id == id }?.let { target ->
+                            miniChallengeViewModel.setChecked(selectedDate, id, !target.isChecked)
                         }
                     },
                     onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },

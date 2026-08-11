@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import com.example.hampouch.domain.model.normalizeMiniChallengeName
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -92,7 +93,7 @@ fun MiniChallengeRecommendedListScreen(
                         RecommendedMiniChallengeListCard(
                             item = item,
                             onAddClick = {
-                                if (existingNames.any { MiniChallengeStore.normalizeName(it) == MiniChallengeStore.normalizeName(item.name) }) {
+                                if (existingNames.any { normalizeMiniChallengeName(it) == normalizeMiniChallengeName(item.name) }) {
                                     Toast.makeText(context, duplicateNameMessage, Toast.LENGTH_SHORT).show()
                                 } else {
                                     pendingChallenge = item

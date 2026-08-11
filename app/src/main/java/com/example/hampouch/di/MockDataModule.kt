@@ -1,14 +1,19 @@
 package com.example.hampouch.di
 
 import com.example.hampouch.data.local.ExpenseMockDataSource
+import java.time.LocalDate
 import com.example.hampouch.data.local.HamTipsMockDataSource
-import com.example.hampouch.data.local.MiniChallengeLocalStore
+import com.example.hampouch.data.local.MiniChallengeMockDataSource
+import com.example.hampouch.data.local.NotificationMockDataSource
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.MiniChallengeState
+import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailMockData
 import com.example.hampouch.ui.hamtips.HamTipsMockData
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
+import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
+import com.example.hampouch.ui.notification.NotificationMockData
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,5 +42,21 @@ object MockDataModule {
 
     @Provides
     @Singleton
-    fun provideMiniChallengeLocalStore(): MiniChallengeLocalStore = MiniChallengeStore
+    fun provideMiniChallengeMockDataSource(): MiniChallengeMockDataSource =
+        object : MiniChallengeMockDataSource {
+            override fun initialState(): MiniChallengeState = MiniChallengeState(
+                challengesByDate = mapOf(
+                    LocalDate.now().minusDays(1) to MiniChallengeMockData.yesterdayChallenges(),
+                    LocalDate.now() to MiniChallengeMockData.todayChallenges()
+                ),
+                recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
+            )
+        }
+
+    @Provides
+    @Singleton
+    fun provideNotificationMockDataSource(): NotificationMockDataSource =
+        object : NotificationMockDataSource {
+            override fun populated(): List<NotificationItem> = NotificationMockData.populated()
+        }
 }

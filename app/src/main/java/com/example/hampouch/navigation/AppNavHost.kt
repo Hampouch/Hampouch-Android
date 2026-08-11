@@ -72,7 +72,7 @@ import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
 import com.example.hampouch.ui.nextchallenge.NextChallengeRoute
 import com.example.hampouch.ui.nextchallenge.NextChallengeTakeABreakRoute
 import com.example.hampouch.ui.notification.NotificationScreen
-import com.example.hampouch.ui.notification.NotificationStore
+import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
@@ -123,6 +123,7 @@ fun AppNavHost(
     val authRepository = remember { AuthRepository.getInstance(context) }
     val battleRepository = remember { BattleRepository.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
+    val notificationViewModel: NotificationViewModel = hiltViewModel()
     var startDestination by remember { mutableStateOf<String?>(null) }
     var pendingNicknameSession by remember { mutableStateOf<AuthSession?>(null) }
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
@@ -217,9 +218,9 @@ fun AppNavHost(
 
     LaunchedEffect(pendingNotificationId) {
         val id = pendingNotificationId ?: return@LaunchedEffect
-        val item = NotificationStore.items.find { it.id == id }
+        val item = notificationViewModel.findById(id)
         if (item != null) {
-            NotificationStore.markRead(item.id)
+            notificationViewModel.markRead(item.id)
             handleNotificationTarget(item.target)
         }
         onPendingNotificationConsumed()
@@ -903,12 +904,13 @@ fun AppNavHost(
         }
 
         composable(Screen.Notification.route) {
+            val notifications by notificationViewModel.items.collectAsStateWithLifecycle()
             NotificationScreen(
-                notifications = NotificationStore.items,
+                notifications = notifications,
                 onBackClick = { navController.popBackStack() },
-                onMarkAllReadClick = { NotificationStore.markAllRead() },
+                onMarkAllReadClick = notificationViewModel::markAllRead,
                 onNotificationClick = { item ->
-                    NotificationStore.markRead(item.id)
+                    notificationViewModel.markRead(item.id)
                     handleNotificationTarget(item.target)
                 }
             )
