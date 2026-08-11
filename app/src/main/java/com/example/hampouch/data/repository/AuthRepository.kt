@@ -110,7 +110,11 @@ class AuthRepository private constructor(private val context: Context) {
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                val me = if (!body.isNewUser) fetchAuthMe(body.tokenType, body.accessToken) else null
+                // 닉네임 입력 도중 이탈하면 계정만 만들어진 채로 남는다. 그 뒤 다시 로그인하면
+                // 서버는 isNewUser=false로 응답하지만 needsNickname은 true로 내려주므로,
+                // 이 값을 봐야 닉네임 단계를 건너뛰고 홈으로 넘어가는 것을 막을 수 있다.
+                val requiresNickname = body.needsNickname || body.isNewUser
+                val me = if (!requiresNickname) fetchAuthMe(body.tokenType, body.accessToken) else null
                 val session = AuthSession(
                     provider = credential.provider,
                     userId = body.user.userId,
@@ -119,14 +123,22 @@ class AuthRepository private constructor(private val context: Context) {
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    nickname = if (body.isNewUser) null else (me?.nickname ?: credential.nickname),
+                    nickname = if (requiresNickname) null else (me?.nickname ?: credential.nickname),
                     email = credential.email,
                     profileImageUrl = credential.profileImageUrl
                 )
-                if (!body.isNewUser) {
+                // 닉네임을 마치기 전에는 세션을 저장하지 않는다. 저장해두면 앱을 다시 켰을 때
+                // 닉네임 없이 로그인된 상태가 되어버린다.
+                if (!requiresNickname) {
                     saveSession(session)
                 }
-                Result.success(SocialLoginOutcome(session = session, isNewUser = body.isNewUser))
+                Result.success(
+                    SocialLoginOutcome(
+                        session = session,
+                        isNewUser = body.isNewUser,
+                        requiresNickname = requiresNickname
+                    )
+                )
             } else {
                 val error = response.errorBody()?.string()?.let {
                     runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
@@ -587,7 +599,11 @@ class AuthRepository private constructor(private val context: Context) {
         val account = LoginMockData.accounts.find { it.email == credential.email }
         if (account != null) {
             return mockSignIn(credential.provider, account).map { session ->
-                SocialLoginOutcome(session = session, isNewUser = false)
+                SocialLoginOutcome(
+                    session = session,
+                    isNewUser = false,
+                    requiresNickname = session.nickname.isNullOrBlank()
+                )
             }
         }
         val session = AuthSession(
@@ -602,7 +618,9 @@ class AuthRepository private constructor(private val context: Context) {
             email = credential.email,
             profileImageUrl = credential.profileImageUrl
         )
-        return Result.success(SocialLoginOutcome(session = session, isNewUser = true))
+        return Result.success(
+            SocialLoginOutcome(session = session, isNewUser = true, requiresNickname = true)
+        )
     }
 
     private suspend fun mockSignIn(provider: AuthProvider, account: User): Result<AuthSession> {

@@ -44,6 +44,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import com.example.hampouch.R
 import com.example.hampouch.core.auth.SocialAuthManager
+import com.example.hampouch.core.auth.SocialSignInCancelledException
 import com.example.hampouch.data.model.AuthSession
 import com.example.hampouch.data.remote.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
@@ -64,13 +65,14 @@ import kotlinx.coroutines.launch
 private const val TAG = "LoginScreen"
 
 /**
- * 구글 로그인 실패를 사용자에게 보여줄 메시지로 변환한다.
- * 계정 선택창을 취소한 경우는 오류가 아니므로 null을 돌려주고 아무 메시지도 띄우지 않는다.
+ * 소셜 로그인 실패를 사용자에게 보여줄 메시지로 변환한다.
+ * 사용자가 직접 취소한 경우는 오류가 아니므로 null을 돌려주고 아무 메시지도 띄우지 않는다.
  */
-private fun googleSignInErrorMessage(error: Throwable): String? = when (error) {
+private fun socialSignInErrorMessage(error: Throwable, fallback: String): String? = when (error) {
+    is SocialSignInCancelledException -> null
     is GetCredentialCancellationException -> null
     is NoCredentialException -> "기기에 로그인된 구글 계정이 없습니다."
-    else -> "구글 로그인에 실패했습니다."
+    else -> fallback
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -190,7 +192,7 @@ fun LoginScreen(
                                 authRepository.loginWithSocial(credential)
                                     .onSuccess { outcome ->
                                         loginErrorMessage = null
-                                        if (outcome.isNewUser) {
+                                        if (outcome.requiresNickname) {
                                             pendingSocialSignUp = outcome.session
                                         } else {
                                             onLoginSuccess()
@@ -203,7 +205,8 @@ fun LoginScreen(
                             }
                         }.onFailure { error ->
                             Log.e(TAG, "카카오 로그인 실패", error)
-                            loginErrorMessage = "카카오 로그인에 실패했습니다."
+                            socialSignInErrorMessage(error, "카카오 로그인에 실패했습니다.")
+                                ?.let { loginErrorMessage = it }
                         }
                     }
                 }
@@ -220,7 +223,7 @@ fun LoginScreen(
                                 authRepository.loginWithSocial(credential)
                                     .onSuccess { outcome ->
                                         loginErrorMessage = null
-                                        if (outcome.isNewUser) {
+                                        if (outcome.requiresNickname) {
                                             pendingSocialSignUp = outcome.session
                                         } else {
                                             onLoginSuccess()
@@ -233,7 +236,8 @@ fun LoginScreen(
                             }
                             .onFailure { error ->
                                 Log.e(TAG, "구글 로그인 실패", error)
-                                googleSignInErrorMessage(error)?.let { loginErrorMessage = it }
+                                socialSignInErrorMessage(error, "구글 로그인에 실패했습니다.")
+                                    ?.let { loginErrorMessage = it }
                             }
                     }
                 }

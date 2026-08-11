@@ -13,6 +13,8 @@ data class ApiResponse<T>(
 
 data class SocialLoginData(
     val isNewUser: Boolean,
+    /** 닉네임 최초 설정이 필요한지. 신규 가입뿐 아니라 닉네임 설정 전에 이탈한 계정도 true로 내려온다. */
+    val needsNickname: Boolean,
     val accessToken: String,
     val refreshToken: String,
     val tokenType: String,
