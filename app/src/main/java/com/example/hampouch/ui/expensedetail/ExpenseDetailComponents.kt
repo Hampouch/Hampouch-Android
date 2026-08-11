@@ -11,12 +11,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +57,7 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -247,28 +252,53 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
     }
 }
 
+private val ChipGridSpacing = 10.dp
+
+/** 칩 한 칸이 이보다 좁아지면 열 수를 줄인다. 글꼴 배율에 비례해 함께 커진다. */
+val ChipGridDefaultMinColumnWidth = 84.dp
+
+/**
+ * 가용 폭과 글꼴 배율에 맞춰 열 수를 [maxColumns]에서 1까지 줄이는 칩 그리드.
+ * 같은 행의 칩은 IntrinsicSize.Min으로 높이를 맞춘다.
+ */
 @Composable
-fun <T> ThreeColumnChipGrid(
+fun <T> ChipGrid(
     items: List<T>,
     modifier: Modifier = Modifier,
+    maxColumns: Int = 3,
+    minColumnWidth: Dp = ChipGridDefaultMinColumnWidth,
     chip: @Composable (T) -> Unit
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items.chunked(3).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                rowItems.forEach { item ->
-                    Box(modifier = Modifier.weight(1f)) { chip(item) }
-                }
-                repeat(3 - rowItems.size) {
-                    Spacer(modifier = Modifier.weight(1f))
+    val scaledMinColumnWidth = minColumnWidth * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    BoxWithConstraints(modifier = modifier) {
+        val columns = ((maxWidth + ChipGridSpacing) / (scaledMinColumnWidth + ChipGridSpacing))
+            .toInt()
+            .coerceIn(1, maxColumns)
+        Column(verticalArrangement = Arrangement.spacedBy(ChipGridSpacing)) {
+            items.chunked(columns).forEach { rowItems ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(ChipGridSpacing)
+                ) {
+                    rowItems.forEach { item ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) { chip(item) }
+                    }
+                    repeat(columns - rowItems.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
     }
 }
+
+private val ChoiceChipMinHeight = 40.dp
 
 @Composable
 fun ChoiceChip(
@@ -280,14 +310,17 @@ fun ChoiceChip(
     iconRes: Int? = null,
     iconTint: Color = HPText,
     iconSize: Dp = 16.dp,
-    iconSpacing: Dp = 4.dp
+    iconSpacing: Dp = 4.dp,
+    /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 칩에서만 줄 수를 제한한다. */
+    maxLines: Int = Int.MAX_VALUE
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
     val contentColor = if (selected) HPWhite else HPBlack
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .fillMaxHeight()
+            .heightIn(min = ChoiceChipMinHeight)
             .clip(RoundedCornerShape(50))
             .background(backgroundColor)
             .border(
@@ -296,7 +329,7 @@ fun ChoiceChip(
                 shape = RoundedCornerShape(50)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -318,10 +351,13 @@ fun ChoiceChip(
         }
         Text(
             label,
+            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

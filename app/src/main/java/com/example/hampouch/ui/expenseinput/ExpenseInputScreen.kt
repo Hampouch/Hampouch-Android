@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
@@ -53,7 +54,7 @@ import com.example.hampouch.ui.expensedetail.ChoiceChip
 import com.example.hampouch.ui.expensedetail.ExpensePhotoEditSection
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
-import com.example.hampouch.ui.expensedetail.ThreeColumnChipGrid
+import com.example.hampouch.ui.expensedetail.ChipGrid
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
@@ -626,13 +627,14 @@ private fun ExpenseInputCategoryStep(
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(10.dp))
-        ThreeColumnChipGrid(items = inputCategoryOptions) { option ->
+        // 30dp 아이콘이 가로로 붙는 칩이라 수정 화면 칩보다 한 칸이 더 넓어야 한다.
+        ChipGrid(items = inputCategoryOptions, minColumnWidth = 96.dp) { option ->
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
                     iconRes = categoryChipIconRes[option.category.id],
                     iconSize = 30.dp,
-                    iconSpacing = 10.dp,
+                    iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,
                     onClick = { onCategorySelected(option.category.id) }
                 )
@@ -643,6 +645,8 @@ private fun ExpenseInputCategoryStep(
                     } else {
                         stringResource(R.string.expensedetail_option_custom_input)
                     },
+                    // 사용자가 직접 입력한 카테고리명이라 길이 제한이 없다. 칩이 세로로 길어지지 않도록 2줄에서 말줄임.
+                    maxLines = 2,
                     selected = isCustomCategory,
                     onClick = onCustomCategoryClick
                 )
@@ -735,7 +739,9 @@ private fun ExpenseInputReasonStep(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             presetReasons.chunked(2).forEach { pair ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     pair.forEach { reason ->
@@ -759,6 +765,8 @@ private fun ExpenseInputReasonStep(
                 },
                 selected = isCustomReason,
                 onClick = onCustomReasonClick,
+                // 사용자가 직접 입력한 이유라 길이 제한이 없다. 버튼이 세로로 길어지지 않도록 2줄에서 말줄임.
+                maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
         }

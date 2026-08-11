@@ -138,7 +138,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_category)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = categoryOptions) { option ->
+                        ChipGrid(items = categoryOptions) { option ->
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
@@ -172,7 +172,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_reason)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = reasonOptions) { option ->
+                        ChipGrid(items = reasonOptions) { option ->
                             when (option) {
                                 is ReasonOption.Preset -> ChoiceChip(
                                     label = stringResource(option.reason.labelResId),
