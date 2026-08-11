@@ -28,8 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.DayOfWeekLabel
-import com.example.hampouch.data.model.ReminderDayMode
+import com.example.hampouch.domain.model.DayOfWeekLabel
+import com.example.hampouch.domain.model.ReminderDayMode
 import com.example.hampouch.ui.mypage.components.DayOfWeekChipsRow
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ReminderModeSegmentedRow

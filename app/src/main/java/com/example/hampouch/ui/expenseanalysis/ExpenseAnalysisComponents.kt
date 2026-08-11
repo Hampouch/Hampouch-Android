@@ -1,5 +1,10 @@
 package com.example.hampouch.ui.expenseanalysis
 
+import com.example.hampouch.domain.model.AmountBreakdownItem
+import com.example.hampouch.domain.model.ExpenseAnalysisEtcId
+import com.example.hampouch.domain.model.MonthlyTotal
+import com.example.hampouch.domain.model.WeekdayAmount
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -50,7 +55,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.formatWon

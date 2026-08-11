@@ -4,10 +4,10 @@ import android.content.Context
 import android.util.Log
 import com.example.hampouch.core.config.MiniChallengeConfig
 import com.example.hampouch.core.network.NetworkModule
-import com.example.hampouch.data.model.MiniChallengeDaySummary
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.RecommendedMiniChallenge
-import com.example.hampouch.data.remote.ApiException
+import com.example.hampouch.domain.model.MiniChallengeDaySummary
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiErrorBody

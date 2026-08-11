@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack

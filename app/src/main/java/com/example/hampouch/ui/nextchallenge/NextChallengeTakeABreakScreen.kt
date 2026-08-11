@@ -32,8 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.OnboardingRequest
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog

@@ -621,7 +621,7 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun ExpenseSummaryCard(
-    record: com.example.hampouch.data.model.ExpenseRecord,
+    record: com.example.hampouch.domain.model.ExpenseRecord,
     modifier: Modifier = Modifier
 ) {
     val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)

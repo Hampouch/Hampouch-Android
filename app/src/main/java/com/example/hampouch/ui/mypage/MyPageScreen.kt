@@ -37,12 +37,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostType
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.common.ExpenseLookupViewModel
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -103,7 +105,8 @@ fun MyPageScreen(
             Toast.makeText(context, error.toUserMessage("지난 챌린지 목록을 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
         }
     }
-    val challengeRecords = MyPageMockData.challengeHistory()
+    val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+    val challengeRecords = MyPageMockData.challengeHistory(expenseLookup::spentOnDate)
     val myTips = MyPageMockData.myTips()
     val savedTips = MyPageMockData.savedTips()
 
@@ -274,7 +277,7 @@ fun MyPageScreen(
             }
             val challenge = selectedChallengeId?.let { id -> ChallengeRepository.challenges.find { it.id == id } }
             if (challenge != null) {
-                val state = ChallengeResultMockData.forChallenge(challenge)
+                val state = ChallengeResultMockData.forChallenge(challenge, expenseLookup::recordsForDate)
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY },

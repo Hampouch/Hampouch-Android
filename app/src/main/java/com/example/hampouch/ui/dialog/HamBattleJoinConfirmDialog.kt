@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.hampouch.data.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable

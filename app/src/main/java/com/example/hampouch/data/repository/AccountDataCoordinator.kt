@@ -2,15 +2,14 @@ package com.example.hampouch.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.login.LoginMockData
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.AllSettingsStore
 import com.example.hampouch.ui.mypage.MyPageProfileStore
 import com.example.hampouch.ui.mypage.RecordAlarmStore
+import com.example.hampouch.di.legacyEntryPoint
 import com.example.hampouch.ui.notification.NotificationStore
-import com.example.hampouch.ui.takeabreak.TakeABreakStore
 
 object AccountDataCoordinator {
 
@@ -21,9 +20,10 @@ object AccountDataCoordinator {
     suspend fun syncIfNeeded(context: Context, userId: String, email: String?) {
         if (userId == syncedUserId) return
         syncedUserId = userId
-        ExpenseDetailStore.resetForAccount()
+        val repositories = context.legacyEntryPoint()
+        repositories.expenseRepository().resetForAccount()
         MiniChallengeStore.resetForAccount()
-        TakeABreakStore.resetForAccount()
+        repositories.restRepository().resetForAccount()
         RecordAlarmStore.resetForAccount()
         NotificationStore.resetForAccount()
         MyPageProfileStore.resetForAccount()

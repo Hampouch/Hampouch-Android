@@ -4,8 +4,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.hampouch.data.model.DayOfWeekLabel
-import com.example.hampouch.data.model.RecordAlarmSettingsState
+import com.example.hampouch.domain.model.DayOfWeekLabel
+import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime

@@ -53,10 +53,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostType
+import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentInputBar
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentRow

@@ -1,85 +1,35 @@
 package com.example.hampouch.ui.expenseanalysis
 
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.AmountBreakdownItem
+import com.example.hampouch.domain.model.DailyAmount
+import com.example.hampouch.domain.model.ExpenseAnalysisEtcId
+import com.example.hampouch.domain.model.ExpenseAnalysisSummary
+import com.example.hampouch.domain.model.ExpenseCategoryIds
+import com.example.hampouch.domain.model.ExpensePeriodSummary
+import com.example.hampouch.domain.model.ExpenseReasonIds
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseTagAnalysisResult
+import com.example.hampouch.domain.model.ExpenseTrendResult
+import com.example.hampouch.domain.model.ExpenseWeekdayOrder
+import com.example.hampouch.domain.model.MonthlyTotal
+import com.example.hampouch.domain.model.WeekdayAmount
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-const val ExpenseAnalysisEtcId = "etc"
+// 분석 결과 모델과 카테고리·이유 id 목록은 domain/model/ExpenseAnalysis.kt로 옮겼다.
+// 화면에서 쓰던 이름은 아래 별칭으로 유지한다.
 
-data class AmountBreakdownItem(
-    val id: String,
-    val amount: Int,
-    val percent: Int
-)
-
-data class WeekdayAmount(
-    val dayOfWeek: DayOfWeek,
-    val amount: Int
-)
-
-data class MonthlyTotal(
-    val month: YearMonth,
-    val amount: Int
-)
-
-data class DailyAmount(
-    val date: LocalDate,
-    val amount: Int
-)
-
-data class ExpensePeriodSummary(
-    val periodStart: LocalDate,
-    val periodEnd: LocalDate,
-    val totalAmount: Int,
-    val dailyAverage: Int,
-    val dailyBreakdown: List<DailyAmount>
-)
-
-data class ExpenseAnalysisSummary(
-    val periodStart: LocalDate,
-    val periodEnd: LocalDate,
-    val totalAmount: Int,
-    val categoryBreakdown: List<AmountBreakdownItem>,
-    val reasonBreakdown: List<AmountBreakdownItem>,
-    val weekdayBreakdown: List<WeekdayAmount>,
-    val weekdayInsight: String?,
-    val pouchInsight: String?
-)
-
-data class ExpenseTagAnalysisResult(
-    val id: String,
-    val totalAmount: Int,
-    val count: Int,
-    val percent: Int,
-    val records: List<ExpenseRecord>
-)
-
-data class ExpenseTrendResult(
-    val month: YearMonth,
-    val totalAmount: Int,
-    val monthlyAverage: Int,
-    val diffRateFromLastMonth: Int?,
-    val trend: List<MonthlyTotal>,
-    val trendInsight: String?
-)
-
-val ExpenseAnalysisCategoryLegendOrder: List<String> =
-    listOf("delivery", "snack", "dining_out", "mart", "convenience", "drink", "cafe", ExpenseAnalysisEtcId)
+val ExpenseAnalysisCategoryLegendOrder: List<String> = ExpenseCategoryIds
 
 val ExpenseAnalysisCategoryTabOrder: List<String> =
     HomeCategoryCatalog.categories.map { it.id }
 
-val ExpenseAnalysisReasonTabOrder: List<String> =
-    ExpenseReasonCatalog.reasons.map { it.id } + ExpenseAnalysisEtcId
+val ExpenseAnalysisReasonTabOrder: List<String> = ExpenseReasonIds
 
-val ExpenseAnalysisWeekdayOrder: List<DayOfWeek> =
-    listOf(
-        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
-    )
+val ExpenseAnalysisWeekdayOrder: List<DayOfWeek> = ExpenseWeekdayOrder
 
 private fun categoryBucketOf(record: ExpenseRecord): String =
     record.categoryId?.takeIf { HomeCategoryCatalog.byId(it) != null } ?: ExpenseAnalysisEtcId

@@ -50,9 +50,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.AmountAdjustmentChallenge
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.AmountAdjustmentChallenge
+import com.example.hampouch.domain.model.toUserMessage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.ui.common.ExpenseLookupViewModel
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.dialog.AbandonChallengeConfirmDialog
 import com.example.hampouch.ui.dialog.AmountAdjustmentConfirmDialog
@@ -92,7 +94,8 @@ fun AmountAdjustmentRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> },
-    onGoalAmountUpdated: () -> Unit = {}
+    onGoalAmountUpdated: () -> Unit = {},
+    expenseLookup: ExpenseLookupViewModel = hiltViewModel()
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
@@ -263,7 +266,9 @@ fun AmountAdjustmentRoute(
                     ChallengeRepository.abandonChallenge()
                         .onSuccess {
                             val actualAmount =
-                                ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
+                                ChallengeResultMockData
+                                    .forChallenge(ChallengeRepository.activeChallenge!!, expenseLookup::recordsForDate)
+                                    .actualAmount
                             val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
                             onChallengeAbandoned(challenge.id, suggestedTargetAmount)
                         }
@@ -472,7 +477,7 @@ private fun DailyFoodGoalCard(amount: Int, modifier: Modifier = Modifier) {
 private fun AmountAdjustmentScreenPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 0),
+            challenge = AmountAdjustmentMockData.challenge(spentOnDate = { 0 }).copy(editCount = 0),
             onBackClick = {}
         )
     }
@@ -483,7 +488,7 @@ private fun AmountAdjustmentScreenPreview() {
 private fun AmountAdjustmentScreenMaxEditPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 1),
+            challenge = AmountAdjustmentMockData.challenge(spentOnDate = { 0 }).copy(editCount = 1),
             onBackClick = {}
         )
     }

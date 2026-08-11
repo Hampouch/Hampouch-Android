@@ -20,13 +20,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.hampouch.data.model.AuthSession
+import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
@@ -37,13 +39,14 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.core.config.ExpenseConfig
-import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.NotificationTarget
+import com.example.hampouch.domain.model.ExpenseChallengePeriod
+import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.common.ExpenseLookupViewModel
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
 import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisHeaderMode
@@ -51,10 +54,13 @@ import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisRoute
 import com.example.hampouch.ui.expenseanalysis.MonthlyExpenseRoute
 import com.example.hampouch.ui.expenseanalysis.ReasonDetailRoute
 import com.example.hampouch.ui.expensedetail.ExpenseCalendarRoute
+import com.example.hampouch.ui.expensedetail.ExpenseDetailEvent
 import com.example.hampouch.ui.expensedetail.ExpenseDetailRoute
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.ui.expensedetail.ExpenseDetailViewModel
 import com.example.hampouch.ui.expensedetail.ExpenseEditRoute
+import com.example.hampouch.ui.expenseinput.ExpenseInputEvent
 import com.example.hampouch.ui.expenseinput.ExpenseInputRoute
+import com.example.hampouch.ui.expenseinput.ExpenseInputViewModel
 import com.example.hampouch.ui.home.HomeScreen
 import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
@@ -68,9 +74,8 @@ import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
 import java.time.YearMonth
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.ui.takeabreak.TakeABreakScreen
-import com.example.hampouch.ui.takeabreak.TakeABreakStore
+import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.ui.takeabreak.TakeABreakRoute
 import com.example.hampouch.ui.theme.HPGray2
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -402,24 +407,22 @@ fun AppNavHost(
             arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
         ) { backStackEntry ->
             val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
-            var record by remember(expenseId) { mutableStateOf(ExpenseDetailStore.byId(expenseId)) }
-            LaunchedEffect(expenseId) {
-                if (ExpenseConfig.USE_SERVER_EXPENSE) {
-                    ExpenseDetailStore.loadExpenseDetail(expenseId).onSuccess { record = it }
+            val viewModel: ExpenseDetailViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        ExpenseDetailEvent.Finished -> navController.popBackStack()
+                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                    }
                 }
             }
-            record?.let { current ->
+            uiState.record?.let { current ->
                 ExpenseDetailRoute(
                     record = current,
                     onBackClick = { navController.popBackStack() },
                     onEditClick = { navController.navigate(Screen.ExpenseEdit.createRoute(expenseId)) },
-                    onDeleted = {
-                        coroutineScope.launch {
-                            if (ExpenseDetailStore.deleteExpense(expenseId).isSuccess) {
-                                navController.popBackStack()
-                            }
-                        }
-                    }
+                    onDeleted = viewModel::delete
                 )
             }
         }
@@ -427,25 +430,22 @@ fun AppNavHost(
         composable(
             route = Screen.ExpenseEdit.route,
             arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val expenseId = backStackEntry.arguments?.getString("expenseId").orEmpty()
-            var record by remember(expenseId) { mutableStateOf(ExpenseDetailStore.byId(expenseId)) }
-            LaunchedEffect(expenseId) {
-                if (ExpenseConfig.USE_SERVER_EXPENSE) {
-                    ExpenseDetailStore.loadExpenseDetail(expenseId).onSuccess { record = it }
+        ) {
+            val viewModel: ExpenseDetailViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        ExpenseDetailEvent.Finished -> navController.popBackStack()
+                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                    }
                 }
             }
-            record?.let { current ->
+            uiState.record?.let { current ->
                 ExpenseEditRoute(
                     record = current,
                     onBackClick = { navController.popBackStack() },
-                    onSaved = { updated ->
-                        coroutineScope.launch {
-                            if (ExpenseDetailStore.updateExpense(updated).isSuccess) {
-                                navController.popBackStack()
-                            }
-                        }
-                    }
+                    onSaved = viewModel::save
                 )
             }
         }
@@ -486,24 +486,24 @@ fun AppNavHost(
         composable(
             route = Screen.ExpenseInput.route,
             arguments = listOf(navArgument("initialDateEpochDay") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
-            val initialDate = LocalDate.ofEpochDay(epochDay)
-            val dailyLimit = ChallengeRepository.activeChallenge?.dailyLimitOn(initialDate) ?: 0
-            val alreadySpent = ExpenseDetailStore.recordsForDate(initialDate).sumOf { it.amount }
-            ExpenseInputRoute(
-                todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),
-                dailyLimit = dailyLimit,
-                initialDate = initialDate,
-                onBackClick = { navController.popBackStack() },
-                onNoSpendingToday = { navController.popBackStack() },
-                onComplete = { record ->
-                    coroutineScope.launch {
-                        if (ExpenseDetailStore.createExpense(record).isSuccess) {
-                            navController.popBackStack()
-                        }
+        ) {
+            val viewModel: ExpenseInputViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        ExpenseInputEvent.Saved -> navController.popBackStack()
+                        is ExpenseInputEvent.ShowMessage -> Log.e(TAG, event.message)
                     }
                 }
+            }
+            ExpenseInputRoute(
+                todayBalance = uiState.todayBalance,
+                dailyLimit = uiState.dailyLimit,
+                initialDate = uiState.initialDate,
+                onBackClick = { navController.popBackStack() },
+                onNoSpendingToday = { navController.popBackStack() },
+                onComplete = viewModel::save
             )
         }
 
@@ -738,7 +738,8 @@ fun AppNavHost(
             val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
-                val state = ChallengeResultMockData.forChallenge(challenge)
+                val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+                val state = ChallengeResultMockData.forChallenge(challenge, expenseLookup::recordsForDate)
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
@@ -768,7 +769,8 @@ fun AppNavHost(
             val suggestedTargetAmount = backStackEntry.arguments?.getInt("suggestedTargetAmount") ?: 0
             val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
             if (challenge != null) {
-                val previousResult = ChallengeResultMockData.forChallenge(challenge)
+                val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+                val previousResult = ChallengeResultMockData.forChallenge(challenge, expenseLookup::recordsForDate)
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
@@ -802,39 +804,23 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val isExtending = backStackEntry.arguments?.getBoolean("extend") ?: false
-            var breakActionErrorMessage by remember { mutableStateOf<String?>(null) }
-            TakeABreakScreen(
-                errorMessage = breakActionErrorMessage,
+            TakeABreakRoute(
+                isExtending = isExtending,
                 onBack = { navController.popBackStack() },
                 onKeepChallenge = { navController.popBackStack() },
-                onStartBreak = { duration, customDays ->
-                    coroutineScope.launch {
-                        // isExtending=true면 이미 휴식 중(팝업의 "더 쉬기")이라 시작이 아니라 연장을 호출한다.
-                        val result = if (isExtending) {
-                            TakeABreakStore.extendBreak(duration, customDays)
-                        } else {
-                            TakeABreakStore.startBreak(duration, customDays)
-                        }
-                        result
-                            .onSuccess {
-                                breakActionErrorMessage = null
-                                pendingHomeTab = null
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = true }
-                                }
-                            }
-                            .onFailure { error ->
-                                Log.e(TAG, "휴식 시작/연장 실패", error)
-                                breakActionErrorMessage = error.toUserMessage("휴식 처리에 실패했습니다.")
-                            }
+                onBreakStarted = {
+                    pendingHomeTab = null
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 }
             )
         }
 
         composable(Screen.AmountAdjustment.route) {
+            val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             AmountAdjustmentRoute(
-                challenge = AmountAdjustmentMockData.challenge(),
+                challenge = AmountAdjustmentMockData.challenge(expenseLookup::spentOnDate),
                 onBackClick = { navController.popBackStack() },
                 onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
                     navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {

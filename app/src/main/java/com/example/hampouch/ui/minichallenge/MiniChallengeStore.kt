@@ -3,9 +3,9 @@ package com.example.hampouch.ui.minichallenge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.hampouch.data.model.MiniChallengeDaySummary
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.MiniChallengeDaySummary
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import java.time.LocalDate
 import java.util.UUID
 

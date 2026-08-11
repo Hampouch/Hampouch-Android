@@ -1,7 +1,7 @@
 package com.example.hampouch.ui.expensedetail
 
-import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseChallengePeriod
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import java.time.DayOfWeek

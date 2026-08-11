@@ -1,18 +1,34 @@
 package com.example.hampouch.ui.hambattle
 
 import androidx.compose.runtime.mutableStateOf
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
-import com.example.hampouch.data.model.HamBattleStatus
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.HamBattleStatus
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
 // TODO: 서버팀 햄배틀 API 연동 시 목데이터 대신 실제 응답으로 대체.
 object HamBattleMockData {
+
+    /**
+     * 햄배틀은 아직 서버 API가 없어 이 목데이터 객체가 상태를 들고 있고, "내 지출"만 실제 기록에서
+     * 가져온다. 화면 패키지끼리 직접 얽히지 않도록 지출 조회는 [HampouchApplication]이 Hilt 그래프에서
+     * 받아 넣어 준다. 햄배틀이 ViewModel로 옮겨지면 이 객체와 함께 사라진다.
+     */
+    private var expenseRepository: ExpenseRepository? = null
+
+    fun attach(repository: ExpenseRepository) {
+        expenseRepository = repository
+    }
+
+    private fun recordsForDate(date: LocalDate) =
+        expenseRepository?.recordsForDate(date).orEmpty()
+
+    private fun spentOnDate(date: LocalDate): Int = recordsForDate(date).sumOf { it.amount }
 
     private const val DEFAULT_DURATION_DAYS = 7
     private const val ME_NAME = "나"
@@ -23,7 +39,7 @@ object HamBattleMockData {
         var date = start
         var total = 0
         while (!date.isAfter(endInclusive)) {
-            total += ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+            total += spentOnDate(date)
             date = date.plusDays(1)
         }
         return total
@@ -49,7 +65,7 @@ object HamBattleMockData {
         var missed = 0
         var date = referenceToday.minusDays(1)
         while (!date.isBefore(start)) {
-            if (ExpenseDetailStore.recordsForDate(date).isNotEmpty()) break
+            if (recordsForDate(date).isNotEmpty()) break
             missed++
             date = date.minusDays(1)
         }
@@ -117,7 +133,7 @@ object HamBattleMockData {
         val inPeriod = start != null && end != null &&
             !referenceToday.isBefore(start) && !referenceToday.isAfter(end)
         val todayAmount = if (inPeriod) {
-            ExpenseDetailStore.recordsForDate(referenceToday).sumOf { it.amount }
+            spentOnDate(referenceToday)
         } else {
             0
         }

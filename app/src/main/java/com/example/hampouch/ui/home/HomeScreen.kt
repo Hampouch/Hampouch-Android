@@ -30,10 +30,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.ExpenseEntry
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.data.model.HomeUiState
-import com.example.hampouch.data.remote.toUserMessage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.domain.model.ExpenseEntry
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.HomeUiState
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
@@ -41,7 +43,6 @@ import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.ChallengeEndedDialog
 import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hamtips.HamTipsScreen
@@ -58,7 +59,6 @@ import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.mypage.RecordAlarmStore
 import com.example.hampouch.ui.session.UserSession
-import com.example.hampouch.ui.takeabreak.TakeABreakStore
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -106,15 +106,23 @@ fun HomeScreen(
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {},
-    onChallengeEndedFinishClick: () -> Unit = {}
+    onChallengeEndedFinishClick: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val referenceToday = remember { LocalDate.now() }
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        // 휴식 도메인엔 상태 조회 API가 없어, GET /api/challenges/current의 rest 블록으로 앱 재시작 후 상태를 보정한다.
-        TakeABreakStore.syncStatus()
-    }
+    val restState by viewModel.restState.collectAsStateWithLifecycle()
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
+    val homeContext = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HomeEvent.ResumedFromBreak -> onStartChallengeClick()
+                is HomeEvent.ShowMessage ->
+                    Toast.makeText(homeContext, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
     var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
@@ -131,15 +139,15 @@ fun HomeScreen(
             Toast.makeText(context, error.toUserMessage("챌린지 현황 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
         }
     }
-    LaunchedEffect(selectedDate) {
-        ExpenseDetailStore.loadDay(selectedDate).onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("지출 내역 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
-        }
+    LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
+    val records by viewModel.records.collectAsStateWithLifecycle()
+    val recordsForDate: (LocalDate) -> List<ExpenseRecord> = { date ->
+        records.values.filter { it.date == date }
     }
     val baseUiState = remember(selectedDate, ChallengeRepository.activeChallenge?.id) {
         mockStateForDate(selectedDate, referenceToday)
     }
-    val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
+    val storeExpenses = recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
             id = record.id,
             categoryId = record.categoryId,
@@ -156,7 +164,7 @@ fun HomeScreen(
         val todaySpent = uiState.expenses.sumOf { it.amount }
         val progress = resolvedChallenge?.let { rc ->
             ChallengeRepository.computeProgress(referenceToday, rc) { date ->
-                ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+                recordsForDate(date).sumOf { it.amount }
             }
         }
         challenge.copy(
@@ -218,22 +226,11 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding)
                 )
 
-                val hasExpenseToday = ExpenseDetailStore.recordsForDate(referenceToday).isNotEmpty()
+                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty()
                 when {
-                    TakeABreakStore.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
-                        onStartNowClick = {
-                            coroutineScope.launch {
-                                TakeABreakStore.resumeNow()
-                                    .onSuccess { onStartChallengeClick() }
-                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(지금 바로) 실패", it) }
-                            }
-                        },
-                        onStartTomorrowClick = {
-                            coroutineScope.launch {
-                                TakeABreakStore.postponeOneDay()
-                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(내일부터) 실패", it) }
-                            }
-                        },
+                    restState.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
+                        onStartNowClick = viewModel::resumeNow,
+                        onStartTomorrowClick = viewModel::postponeOneDay,
                         onRestMoreClick = onExtendBreak
                     )
 
@@ -258,9 +255,7 @@ fun HomeScreen(
                                 onAddExpenseClick()
                             },
                             onNoSpendingTodayClick = {
-                                ExpenseDetailStore.upsert(
-                                    ExpenseRecord(id = UUID.randomUUID().toString(), date = referenceToday, amount = 0)
-                                )
+                                viewModel.markNoSpending(referenceToday)
                                 RecordAlarmStore.dismissForToday(referenceToday)
                             },
                             onLaterClick = {

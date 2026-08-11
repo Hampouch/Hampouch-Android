@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.hampouch.data.model.ChallengePeriodType
-import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriodType
+import com.example.hampouch.domain.model.OnboardingRequest
 import java.time.LocalDate
 
 private const val PREFS_NAME = "hampouch_onboarding"

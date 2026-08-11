@@ -35,11 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard

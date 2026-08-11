@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar

@@ -61,8 +61,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.HamBattleChallengeCancelledDialog

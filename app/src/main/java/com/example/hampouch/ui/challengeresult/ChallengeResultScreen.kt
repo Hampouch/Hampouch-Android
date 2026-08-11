@@ -53,11 +53,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.DailyRecordStatus
-import com.example.hampouch.data.model.EmotionStat
-import com.example.hampouch.data.model.SpendingEmotion
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.domain.model.ChallengeResultUiState
+import com.example.hampouch.domain.model.DailyRecordStatus
+import com.example.hampouch.domain.model.EmotionStat
+import com.example.hampouch.domain.model.SpendingEmotion
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPSub1
@@ -73,7 +73,7 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
+    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(recordsForDate = { emptyList() }),
     onBackClick: () -> Unit = {},
     showBackButton: Boolean = true,
     onExpenseAnalysisClick: () -> Unit = {},
@@ -379,7 +379,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
 @Composable
 private fun ChallengeResultScreenInProgressPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.inProgress())
+        ChallengeResultScreen(state = ChallengeResultMockData.inProgress(recordsForDate = { emptyList() }))
     }
 }
 

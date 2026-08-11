@@ -61,9 +61,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.challengeresult.ShareOption
 import com.example.hampouch.ui.challengeresult.ShareOptionsDialog
 import com.example.hampouch.ui.challengeresult.buildShareImageIntent

@@ -62,10 +62,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleDefaultPenaltyOptions
-import com.example.hampouch.data.model.HamBattleDurationOptions
-import com.example.hampouch.data.model.HamBattleParticipantOptions
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleDefaultPenaltyOptions
+import com.example.hampouch.domain.model.HamBattleDurationOptions
+import com.example.hampouch.domain.model.HamBattleParticipantOptions
 import com.example.hampouch.ui.common.CheckButton
 import com.example.hampouch.ui.dialog.HamBattleStartConfirmDialog
 import com.example.hampouch.ui.theme.Body16Bold

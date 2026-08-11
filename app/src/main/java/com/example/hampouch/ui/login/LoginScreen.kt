@@ -45,8 +45,8 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.example.hampouch.R
 import com.example.hampouch.core.auth.SocialAuthManager
 import com.example.hampouch.core.auth.SocialSignInCancelledException
-import com.example.hampouch.data.model.AuthSession
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.AuthSession
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField

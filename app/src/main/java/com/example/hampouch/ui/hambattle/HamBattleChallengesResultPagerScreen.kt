@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HampouchTheme

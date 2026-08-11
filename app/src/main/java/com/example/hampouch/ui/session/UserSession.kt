@@ -2,8 +2,8 @@ package com.example.hampouch.ui.session
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateOf
-import com.example.hampouch.data.model.User
-import com.example.hampouch.data.model.UserRole
+import com.example.hampouch.domain.model.User
+import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.ui.login.LoginMockData
 
 object UserSession {

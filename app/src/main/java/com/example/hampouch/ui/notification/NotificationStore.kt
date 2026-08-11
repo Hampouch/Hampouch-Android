@@ -3,7 +3,7 @@ package com.example.hampouch.ui.notification
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.hampouch.data.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationItem
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 

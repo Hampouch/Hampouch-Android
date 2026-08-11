@@ -13,8 +13,8 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.example.hampouch.BuildConfig
 import kotlinx.coroutines.CancellationException
 import com.example.hampouch.core.config.AuthConfig
-import com.example.hampouch.data.model.AuthProvider
-import com.example.hampouch.data.model.SocialCredential
+import com.example.hampouch.domain.model.AuthProvider
+import com.example.hampouch.domain.model.SocialCredential
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException

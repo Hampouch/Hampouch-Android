@@ -1,4 +1,4 @@
-package com.example.hampouch.data.remote
+package com.example.hampouch.domain.model
 
 class ApiException(
     val code: String,

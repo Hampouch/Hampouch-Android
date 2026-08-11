@@ -62,10 +62,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
-import com.example.hampouch.data.model.HamTipsCategoryTab
-import com.example.hampouch.data.model.HamTipsFabMenuOption
-import com.example.hampouch.data.model.HamTipsSortOrder
-import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.domain.model.HamTipsCategoryTab
+import com.example.hampouch.domain.model.HamTipsFabMenuOption
+import com.example.hampouch.domain.model.HamTipsSortOrder
+import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.TipCategoryBadge
 import com.example.hampouch.ui.theme.HPBlack

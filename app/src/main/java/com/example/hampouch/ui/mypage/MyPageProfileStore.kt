@@ -3,7 +3,7 @@ package com.example.hampouch.ui.mypage
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.hampouch.data.model.MyPageProfile
+import com.example.hampouch.domain.model.MyPageProfile
 
 object MyPageProfileStore {
 

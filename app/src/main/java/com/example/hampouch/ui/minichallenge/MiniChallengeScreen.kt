@@ -30,9 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.RecommendedMiniChallenge
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.ui.dialog.MiniChallengeAddConfirmDialog
 import com.example.hampouch.ui.home.components.EmptyStateBlock

@@ -1,11 +1,10 @@
 package com.example.hampouch.ui.mypage
 
-import com.example.hampouch.data.model.ChallengeRecord
-import com.example.hampouch.data.model.ChallengeStatus
-import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.domain.model.ChallengeRecord
+import com.example.hampouch.domain.model.ChallengeStatus
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.session.UserSession
 import java.time.LocalDate
@@ -27,7 +26,8 @@ object MyPageMockData {
 
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 
-    fun challengeHistory(): List<ChallengeRecord> {
+    /** @param spentOnDate 해당 날짜의 지출 합계. 지출 저장소는 ViewModel이 들고 있으므로 조회 함수로 받는다. */
+    fun challengeHistory(spentOnDate: (LocalDate) -> Int): List<ChallengeRecord> {
         val referenceToday = LocalDate.now()
         return ChallengeRepository.challenges
             .sortedByDescending { it.periodStart }
@@ -37,7 +37,7 @@ object MyPageMockData {
                 val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
                 val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
                     .takeWhile { !it.isAfter(trackedEnd) }
-                    .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
+                    .sumOf { day -> spentOnDate(day) }
                 ChallengeRecord(
                     id = challenge.id,
                     status = when {

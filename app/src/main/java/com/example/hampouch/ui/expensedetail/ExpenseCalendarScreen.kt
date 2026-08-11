@@ -50,12 +50,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
-import com.example.hampouch.data.model.ExpenseCalendarViewMode
-import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpensePeriodSummary
+import com.example.hampouch.domain.model.ExpenseCalendarViewMode
+import com.example.hampouch.domain.model.ExpenseChallengePeriod
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
-import com.example.hampouch.ui.expenseanalysis.ExpensePeriodSummary
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -107,7 +109,8 @@ fun ExpenseCalendarRoute(
     challengePeriod: ExpenseChallengePeriod? = ExpenseDetailMockData.activeChallengePeriod(),
     onExpenseAnalysisClick: () -> Unit = {},
     onAddExpenseClick: (LocalDate) -> Unit = {},
-    restrictToChallengePeriod: Boolean = false
+    restrictToChallengePeriod: Boolean = false,
+    viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
     val initialSelectedDate = if (restrictToChallengePeriod) {
         challengePeriod?.endDate ?: referenceToday
@@ -119,21 +122,22 @@ fun ExpenseCalendarRoute(
     var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
     var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
 
-    var monthSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
-    var weekSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
+    val records by viewModel.records.collectAsStateWithLifecycle()
+    val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
+    val weekSummary by viewModel.weekSummary.collectAsStateWithLifecycle()
     LaunchedEffect(displayedMonth) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            monthSummary = ExpenseDetailStore.loadMonthSummary(YearMonth.from(displayedMonth)).getOrNull()
+            viewModel.loadMonthSummary(YearMonth.from(displayedMonth))
         }
     }
     LaunchedEffect(displayedWeekStart) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            weekSummary = ExpenseDetailStore.loadWeekSummary(displayedWeekStart).getOrNull()
+            viewModel.loadWeekSummary(displayedWeekStart)
         }
     }
     LaunchedEffect(selectedDate) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            ExpenseDetailStore.loadDay(selectedDate)
+            viewModel.loadDay(selectedDate)
         }
     }
 
@@ -141,16 +145,16 @@ fun ExpenseCalendarRoute(
         val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
         activeSummary?.dailyBreakdown?.associate { it.date to it.amount } ?: emptyMap()
     } else {
-        ExpenseDetailStore.recordsById.values
+        records.values
             .groupBy { it.date }
             .mapValues { (_, records) -> records.sumOf { it.amount } }
     }
-    val dayRecords = ExpenseDetailStore.recordsForDate(selectedDate)
+    val dayRecords = records.values.filter { it.date == selectedDate }.sortedBy { it.id }
     val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate, restrictToChallengePeriod)
     val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
     val editableRange = challengePeriod.takeIf { restrictToChallengePeriod }
 
-    val monthlyRecordsTotal = ExpenseDetailStore.recordsById.values
+    val monthlyRecordsTotal = records.values
         .filter { it.date.year == displayedMonth.year && it.date.monthValue == displayedMonth.monthValue }
         .sumOf { it.amount }
     val monthlyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) monthSummary?.totalAmount ?: 0 else monthlyRecordsTotal
@@ -161,7 +165,7 @@ fun ExpenseCalendarRoute(
     }
 
     val weeklyWeekEnd = displayedWeekStart.plusDays(6)
-    val weeklyRecordsTotal = ExpenseDetailStore.recordsById.values
+    val weeklyRecordsTotal = records.values
         .filter { !it.date.isBefore(displayedWeekStart) && !it.date.isAfter(weeklyWeekEnd) }
         .sumOf { it.amount }
     val weeklyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) weekSummary?.totalAmount ?: 0 else weeklyRecordsTotal

@@ -27,8 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.NotificationCategory
-import com.example.hampouch.data.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationCategory
+import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4

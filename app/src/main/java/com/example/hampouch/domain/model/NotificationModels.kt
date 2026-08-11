@@ -1,4 +1,4 @@
-package com.example.hampouch.data.model
+package com.example.hampouch.domain.model
 
 import com.example.hampouch.R
 import java.time.LocalDate

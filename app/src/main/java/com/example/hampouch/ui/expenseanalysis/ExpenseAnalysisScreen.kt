@@ -1,5 +1,13 @@
 package com.example.hampouch.ui.expenseanalysis
 
+import com.example.hampouch.domain.model.AmountBreakdownItem
+import com.example.hampouch.domain.model.ExpenseAnalysisEtcId
+import com.example.hampouch.domain.model.ExpenseAnalysisSummary
+import com.example.hampouch.domain.model.ExpenseTagAnalysisResult
+import com.example.hampouch.domain.model.ExpenseTrendResult
+import com.example.hampouch.domain.model.MonthlyTotal
+import com.example.hampouch.domain.model.WeekdayAmount
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +54,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -90,7 +99,8 @@ fun ExpenseAnalysisRoute(
     onCategoryDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     onReasonDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var displayedMonth by rememberSaveable(stateSaver = YearMonthSaver) {
         mutableStateOf((headerMode as? ExpenseAnalysisHeaderMode.Month)?.initialMonth ?: YearMonth.from(referenceToday))
@@ -109,10 +119,10 @@ fun ExpenseAnalysisRoute(
         }
     }
 
-    var serverSummary by remember { mutableStateOf<ExpenseAnalysisSummary?>(null) }
+    val serverSummary by viewModel.summary.collectAsStateWithLifecycle()
     LaunchedEffect(periodStart, periodEnd) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverSummary = ExpenseDetailStore.loadAnalysis(periodStart, periodEnd).getOrNull()
+            viewModel.loadSummary(periodStart, periodEnd)
         }
     }
 
@@ -447,13 +457,14 @@ fun MonthlyExpenseRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     val currentMonth = YearMonth.from(referenceToday)
-    var serverTrend by remember { mutableStateOf<ExpenseTrendResult?>(null) }
+    val serverTrend by viewModel.trend.collectAsStateWithLifecycle()
     LaunchedEffect(currentMonth) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverTrend = ExpenseDetailStore.loadTrend(currentMonth).getOrNull()
+            viewModel.loadTrend(currentMonth)
         }
     }
     val totals = if (ExpenseConfig.USE_SERVER_EXPENSE) {
@@ -629,13 +640,14 @@ fun CategoryDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var selectedId by remember { mutableStateOf(initialCategoryId) }
-    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    val serverResult by viewModel.tagResult.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverResult = ExpenseDetailStore.loadCategoryAnalysis(selectedId, periodStart, periodEnd).getOrNull()
+            viewModel.loadCategoryAnalysis(selectedId, periodStart, periodEnd)
         }
     }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
@@ -704,13 +716,14 @@ fun ReasonDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var selectedId by remember { mutableStateOf(initialReasonId) }
-    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    val serverResult by viewModel.tagResult.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverResult = ExpenseDetailStore.loadEmotionAnalysis(selectedId, periodStart, periodEnd).getOrNull()
+            viewModel.loadEmotionAnalysis(selectedId, periodStart, periodEnd)
         }
     }
     val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }

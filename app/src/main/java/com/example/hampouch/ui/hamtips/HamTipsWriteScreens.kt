@@ -40,10 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MenuRatingInfo
-import com.example.hampouch.data.model.MenuRatingType
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipShareCategory
+import com.example.hampouch.domain.model.MenuRatingInfo
+import com.example.hampouch.domain.model.MenuRatingType
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipShareCategory
 import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hambattle.HamBattleMockData

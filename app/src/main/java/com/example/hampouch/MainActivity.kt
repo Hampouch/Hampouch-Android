@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import com.example.hampouch.navigation.AppNavHost
 import com.example.hampouch.ui.notification.EXTRA_NOTIFICATION_ID
 import com.example.hampouch.ui.theme.HampouchTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private var pendingNotificationId by mutableStateOf<String?>(null)
 

@@ -1,52 +1,42 @@
 package com.example.hampouch.core.network
 
 import android.content.Context
-import com.example.hampouch.BuildConfig
 import com.example.hampouch.data.remote.ApiService
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * MVVM 이관 과도기용 브리지.
+ *
+ * 네트워크 의존성의 진짜 정의는 [com.example.hampouch.di.NetworkModule]에 있고, 여기서는
+ * 아직 Hilt 주입으로 옮기지 못한 옛 싱글톤(`AuthRepository`, `HamTipsRepository` 등)이
+ * 같은 인스턴스를 쓸 수 있도록 EntryPoint로 꺼내 주기만 한다.
+ *
+ * 각 도메인이 Repository 인터페이스 + 생성자 주입으로 이관되면 이 파일은 통째로 삭제한다.
+ */
 object NetworkModule {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface NetworkEntryPoint {
+        fun apiService(): ApiService
+        fun okHttpClient(): OkHttpClient
+    }
 
     private lateinit var appContext: Context
 
-    /**
-     * [com.example.hampouch.HampouchApplication.onCreate]에서 한 번 호출한다.
-     * 401 응답을 가로채 토큰을 재발급하는 [TokenAuthenticator]가 AuthRepository에
-     * 접근하려면 Context가 필요하기 때문이다.
-     */
+    /** [com.example.hampouch.HampouchApplication.onCreate]에서 한 번 호출한다. */
     fun attach(context: Context) {
         appContext = context.applicationContext
     }
 
-    private val loggingInterceptor by lazy {
-        HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
-        }
-    }
+    private val entryPoint: NetworkEntryPoint
+        get() = EntryPointAccessors.fromApplication(appContext, NetworkEntryPoint::class.java)
 
-    private val tokenAuthenticator by lazy { TokenAuthenticator { appContext } }
+    val okHttpClient: OkHttpClient get() = entryPoint.okHttpClient()
 
-    val okHttpClient by lazy {
-        OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .authenticator(tokenAuthenticator)
-            .build()
-    }
-
-    private val retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BuildConfig.BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    val apiService: ApiService by lazy { retrofit.create(ApiService::class.java) }
+    val apiService: ApiService get() = entryPoint.apiService()
 }

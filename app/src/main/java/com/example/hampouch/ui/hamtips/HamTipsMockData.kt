@@ -1,12 +1,12 @@
 package com.example.hampouch.ui.hamtips
 
-import com.example.hampouch.data.model.BattleRecruitInfo
-import com.example.hampouch.data.model.MenuRatingInfo
-import com.example.hampouch.data.model.TipCategory
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.model.TipReply
+import com.example.hampouch.domain.model.BattleRecruitInfo
+import com.example.hampouch.domain.model.MenuRatingInfo
+import com.example.hampouch.domain.model.TipCategory
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostType
+import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.login.LoginMockData
 

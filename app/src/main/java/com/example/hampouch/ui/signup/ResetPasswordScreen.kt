@@ -39,7 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
-import com.example.hampouch.data.remote.toUserMessage
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FieldLinkMessage
 import com.example.hampouch.ui.common.FieldMessage

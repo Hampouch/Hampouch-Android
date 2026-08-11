@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.ExpensePhotoViewRow
