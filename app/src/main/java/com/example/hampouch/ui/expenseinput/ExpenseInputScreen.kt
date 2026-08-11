@@ -54,7 +54,7 @@ import com.example.hampouch.ui.expensedetail.ChoiceChip
 import com.example.hampouch.ui.expensedetail.ExpensePhotoEditSection
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
-import com.example.hampouch.ui.expensedetail.ChipGrid
+import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack

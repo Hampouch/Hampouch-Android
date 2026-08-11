@@ -11,9 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,7 +55,6 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -246,52 +243,6 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
                             .fillMaxWidth()
                             .height(140.dp)
                     )
-                }
-            }
-        }
-    }
-}
-
-private val ChipGridSpacing = 10.dp
-
-/** 칩 한 칸이 이보다 좁아지면 열 수를 줄인다. 글꼴 배율에 비례해 함께 커진다. */
-val ChipGridDefaultMinColumnWidth = 84.dp
-
-/**
- * 가용 폭과 글꼴 배율에 맞춰 열 수를 [maxColumns]에서 1까지 줄이는 칩 그리드.
- * 같은 행의 칩은 IntrinsicSize.Min으로 높이를 맞춘다.
- */
-@Composable
-fun <T> ChipGrid(
-    items: List<T>,
-    modifier: Modifier = Modifier,
-    maxColumns: Int = 3,
-    minColumnWidth: Dp = ChipGridDefaultMinColumnWidth,
-    chip: @Composable (T) -> Unit
-) {
-    val scaledMinColumnWidth = minColumnWidth * LocalDensity.current.fontScale.coerceAtLeast(1f)
-    BoxWithConstraints(modifier = modifier) {
-        val columns = ((maxWidth + ChipGridSpacing) / (scaledMinColumnWidth + ChipGridSpacing))
-            .toInt()
-            .coerceIn(1, maxColumns)
-        Column(verticalArrangement = Arrangement.spacedBy(ChipGridSpacing)) {
-            items.chunked(columns).forEach { rowItems ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(ChipGridSpacing)
-                ) {
-                    rowItems.forEach { item ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                        ) { chip(item) }
-                    }
-                    repeat(columns - rowItems.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
                 }
             }
         }

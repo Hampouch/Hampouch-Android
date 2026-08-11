@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.onboarding.OnboardingMockData
 import com.example.hampouch.ui.onboarding.components.CategoryChip
 import com.example.hampouch.ui.onboarding.components.OnboardingCaptionText
@@ -83,21 +83,14 @@ fun CategorySelectStep(
                     )
                 }
 
-                OnboardingMockData.categoryOptions.chunked(3).forEach { rowCategories ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        rowCategories.forEach { category ->
-                            CategoryChip(
-                                label = stringResource(category.labelResId),
-                                icon = category.icon,
-                                accentColor = category.accentColor,
-                                selected = category.id in selectedCategoryIds,
-                                onClick = { onToggleCategory(category.id) }
-                            )
-                        }
-                    }
+                ChipGrid(items = OnboardingMockData.categoryOptions) { category ->
+                    CategoryChip(
+                        label = stringResource(category.labelResId),
+                        icon = category.icon,
+                        accentColor = category.accentColor,
+                        selected = category.id in selectedCategoryIds,
+                        onClick = { onToggleCategory(category.id) }
+                    )
                 }
             }
 

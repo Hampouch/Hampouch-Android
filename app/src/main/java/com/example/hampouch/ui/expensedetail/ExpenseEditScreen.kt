@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.dialog.ExpenseEditConfirmDialog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPMain
