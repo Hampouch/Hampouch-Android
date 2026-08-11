@@ -31,7 +31,7 @@ import com.example.hampouch.R
 import com.example.hampouch.data.model.DayOfWeekLabel
 import com.example.hampouch.data.model.ReminderDayMode
 import com.example.hampouch.ui.mypage.components.DayOfWeekChipsRow
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ReminderModeSegmentedRow
 import com.example.hampouch.ui.mypage.components.SettingsToggleCard
 import com.example.hampouch.ui.theme.HPBlack
@@ -55,7 +55,8 @@ private fun formatTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour
 @Composable
 fun RecordAlarmScreen(
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {}
 ) {
     var state by RecordAlarmStore.stateHolder
     val context = LocalContext.current
@@ -98,11 +99,11 @@ fun RecordAlarmScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.record_alarm_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier

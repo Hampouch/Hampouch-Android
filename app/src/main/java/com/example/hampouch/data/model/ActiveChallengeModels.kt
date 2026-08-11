@@ -20,7 +20,9 @@ data class ActiveChallenge(
     val editCount: Int,
     val repeatMonthly: Boolean = false,
     val dailyLimitOverrides: List<DailyLimitOverride> = listOf(DailyLimitOverride(periodStart, dailyLimit)),
-    val abandonedDate: LocalDate? = null
+    val abandonedDate: LocalDate? = null,
+    val remoteStatus: String? = null,
+    val closedAt: String? = null
 ) {
     val maxEditCount: Int
         get() = if (totalDays >= 15) 2 else 1

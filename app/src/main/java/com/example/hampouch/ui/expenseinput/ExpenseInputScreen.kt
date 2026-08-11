@@ -131,7 +131,6 @@ fun ExpenseInputRoute(
     var showSkipPromptDialog by remember { mutableStateOf(false) }
     var showCategorySkipPromptDialog by remember { mutableStateOf(false) }
     var showReasonSkipPromptDialog by remember { mutableStateOf(false) }
-    var showReasonNextConfirmDialog by remember { mutableStateOf(false) }
     var showMemoSkipPromptDialog by remember { mutableStateOf(false) }
     var showCategoryCustomDialog by remember { mutableStateOf(false) }
     var showReasonCustomDialog by remember { mutableStateOf(false) }
@@ -299,7 +298,6 @@ fun ExpenseInputRoute(
                     },
                     onClick = {
                         when {
-                            step == 3 -> showReasonNextConfirmDialog = true
                             step < ExpenseInputTotalSteps -> step++
                             else -> showSaveConfirmDialog = true
                         }
@@ -371,17 +369,6 @@ fun ExpenseInputRoute(
                 showReasonSkipPromptDialog = false
                 isCustomReason = true
                 customReasonText = reasonNoneLabel
-                step = 4
-            }
-        )
-    }
-
-    if (showReasonNextConfirmDialog) {
-        ExpenseInputSaveConfirmDialog(
-            record = buildRecord(),
-            onCancel = { showReasonNextConfirmDialog = false },
-            onSave = {
-                showReasonNextConfirmDialog = false
                 step = 4
             }
         )

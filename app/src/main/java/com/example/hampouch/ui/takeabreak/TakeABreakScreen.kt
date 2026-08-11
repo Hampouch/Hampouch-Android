@@ -84,7 +84,8 @@ enum class BreakDuration(val label: String) {
 fun TakeABreakScreen(
     onBack: () -> Unit = {},
     onKeepChallenge: () -> Unit = {},
-    onStartBreak: (BreakDuration?, customDays: Int?) -> Unit = { _, _ -> }
+    onStartBreak: (BreakDuration?, customDays: Int?) -> Unit = { _, _ -> },
+    errorMessage: String? = null
 ) {
     var selectedDuration by rememberSaveable { mutableStateOf<BreakDuration?>(BreakDuration.ONE_WEEK) }
     var customDaysInput by rememberSaveable { mutableStateOf("") }
@@ -129,6 +130,16 @@ fun TakeABreakScreen(
             BreakChangesNotice()
 
             Spacer(modifier = Modifier.height(30.dp))
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPSub,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             BreakPrimaryButton(
                 text = "쉬어가기",
                 onClick = {

@@ -41,6 +41,8 @@ object MyPageMockData {
                 ChallengeRecord(
                     id = challenge.id,
                     status = when {
+                        challenge.remoteStatus == "SUCCESS" -> ChallengeStatus.SUCCESS
+                        challenge.remoteStatus == "FAIL" -> ChallengeStatus.FAIL
                         challenge.abandonedDate != null -> ChallengeStatus.FAIL
                         isOngoing -> ChallengeStatus.IN_PROGRESS
                         actualAmount <= challenge.targetAmount -> ChallengeStatus.SUCCESS

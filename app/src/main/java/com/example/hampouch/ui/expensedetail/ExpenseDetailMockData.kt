@@ -174,7 +174,8 @@ object ExpenseDetailMockData {
 
     private fun generateHistoryRecords(referenceToday: LocalDate): List<ExpenseRecord> {
         val startMonth = YearMonth.from(referenceToday).minusMonths(5)
-        val handcraftedRangeStart = ChallengeRepository.challenges.first().periodStart
+        val handcraftedRangeStart = ChallengeRepository.challenges.firstOrNull()?.periodStart
+            ?: referenceToday.minusDays(7)
         val result = mutableListOf<ExpenseRecord>()
         var counter = 0
 
