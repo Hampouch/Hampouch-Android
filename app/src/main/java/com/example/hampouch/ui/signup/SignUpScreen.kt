@@ -25,6 +25,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +46,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
+import com.example.hampouch.domain.model.EmailVerificationPurpose
 import com.example.hampouch.domain.model.toUserMessage
-import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.common.FieldLinkMessage
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
@@ -66,39 +68,23 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignUpScreen(
     onSignUpSuccess: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    viewModel: SignUpViewModel = hiltViewModel()
 ) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var emailCode by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var nickname by rememberSaveable { mutableStateOf("") }
-    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var emailSendMessage by remember { mutableStateOf<String?>(null) }
-    var emailVerifyMessage by remember { mutableStateOf<String?>(null) }
-    var isEmailVerified by remember { mutableStateOf(false) }
-    var isSendingEmailCode by remember { mutableStateOf(false) }
-    var hasSentEmailCode by remember { mutableStateOf(false) }
-    var isVerifyingEmailCode by remember { mutableStateOf(false) }
-    var emailCodeExpiresAtMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var nicknameCheckMessage by remember { mutableStateOf<String?>(null) }
-    var isNicknameAvailable by remember { mutableStateOf(false) }
-    var isTermsChecked by rememberSaveable { mutableStateOf(false) }
-    var isPrivacyChecked by rememberSaveable { mutableStateOf(false) }
-    var isMarketingChecked by rememberSaveable { mutableStateOf(false) }
-    var signUpErrorMessage by remember { mutableStateOf<String?>(null) }
-    val isPasswordValid = password.length >= 8 &&
-        password.any { it in 'a'..'z' || it in 'A'..'Z' } &&
-        password.any { it.isDigit() }
-    val showPasswordError = password.isNotEmpty() && !isPasswordValid
-    val areRequiredTermsChecked = isTermsChecked && isPrivacyChecked
-    val isSignUpEnabled = isEmailVerified && isNicknameAvailable && isPasswordValid && areRequiredTermsChecked
-    val emailCodeRemainingSeconds = rememberCountdownSeconds(emailCodeExpiresAtMillis)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                SignUpEvent.SignedUp -> onSignUpSuccess()
+            }
+        }
+    }
+    val emailCodeRemainingSeconds = rememberCountdownSeconds(uiState.emailCodeExpiresAtMillis)
     val isEmailCodeExpired = emailCodeRemainingSeconds == 0
-    val isEmailFieldEnabled = !isSendingEmailCode && !isEmailVerified && (!hasSentEmailCode || isEmailCodeExpired)
-    val isCodeFieldEnabled = hasSentEmailCode && !isEmailCodeExpired && !isVerifyingEmailCode && !isEmailVerified
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val authRepository = remember { AuthRepository.getInstance(context) }
+    val isEmailFieldEnabled =
+        !uiState.isSendingEmailCode && !uiState.isEmailVerified && (!uiState.hasSentEmailCode || isEmailCodeExpired)
+    val isCodeFieldEnabled =
+        uiState.hasSentEmailCode && !isEmailCodeExpired && !uiState.isVerifyingEmailCode && !uiState.isEmailVerified
 
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
@@ -128,50 +114,20 @@ fun SignUpScreen(
             Column(horizontalAlignment = Alignment.Start) {
                 LoginTextField(
                     label = "이메일",
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        isEmailVerified = false
-                        hasSentEmailCode = false
-                    },
+                    value = uiState.email,
+                    onValueChange = viewModel::changeEmail,
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = {
-                        if (email.isBlank()) {
-                            emailSendMessage = "이메일을 입력해주세요."
-                        } else {
-                            isSendingEmailCode = true
-                            coroutineScope.launch {
-                                authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.SIGNUP)
-                                    .onSuccess { data ->
-                                        emailSendMessage = "인증번호가 발송되었습니다."
-                                        hasSentEmailCode = true
-                                        emailCode = ""
-                                        emailCodeExpiresAtMillis =
-                                            System.currentTimeMillis() + data.expiresInSeconds * 1000L
-                                    }
-                                    .onFailure { error ->
-                                        emailSendMessage = error.toUserMessage("인증번호 발송에 실패했습니다.")
-                                    }
-                                isSendingEmailCode = false
-                            }
-                        }
-                    },
+                    onCheckClick = viewModel::sendEmailCode,
                     isCheckEnabled = isEmailFieldEnabled,
                     enabled = isEmailFieldEnabled
                 )
-                emailSendMessage?.let { FieldMessage(it) }
-                if (hasSentEmailCode && !isEmailVerified) {
-                    FieldLinkMessage("이메일을 잘못 입력하셨나요?") {
-                        hasSentEmailCode = false
-                        emailCode = ""
-                        emailSendMessage = null
-                        emailVerifyMessage = null
-                        emailCodeExpiresAtMillis = null
-                    }
+                uiState.emailSendMessage?.let { FieldMessage(it) }
+                if (uiState.hasSentEmailCode && !uiState.isEmailVerified) {
+                    FieldLinkMessage("이메일을 잘못 입력하셨나요?", viewModel::resetEmailVerification)
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
@@ -180,136 +136,88 @@ fun SignUpScreen(
                     } else {
                         "인증번호"
                     },
-                    value = emailCode,
-                    onValueChange = {
-                        emailCode = it
-                        isEmailVerified = false
-                    },
+                    value = uiState.emailCode,
+                    onValueChange = viewModel::changeEmailCode,
                     placeholder = "인증번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = {
-                        isVerifyingEmailCode = true
-                        coroutineScope.launch {
-                            authRepository.verifyEmailCode(email, emailCode, EmailVerificationPurpose.SIGNUP)
-                                .onSuccess {
-                                    isEmailVerified = true
-                                    emailCodeExpiresAtMillis = null
-                                    emailVerifyMessage = "이메일 인증이 완료되었습니다."
-                                }
-                                .onFailure { error ->
-                                    isEmailVerified = false
-                                    emailVerifyMessage = error.toUserMessage("인증번호를 다시 확인해주세요.")
-                                }
-                            isVerifyingEmailCode = false
-                        }
-                    },
+                    onCheckClick = viewModel::verifyEmailCode,
                     isCheckEnabled = isCodeFieldEnabled,
                     enabled = isCodeFieldEnabled
                 )
                 if (isEmailCodeExpired) {
                     FieldMessage("인증번호가 만료되었습니다.")
                 } else {
-                    emailVerifyMessage?.let { FieldMessage(it) }
+                    uiState.emailVerifyMessage?.let { FieldMessage(it) }
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
                     label = "비밀번호",
-                    value = password,
-                    onValueChange = { password = it },
+                    value = uiState.password,
+                    onValueChange = viewModel::changePassword,
                     placeholder = "8자 이상, 영문 + 숫자 조합",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    isValid = isPasswordValid,
-                    visualTransformation = if (isPasswordVisible) {
+                    isValid = uiState.isPasswordValid,
+                    visualTransformation = if (uiState.isPasswordVisible) {
                         VisualTransformation.None
                     } else {
                         PasswordVisualTransformation()
                     },
                     trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        IconButton(onClick = viewModel::togglePasswordVisibility) {
                             Image(
                                 modifier = Modifier.size(20.dp),
                                 painter = painterResource(
-                                    id = if (isPasswordVisible) {
+                                    id = if (uiState.isPasswordVisible) {
                                         R.drawable.login_eye
                                     } else {
                                         R.drawable.login_no_eye
                                     }
                                 ),
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                                contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password",
                             )
                         }
                     }
                 )
-                if (showPasswordError) {
+                if (uiState.showPasswordError) {
                     FieldMessage("비밀번호를 다시 입력해주세요.")
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
                     label = "닉네임",
-                    value = nickname,
-                    onValueChange = {
-                        nickname = it
-                        isNicknameAvailable = false
-                    },
+                    value = uiState.nickname,
+                    onValueChange = viewModel::changeNickname,
                     placeholder = "닉네임을 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
-                    onCheckClick = {
-                        coroutineScope.launch {
-                            authRepository.checkNicknameAvailability(nickname)
-                                .onSuccess { data ->
-                                    isNicknameAvailable = data.available
-                                    nicknameCheckMessage = if (data.available) {
-                                        "사용가능한 닉네임입니다."
-                                    } else {
-                                        "이미 존재하는 닉네임입니다."
-                                    }
-                                }
-                                .onFailure { error ->
-                                    isNicknameAvailable = false
-                                    nicknameCheckMessage = error.toUserMessage("닉네임 확인에 실패했습니다.")
-                                }
-                        }
-                    }
+                    onCheckClick = viewModel::checkNickname
                 )
-                nicknameCheckMessage?.let { FieldMessage(it) }
+                uiState.nicknameCheckMessage?.let { FieldMessage(it) }
 
                 Spacer(modifier = Modifier.size(30.dp))
                 TermsAgreementSection(
-                    isTermsChecked = isTermsChecked,
-                    onTermsCheckedChange = { isTermsChecked = it },
-                    isPrivacyChecked = isPrivacyChecked,
-                    onPrivacyCheckedChange = { isPrivacyChecked = it },
-                    isMarketingChecked = isMarketingChecked,
-                    onMarketingCheckedChange = { isMarketingChecked = it }
+                    isTermsChecked = uiState.isTermsChecked,
+                    onTermsCheckedChange = viewModel::setTermsChecked,
+                    isPrivacyChecked = uiState.isPrivacyChecked,
+                    onPrivacyCheckedChange = viewModel::setPrivacyChecked,
+                    isMarketingChecked = uiState.isMarketingChecked,
+                    onMarketingCheckedChange = viewModel::setMarketingChecked
                 )
             }
 
-            signUpErrorMessage?.let { FieldMessage(it) }
+            uiState.signUpErrorMessage?.let { FieldMessage(it) }
 
             Spacer(modifier = Modifier.size(30.dp))
             Button(
-                onClick = {
-                    coroutineScope.launch {
-                        authRepository.signUp(email, password, nickname)
-                            .onSuccess {
-                                signUpErrorMessage = null
-                                onSignUpSuccess()
-                            }
-                            .onFailure { error ->
-                                signUpErrorMessage = error.toUserMessage("회원가입에 실패했습니다.")
-                            }
-                    }
-                },
-                enabled = isSignUpEnabled,
+                onClick = viewModel::signUp,
+                enabled = uiState.isSignUpEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

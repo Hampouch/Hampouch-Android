@@ -11,6 +11,8 @@ import com.example.hampouch.domain.model.HamTipsSortOrder
 import com.example.hampouch.domain.model.MenuRatingInfo
 import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.data.local.HamTipsMockDataSource
+import com.example.hampouch.di.legacyEntryPoint
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
 import com.example.hampouch.domain.model.TipReply
@@ -26,9 +28,7 @@ import com.example.hampouch.data.remote.dto.CommunityPostDetailData
 import com.example.hampouch.data.remote.dto.CommunityPostSummaryData
 import com.example.hampouch.data.remote.dto.CommunityRecruitWriteRequest
 import com.example.hampouch.data.remote.dto.CommunityTipWriteRequest
-import com.example.hampouch.ui.hamtips.HamTipsMockData
-import com.example.hampouch.ui.hamtips.formatTimeAgoLabel
-import com.example.hampouch.ui.session.UserSession
+import com.example.hampouch.domain.model.formatTimeAgoLabel
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -52,14 +52,15 @@ object HamTipsRepository {
     private const val JUST_NOW_LABEL = "방금"
     private const val DEFAULT_PAGE_SIZE = 20
 
-    private val activeUserId: String get() = UserSession.currentUser.id
-    private val activeUserName: String get() = UserSession.currentUser.name
+    private val activeUserId: String get() = authRepository.currentUser.value.id
+    private val activeUserName: String get() = authRepository.currentUser.value.name
 
-    private val posts = mutableStateListOf<TipPost>().apply { addAll(HamTipsMockData.allPosts()) }
+    private val posts = mutableStateListOf<TipPost>().apply { addAll(mockDataSource.allPosts()) }
     private var nextId = 1000
 
     private lateinit var appContext: Context
     private val authRepository: AuthRepository get() = AuthRepository.getInstance(appContext)
+    private val mockDataSource: HamTipsMockDataSource get() = appContext.legacyEntryPoint().hamTipsMockDataSource()
 
     fun attach(context: Context) {
         appContext = context.applicationContext
@@ -411,7 +412,7 @@ object HamTipsRepository {
                 content = content,
                 authorId = activeUserId,
                 authorName = activeUserName,
-                isEditorAuthor = UserSession.isEditor,
+                isEditorAuthor = authRepository.isEditor,
                 hasImage = imageUris.isNotEmpty(),
                 imageUris = imageUris
             )
@@ -435,7 +436,7 @@ object HamTipsRepository {
                     content = content,
                     authorId = activeUserId,
                     authorName = activeUserName,
-                    isEditorAuthor = UserSession.isEditor,
+                    isEditorAuthor = authRepository.isEditor,
                     hasImage = imageUris.isNotEmpty(),
                     imageUris = imageUris,
                     imageKeys = keys
@@ -516,7 +517,7 @@ object HamTipsRepository {
                 content = comment,
                 authorId = activeUserId,
                 authorName = activeUserName,
-                isEditorAuthor = UserSession.isEditor,
+                isEditorAuthor = authRepository.isEditor,
                 hasImage = imageUris.isNotEmpty(),
                 imageUris = imageUris,
                 menuName = menuName,
@@ -549,7 +550,7 @@ object HamTipsRepository {
                     content = comment,
                     authorId = activeUserId,
                     authorName = activeUserName,
-                    isEditorAuthor = UserSession.isEditor,
+                    isEditorAuthor = authRepository.isEditor,
                     hasImage = imageUris.isNotEmpty(),
                     imageUris = imageUris,
                     imageKeys = keys,
@@ -907,13 +908,13 @@ object HamTipsRepository {
 
 
     fun canDeletePost(post: TipPost): Boolean =
-        post.authorId == activeUserId || UserSession.isEditor
+        post.authorId == activeUserId || authRepository.isEditor
 
     fun canDeleteComment(post: TipPost, comment: TipComment): Boolean =
-        post.authorId == activeUserId || comment.authorId == activeUserId || UserSession.isEditor
+        post.authorId == activeUserId || comment.authorId == activeUserId || authRepository.isEditor
 
     fun canDeleteReply(post: TipPost, reply: TipReply): Boolean =
-        post.authorId == activeUserId || reply.authorId == activeUserId || UserSession.isEditor
+        post.authorId == activeUserId || reply.authorId == activeUserId || authRepository.isEditor
 
     fun joinBattle(postId: String) {
         mutate(postId) { post ->
@@ -932,7 +933,7 @@ object HamTipsRepository {
     fun resetForAccount() {
         posts.clear()
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
-            posts.addAll(HamTipsMockData.allPosts())
+            posts.addAll(mockDataSource.allPosts())
         }
         nextId = 1000
     }

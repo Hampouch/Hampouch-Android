@@ -1,6 +1,10 @@
 package com.example.hampouch.di
 
 import android.content.Context
+import com.example.hampouch.data.local.HamTipsMockDataSource
+import com.example.hampouch.data.local.MiniChallengeLocalStore
+import com.example.hampouch.data.repository.AccountDataCoordinator
+import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
 import dagger.hilt.EntryPoint
@@ -20,6 +24,10 @@ import dagger.hilt.components.SingletonComponent
 interface LegacyEntryPoint {
     fun restRepository(): RestRepository
     fun expenseRepository(): ExpenseRepository
+    fun challengeRepository(): ChallengeRepository
+    fun accountDataCoordinator(): AccountDataCoordinator
+    fun hamTipsMockDataSource(): HamTipsMockDataSource
+    fun miniChallengeLocalStore(): MiniChallengeLocalStore
 }
 
 fun Context.legacyEntryPoint(): LegacyEntryPoint =

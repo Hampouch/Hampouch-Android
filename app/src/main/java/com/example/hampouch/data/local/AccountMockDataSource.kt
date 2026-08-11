@@ -1,11 +1,17 @@
-package com.example.hampouch.ui.login
+package com.example.hampouch.data.local
 
-import androidx.compose.runtime.mutableStateListOf
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 
-// TODO: 서버팀 회원가입/로그인 API 연동 시 이 인메모리 계정 목록 대신 서버 응답으로 교체.
-object LoginMockData {
+/**
+ * 목데이터 모드의 인메모리 계정 목록.
+ *
+ * 예전에는 화면 패키지(`ui/login`)에 Compose 상태 리스트로 있었다. data 레이어에서 쓰는 값이라
+ * 여기로 옮기고 일반 리스트로 바꿨다 — 화면이 이 목록의 변화를 구독하지는 않는다.
+ *
+ * TODO: 서버팀 회원가입/로그인 API 연동이 끝나면 통째로 삭제.
+ */
+object AccountMockDataSource {
 
     val normalUser = User(
         id = "user_me",
@@ -25,7 +31,7 @@ object LoginMockData {
         isExistingMember = true
     )
 
-    private val registeredAccounts = mutableStateListOf(normalUser, editorUser)
+    private val registeredAccounts = mutableListOf(normalUser, editorUser)
 
     val accounts: List<User> get() = registeredAccounts
 

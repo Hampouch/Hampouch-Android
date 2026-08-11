@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hamtips
 
+import com.example.hampouch.domain.model.formatTimeAgoLabel
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -32,6 +33,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.hampouch.ui.common.SessionViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,7 +68,6 @@ import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsPhotoCarousel
 import com.example.hampouch.ui.mypage.components.TipCategoryBadge
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -245,9 +248,6 @@ internal fun HamTipsPostHeader(post: TipPost, modifier: Modifier = Modifier) {
     }
 }
 
-internal fun formatTimeAgoLabel(minutesAgo: Int): String =
-    if (minutesAgo < 60) "${minutesAgo}분전" else "${minutesAgo / 60}시간전"
-
 @Composable
 internal fun HamTipsEngagementRow(
     post: TipPost,
@@ -422,7 +422,8 @@ fun HamTipsDetailScreen(
     onEditClick: (TipPost) -> Unit,
     onDeleted: () -> Unit,
     scrollToComments: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
@@ -447,7 +448,8 @@ fun HamTipsDetailScreen(
         HamTipsRepository.loadPostDetail(post.id)
     }
 
-    val isAuthor = post.authorId == UserSession.currentUser.id
+    val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
+    val isAuthor = post.authorId == currentUser.id
     val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
 

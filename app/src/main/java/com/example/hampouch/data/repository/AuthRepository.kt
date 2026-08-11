@@ -12,6 +12,7 @@ import com.example.hampouch.domain.model.AuthProvider
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
+import com.example.hampouch.di.legacyEntryPoint
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
@@ -19,7 +20,7 @@ import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
-import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
+import com.example.hampouch.domain.model.EmailVerificationPurpose
 import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
@@ -31,12 +32,14 @@ import com.example.hampouch.data.remote.dto.SetNicknameRequest
 import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
-import com.example.hampouch.ui.login.LoginMockData
-import com.example.hampouch.ui.session.UserSession
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
 private const val TAG = "AuthRepository"
@@ -67,6 +70,22 @@ class AuthRepository private constructor(private val context: Context) {
         val EMAIL = stringPreferencesKey("email")
         val PROFILE_IMAGE_URL = stringPreferencesKey("profile_image_url")
     }
+
+    private val _currentUser = MutableStateFlow(AccountMockDataSource.normalUser)
+    /**
+     * 화면에서 동기적으로 읽기 쉬운 형태의 현재 로그인 사용자.
+     *
+     * 세션의 유일한 소스는 DataStore 기반 [userSession]이고, 여기서는 그 값을 반영만 한다.
+     * 앱을 재시작해도 [saveSession]이 다시 호출되며 동기화된다(예전엔 SharedPreferences에 유저 id를
+     * 저장해 뒀다가 목데이터 계정 목록에서 재조회했는데, 실제 서버 로그인 유저는 그 목록에 없어서
+     * 앱을 재실행하면 항상 기본 목데이터 계정으로 되돌아가는 버그가 있었다).
+     */
+    val currentUser: StateFlow<User> = _currentUser.asStateFlow()
+
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    val isEditor: Boolean get() = _currentUser.value.role == UserRole.EDITOR
 
     val userSession: Flow<AuthSession?> = context.authDataStore.data.map { preferences ->
         val provider = preferences[Keys.PROVIDER]?.let { AuthProvider.valueOf(it) }
@@ -163,7 +182,7 @@ class AuthRepository private constructor(private val context: Context) {
     suspend fun completeSocialSignUp(session: AuthSession, nickname: String): Result<AuthSession> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             val updatedSession = session.copy(nickname = nickname)
-            LoginMockData.register(email = updatedSession.email ?: "", password = "", nickname = nickname)
+            AccountMockDataSource.register(email = updatedSession.email ?: "", password = "", nickname = nickname)
             updatedSession.email?.let { OnboardingDataStore.reserveForNewAccount(context, it) }
             saveSession(updatedSession)
             return Result.success(updatedSession)
@@ -380,7 +399,7 @@ class AuthRepository private constructor(private val context: Context) {
 
     suspend fun resetPassword(email: String, newPassword: String): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
-            return if (LoginMockData.updatePassword(email, newPassword)) {
+            return if (AccountMockDataSource.updatePassword(email, newPassword)) {
                 Result.success(Unit)
             } else {
                 Result.failure(
@@ -589,7 +608,7 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     private suspend fun mockLogin(email: String, password: String): Result<AuthSession> {
-        val account = LoginMockData.findAccount(email, password)
+        val account = AccountMockDataSource.findAccount(email, password)
             ?: return Result.failure(
                 ApiException(code = "INVALID_CREDENTIALS", message = "이메일 및 비밀번호를 다시 확인해주세요.")
             )
@@ -597,7 +616,7 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     private suspend fun mockLoginWithSocial(credential: SocialCredential): Result<SocialLoginOutcome> {
-        val account = LoginMockData.accounts.find { it.email == credential.email }
+        val account = AccountMockDataSource.accounts.find { it.email == credential.email }
         if (account != null) {
             return mockSignIn(credential.provider, account).map { session ->
                 SocialLoginOutcome(
@@ -642,7 +661,7 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     private fun checkEmailEligibility(email: String, purpose: EmailVerificationPurpose): ApiException? {
-        val isRegistered = LoginMockData.isRegistered(email)
+        val isRegistered = AccountMockDataSource.isRegistered(email)
         return when (purpose) {
             EmailVerificationPurpose.SIGNUP -> if (isRegistered) {
                 ApiException(code = "EMAIL_ALREADY_EXISTS", message = "이미 가입된 이메일입니다.")
@@ -679,12 +698,12 @@ class AuthRepository private constructor(private val context: Context) {
     }
 
     private fun mockCheckNicknameAvailability(nickname: String): Result<NicknameCheckData> {
-        val taken = LoginMockData.accounts.any { it.name == nickname }
+        val taken = AccountMockDataSource.accounts.any { it.name == nickname }
         return Result.success(NicknameCheckData(nickname = nickname, available = !taken))
     }
 
     private fun mockSignUp(email: String, password: String, nickname: String): Result<SignUpData> {
-        LoginMockData.register(email = email, password = password, nickname = nickname)
+        AccountMockDataSource.register(email = email, password = password, nickname = nickname)
         OnboardingDataStore.reserveForNewAccount(context, email)
         return Result.success(
             SignUpData(
@@ -711,8 +730,10 @@ class AuthRepository private constructor(private val context: Context) {
                 preferences[Keys.PROFILE_IMAGE_URL] = it
             } ?: preferences.remove(Keys.PROFILE_IMAGE_URL)
         }
-        UserSession.login(context, sessionToUser(session))
-        AccountDataCoordinator.syncIfNeeded(context, session.userId.toString(), session.email)
+        _currentUser.value = sessionToUser(session)
+        _isLoggedIn.value = true
+        context.legacyEntryPoint().accountDataCoordinator()
+            .syncIfNeeded(context, session.userId.toString(), session.email)
     }
 
     private fun sessionToUser(session: AuthSession): User = User(
@@ -730,7 +751,8 @@ class AuthRepository private constructor(private val context: Context) {
 
     suspend fun clearSession() {
         context.authDataStore.edit { it.clear() }
-        UserSession.logout(context)
+        _currentUser.value = AccountMockDataSource.normalUser
+        _isLoggedIn.value = false
     }
 
     companion object {

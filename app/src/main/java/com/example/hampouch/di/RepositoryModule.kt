@@ -1,7 +1,9 @@
 package com.example.hampouch.di
 
+import com.example.hampouch.data.repository.ChallengeRepositoryImpl
 import com.example.hampouch.data.repository.ExpenseRepositoryImpl
 import com.example.hampouch.data.repository.RestRepositoryImpl
+import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
 import dagger.Binds
@@ -22,4 +24,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindExpenseRepository(impl: ExpenseRepositoryImpl): ExpenseRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
 }

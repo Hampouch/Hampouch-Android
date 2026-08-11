@@ -1,9 +1,6 @@
 package com.example.hampouch.data.remote.dto
 
-enum class EmailVerificationPurpose {
-    SIGNUP,
-    PASSWORD_RESET
-}
+import com.example.hampouch.domain.model.EmailVerificationPurpose
 
 data class EmailSendRequest(
     val email: String,

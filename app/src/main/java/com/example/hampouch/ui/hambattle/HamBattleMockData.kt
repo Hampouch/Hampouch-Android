@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hambattle
 
+import com.example.hampouch.domain.repository.AccountScopedState
 import androidx.compose.runtime.mutableStateOf
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.model.HamBattleChallenge
@@ -12,7 +13,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 // TODO: 서버팀 햄배틀 API 연동 시 목데이터 대신 실제 응답으로 대체.
-object HamBattleMockData {
+object HamBattleMockData : AccountScopedState {
 
     /**
      * 햄배틀은 아직 서버 API가 없어 이 목데이터 객체가 상태를 들고 있고, "내 지출"만 실제 기록에서
@@ -234,7 +235,7 @@ object HamBattleMockData {
 
     private val challengesState = mutableStateOf(buildSeedChallenges())
 
-    fun resetForAccount() {
+    override fun resetForAccount() {
         challengesState.value = buildSeedChallenges()
         acknowledgedDisqualifications.value = emptySet()
         missedWarningShownDates.value = emptyMap()

@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.domain.repository.AccountScopedState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,7 +12,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 // TODO: 서버팀 알림 설정 API 연동 시 이 목데이터 대신 서버 응답으로 state를 채우도록 교체.
-object RecordAlarmStore {
+object RecordAlarmStore : AccountScopedState {
 
     val stateHolder: MutableState<RecordAlarmSettingsState> = mutableStateOf(RecordAlarmSettingsState())
 
@@ -47,7 +48,7 @@ object RecordAlarmStore {
         dismissedDate = referenceToday
     }
 
-    fun resetForAccount() {
+    override fun resetForAccount() {
         state = RecordAlarmSettingsState()
         dismissedDate = null
     }

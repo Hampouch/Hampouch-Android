@@ -22,6 +22,7 @@ import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.TipPostCard
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
@@ -74,7 +75,7 @@ private fun MyTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
-            tips = MyPageMockData.myTips(),
+            tips = MyPageMockData.myTips(AccountMockDataSource.normalUser.id),
             onBackClick = {}
         )
     }

@@ -17,6 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.hampouch.ui.common.SessionViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +51,6 @@ import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -143,7 +145,8 @@ fun HamTipsBattleDetailScreen(
     onNavigateToBattleLink: (String) -> Unit,
     onNavigateToHamBattleTab: () -> Unit = {},
     onEditClick: (TipPost) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sessionViewModel: SessionViewModel = hiltViewModel()
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var showJoinConfirm by remember { mutableStateOf(false) }
@@ -159,7 +162,8 @@ fun HamTipsBattleDetailScreen(
         HamTipsRepository.loadPostDetail(post.id)
     }
 
-    val isAuthor = post.authorId == UserSession.currentUser.id
+    val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
+    val isAuthor = post.authorId == currentUser.id
     val canDeletePost = HamTipsRepository.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleInfo = post.battleInfo

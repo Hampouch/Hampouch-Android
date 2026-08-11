@@ -2,7 +2,7 @@ package com.example.hampouch.ui.expensedetail
 
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.ExpenseRecord
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -25,7 +25,10 @@ object ExpenseDetailMockData {
     private val historyReasonCycle = ExpenseReasonCatalog.reasons.map { it.id }
     private val historyCategoryCycle = HomeCategoryCatalog.categories.map { it.id }
 
-    fun initialRecords(referenceToday: LocalDate = LocalDate.now()): Map<String, ExpenseRecord> {
+    fun initialRecords(
+        challengeState: ChallengeState,
+        referenceToday: LocalDate = LocalDate.now()
+    ): Map<String, ExpenseRecord> {
         val yesterday = referenceToday.minusDays(1)
         val handcraftedRecords = listOf(
             ExpenseRecord(
@@ -168,13 +171,16 @@ object ExpenseDetailMockData {
                 reasonId = "lazy"
             )
         )
-        val historyRecords = generateHistoryRecords(referenceToday)
+        val historyRecords = generateHistoryRecords(challengeState, referenceToday)
         return (historyRecords + handcraftedRecords).associateBy { it.id }
     }
 
-    private fun generateHistoryRecords(referenceToday: LocalDate): List<ExpenseRecord> {
+    private fun generateHistoryRecords(
+        challengeState: ChallengeState,
+        referenceToday: LocalDate
+    ): List<ExpenseRecord> {
         val startMonth = YearMonth.from(referenceToday).minusMonths(5)
-        val handcraftedRangeStart = ChallengeRepository.challenges.firstOrNull()?.periodStart
+        val handcraftedRangeStart = challengeState.challenges.firstOrNull()?.periodStart
             ?: referenceToday.minusDays(7)
         val result = mutableListOf<ExpenseRecord>()
         var counter = 0
@@ -220,8 +226,8 @@ object ExpenseDetailMockData {
         )
     }
 
-    fun activeChallengePeriod(): ExpenseChallengePeriod? {
-        val active = ChallengeRepository.activeChallenge ?: return null
+    fun activeChallengePeriod(challengeState: ChallengeState): ExpenseChallengePeriod? {
+        val active = challengeState.activeChallenge ?: return null
         return ExpenseChallengePeriod(startDate = active.periodStart, endDate = active.periodEnd)
     }
 

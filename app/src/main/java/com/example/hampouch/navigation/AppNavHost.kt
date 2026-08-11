@@ -41,11 +41,11 @@ import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.NotificationTarget
-import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.common.ChallengeLookupViewModel
 import com.example.hampouch.ui.common.ExpenseLookupViewModel
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
@@ -299,6 +299,8 @@ fun AppNavHost(
         }
 
         composable(Screen.Home.route) {
+            val homeChallengeVm: ChallengeLookupViewModel = hiltViewModel()
+            val homeChallengeState by homeChallengeVm.challengeState.collectAsStateWithLifecycle()
             val startTab = pendingHomeTab
                 ?: if (openCommunityWriteBattle) BottomNavItem.COMMUNITY else BottomNavItem.HOME
             val openWriteBattle = openCommunityWriteBattle
@@ -396,7 +398,7 @@ fun AppNavHost(
                     }
                 },
                 onChallengeEndedFinishClick = {
-                    val challenge = ChallengeRepository.activeChallenge ?: return@HomeScreen
+                    val challenge = homeChallengeState.activeChallenge ?: return@HomeScreen
                     navController.navigate(Screen.ChallengeSummary.createRoute(challenge.id, locked = true))
                 }
             )
@@ -466,10 +468,12 @@ fun AppNavHost(
         }
 
         composable(Screen.ChallengeEndExpenseCalendar.route) {
-            val active = ChallengeRepository.activeChallenge ?: return@composable
+            val challengeVm: ChallengeLookupViewModel = hiltViewModel()
+            val challengeState by challengeVm.challengeState.collectAsStateWithLifecycle()
+            val active = challengeState.activeChallenge ?: return@composable
             ExpenseCalendarRoute(
                 onBackClick = {
-                    ChallengeRepository.markVisitedExpenseEditAfterEnd()
+                    challengeVm.markVisitedExpenseEditAfterEnd()
                     navController.popBackStack()
                 },
                 onExpenseClick = { expenseId ->
@@ -735,11 +739,14 @@ fun AppNavHost(
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
             val locked = backStackEntry.arguments?.getBoolean("locked") ?: false
-            val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
+            val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+            val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
+            val challenge = challengeState.challengeById(challengeId)
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
-                val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
-                val state = ChallengeResultMockData.forChallenge(challenge, expenseLookup::recordsForDate)
+                val state = ChallengeResultMockData.forChallenge(
+                    challenge, challengeState, expenseLookup::recordsForDate
+                )
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
@@ -767,10 +774,13 @@ fun AppNavHost(
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
             val suggestedTargetAmount = backStackEntry.arguments?.getInt("suggestedTargetAmount") ?: 0
-            val challenge = ChallengeRepository.challenges.find { it.id == challengeId }
+            val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+            val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
+            val challenge = challengeState.challengeById(challengeId)
             if (challenge != null) {
-                val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
-                val previousResult = ChallengeResultMockData.forChallenge(challenge, expenseLookup::recordsForDate)
+                val previousResult = ChallengeResultMockData.forChallenge(
+                    challenge, challengeState, expenseLookup::recordsForDate
+                )
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
@@ -819,8 +829,9 @@ fun AppNavHost(
 
         composable(Screen.AmountAdjustment.route) {
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+            val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
             AmountAdjustmentRoute(
-                challenge = AmountAdjustmentMockData.challenge(expenseLookup::spentOnDate),
+                challenge = AmountAdjustmentMockData.challenge(challengeState, expenseLookup::spentOnDate),
                 onBackClick = { navController.popBackStack() },
                 onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
                     navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {

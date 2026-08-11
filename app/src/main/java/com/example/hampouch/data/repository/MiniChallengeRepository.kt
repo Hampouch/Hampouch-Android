@@ -8,6 +8,8 @@ import com.example.hampouch.domain.model.MiniChallengeDaySummary
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.data.local.MiniChallengeLocalStore
+import com.example.hampouch.di.legacyEntryPoint
 import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiErrorBody
@@ -16,7 +18,6 @@ import com.example.hampouch.data.remote.dto.CustomMiniChallengeBody
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeItemDto
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeDto
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.google.gson.Gson
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
@@ -35,6 +36,7 @@ private const val TAG = "MiniChallengeRepository"
 class MiniChallengeRepository private constructor(private val context: Context) {
 
     private val authRepository by lazy { AuthRepository.getInstance(context) }
+    private val store: MiniChallengeLocalStore get() = context.legacyEntryPoint().miniChallengeLocalStore()
 
     /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
     suspend fun loadChallenges(date: LocalDate): Result<Unit> {
@@ -43,8 +45,8 @@ class MiniChallengeRepository private constructor(private val context: Context) 
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getMiniChallenges(authorization, date.toString())
             val body = requireBody(response, "미니 챌린지 조회에 실패했습니다.")
-            MiniChallengeStore.setChallengesForDate(date, body.items.map { it.toDomain() })
-            MiniChallengeStore.setSummaryForDate(
+            store.setChallengesForDate(date, body.items.map { it.toDomain() })
+            store.setSummaryForDate(
                 date,
                 MiniChallengeDaySummary(
                     checkedCount = body.summary.checkedCount,
@@ -62,7 +64,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
             val authorization = requireAuthorizationHeader()
             val response = NetworkModule.apiService.getRecommendedMiniChallenges(authorization, durationDays)
             val body = requireBody(response, "추천 목록 조회에 실패했습니다.")
-            MiniChallengeStore.replaceRecommendedChallenges(body.items.map { it.toDomain() })
+            store.replaceRecommendedChallenges(body.items.map { it.toDomain() })
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
     }
 
@@ -77,7 +79,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      */
     suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = MiniChallengeStore.addRecommendedChallenge(date, recommended)
+            val added = store.addRecommendedChallenge(date, recommended)
             return Result.success(if (added) date else null)
         }
         return runCatching {
@@ -89,7 +91,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
                 AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
             )
             requireBody(response, "미니 챌린지 추가에 실패했습니다.")
-            MiniChallengeStore.removeRecommended(recommended.id)
+            store.removeRecommended(recommended.id)
             val today = LocalDate.now()
             loadChallenges(today).getOrThrow()
             today
@@ -102,7 +104,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
      */
     suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = MiniChallengeStore.addChallenge(date, name, totalDays)
+            val added = store.addChallenge(date, name, totalDays)
             return Result.success(if (added) date else null)
         }
         return runCatching {
@@ -123,7 +125,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
     /** [id]의 미니 챌린지를 삭제한다. */
     suspend fun remove(date: LocalDate, id: String): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            MiniChallengeStore.removeChallenge(date, id)
+            store.removeChallenge(date, id)
             return Result.success(Unit)
         }
         return runCatching {
@@ -139,7 +141,7 @@ class MiniChallengeRepository private constructor(private val context: Context) 
     /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다(PUT은 멱등이라 재시도해도 안전). */
     suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            MiniChallengeStore.toggle(date, id)
+            store.toggle(date, id)
             return Result.success(Unit)
         }
         return runCatching {

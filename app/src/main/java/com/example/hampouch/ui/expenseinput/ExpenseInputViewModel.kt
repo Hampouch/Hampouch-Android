@@ -3,9 +3,9 @@ package com.example.hampouch.ui.expenseinput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -32,6 +32,7 @@ sealed interface ExpenseInputEvent {
 @HiltViewModel
 class ExpenseInputViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
+    private val challengeRepository: ChallengeRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -46,7 +47,7 @@ class ExpenseInputViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     private fun buildInitialState(): ExpenseInputUiState {
-        val dailyLimit = ChallengeRepository.activeChallenge?.dailyLimitOn(initialDate) ?: 0
+        val dailyLimit = challengeRepository.state.value.activeChallenge?.dailyLimitOn(initialDate) ?: 0
         val alreadySpent = expenseRepository.recordsForDate(initialDate).sumOf { it.amount }
         return ExpenseInputUiState(
             initialDate = initialDate,

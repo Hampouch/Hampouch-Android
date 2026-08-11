@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.challengeresult
 
+import com.example.hampouch.ui.common.previewChallengeState
 import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.widget.Toast
@@ -73,7 +74,7 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(recordsForDate = { emptyList() }),
+    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
     onBackClick: () -> Unit = {},
     showBackButton: Boolean = true,
     onExpenseAnalysisClick: () -> Unit = {},
@@ -379,7 +380,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
 @Composable
 private fun ChallengeResultScreenInProgressPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.inProgress(recordsForDate = { emptyList() }))
+        ChallengeResultScreen(state = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }))
     }
 }
 

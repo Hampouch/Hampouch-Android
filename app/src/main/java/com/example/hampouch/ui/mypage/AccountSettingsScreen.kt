@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,7 +27,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.MyPageProfile
 import com.example.hampouch.domain.model.toUserMessage
-import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ProfileCard
@@ -34,6 +35,7 @@ import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.launch
 
@@ -45,12 +47,21 @@ fun AccountSettingsScreen(
     onChangePasswordClick: () -> Unit,
     onLoggedOut: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    viewModel: AccountSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val authRepository = remember { AuthRepository.getInstance(context) }
     var showWithdrawConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AccountSettingsEvent.LoggedOut -> onLoggedOut()
+                is AccountSettingsEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -109,17 +120,7 @@ fun AccountSettingsScreen(
                 onCancel = { showWithdrawConfirm = false },
                 onConfirm = {
                     showWithdrawConfirm = false
-                    coroutineScope.launch {
-                        authRepository.withdraw()
-                            .onSuccess { onLoggedOut() }
-                            .onFailure { error ->
-                                Toast.makeText(
-                                    context,
-                                    error.toUserMessage("회원 탈퇴에 실패했습니다."),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                    }
+                    viewModel.withdraw()
                 }
             )
         }
@@ -131,7 +132,7 @@ fun AccountSettingsScreen(
 private fun AccountSettingsScreenPreview() {
     HampouchTheme {
         AccountSettingsScreen(
-            profile = MyPageMockData.defaultProfile(),
+            profile = MyPageMockData.defaultProfile(AccountMockDataSource.normalUser),
             onBackClick = {},
             onProfileEditClick = {},
             onChangePasswordClick = {},

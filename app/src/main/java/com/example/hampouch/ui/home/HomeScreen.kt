@@ -32,14 +32,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.data.repository.MiniChallengeRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.common.previewChallengeState
 import com.example.hampouch.ui.dialog.ChallengeEndedDialog
 import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
@@ -58,7 +59,6 @@ import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import com.example.hampouch.ui.mypage.MyPageScreen
 import com.example.hampouch.ui.mypage.RecordAlarmStore
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -118,6 +118,7 @@ fun HomeScreen(
         viewModel.events.collect { event ->
             when (event) {
                 HomeEvent.ResumedFromBreak -> onStartChallengeClick()
+                HomeEvent.ChallengeEndAcknowledged -> onChallengeEndedFinishClick()
                 is HomeEvent.ShowMessage ->
                     Toast.makeText(homeContext, event.message, Toast.LENGTH_SHORT).show()
             }
@@ -134,18 +135,15 @@ fun HomeScreen(
             Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
         }
     }
-    LaunchedEffect(Unit) {
-        ChallengeRepository.loadCurrentChallenge().onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("챌린지 현황 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
-        }
-    }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
     val records by viewModel.records.collectAsStateWithLifecycle()
+    val challengeState by viewModel.challengeState.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val recordsForDate: (LocalDate) -> List<ExpenseRecord> = { date ->
         records.values.filter { it.date == date }
     }
-    val baseUiState = remember(selectedDate, ChallengeRepository.activeChallenge?.id) {
-        mockStateForDate(selectedDate, referenceToday)
+    val baseUiState = remember(selectedDate, challengeState, currentUser) {
+        mockStateForDate(challengeState, currentUser.name, selectedDate, referenceToday)
     }
     val storeExpenses = recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
@@ -158,12 +156,12 @@ fun HomeScreen(
         )
     }
     val uiState = baseUiState.copy(expenses = storeExpenses)
-    val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
+    val resolvedChallenge = challengeState.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val liveDailyLimit = resolvedChallenge?.dailyLimitOn(selectedDate) ?: challenge.dailyLimit
         val todaySpent = uiState.expenses.sumOf { it.amount }
         val progress = resolvedChallenge?.let { rc ->
-            ChallengeRepository.computeProgress(referenceToday, rc) { date ->
+            challengeState.computeProgress(referenceToday, rc) { date ->
                 recordsForDate(date).sumOf { it.amount }
             }
         }
@@ -234,18 +232,11 @@ fun HomeScreen(
                         onRestMoreClick = onExtendBreak
                     )
 
-                    ChallengeRepository.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
-                        totalDays = ChallengeRepository.activeChallenge!!.totalDays,
-                        hasVisitedExpenseEdit = ChallengeRepository.hasVisitedExpenseEditAfterEnd,
+                    challengeState.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
+                        totalDays = challengeState.activeChallenge!!.totalDays,
+                        hasVisitedExpenseEdit = challengeState.hasVisitedExpenseEditAfterEnd,
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
-                        onFinishChallengeClick = {
-                            coroutineScope.launch {
-                                ChallengeRepository.acknowledgeChallengeEnd().onFailure { error ->
-                                    Toast.makeText(context, error.toUserMessage("챌린지 종료 처리에 실패했습니다."), Toast.LENGTH_SHORT).show()
-                                }
-                                onChallengeEndedFinishClick()
-                            }
-                        }
+                        onFinishChallengeClick = viewModel::acknowledgeChallengeEnd
                     )
 
                     RecordAlarmStore.isMissingReminderDue(referenceToday, LocalTime.now(), hasExpenseToday) ->
@@ -260,7 +251,7 @@ fun HomeScreen(
                             },
                             onLaterClick = {
                                 RecordAlarmStore.dismissForToday(referenceToday)
-                                ChallengeRepository.markNoRecord(referenceToday)
+                                viewModel.markNoRecord(referenceToday)
                             }
                         )
                 }
@@ -321,8 +312,12 @@ fun HomeScreen(
     }
 }
 
-private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState =
-    HomeMockData.freshDayState(UserSession.currentUser.name, date)
+private fun mockStateForDate(
+    challengeState: ChallengeState,
+    userName: String,
+    date: LocalDate,
+    referenceToday: LocalDate
+): HomeUiState = HomeMockData.freshDayState(challengeState, userName, date)
 
 @Composable
 private fun HomeContent(
@@ -426,28 +421,28 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
 @Composable
 private fun HomeScreenChubbyPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.freshDayState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.freshDayState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "2. 지출 반영 예시 - 통통(86%)")
 @Composable
 private fun HomeScreenDecreasingPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.decreasingBalanceState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.decreasingBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "3. 보통(36%)")
 @Composable
 private fun HomeScreenNormalPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.normalBalanceState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.normalBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "4-5. 홀쭉(15%) + 경고 배너")
 @Composable
 private fun HomeScreenWarningPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.lowBalanceWithWarningState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.lowBalanceWithWarningState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "6. 진행 중인 챌린지 없음")

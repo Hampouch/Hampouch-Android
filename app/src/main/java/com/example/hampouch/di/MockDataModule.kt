@@ -1,8 +1,14 @@
 package com.example.hampouch.di
 
 import com.example.hampouch.data.local.ExpenseMockDataSource
+import com.example.hampouch.data.local.HamTipsMockDataSource
+import com.example.hampouch.data.local.MiniChallengeLocalStore
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailMockData
+import com.example.hampouch.ui.hamtips.HamTipsMockData
+import com.example.hampouch.ui.minichallenge.MiniChallengeStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +27,20 @@ object MockDataModule {
 
     @Provides
     @Singleton
-    fun provideExpenseMockDataSource(): ExpenseMockDataSource = object : ExpenseMockDataSource {
-        override fun initialRecords(): Map<String, ExpenseRecord> = ExpenseDetailMockData.initialRecords()
+    fun provideExpenseMockDataSource(
+        challengeRepository: ChallengeRepository
+    ): ExpenseMockDataSource = object : ExpenseMockDataSource {
+        override fun initialRecords(): Map<String, ExpenseRecord> =
+            ExpenseDetailMockData.initialRecords(challengeRepository.state.value)
     }
+
+    @Provides
+    @Singleton
+    fun provideHamTipsMockDataSource(): HamTipsMockDataSource = object : HamTipsMockDataSource {
+        override fun allPosts(): List<TipPost> = HamTipsMockData.allPosts()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMiniChallengeLocalStore(): MiniChallengeLocalStore = MiniChallengeStore
 }

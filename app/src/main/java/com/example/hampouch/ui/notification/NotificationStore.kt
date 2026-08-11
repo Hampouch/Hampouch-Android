@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.notification
 
+import com.example.hampouch.domain.repository.AccountScopedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,7 +11,7 @@ import java.time.temporal.ChronoUnit
 private const val EXPIRY_DAYS = 7L
 
 // TODO: 서버팀 알림 API 연동 시 이 목데이터 대신 서버 응답으로 items를 채우도록 교체.
-object NotificationStore {
+object NotificationStore : AccountScopedState {
 
     private var allItems: List<NotificationItem> by mutableStateOf(NotificationMockData.populated())
 
@@ -31,7 +32,7 @@ object NotificationStore {
         allItems = allItems.map { it.copy(isRead = true) }
     }
 
-    fun resetForAccount() {
+    override fun resetForAccount() {
         allItems = NotificationMockData.populated()
     }
 }

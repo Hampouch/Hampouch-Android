@@ -30,6 +30,14 @@ import com.example.hampouch.domain.model.ExpenseTrendResult
 import com.example.hampouch.domain.model.ExpenseWeekdayOrder
 import com.example.hampouch.domain.model.MonthlyTotal
 import com.example.hampouch.domain.model.WeekdayAmount
+import com.example.hampouch.domain.model.categoryBreakdown
+import com.example.hampouch.domain.model.inPeriod
+import com.example.hampouch.domain.model.monthlyTotals
+import com.example.hampouch.domain.model.reasonBreakdown
+import com.example.hampouch.domain.model.recordsForCategory
+import com.example.hampouch.domain.model.recordsForReason
+import com.example.hampouch.domain.model.weekdayBreakdown
+import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +52,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -56,6 +65,7 @@ class ExpenseRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val okHttpClient: OkHttpClient,
     private val authRepository: AuthRepository,
+    private val challengeRepository: ChallengeRepository,
     private val mockDataSource: ExpenseMockDataSource
 ) : ExpenseRepository {
 
@@ -71,7 +81,7 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     private fun upsert(record: ExpenseRecord) {
         _records.value = _records.value + (record.id to record)
-        ChallengeRepository.clearNoRecord(record.date)
+        challengeRepository.clearNoRecord(record.date)
     }
 
     private fun removeLocal(id: String) {
@@ -398,7 +408,26 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
+    /** 목데이터 모드에서 로컬 캐시로부터 기간 요약을 계산한다. */
+    private fun localPeriodSummary(start: LocalDate, end: LocalDate): ExpensePeriodSummary {
+        val records = _records.value.values.toList().inPeriod(start, end)
+        val days = (ChronoUnit.DAYS.between(start, end).toInt() + 1).coerceAtLeast(1)
+        val total = records.sumOf { it.amount }
+        val byDate = records.groupBy { it.date }.mapValues { (_, r) -> r.sumOf { it.amount } }
+        return ExpensePeriodSummary(
+            periodStart = start,
+            periodEnd = end,
+            totalAmount = total,
+            dailyAverage = total / days,
+            dailyBreakdown = byDate.map { (date, amount) -> DailyAmount(date, amount) }.sortedBy { it.date }
+        )
+    }
+
     override suspend fun loadWeekSummary(standardDate: LocalDate): Result<ExpensePeriodSummary> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            val weekStart = sundayOfWeek(standardDate)
+            return Result.success(localPeriodSummary(weekStart, weekStart.plusDays(6)))
+        }
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseWeekSummary(header, standardDate.toString())
@@ -413,6 +442,11 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadMonthSummary(standardMonth: YearMonth): Result<ExpensePeriodSummary> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            return Result.success(
+                localPeriodSummary(standardMonth.atDay(1), standardMonth.atEndOfMonth())
+            )
+        }
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseMonthSummary(header, standardMonth.toString())
@@ -431,6 +465,21 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadAnalysis(periodStart: LocalDate, periodEnd: LocalDate): Result<ExpenseAnalysisSummary> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            val records = _records.value.values.toList().inPeriod(periodStart, periodEnd)
+            return Result.success(
+                ExpenseAnalysisSummary(
+                    periodStart = periodStart,
+                    periodEnd = periodEnd,
+                    totalAmount = records.sumOf { it.amount },
+                    categoryBreakdown = records.categoryBreakdown(),
+                    reasonBreakdown = records.reasonBreakdown(),
+                    weekdayBreakdown = records.weekdayBreakdown(),
+                    weekdayInsight = null,
+                    pouchInsight = null
+                )
+            )
+        }
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseAnalysis(header, periodStart.toString(), periodEnd.toString())
@@ -475,6 +524,11 @@ class ExpenseRepositoryImpl @Inject constructor(
         periodStart: LocalDate,
         periodEnd: LocalDate
     ): Result<ExpenseTagAnalysisResult> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            return Result.success(
+                localTagResult(categoryId, periodStart, periodEnd) { it.recordsForCategory(categoryId) }
+            )
+        }
         val serverCategory = if (categoryId == ExpenseAnalysisEtcId) "ETC" else (localCategoryToServer[categoryId] ?: "ETC")
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
@@ -503,6 +557,11 @@ class ExpenseRepositoryImpl @Inject constructor(
         periodStart: LocalDate,
         periodEnd: LocalDate
     ): Result<ExpenseTagAnalysisResult> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            return Result.success(
+                localTagResult(reasonId, periodStart, periodEnd) { it.recordsForReason(reasonId) }
+            )
+        }
         val serverEmotion = if (reasonId == ExpenseAnalysisEtcId) "ETC" else (localReasonToServer[reasonId] ?: "ETC")
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
@@ -526,7 +585,47 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
+    /** 목데이터 모드의 카테고리·이유별 집계. [pick]으로 해당 태그의 내역만 걸러낸다. */
+    private fun localTagResult(
+        id: String,
+        periodStart: LocalDate,
+        periodEnd: LocalDate,
+        pick: (List<ExpenseRecord>) -> List<ExpenseRecord>
+    ): ExpenseTagAnalysisResult {
+        val periodRecords = _records.value.values.toList().inPeriod(periodStart, periodEnd)
+        val picked = pick(periodRecords)
+        val periodTotal = periodRecords.sumOf { it.amount }
+        val total = picked.sumOf { it.amount }
+        return ExpenseTagAnalysisResult(
+            id = id,
+            totalAmount = total,
+            count = picked.size,
+            percent = if (periodTotal <= 0) 0 else Math.round(total * 100f / periodTotal),
+            records = picked
+        )
+    }
+
     override suspend fun loadTrend(month: YearMonth): Result<ExpenseTrendResult> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) {
+            val totals = _records.value.values.toList().monthlyTotals(month.atDay(1))
+            val currentTotal = totals.lastOrNull()?.amount ?: 0
+            val previousTotal = totals.getOrNull(totals.lastIndex - 1)?.amount ?: 0
+            return Result.success(
+                ExpenseTrendResult(
+                    month = month,
+                    totalAmount = currentTotal,
+                    // 값이 0인 달도 분모에 포함한다(이관 전 화면 계산과 동일).
+                    monthlyAverage = if (totals.isEmpty()) 0 else totals.sumOf { it.amount } / totals.size,
+                    diffRateFromLastMonth = if (previousTotal <= 0) {
+                        null
+                    } else {
+                        Math.round((currentTotal - previousTotal) * 100f / previousTotal)
+                    },
+                    trend = totals,
+                    trendInsight = null
+                )
+            )
+        }
         val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseTrend(header, month.toString())

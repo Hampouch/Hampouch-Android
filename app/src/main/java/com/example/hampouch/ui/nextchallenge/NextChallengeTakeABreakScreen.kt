@@ -19,6 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
@@ -58,7 +59,8 @@ private const val DefaultTakeABreakTotalDays = 14
 fun NextChallengeTakeABreakRoute(
     onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
     var periodEnabled by remember { mutableStateOf(false) }
     var periodDays by remember { mutableStateOf<Int?>(null) }
@@ -70,6 +72,15 @@ fun NextChallengeTakeABreakRoute(
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                NextChallengeEvent.Started -> onStartChallengeClick()
+                is NextChallengeEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val explicitPeriodDays = customPeriodDays?.takeIf { it > 0 } ?: periodDays?.takeIf { it > 0 }
@@ -243,13 +254,7 @@ fun NextChallengeTakeABreakRoute(
                     totalTargetAmount = targetAmount ?: 0,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
-                coroutineScope.launch {
-                    ChallengeRepository.startNewChallenge(request)
-                        .onSuccess { onStartChallengeClick() }
-                        .onFailure { error ->
-                            Toast.makeText(context, error.toUserMessage("챌린지 시작에 실패했습니다."), Toast.LENGTH_SHORT).show()
-                        }
-                }
+                viewModel.startNewChallenge(request)
             }
         )
     }
