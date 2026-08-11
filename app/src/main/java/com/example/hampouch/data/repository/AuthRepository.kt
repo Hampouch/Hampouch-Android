@@ -123,9 +123,10 @@ class AuthRepository private constructor(private val context: Context) {
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    nickname = if (requiresNickname) null else (me?.nickname ?: credential.nickname),
+                    // 닉네임은 소셜 계정이 아니라 서버(/me)가 가진 값을 쓴다.
+                    nickname = if (requiresNickname) null else me?.nickname,
                     email = credential.email,
-                    profileImageUrl = credential.profileImageUrl
+                    profileImageUrl = null
                 )
                 // 닉네임을 마치기 전에는 세션을 저장하지 않는다. 저장해두면 앱을 다시 켰을 때
                 // 닉네임 없이 로그인된 상태가 되어버린다.
@@ -616,7 +617,7 @@ class AuthRepository private constructor(private val context: Context) {
             tokenType = "Bearer",
             nickname = null,
             email = credential.email,
-            profileImageUrl = credential.profileImageUrl
+            profileImageUrl = null
         )
         return Result.success(
             SocialLoginOutcome(session = session, isNewUser = true, requiresNickname = true)

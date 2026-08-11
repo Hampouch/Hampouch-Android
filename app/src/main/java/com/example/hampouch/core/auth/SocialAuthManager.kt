@@ -85,9 +85,7 @@ object SocialAuthManager {
                 SocialCredential(
                     provider = AuthProvider.GOOGLE,
                     providerToken = googleCredential.idToken,
-                    nickname = googleCredential.displayName,
-                    email = googleCredential.email,
-                    profileImageUrl = googleCredential.profilePictureUri?.toString()
+                    email = googleCredential.email
                 )
             )
         } catch (e: GoogleIdTokenParsingException) {
@@ -164,15 +162,12 @@ object SocialAuthManager {
                 return@me
             }
             // 동의하지 않은 항목은 null로 내려오므로 안전하게 접근한다.
-            val account = user.kakaoAccount
             onResult(
                 Result.success(
                     SocialCredential(
                         provider = AuthProvider.KAKAO,
                         providerToken = accessToken,
-                        nickname = account?.profile?.nickname,
-                        email = account?.email,
-                        profileImageUrl = account?.profile?.profileImageUrl
+                        email = user.kakaoAccount?.email
                     )
                 )
             )
@@ -188,9 +183,7 @@ object SocialAuthManager {
         return SocialCredential(
             provider = provider,
             providerToken = "mock-provider-token",
-            nickname = null,
-            email = testEmail,
-            profileImageUrl = null
+            email = testEmail
         )
     }
 }

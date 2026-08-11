@@ -6,12 +6,16 @@ enum class AuthProvider {
     GOOGLE
 }
 
+/**
+ * 소셜 SDK에서 받아오는 정보.
+ *
+ * 닉네임은 가입 시 사용자에게 직접 입력받고 프로필 사진은 마이페이지에서 설정하므로,
+ * 소셜 계정에서는 서버 인증용 토큰과 이메일만 가져온다.
+ */
 data class SocialCredential(
     val provider: AuthProvider,
     val providerToken: String,
-    val nickname: String?,
-    val email: String?,
-    val profileImageUrl: String?
+    val email: String?
 )
 
 data class AuthSession(
