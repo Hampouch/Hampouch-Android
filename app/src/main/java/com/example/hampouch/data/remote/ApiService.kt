@@ -23,6 +23,7 @@ import com.example.hampouch.data.remote.dto.ExpenseDaySummaryData
 import com.example.hampouch.data.remote.dto.ExpenseDetailData
 import com.example.hampouch.data.remote.dto.ExpenseEmotionAnalysisData
 import com.example.hampouch.data.remote.dto.ExpenseIdData
+import com.example.hampouch.data.remote.dto.ExpenseNoSpendRequest
 import com.example.hampouch.data.remote.dto.ExpensePeriodSummaryData
 import com.example.hampouch.data.remote.dto.ExpensePhotoConfirmRequest
 import com.example.hampouch.data.remote.dto.ExpensePhotoPresignData
@@ -378,6 +379,16 @@ interface ApiService {
     suspend fun deleteExpensePhoto(
         @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long
+    ): Response<ApiResponse<Unit>>
+
+    /**
+     * "오늘은 안 썼어요". 0원 지출을 만드는 게 아니라 no_spend_day 기록을 남긴다.
+     * 같은 날짜에 일반 지출이 생기면 서버가 이 기록을 지운다.
+     */
+    @PUT("api/expenses/no-spend")
+    suspend fun markNoSpend(
+        @Header("Authorization") authorization: String,
+        @Body request: ExpenseNoSpendRequest
     ): Response<ApiResponse<Unit>>
 
     @GET("api/expenses/day")

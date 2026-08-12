@@ -154,6 +154,7 @@ fun HomeScreen(
         if (selectedBottomTab == BottomNavItem.HAM_BATTLE) battleViewModel.loadMyBattles()
     }
     val records by viewModel.records.collectAsStateWithLifecycle()
+    val daysWithRecord by viewModel.daysWithRecord.collectAsStateWithLifecycle()
     val challengeState by viewModel.challengeState.collectAsStateWithLifecycle()
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val recordsForDate: (LocalDate) -> List<ExpenseRecord> = { date ->
@@ -231,7 +232,9 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding)
                 )
 
-                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty()
+                // "오늘은 안 썼어요"는 지출 목록에 안 잡히므로 서버의 hasRecord도 함께 본다.
+                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty() ||
+                    referenceToday in daysWithRecord
                 when {
                     restState.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
                         onStartNowClick = viewModel::resumeNow,

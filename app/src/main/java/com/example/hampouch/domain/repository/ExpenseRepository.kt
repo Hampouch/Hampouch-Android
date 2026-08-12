@@ -51,10 +51,17 @@ interface ExpenseRepository {
     suspend fun loadTrend(month: YearMonth): Result<ExpenseTrendResult>
 
     /**
-     * "오늘 지출 없음"을 기록한다. 대응하는 서버 API가 없어 로컬 캐시에만 0원 항목을 남긴다
-     * — 앱을 다시 켜면 사라진다.
+     * 그 날짜의 입력을 마쳤는지(지출이 있거나 "오늘은 안 썼어요"를 눌렀는지).
+     * 서버 `GET /api/expenses/day`의 `hasRecord`로 채워진다.
      */
-    fun markNoSpending(date: LocalDate)
+    val daysWithRecord: StateFlow<Set<LocalDate>>
+
+    /**
+     * "오늘은 안 썼어요"를 기록한다(PUT /api/expenses/no-spend).
+     * 0원 지출을 만드는 게 아니라 해당 날짜를 지출 없이 마감했다는 별도 기록이라,
+     * 지출 목록([records])에는 포함되지 않는다.
+     */
+    suspend fun markNoSpend(date: LocalDate): Result<Unit>
 
     fun resetForAccount()
 }

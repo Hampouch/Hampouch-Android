@@ -415,7 +415,10 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseDetailEvent.Finished -> navController.popBackStack()
-                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                        is ExpenseDetailEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -439,7 +442,10 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseDetailEvent.Finished -> navController.popBackStack()
-                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                        is ExpenseDetailEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -497,7 +503,13 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseInputEvent.Saved -> navController.popBackStack()
-                        is ExpenseInputEvent.ShowMessage -> Log.e(TAG, event.message)
+                        ExpenseInputEvent.NoSpendSaved -> navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                        is ExpenseInputEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -506,7 +518,7 @@ fun AppNavHost(
                 dailyLimit = uiState.dailyLimit,
                 initialDate = uiState.initialDate,
                 onBackClick = { navController.popBackStack() },
-                onNoSpendingToday = { navController.popBackStack() },
+                onNoSpendingToday = { viewModel.markNoSpend(uiState.initialDate) },
                 onComplete = viewModel::save
             )
         }

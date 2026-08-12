@@ -47,6 +47,9 @@ class HomeViewModel @Inject constructor(
     /** id → 지출 내역 캐시. 홈은 선택한 날짜/오늘 기준으로 걸러 쓴다. */
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 
+    /** 지출이 있거나 "오늘은 안 썼어요"를 누른 날짜들. */
+    val daysWithRecord: StateFlow<Set<LocalDate>> = expenseRepository.daysWithRecord
+
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -89,7 +92,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun markNoSpending(date: LocalDate) = expenseRepository.markNoSpending(date)
+    fun markNoSpending(date: LocalDate) {
+        viewModelScope.launch {
+            expenseRepository.markNoSpend(date).onFailure { error ->
+                _events.send(
+                    HomeEvent.ShowMessage(error.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
+                )
+            }
+        }
+    }
 
     fun postponeOneDay() {
         viewModelScope.launch {

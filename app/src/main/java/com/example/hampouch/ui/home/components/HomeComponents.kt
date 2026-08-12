@@ -71,6 +71,8 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.ui.theme.HampouchTheme
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
 
@@ -435,9 +437,9 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick:
     val category = HomeCategoryCatalog.byId(entry.categoryId)
     val icon = category?.icon ?: HomeCategoryCatalog.defaultIcon
     val accentColor = category?.accentColor ?: HomeCategoryCatalog.defaultColor
+    // 카테고리를 고르지 않았으면 줄 자체를 그리지 않는다. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
     val categoryLabel = entry.customCategoryName
         ?: category?.let { stringResource(it.labelResId) }
-        ?: stringResource(R.string.category_etc)
 
     Row(
         modifier = modifier
@@ -462,7 +464,9 @@ fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick:
             if (entry.name != null) {
                 Text(text = entry.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)
             }
-            Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+            if (categoryLabel != null) {
+                Text(text = categoryLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
+            }
         }
         ReasonTagAndAmountColumn(
             reasonTag = entry.reasonTag,
@@ -651,5 +655,49 @@ fun NoActiveChallengeSection(onStartChallengeClick: () -> Unit, modifier: Modifi
                 .width(110.dp)
                 .height(128.dp)
         )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFF1F1F1, name = "지출 카드 - 입력 조합별")
+@Composable
+private fun ExpenseItemCardBranchPreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // 이름 + 카테고리 + 이유
+            ExpenseItemCard(
+                ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+            )
+            // 이유 없음
+            ExpenseItemCard(
+                ExpenseEntry(id = "2", categoryId = "cafe", name = "스타벅스", amount = 4_500)
+            )
+            // 카테고리 미선택
+            ExpenseItemCard(
+                ExpenseEntry(id = "3", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+            )
+            // '기타'를 명시적으로 선택
+            ExpenseItemCard(
+                ExpenseEntry(id = "4", categoryId = "etc", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+            )
+            // 이름 없음
+            ExpenseItemCard(
+                ExpenseEntry(id = "5", categoryId = "cafe", reasonTag = "스트레스", amount = 4_500)
+            )
+            // 이름·카테고리 없음
+            ExpenseItemCard(
+                ExpenseEntry(id = "6", reasonTag = "스트레스", amount = 4_500)
+            )
+            // 전부 없음
+            ExpenseItemCard(
+                ExpenseEntry(id = "7", amount = 4_500)
+            )
+            // 직접 입력 카테고리 + 직접 입력 이유
+            ExpenseItemCard(
+                ExpenseEntry(id = "8", customCategoryName = "직접입력한카테고리", name = "지출내역", reasonTag = "감정태깅", amount = 0)
+            )
+        }
     }
 }

@@ -215,7 +215,7 @@ fun MyPageScreen(
             ProfileEditScreen(
                 currentName = profile.name,
                 currentAvatarUri = profile.avatarUri,
-                isNicknameTaken = MyPageMockData::isNicknameTaken,
+                onValidateNickname = profileViewModel::isNicknameTaken,
                 onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmit = { newName, newAvatarUri ->
                     profileViewModel.update(currentUser, newName, newAvatarUri)

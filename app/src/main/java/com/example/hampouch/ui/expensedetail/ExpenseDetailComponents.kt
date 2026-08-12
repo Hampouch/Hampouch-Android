@@ -102,9 +102,16 @@ fun resolveCategoryColor(categoryId: String?): Color =
 
 @Composable
 fun resolveCategoryLabel(categoryId: String?, customCategoryName: String?): String =
-    customCategoryName
-        ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
+    resolveCategoryLabelOrNull(categoryId, customCategoryName)
         ?: stringResource(R.string.category_etc)
+
+/**
+ * 카테고리를 고르지 않았으면 null. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
+ * 라벨을 생략할 수 있는 화면(홈 카드, 저장 확인)에서 쓴다.
+ */
+@Composable
+fun resolveCategoryLabelOrNull(categoryId: String?, customCategoryName: String?): String? =
+    customCategoryName ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
 
 @Composable
 fun resolveReasonLabel(reasonId: String?, customReason: String?): String? =
@@ -624,7 +631,7 @@ fun ExpenseSummaryCard(
     record: com.example.hampouch.domain.model.ExpenseRecord,
     modifier: Modifier = Modifier
 ) {
-    val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
+    val categoryLabel = resolveCategoryLabelOrNull(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
         modifier = modifier
@@ -652,21 +659,25 @@ fun ExpenseSummaryCard(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(
-                    record.expenseName ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = HPBlack,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    categoryLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HPText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (record.expenseName != null) {
+                    Text(
+                        record.expenseName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = HPBlack,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (categoryLabel != null) {
+                    Text(
+                        categoryLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         ReasonTagAndAmountColumn(
