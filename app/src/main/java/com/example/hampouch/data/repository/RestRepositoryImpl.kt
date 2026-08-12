@@ -1,7 +1,8 @@
 package com.example.hampouch.data.repository
 
 import com.example.hampouch.core.config.RestConfig
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.ChallengeApi
+import com.example.hampouch.data.remote.RestApi
 import com.example.hampouch.data.remote.dto.RestResumeRequest
 import com.example.hampouch.data.remote.dto.RestResumeWhen
 import com.example.hampouch.data.remote.dto.RestStartRequest
@@ -26,7 +27,8 @@ private const val MAX_REST_DAYS = 3650
 
 @Singleton
 class RestRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val challengeApi: ChallengeApi,
+    private val restApi: RestApi,
     private val authRepository: AuthRepository
 ) : RestRepository {
 
@@ -44,9 +46,9 @@ class RestRepositoryImpl @Inject constructor(
     /** 휴식 도메인엔 상태 조회 API가 없어 challenge 도메인의 GET /api/challenges/current(rest 블록)로 보정한다. */
     override suspend fun syncStatus(): Result<Unit> {
         if (!RestConfig.USE_SERVER_REST) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getCurrentChallenge(header)
+            val response = challengeApi.getCurrentChallenge()
             when {
                 response.isSuccessful -> {
                     val resumeDate = response.body()?.data?.rest?.plannedResumeDate?.let(LocalDate::parse)
@@ -68,10 +70,9 @@ class RestRepositoryImpl @Inject constructor(
             _restState.update { it.copy(plannedResumeDate = LocalDate.now().plusDays(days)) }
             return Result.success(Unit)
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.startRest(
-                header,
+            val response = restApi.startRest(
                 RestStartRequest(restDays = resolveRestDays(duration, customDays))
             )
             val data = response.body()?.data
@@ -116,10 +117,9 @@ class RestRepositoryImpl @Inject constructor(
     }
 
     private suspend fun resume(whenValue: String, extendDays: Int? = null): Result<Unit> {
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.resumeRest(
-                header,
+            val response = restApi.resumeRest(
                 RestResumeRequest(`when` = whenValue, extendDays = extendDays)
             )
             val data = response.body()?.data

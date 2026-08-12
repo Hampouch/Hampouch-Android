@@ -11,7 +11,8 @@ import com.example.hampouch.domain.model.TipComment
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.example.hampouch.data.local.HamTipsMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.CommunityApi
+import com.example.hampouch.data.remote.toApiException
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.HamTipsRepository
 import okhttp3.OkHttpClient
@@ -25,7 +26,6 @@ import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
 import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.domain.model.ApiException
-import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.CommunityCommentData
 import com.example.hampouch.data.remote.dto.CommunityCommentWriteRequest
 import com.example.hampouch.data.remote.dto.CommunityFoodWriteRequest
@@ -37,7 +37,6 @@ import com.example.hampouch.data.remote.dto.CommunityPostSummaryData
 import com.example.hampouch.data.remote.dto.CommunityRecruitWriteRequest
 import com.example.hampouch.data.remote.dto.CommunityTipWriteRequest
 import com.example.hampouch.domain.model.formatTimeAgoLabel
-import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,7 +58,7 @@ private const val DEFAULT_PAGE_SIZE = 20
 @Singleton
 class HamTipsRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val apiService: ApiService,
+    private val apiService: CommunityApi,
     private val okHttpClient: OkHttpClient,
     private val authRepository: AuthRepository,
     private val mockDataSource: HamTipsMockDataSource
@@ -211,20 +210,15 @@ class HamTipsRepositoryImpl @Inject constructor(
     )
 
 
-    private suspend fun requireAuthHeader(): Result<String> {
-        val header = authRepository.currentAuthHeader()
-        return if (header != null) {
-            Result.success(header)
+    private suspend fun requireAuthentication(): Result<Unit> =
+        if (authRepository.currentAuthHeader() != null) {
+            Result.success(Unit)
         } else {
             Result.failure(ApiException(code = "AUTH_UNAUTHORIZED", message = "인증이 필요합니다."))
         }
-    }
 
     private fun errorFrom(response: Response<*>, fallbackMessage: String): ApiException {
-        val error = response.errorBody()?.string()?.let {
-            runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-        }
-        return ApiException(code = error?.code ?: "UNKNOWN", message = error?.message ?: fallbackMessage)
+        return response.toApiException(fallbackMessage)
     }
 
     private inline fun <T> runCatchingNetwork(action: () -> Result<T>): Result<T> = try {
@@ -242,9 +236,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadHome(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getCommunityHome(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityHome(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.popularPosts.forEach { upsert(it.toTipPost()) }
@@ -259,10 +253,10 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadCategoryPosts(category: TipCategory, sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.getCommunityPosts(
-                header, category.toServerCategory(), sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE
+                category.toServerCategory(), sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -276,9 +270,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadPopularPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getCommunityPopularPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityPopularPosts(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -291,9 +285,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadPochipickPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getCommunityPochiPicks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityPochiPicks(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost(isEditorAuthor = true)) }
@@ -306,9 +300,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadMyPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getMyCommunityPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getMyCommunityPosts(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -321,9 +315,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     override suspend fun loadSavedPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getMyCommunityBookmarks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getMyCommunityBookmarks(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -342,9 +336,9 @@ class HamTipsRepositoryImpl @Inject constructor(
         }
         val id = postId.toLongOrNull()
             ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getCommunityPostDetail(header, id)
+            val response = apiService.getCommunityPostDetail(id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val isEditorAuthor = postById(postId)?.isEditorAuthor ?: false
@@ -370,11 +364,10 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     private suspend fun uploadImages(localUris: List<String>): Result<List<CommunityImagePresignFileData>> {
         if (localUris.isEmpty()) return Result.success(emptyList())
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val payloads = localUris.map { readLocalImage(it) }
             val response = apiService.presignCommunityImages(
-                header,
                 CommunityImagePresignRequest(
                     files = payloads.map { CommunityImagePresignFileRequest(it.contentType, it.bytes.size.toLong()) }
                 )
@@ -432,11 +425,11 @@ class HamTipsRepositoryImpl @Inject constructor(
             prepend(post)
             return Result.success(post)
         }
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.createCommunityTipPost(
-                header, CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
+                CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -485,11 +478,11 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(post)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.updateCommunityTipPost(
-                header, id, CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
+                id, CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
             )
             if (response.isSuccessful && response.body()?.data != null) {
                 mutate(postId) { post ->
@@ -541,11 +534,10 @@ class HamTipsRepositoryImpl @Inject constructor(
             prepend(post)
             return Result.success(post)
         }
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.createCommunityFoodPost(
-                header,
                 CommunityFoodWriteRequest(
                     title = title, menuName = menuName, placeName = place, price = price,
                     tasteRating = rating.taste, costRating = rating.costEffectiveness, moodRating = rating.mood,
@@ -603,11 +595,11 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(post)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.updateCommunityFoodPost(
-                header, id,
+                id,
                 CommunityFoodWriteRequest(
                     title = title, menuName = menuName, placeName = place, price = price,
                     tasteRating = rating.taste, costRating = rating.costEffectiveness, moodRating = rating.mood,
@@ -650,10 +642,10 @@ class HamTipsRepositoryImpl @Inject constructor(
             prepend(post)
             return Result.success(post)
         }
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.createCommunityRecruitPost(
-                header, CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
+                CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -697,10 +689,10 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(post)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.updateCommunityRecruitPost(
-                header, id, CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
+                id, CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
             )
             if (response.isSuccessful && response.body()?.data != null) {
                 mutate(postId) { post ->
@@ -726,9 +718,9 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.deleteCommunityPost(header, id)
+            val response = apiService.deleteCommunityPost(id)
             if (response.isSuccessful) {
                 removeById(postId)
                 Result.success(Unit)
@@ -748,9 +740,9 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.toggleCommunityLike(header, id)
+            val response = apiService.toggleCommunityLike(id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 mutate(postId) { it.copy(isLiked = data.isLiked, likeCount = data.likeCount) }
@@ -767,9 +759,9 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.toggleCommunityBookmark(header, id)
+            val response = apiService.toggleCommunityBookmark(id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 mutate(postId) { it.copy(isSaved = data.isBookmarked) }
@@ -793,10 +785,10 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.createCommunityComment(
-                header, id, CommunityCommentWriteRequest(parentCommentId = null, content = content)
+                id, CommunityCommentWriteRequest(parentCommentId = null, content = content)
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -831,10 +823,10 @@ class HamTipsRepositoryImpl @Inject constructor(
         val postIdLong = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val parentId = commentId.toLongOrNull()
             ?: return Result.failure(ApiException("COMMUNITY_PARENT_COMMENT_NOT_FOUND", "부모 댓글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val response = apiService.createCommunityComment(
-                header, postIdLong, CommunityCommentWriteRequest(parentCommentId = parentId, content = content)
+                postIdLong, CommunityCommentWriteRequest(parentCommentId = parentId, content = content)
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -866,9 +858,9 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = commentId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.deleteCommunityComment(header, id)
+            val response = apiService.deleteCommunityComment(id)
             if (response.isSuccessful) {
                 mutate(postId) { post ->
                     val comments = post.comments.map { comment ->
@@ -898,9 +890,9 @@ class HamTipsRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         val id = replyId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))
-        val header = requireAuthHeader().getOrElse { return Result.failure(it) }
+        requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.deleteCommunityComment(header, id)
+            val response = apiService.deleteCommunityComment(id)
             if (response.isSuccessful) {
                 mutate(postId) { post ->
                     val comments = post.comments.map { comment ->

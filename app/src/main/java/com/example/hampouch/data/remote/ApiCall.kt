@@ -2,6 +2,7 @@ package com.example.hampouch.data.remote
 
 import android.util.Log
 import com.example.hampouch.data.remote.dto.ApiErrorBody
+import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.domain.model.ApiException
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
@@ -21,6 +22,22 @@ fun Response<*>.toApiException(fallbackMessage: String): ApiException {
         message = error?.message ?: fallbackMessage,
         fieldErrors = error?.fieldErrors
     )
+}
+
+/** HTTP 상태와 서버 envelope를 data 계층의 공통 [Result] 경계로 변환한다. */
+fun <T> Response<ApiResponse<T>>.toApiResult(fallbackMessage: String): Result<T> {
+    if (!isSuccessful) return Result.failure(toApiException(fallbackMessage))
+
+    val envelope = body()
+        ?: return Result.failure(ApiException(code = "EMPTY_RESPONSE", message = fallbackMessage))
+    val data = envelope.data
+        ?: return Result.failure(
+            ApiException(
+                code = envelope.code.ifBlank { "EMPTY_RESPONSE" },
+                message = envelope.message.ifBlank { fallbackMessage }
+            )
+        )
+    return Result.success(data)
 }
 
 inline fun <T> runCatchingNetwork(tag: String, action: () -> Result<T>): Result<T> = try {

@@ -84,7 +84,7 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface ApiService {
+interface AuthApi {
 
     @POST("api/auth/social")
     suspend fun loginWithSocial(@Body request: SocialLoginRequest): Response<ApiResponse<SocialLoginData>>
@@ -109,13 +109,13 @@ interface ApiService {
 
     @PATCH("api/auth/nickname")
     suspend fun setNickname(
-        @Header("Authorization") authorization: String,
+        @Header("Authorization") authorization: String? = null,
         @Body request: SetNicknameRequest
     ): Response<ApiResponse<SetNicknameData>>
 
     @GET("api/auth/me")
     suspend fun getMe(
-        @Header("Authorization") authorization: String
+        @Header("Authorization") authorization: String? = null
     ): Response<ApiResponse<AuthMeData>>
 
     @POST("api/auth/refresh")
@@ -123,27 +123,24 @@ interface ApiService {
 
     @POST("api/auth/logout")
     suspend fun logout(
-        @Header("Authorization") authorization: String,
         @Body request: LogoutRequest
     ): Response<ApiResponse<Unit>>
 
     @DELETE("api/auth/me")
-    suspend fun withdraw(
-        @Header("Authorization") authorization: String
-    ): Response<ApiResponse<Unit>>
+    suspend fun withdraw(): Response<ApiResponse<Unit>>
+}
 
+interface BattleApi {
     /**
      * 로그인한 사용자가 참가 중인 햄배틀을 상태별로 조회한다. status를 생략하면 전체 상태를 조회한다.
      */
     @GET("api/battles")
     suspend fun getMyBattles(
-        @Header("Authorization") authorization: String,
         @Query("status") status: String? = null
     ): Response<ApiResponse<MyBattlesData>>
 
     @POST("api/battles")
     suspend fun createBattle(
-        @Header("Authorization") authorization: String,
         @Body request: CreateBattleRequest
     ): Response<ApiResponse<CreateBattleData>>
 
@@ -152,62 +149,56 @@ interface ApiService {
      */
     @GET("api/battles/invitations/{battleCode}")
     suspend fun getBattleInvitation(
-        @Header("Authorization") authorization: String,
         @Path("battleCode") battleCode: String
     ): Response<ApiResponse<BattleInvitationPreviewData>>
 
     @POST("api/battles/invitations/{battleCode}")
     suspend fun joinBattle(
-        @Header("Authorization") authorization: String,
         @Path("battleCode") battleCode: String
     ): Response<ApiResponse<JoinBattleData>>
 
     @GET("api/battles/{battleId}")
     suspend fun getBattleDetail(
-        @Header("Authorization") authorization: String,
         @Path("battleId") battleId: Long
     ): Response<ApiResponse<BattleDetailData>>
+}
 
+interface MiniChallengeApi {
     @GET("api/mini-challenges")
     suspend fun getMiniChallenges(
-        @Header("Authorization") authorization: String,
         @Query("date") date: String? = null
     ): Response<ApiResponse<MiniChallengeDayData>>
 
     @GET("api/mini-challenges/recommended")
     suspend fun getRecommendedMiniChallenges(
-        @Header("Authorization") authorization: String,
         @Query("durationDays") durationDays: Int? = null
     ): Response<ApiResponse<RecommendedMiniChallengeListData>>
 
     @POST("api/mini-challenges")
     suspend fun addRecommendedMiniChallenge(
-        @Header("Authorization") authorization: String,
         @Body request: AddRecommendedMiniChallengeRequest
     ): Response<ApiResponse<MiniChallengeCreatedData>>
 
     @POST("api/mini-challenges")
     suspend fun addCustomMiniChallenge(
-        @Header("Authorization") authorization: String,
         @Body request: AddCustomMiniChallengeRequest
     ): Response<ApiResponse<MiniChallengeCreatedData>>
 
     @DELETE("api/mini-challenges/{miniChallengeId}")
     suspend fun deleteMiniChallenge(
-        @Header("Authorization") authorization: String,
         @Path("miniChallengeId") miniChallengeId: Long
     ): Response<Unit>
 
     @PUT("api/mini-challenges/{miniChallengeId}/check")
     suspend fun checkMiniChallenge(
-        @Header("Authorization") authorization: String,
         @Path("miniChallengeId") miniChallengeId: Long,
         @Body request: MiniChallengeCheckRequest
     ): Response<ApiResponse<MiniChallengeCheckData>>
+}
 
+interface CommunityApi {
     @GET("api/community/home")
     suspend fun getCommunityHome(
-        @Header("Authorization") authorization: String,
         @Query("sortType") sortType: String,
         @Query("page") page: Int,
         @Query("size") size: Int
@@ -215,7 +206,6 @@ interface ApiService {
 
     @GET("api/community/posts")
     suspend fun getCommunityPosts(
-        @Header("Authorization") authorization: String,
         @Query("category") category: String,
         @Query("sortType") sortType: String,
         @Query("page") page: Int,
@@ -224,83 +214,70 @@ interface ApiService {
 
     @GET("api/community/posts/{postId}")
     suspend fun getCommunityPostDetail(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long
     ): Response<ApiResponse<CommunityPostDetailData>>
 
     @DELETE("api/community/posts/{postId}")
     suspend fun deleteCommunityPost(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long
     ): Response<ApiResponse<Unit>>
 
     @POST("api/community/posts/tips")
     suspend fun createCommunityTipPost(
-        @Header("Authorization") authorization: String,
         @Body request: CommunityTipWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @PATCH("api/community/posts/tips/{postId}")
     suspend fun updateCommunityTipPost(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long,
         @Body request: CommunityTipWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @POST("api/community/posts/foods")
     suspend fun createCommunityFoodPost(
-        @Header("Authorization") authorization: String,
         @Body request: CommunityFoodWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @PATCH("api/community/posts/foods/{postId}")
     suspend fun updateCommunityFoodPost(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long,
         @Body request: CommunityFoodWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @POST("api/community/posts/recruits")
     suspend fun createCommunityRecruitPost(
-        @Header("Authorization") authorization: String,
         @Body request: CommunityRecruitWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @PATCH("api/community/posts/recruits/{postId}")
     suspend fun updateCommunityRecruitPost(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long,
         @Body request: CommunityRecruitWriteRequest
     ): Response<ApiResponse<CommunityPostIdData>>
 
     @POST("api/community/posts/{postId}/comments")
     suspend fun createCommunityComment(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long,
         @Body request: CommunityCommentWriteRequest
     ): Response<ApiResponse<CommunityCommentWriteData>>
 
     @DELETE("api/community/comments/{commentId}")
     suspend fun deleteCommunityComment(
-        @Header("Authorization") authorization: String,
         @Path("commentId") commentId: Long
     ): Response<ApiResponse<Unit>>
 
     @POST("api/community/posts/{postId}/likes")
     suspend fun toggleCommunityLike(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long
     ): Response<ApiResponse<CommunityLikeToggleData>>
 
     @POST("api/community/posts/{postId}/bookmarks")
     suspend fun toggleCommunityBookmark(
-        @Header("Authorization") authorization: String,
         @Path("postId") postId: Long
     ): Response<ApiResponse<CommunityBookmarkToggleData>>
 
     @GET("api/community/me/posts")
     suspend fun getMyCommunityPosts(
-        @Header("Authorization") authorization: String,
         @Query("sortType") sortType: String,
         @Query("cursor") cursor: Int,
         @Query("size") size: Int
@@ -308,7 +285,6 @@ interface ApiService {
 
     @GET("api/community/me/bookmarks")
     suspend fun getMyCommunityBookmarks(
-        @Header("Authorization") authorization: String,
         @Query("sortType") sortType: String,
         @Query("cursor") cursor: Int,
         @Query("size") size: Int
@@ -316,7 +292,6 @@ interface ApiService {
 
     @GET("api/community/posts/popular")
     suspend fun getCommunityPopularPosts(
-        @Header("Authorization") authorization: String,
         @Query("sortType") sortType: String,
         @Query("page") page: Int,
         @Query("size") size: Int
@@ -324,7 +299,6 @@ interface ApiService {
 
     @GET("api/community/posts/pochi-picks")
     suspend fun getCommunityPochiPicks(
-        @Header("Authorization") authorization: String,
         @Query("sortType") sortType: String,
         @Query("page") page: Int,
         @Query("size") size: Int
@@ -332,52 +306,46 @@ interface ApiService {
 
     @POST("api/community/images/presign")
     suspend fun presignCommunityImages(
-        @Header("Authorization") authorization: String,
         @Body request: CommunityImagePresignRequest
     ): Response<ApiResponse<CommunityImagePresignData>>
+}
 
+interface ExpenseApi {
     @POST("api/expenses")
     suspend fun createExpense(
-        @Header("Authorization") authorization: String,
         @Body request: ExpenseCreateRequest
     ): Response<ApiResponse<ExpenseIdData>>
 
     @PUT("api/expenses/{expenseId}")
     suspend fun updateExpense(
-        @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long,
         @Body request: ExpenseUpdateRequest
     ): Response<ApiResponse<ExpenseIdData>>
 
     @GET("api/expenses/{expenseId}")
     suspend fun getExpenseDetail(
-        @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long
     ): Response<ApiResponse<ExpenseDetailData>>
 
     @DELETE("api/expenses/{expenseId}")
     suspend fun deleteExpense(
-        @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long
     ): Response<ApiResponse<Unit>>
 
     @POST("api/expenses/photos/presigned")
     suspend fun presignExpensePhoto(
-        @Header("Authorization") authorization: String,
         @Query("expenseId") expenseId: Long?,
         @Body request: ExpensePhotoPresignRequest
     ): Response<ApiResponse<ExpensePhotoPresignData>>
 
     @PATCH("api/expenses/{expenseId}/photos")
     suspend fun confirmExpensePhoto(
-        @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long,
         @Body request: ExpensePhotoConfirmRequest
     ): Response<ApiResponse<Unit>>
 
     @DELETE("api/expenses/{expenseId}/photos")
     suspend fun deleteExpensePhoto(
-        @Header("Authorization") authorization: String,
         @Path("expenseId") expenseId: Long
     ): Response<ApiResponse<Unit>>
 
@@ -387,38 +355,32 @@ interface ApiService {
      */
     @PUT("api/expenses/no-spend")
     suspend fun markNoSpend(
-        @Header("Authorization") authorization: String,
         @Body request: ExpenseNoSpendRequest
     ): Response<ApiResponse<Unit>>
 
     @GET("api/expenses/day")
     suspend fun getExpenseDay(
-        @Header("Authorization") authorization: String,
         @Query("date") date: String
     ): Response<ApiResponse<ExpenseDaySummaryData>>
 
     @GET("api/expenses/summary/week")
     suspend fun getExpenseWeekSummary(
-        @Header("Authorization") authorization: String,
         @Query("standardDate") standardDate: String
     ): Response<ApiResponse<ExpensePeriodSummaryData>>
 
     @GET("api/expenses/summary/month")
     suspend fun getExpenseMonthSummary(
-        @Header("Authorization") authorization: String,
         @Query("standardMonth") standardMonth: String
     ): Response<ApiResponse<ExpensePeriodSummaryData>>
 
     @GET("api/expenses/analysis")
     suspend fun getExpenseAnalysis(
-        @Header("Authorization") authorization: String,
         @Query("periodStart") periodStart: String,
         @Query("periodEnd") periodEnd: String
     ): Response<ApiResponse<ExpenseAnalysisData>>
 
     @GET("api/expenses/analysis/category/{category}")
     suspend fun getExpenseCategoryAnalysis(
-        @Header("Authorization") authorization: String,
         @Path("category") category: String,
         @Query("periodStart") periodStart: String,
         @Query("periodEnd") periodEnd: String
@@ -426,7 +388,6 @@ interface ApiService {
 
     @GET("api/expenses/analysis/emotion/{emotion}")
     suspend fun getExpenseEmotionAnalysis(
-        @Header("Authorization") authorization: String,
         @Path("emotion") emotion: String,
         @Query("periodStart") periodStart: String,
         @Query("periodEnd") periodEnd: String
@@ -434,60 +395,54 @@ interface ApiService {
 
     @GET("api/expenses/analysis/trend")
     suspend fun getExpenseTrend(
-        @Header("Authorization") authorization: String,
         @Query("month") month: String
     ): Response<ApiResponse<ExpenseTrendData>>
+}
 
+interface ChallengeApi {
     @POST("api/challenges")
     suspend fun createChallenge(
-        @Header("Authorization") authorization: String,
         @Body request: ChallengeCreateRequest
     ): Response<ApiResponse<ChallengeCreateData>>
 
     @GET("api/challenges/current")
     suspend fun getCurrentChallenge(
-        @Header("Authorization") authorization: String
     ): Response<ApiResponse<ChallengeCurrentData>>
 
     @GET("api/challenges/history")
     suspend fun getChallengeHistory(
-        @Header("Authorization") authorization: String
     ): Response<ApiResponse<ChallengeHistoryListData>>
 
     @GET("api/challenges/{challengeId}/result")
     suspend fun getChallengeResult(
-        @Header("Authorization") authorization: String,
         @Path("challengeId") challengeId: Long
     ): Response<ApiResponse<ChallengeResultData>>
 
     @POST("api/challenges/{challengeId}/give-up")
     suspend fun giveUpChallenge(
-        @Header("Authorization") authorization: String,
         @Path("challengeId") challengeId: Long
     ): Response<ApiResponse<ChallengeStatusData>>
 
     @PUT("api/challenges/{challengeId}/focus-categories")
     suspend fun updateChallengeFocusCategories(
-        @Header("Authorization") authorization: String,
         @Path("challengeId") challengeId: Long,
         @Body request: ChallengeFocusCategoriesRequest
     ): Response<ApiResponse<ChallengeFocusCategoriesData>>
 
     @POST("api/challenges/{challengeId}/close")
     suspend fun closeChallenge(
-        @Header("Authorization") authorization: String,
         @Path("challengeId") challengeId: Long
     ): Response<ApiResponse<ChallengeCloseData>>
+}
 
+interface RestApi {
     @POST("api/rests")
     suspend fun startRest(
-        @Header("Authorization") authorization: String,
         @Body request: RestStartRequest
     ): Response<ApiResponse<RestStartData>>
 
     @POST("api/rests/resume")
     suspend fun resumeRest(
-        @Header("Authorization") authorization: String,
         @Body request: RestResumeRequest
     ): Response<ApiResponse<RestResumeData>>
 }

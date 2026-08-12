@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.local.ExpenseMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.ExpenseApi
 import com.example.hampouch.data.remote.dto.ExpenseCreateRequest
 import com.example.hampouch.data.remote.dto.ExpenseNoSpendRequest
 import com.example.hampouch.data.remote.dto.ExpenseDaySummaryItemData
@@ -63,7 +63,7 @@ private const val TAG = "ExpenseRepository"
 @Singleton
 class ExpenseRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val apiService: ApiService,
+    private val apiService: ExpenseApi,
     private val okHttpClient: OkHttpClient,
     private val authRepository: AuthRepository,
     private val challengeRepository: ChallengeRepository,
@@ -102,9 +102,9 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun markNoSpend(date: LocalDate): Result<Unit> {
         if (!ExpenseConfig.USE_SERVER_EXPENSE) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.markNoSpend(header, ExpenseNoSpendRequest(date = date.toString()))
+            val response = apiService.markNoSpend(ExpenseNoSpendRequest(date = date.toString()))
             if (response.isSuccessful) {
                 setDayRecorded(date, true)
                 Result.success(Unit)
@@ -191,11 +191,10 @@ class ExpenseRepositoryImpl @Inject constructor(
         LocalImagePayload(bytes = bytes, contentType = resolver.getType(uri) ?: "image/jpeg")
     }
 
-    private suspend fun uploadNewImage(header: String, expenseId: Long?, localUri: String): Result<String> =
+    private suspend fun uploadNewImage(expenseId: Long?, localUri: String): Result<String> =
         runCatchingNetwork(TAG) {
             val payload = readLocalImage(localUri)
             val response = apiService.presignExpensePhoto(
-                header,
                 expenseId,
                 ExpensePhotoPresignRequest(contentType = payload.contentType, size = payload.bytes.size.toLong())
             )
@@ -216,7 +215,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
 
     private suspend fun syncPhoto(
-        header: String,
         expenseId: Long,
         previousUri: String?,
         newUri: String?
@@ -224,7 +222,7 @@ class ExpenseRepositoryImpl @Inject constructor(
         if (newUri == previousUri) return Result.success(Unit)
         if (newUri == null) {
             return runCatchingNetwork(TAG) {
-                val response = apiService.deleteExpensePhoto(header, expenseId)
+                val response = apiService.deleteExpensePhoto(expenseId)
                 if (response.isSuccessful) {
                     Result.success(Unit)
                 } else {
@@ -233,9 +231,9 @@ class ExpenseRepositoryImpl @Inject constructor(
             }
         }
         if (isRemoteUrl(newUri)) return Result.success(Unit)
-        val imageKey = uploadNewImage(header, expenseId, newUri).getOrElse { return Result.failure(it) }
+        val imageKey = uploadNewImage(expenseId, newUri).getOrElse { return Result.failure(it) }
         return runCatchingNetwork(TAG) {
-            val response = apiService.confirmExpensePhoto(header, expenseId, ExpensePhotoConfirmRequest(imageKey))
+            val response = apiService.confirmExpensePhoto(expenseId, ExpensePhotoConfirmRequest(imageKey))
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -310,11 +308,11 @@ class ExpenseRepositoryImpl @Inject constructor(
             upsert(record)
             return Result.success(record)
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val localUri = record.photoUris.firstOrNull()
             val imageKey = if (localUri != null && !isRemoteUrl(localUri)) {
-                uploadNewImage(header, expenseId = null, localUri = localUri).getOrElse {
+                uploadNewImage(expenseId = null, localUri = localUri).getOrElse {
                     return@runCatchingNetwork Result.failure(it)
                 }
             } else {
@@ -323,7 +321,6 @@ class ExpenseRepositoryImpl @Inject constructor(
             val (category, customCategory) = categoryRequestPair(record)
             val (emotion, customEmotion) = emotionRequestPair(record)
             val response = apiService.createExpense(
-                header,
                 ExpenseCreateRequest(
                     name = record.expenseName?.takeIf { it.isNotBlank() },
                     price = record.amount,
@@ -354,13 +351,13 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val id = record.id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         val previousPhotoUri = _records.value[record.id]?.photoUris?.firstOrNull()
         return runCatchingNetwork(TAG) {
             val (category, customCategory) = categoryRequestPair(record)
             val (emotion, customEmotion) = emotionRequestPair(record)
             val response = apiService.updateExpense(
-                header, id,
+                id,
                 ExpenseUpdateRequest(
                     name = record.expenseName?.takeIf { it.isNotBlank() },
                     price = record.amount,
@@ -375,7 +372,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             if (!response.isSuccessful || response.body()?.data == null) {
                 return@runCatchingNetwork Result.failure(response.toApiException("지출 내역 수정에 실패했습니다."))
             }
-            syncPhoto(header, id, previousUri = previousPhotoUri, newUri = record.photoUris.firstOrNull())
+            syncPhoto(id, previousUri = previousPhotoUri, newUri = record.photoUris.firstOrNull())
                 .onFailure { return@runCatchingNetwork Result.failure(it) }
             upsert(record)
             Result.success(record)
@@ -389,9 +386,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val expenseId = id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.deleteExpense(header, expenseId)
+            val response = apiService.deleteExpense(expenseId)
             if (response.isSuccessful) {
                 removeLocal(id)
                 Result.success(Unit)
@@ -409,9 +406,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val expenseId = id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseDetail(header, expenseId)
+            val response = apiService.getExpenseDetail(expenseId)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val record = data.toExpenseRecord()
@@ -425,9 +422,9 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun loadDay(date: LocalDate): Result<Unit> {
         if (!ExpenseConfig.USE_SERVER_EXPENSE) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseDay(header, date.toString())
+            val response = apiService.getExpenseDay(date.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val fetched = data.expenses.associate { it.expenseId.toString() to it.toExpenseRecord(date) }
@@ -461,9 +458,9 @@ class ExpenseRepositoryImpl @Inject constructor(
             val weekStart = sundayOfWeek(standardDate)
             return Result.success(localPeriodSummary(weekStart, weekStart.plusDays(6)))
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseWeekSummary(header, standardDate.toString())
+            val response = apiService.getExpenseWeekSummary(standardDate.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val weekStart = sundayOfWeek(standardDate)
@@ -480,9 +477,9 @@ class ExpenseRepositoryImpl @Inject constructor(
                 localPeriodSummary(standardMonth.atDay(1), standardMonth.atEndOfMonth())
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseMonthSummary(header, standardMonth.toString())
+            val response = apiService.getExpenseMonthSummary(standardMonth.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 Result.success(
@@ -513,9 +510,9 @@ class ExpenseRepositoryImpl @Inject constructor(
                 )
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseAnalysis(header, periodStart.toString(), periodEnd.toString())
+            val response = apiService.getExpenseAnalysis(periodStart.toString(), periodEnd.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val categoryByLocalId = data.categoryBreakdown
@@ -563,10 +560,10 @@ class ExpenseRepositoryImpl @Inject constructor(
             )
         }
         val serverCategory = if (categoryId == ExpenseAnalysisEtcId) "ETC" else (localCategoryToServer[categoryId] ?: "ETC")
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseCategoryAnalysis(
-                header, serverCategory, periodStart.toString(), periodEnd.toString()
+                serverCategory, periodStart.toString(), periodEnd.toString()
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -596,10 +593,10 @@ class ExpenseRepositoryImpl @Inject constructor(
             )
         }
         val serverEmotion = if (reasonId == ExpenseAnalysisEtcId) "ETC" else (localReasonToServer[reasonId] ?: "ETC")
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseEmotionAnalysis(
-                header, serverEmotion, periodStart.toString(), periodEnd.toString()
+                serverEmotion, periodStart.toString(), periodEnd.toString()
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -659,9 +656,9 @@ class ExpenseRepositoryImpl @Inject constructor(
                 )
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseTrend(header, month.toString())
+            val response = apiService.getExpenseTrend(month.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 Result.success(

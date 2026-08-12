@@ -7,11 +7,13 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.hampouch.core.config.AuthConfig
+import com.example.hampouch.core.network.AuthTokenProvider
 import com.example.hampouch.domain.model.AuthProvider
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.AuthApi
+import com.example.hampouch.data.remote.toApiException
 import com.example.hampouch.di.AuthDataStore
 import javax.inject.Inject
 import javax.inject.Provider
@@ -19,7 +21,6 @@ import javax.inject.Singleton
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
-import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
@@ -36,7 +37,6 @@ import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
 import com.example.hampouch.data.local.AccountMockDataSource
-import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -56,11 +56,11 @@ sealed class SessionStatus {
 @Singleton
 class AuthRepository @Inject constructor(
     @AuthDataStore private val authDataStore: DataStore<Preferences>,
-    private val apiService: ApiService,
+    private val apiService: AuthApi,
     /** [AccountDataCoordinator]가 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
     private val accountDataCoordinator: Provider<AccountDataCoordinator>,
     private val onboardingLocalStore: OnboardingLocalStore
-) {
+) : AuthTokenProvider {
 
     private object Keys {
         val PROVIDER = stringPreferencesKey("provider")
@@ -164,16 +164,7 @@ class AuthRepository @Inject constructor(
                     )
                 )
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "소셜 로그인에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("소셜 로그인에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -204,16 +195,7 @@ class AuthRepository @Inject constructor(
                 saveSession(updatedSession)
                 Result.success(updatedSession)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "닉네임 설정에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("닉네임 설정에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -248,16 +230,7 @@ class AuthRepository @Inject constructor(
                 saveSession(session)
                 Result.success(session)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "로그인에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("로그인에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -283,16 +256,7 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful && body != null) {
                 Result.success(body)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "인증번호 발송에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("인증번호 발송에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -319,16 +283,7 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful && body != null) {
                 Result.success(body)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "인증번호를 다시 확인해주세요.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("인증번호를 다시 확인해주세요."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -349,16 +304,7 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful && body != null) {
                 Result.success(body)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "닉네임 확인에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("닉네임 확인에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -382,16 +328,7 @@ class AuthRepository @Inject constructor(
                 onboardingLocalStore.reserveForNewAccount(email)
                 Result.success(body)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "회원가입에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("회원가입에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -419,16 +356,7 @@ class AuthRepository @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "비밀번호 재설정에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("비밀번호 재설정에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -512,19 +440,10 @@ class AuthRepository @Inject constructor(
                 saveSession(updatedSession)
                 Result.success(updatedSession)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
                 if (response.code() == 401 || response.code() == 403) {
                     clearSession()
                 }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "토큰 재발급에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("토큰 재발급에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -546,23 +465,13 @@ class AuthRepository @Inject constructor(
         }
         return try {
             val response = apiService.logout(
-                authorization = "${session.tokenType} ${session.accessToken}",
                 request = LogoutRequest(refreshToken = session.refreshToken)
             )
             clearSession()
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "로그아웃에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("로그아웃에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -585,23 +494,12 @@ class AuthRepository @Inject constructor(
             return Result.success(Unit)
         }
         return try {
-            val response = apiService.withdraw(
-                authorization = "${session.tokenType} ${session.accessToken}"
-            )
+            val response = apiService.withdraw()
             if (response.isSuccessful) {
                 clearSession()
                 Result.success(Unit)
             } else {
-                val error = response.errorBody()?.string()?.let {
-                    runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-                }
-                Result.failure(
-                    ApiException(
-                        code = error?.code ?: "UNKNOWN",
-                        message = error?.message ?: "회원 탈퇴에 실패했습니다.",
-                        fieldErrors = error?.fieldErrors
-                    )
-                )
+                Result.failure(response.toApiException("회원 탈퇴에 실패했습니다."))
             }
         } catch (e: CancellationException) {
             throw e
@@ -747,7 +645,7 @@ class AuthRepository @Inject constructor(
         role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
     )
 
-    suspend fun currentAuthHeader(): String? {
+    override suspend fun currentAuthHeader(): String? {
         val session = userSession.first() ?: return null
         return "${session.tokenType} ${session.accessToken}"
     }

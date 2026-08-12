@@ -10,16 +10,16 @@ import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.data.local.MiniChallengeMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.MiniChallengeApi
+import com.example.hampouch.data.remote.toApiException
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
-import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.CustomMiniChallengeBody
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeItemDto
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeDto
-import com.google.gson.Gson
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
@@ -37,7 +37,7 @@ private const val TAG = "MiniChallengeRepository"
 // 미니 챌린지 연동
 @Singleton
 class MiniChallengeRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val apiService: MiniChallengeApi,
     private val authRepository: AuthRepository,
     private val mockDataSource: MiniChallengeMockDataSource
 ) : MiniChallengeRepository, AccountScopedState {
@@ -111,8 +111,8 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     override suspend fun loadChallenges(date: LocalDate): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.getMiniChallenges(authorization, date.toString())
+            requireAuthentication()
+            val response = apiService.getMiniChallenges(date.toString())
             val body = requireBody(response, "미니 챌린지 조회에 실패했습니다.")
             setChallengesForDate(date, body.items.map { it.toDomain() })
             setSummaryForDate(
@@ -130,8 +130,8 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     override suspend fun loadRecommended(durationDays: Int?): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.getRecommendedMiniChallenges(authorization, durationDays)
+            requireAuthentication()
+            val response = apiService.getRecommendedMiniChallenges(durationDays)
             val body = requireBody(response, "추천 목록 조회에 실패했습니다.")
             replaceRecommendedChallenges(body.items.map { it.toDomain() })
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
@@ -152,11 +152,10 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             return Result.success(if (added) date else null)
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val recommendedId = recommended.id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_RECOMMENDED_NOT_FOUND", message = "추천 미니 챌린지를 찾을 수 없습니다.")
             val response = apiService.addRecommendedMiniChallenge(
-                authorization,
                 AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
             )
             requireBody(response, "미니 챌린지 추가에 실패했습니다.")
@@ -177,9 +176,8 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             return Result.success(if (added) date else null)
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val response = apiService.addCustomMiniChallenge(
-                authorization,
                 AddCustomMiniChallengeRequest(
                     custom = CustomMiniChallengeBody(title = name.trim(), durationDays = totalDays.toDurationDays())
                 )
@@ -198,11 +196,11 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val miniChallengeId = id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_NOT_FOUND", message = "미니 챌린지를 찾을 수 없습니다.")
-            val response = apiService.deleteMiniChallenge(authorization, miniChallengeId)
-            if (!response.isSuccessful) throw parseError(response.errorBody()?.string(), "미니 챌린지 삭제에 실패했습니다.")
+            val response = apiService.deleteMiniChallenge(miniChallengeId)
+            if (!response.isSuccessful) throw response.toApiException("미니 챌린지 삭제에 실패했습니다.")
             loadChallenges(date).getOrThrow()
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 삭제") }
     }
@@ -214,11 +212,10 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             return Result.success(Unit)
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val miniChallengeId = id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_NOT_FOUND", message = "미니 챌린지를 찾을 수 없습니다.")
             val response = apiService.checkMiniChallenge(
-                authorization,
                 miniChallengeId,
                 MiniChallengeCheckRequest(date = date.toString(), checked = checked)
             )
@@ -227,27 +224,14 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 체크") }
     }
 
-    private suspend fun requireAuthorizationHeader(): String {
-        val session = authRepository.userSession.first()
-            ?: throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
-        return "${session.tokenType} ${session.accessToken}"
+    private suspend fun requireAuthentication() {
+        if (authRepository.userSession.first() == null) {
+            throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
+        }
     }
 
     private fun <T> requireBody(response: Response<ApiResponse<T>>, fallbackMessage: String): T {
-        val body = response.body()?.data
-        if (response.isSuccessful && body != null) return body
-        throw parseError(response.errorBody()?.string(), fallbackMessage)
-    }
-
-    private fun parseError(errorBodyString: String?, fallbackMessage: String): ApiException {
-        val error = errorBodyString?.let {
-            runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-        }
-        return ApiException(
-            code = error?.code ?: "UNKNOWN",
-            message = error?.message ?: fallbackMessage,
-            fieldErrors = error?.fieldErrors
-        )
+        return response.toApiResult(fallbackMessage).getOrThrow()
     }
 
     /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */

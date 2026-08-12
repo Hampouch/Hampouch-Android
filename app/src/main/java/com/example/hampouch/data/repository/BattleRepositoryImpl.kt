@@ -7,11 +7,11 @@ import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.domain.model.ApiException
-import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.BattleDetailData
 import com.example.hampouch.data.local.BattleMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.BattleApi
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
 import com.example.hampouch.domain.model.BattleInvitationPreview
 import com.example.hampouch.domain.model.BattleState
@@ -26,7 +26,6 @@ import javax.inject.Singleton
 import com.example.hampouch.data.remote.dto.BattleParticipantDto
 import com.example.hampouch.data.remote.dto.CreateBattleRequest
 import com.example.hampouch.data.remote.dto.MyBattleSummaryDto
-import com.google.gson.Gson
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -42,7 +41,7 @@ private const val ME_NAME = "나"
 
 @Singleton
 class BattleRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val apiService: BattleApi,
     private val authRepository: AuthRepository,
     private val mockDataSource: BattleMockDataSource
 ) : BattleRepository, AccountScopedState {
@@ -85,9 +84,9 @@ class BattleRepositoryImpl @Inject constructor(
     override suspend fun loadMyBattles(): Result<Unit> {
         if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val myUserId = requireUserId()
-            val response = apiService.getMyBattles(authorization)
+            val response = apiService.getMyBattles()
             val body = requireBody(response, "햄배틀 목록 조회에 실패했습니다.")
             val ready = mutableListOf<HamBattleChallenge>()
             val ongoing = mutableListOf<HamBattleChallenge>()
@@ -107,9 +106,9 @@ class BattleRepositoryImpl @Inject constructor(
     override suspend fun loadBattleDetail(battleId: Long): Result<Unit> {
         if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val myUserId = requireUserId()
-            val response = apiService.getBattleDetail(authorization, battleId)
+            val response = apiService.getBattleDetail(battleId)
             val body = requireBody(response, "햄배틀 상세 조회에 실패했습니다.")
             setDetail(battleId, body.toDomain(myUserId))
         }.onFailure { rethrowIfCancelled(it, "햄배틀 상세 조회") }
@@ -117,16 +116,16 @@ class BattleRepositoryImpl @Inject constructor(
 
     override suspend fun loadInvitationPreview(battleCode: String): Result<BattleInvitationPreview> {
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.getBattleInvitation(authorization, battleCode)
+            requireAuthentication()
+            val response = apiService.getBattleInvitation(battleCode)
             requireBody(response, "초대 정보를 불러오지 못했습니다.").toDomain()
         }.onFailure { rethrowIfCancelled(it, "햄배틀 초대 조회") }
     }
 
     override suspend fun join(battleCode: String): Result<Long> {
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.joinBattle(authorization, battleCode)
+            requireAuthentication()
+            val response = apiService.joinBattle(battleCode)
             val body = requireBody(response, "햄배틀 참가에 실패했습니다.")
             loadMyBattles().getOrThrow()
             body.battleId
@@ -139,12 +138,11 @@ class BattleRepositoryImpl @Inject constructor(
             return Result.success(mockDataSource.startNewChallenge(request))
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val startDate = request.startDateMillis?.let {
                 Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
             } ?: LocalDate.now()
             val response = apiService.createBattle(
-                authorization,
                 CreateBattleRequest(
                     title = request.challengeName,
                     capacity = parseParticipantTotalCount(request.participantCount),
@@ -172,10 +170,10 @@ class BattleRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "햄배틀 생성") }
     }
 
-    private suspend fun requireAuthorizationHeader(): String {
-        val session = authRepository.userSession.first()
-            ?: throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
-        return "${session.tokenType} ${session.accessToken}"
+    private suspend fun requireAuthentication() {
+        if (authRepository.userSession.first() == null) {
+            throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
+        }
     }
 
     private suspend fun requireUserId(): Long {
@@ -185,20 +183,7 @@ class BattleRepositoryImpl @Inject constructor(
     }
 
     private fun <T> requireBody(response: Response<ApiResponse<T>>, fallbackMessage: String): T {
-        val body = response.body()?.data
-        if (response.isSuccessful && body != null) return body
-        throw parseError(response.errorBody()?.string(), fallbackMessage)
-    }
-
-    private fun parseError(errorBodyString: String?, fallbackMessage: String): ApiException {
-        val error = errorBodyString?.let {
-            runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-        }
-        return ApiException(
-            code = error?.code ?: "UNKNOWN",
-            message = error?.message ?: fallbackMessage,
-            fieldErrors = error?.fieldErrors
-        )
+        return response.toApiResult(fallbackMessage).getOrThrow()
     }
 
     /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */
