@@ -21,7 +21,6 @@ sealed interface HamTipsWriteEvent {
     data class ShowMessage(val message: String) : HamTipsWriteEvent
 }
 
-/** 커뮤니티 글 작성·수정(꿀팁·메뉴·햄배틀 공용). */
 @HiltViewModel
 class HamTipsWriteViewModel @Inject constructor(
     private val hamTipsRepository: HamTipsRepository

@@ -1,5 +1,4 @@
 <resources>
-    <!-- 지출 분석 -->
     <string name="expenseanalysis_title">식비 지출 분석</string>
 
     <string name="expenseanalysis_challenge_title_format">%1$d일 챌린지</string>

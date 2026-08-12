@@ -21,7 +21,6 @@ data class LoginUiState(
     val isPasswordVisible: Boolean = false,
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
-    /** null이 아니면 소셜 가입 닉네임 입력 다이얼로그를 띄운다. */
     val pendingSocialSignUp: AuthSession? = null,
     val socialNickname: String = "",
     val isSocialNicknameAvailable: Boolean = false,
@@ -43,7 +42,6 @@ class LoginViewModel @Inject constructor(
     private val _events = Channel<LoginEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    /** 앱 시작 시 이미 "닉네임 필요" 상태로 복원된 세션이 있으면 다이얼로그를 이어서 띄운다. */
     fun restorePendingSocialSignUp(session: AuthSession?) {
         if (session != null && _uiState.value.pendingSocialSignUp == null) {
             _uiState.value = _uiState.value.copy(pendingSocialSignUp = session)
@@ -85,7 +83,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    /** 카카오/구글 SDK가 돌려준 자격증명으로 서버 로그인을 마친다. */
     fun loginWithSocial(credential: SocialCredential, failureMessage: String) {
         if (_uiState.value.isSubmitting) return
         _uiState.value = _uiState.value.copy(isSubmitting = true, errorMessage = null)
@@ -95,7 +92,6 @@ class LoginViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
                         errorMessage = null,
-                        // 닉네임이 없는 신규 소셜 계정이면 가입을 마저 받아야 한다.
                         pendingSocialSignUp = outcome.session.takeIf { outcome.requiresNickname }
                     )
                     if (!outcome.requiresNickname) _events.send(LoginEvent.LoggedIn)

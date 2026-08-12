@@ -32,7 +32,6 @@ object SocialAuthManager {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return Result.success(mockCredential(AuthProvider.GOOGLE))
         }
-        // Credential Manager는 시스템 UI를 띄우므로 액티비티 컨텍스트가 필요하다.
         val activity = context.findActivity()
             ?: return Result.failure(IllegalStateException("액티비티 컨텍스트를 찾을 수 없습니다."))
 
@@ -83,12 +82,6 @@ object SocialAuthManager {
         }
     }
 
-    /**
-     * 카카오 로그인. 카카오톡이 설치돼 있으면 카카오톡으로, 아니면 카카오계정으로 로그인한다.
-     *
-     * 카카오톡 로그인이 실패하면 카카오계정 로그인으로 넘어가되,
-     * 사용자가 직접 취소한 경우([ClientErrorCause.Cancelled])에는 넘어가지 않고 취소로 끝낸다.
-     */
     fun signInWithKakao(context: Context, onResult: (Result<SocialCredential>) -> Unit) {
         if (!AuthConfig.USE_SERVER_AUTH) {
             onResult(Result.success(mockCredential(AuthProvider.KAKAO)))
@@ -118,7 +111,6 @@ object SocialAuthManager {
                             if (error.isUserCancelled()) {
                                 onResult(Result.failure(SocialSignInCancelledException()))
                             } else {
-                                // 카카오톡에 연결된 계정이 없는 등의 경우 카카오계정 로그인으로 넘어간다.
                                 UserApiClient.instance.loginWithKakaoAccount(
                                     loginContext,
                                     callback = accountCallback
@@ -150,7 +142,6 @@ object SocialAuthManager {
                 onResult(Result.failure(error ?: IllegalStateException("사용자 정보를 가져오지 못했습니다.")))
                 return@me
             }
-            // 동의하지 않은 항목은 null로 내려오므로 안전하게 접근한다.
             onResult(
                 Result.success(
                     SocialCredential(

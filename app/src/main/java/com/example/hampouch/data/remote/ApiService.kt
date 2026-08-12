@@ -131,9 +131,6 @@ interface ApiService {
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<Unit>>
 
-    /**
-     * 로그인한 사용자가 참가 중인 햄배틀을 상태별로 조회한다. status를 생략하면 전체 상태를 조회한다.
-     */
     @GET("api/battles")
     suspend fun getMyBattles(
         @Header("Authorization") authorization: String,
@@ -146,9 +143,6 @@ interface ApiService {
         @Body request: CreateBattleRequest
     ): Response<ApiResponse<CreateBattleData>>
 
-    /**
-     * battleCode로 참가 전 미리보기를 조회한다. battleId는 참가자 전용 리소스라 응답에 포함되지 않는다.
-     */
     @GET("api/battles/invitations/{battleCode}")
     suspend fun getBattleInvitation(
         @Header("Authorization") authorization: String,

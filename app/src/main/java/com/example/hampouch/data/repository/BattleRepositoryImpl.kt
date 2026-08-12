@@ -37,7 +37,6 @@ import retrofit2.Response
 
 private const val TAG = "BattleRepository"
 
-// 로그인한 사용자의 userId와 일치하는 참가자만 나 표시
 private const val ME_NAME = "나"
 
 @Singleton
@@ -133,7 +132,6 @@ class BattleRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "햄배틀 참가") }
     }
 
-    // 햄배틀 생성
     override suspend fun create(request: HamBattleChallengeRequest): Result<HamBattleChallenge> {
         if (!BattleConfig.USE_SERVER_BATTLE) {
             return Result.success(mockDataSource.startNewChallenge(request))
@@ -201,7 +199,6 @@ class BattleRepositoryImpl @Inject constructor(
         )
     }
 
-    /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */
     private fun rethrowIfCancelled(error: Throwable, action: String) {
         if (error is CancellationException) throw error
         Log.e(TAG, "$action 네트워크 오류", error)
@@ -220,7 +217,6 @@ private fun durationDaysBetween(startDate: String, endDate: String): Int =
         (ChronoUnit.DAYS.between(LocalDate.parse(startDate), LocalDate.parse(endDate)) + 1).toInt()
     }.getOrDefault(1)
 
-/** 참가자 목록에서 나를 찾아 [ME_NAME]으로 라벨링한다(다른 화면 로직이 전부 "나" 문자열로 나를 식별한다). */
 private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantSpending {
     val disqualified = isValid == false
     return HamBattleParticipantSpending(

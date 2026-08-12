@@ -19,7 +19,6 @@ import javax.inject.Singleton
 
 private const val EXPIRY_DAYS = 7L
 
-// TODO: 서버팀 알림 API 연동 시 목데이터 대신 서버 응답으로 채우도록 교체.
 @Singleton
 class NotificationRepositoryImpl @Inject constructor(
     private val mockDataSource: NotificationMockDataSource

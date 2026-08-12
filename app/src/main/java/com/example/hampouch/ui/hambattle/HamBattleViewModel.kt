@@ -18,10 +18,8 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface HamBattleEvent {
-    /** 새 햄배틀 생성 완료. */
     data object Created : HamBattleEvent
 
-    /** 초대 코드로 참가 완료. */
     data class Joined(val battleId: Long) : HamBattleEvent
 
     data class ShowMessage(val message: String) : HamBattleEvent
@@ -35,7 +33,6 @@ class HamBattleViewModel @Inject constructor(
 
     val state: StateFlow<BattleState> = battleRepository.state
 
-    /** 목데이터 모드 전용 상태. 서버 모드에서는 항상 빈 목록이다. */
     val mockChallenges: StateFlow<List<HamBattleChallenge>> = mockStore.challenges
 
     fun mockChallengesWith(status: HamBattleStatus, referenceToday: LocalDate = LocalDate.now()) =

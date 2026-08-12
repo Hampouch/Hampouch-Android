@@ -368,7 +368,6 @@ fun ExpenseInputReasonOptionButton(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 버튼에서만 줄 수를 제한한다. */
     maxLines: Int = Int.MAX_VALUE
 ) {
     Box(

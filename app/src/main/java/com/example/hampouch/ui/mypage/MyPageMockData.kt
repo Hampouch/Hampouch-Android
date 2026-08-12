@@ -24,7 +24,6 @@ object MyPageMockData {
 
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 
-    /** @param spentOnDate 해당 날짜의 지출 합계. */
     fun challengeHistory(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): List<ChallengeRecord> {
         val referenceToday = LocalDate.now()
         return challengeState.challenges

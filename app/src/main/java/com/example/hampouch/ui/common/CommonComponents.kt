@@ -283,7 +283,6 @@ fun ReasonTagAndAmountColumn(
     }
 }
 
-/** 읽지 않은 알림 여부. 프리뷰 등에서는 [NotificationBellIcon]의 인자로 직접 넘길 수 있다. */
 @Composable
 private fun rememberHasUnreadNotifications(
     viewModel: NotificationViewModel = hiltViewModel()

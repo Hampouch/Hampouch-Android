@@ -106,7 +106,6 @@ fun ExpenseCalendarRoute(
     onExpenseClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    /** null이면 진행 중 챌린지 기간을 쓴다. */
     challengePeriod: ExpenseChallengePeriod? = null,
     onExpenseAnalysisClick: () -> Unit = {},
     onAddExpenseClick: (LocalDate) -> Unit = {},
@@ -114,7 +113,6 @@ fun ExpenseCalendarRoute(
     viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
     val calendarChallengeState by viewModel.challengeState.collectAsStateWithLifecycle()
-    // 호출자가 기간을 지정하지 않으면 진행 중 챌린지 기간을 쓴다.
     val effectiveChallengePeriod = challengePeriod
         ?: ExpenseDetailMockData.activeChallengePeriod(calendarChallengeState)
     val initialSelectedDate = if (restrictToChallengePeriod) {

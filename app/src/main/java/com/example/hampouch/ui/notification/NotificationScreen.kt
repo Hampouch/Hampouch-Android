@@ -73,7 +73,6 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        // TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
         TestNotificationTriggerButton(notifications = notifications, modifier = Modifier.padding(horizontal = 20.dp))
         Spacer(modifier = Modifier.height(12.dp))
         if (notifications.isEmpty()) {
@@ -114,7 +113,6 @@ fun NotificationScreen(
     }
 }
 
-// TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
 @Composable
 private fun TestNotificationTriggerButton(notifications: List<NotificationItem>, modifier: Modifier = Modifier) {
     val context = LocalContext.current

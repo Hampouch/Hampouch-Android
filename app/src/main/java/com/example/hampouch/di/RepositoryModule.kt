@@ -26,7 +26,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-// 도메인 Repository 인터페이스 ↔ data 레이어 구현 연결.
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {

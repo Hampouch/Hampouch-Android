@@ -61,7 +61,6 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     private val current: ChallengeState get() = _state.value
 
-    /** 목데이터 모드용 초기 챌린지 2건(직전 주기 + 진행 중). */
     private fun buildSeedChallenges(referenceToday: LocalDate): List<ActiveChallenge> {
         val activeEnd = referenceToday.minusDays(1)
         val activeStart = activeEnd.minusDays((CHALLENGE_TOTAL_DAYS - 1).toLong())
@@ -377,7 +376,6 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
-    /** 목데이터 모드에서만: 월간 반복 챌린지는 확인 즉시 다음 달 주기를 로컬로 이어 붙인다(서버에 대응 API 없음). */
     private fun applyAcknowledge(ended: ActiveChallenge) {
         if (ended.repeatMonthly && !ChallengeConfig.USE_SERVER_CHALLENGE) {
             val nextStart = ended.periodEnd.plusDays(1)

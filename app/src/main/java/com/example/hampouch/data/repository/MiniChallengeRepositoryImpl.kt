@@ -34,7 +34,6 @@ import retrofit2.Response
 
 private const val TAG = "MiniChallengeRepository"
 
-// 미니 챌린지 연동
 @Singleton
 class MiniChallengeRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
@@ -79,7 +78,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         setChallengesForDate(date, challengesFor(date).filterNot { it.id == id })
     }
 
-    /** 중복 이름이면 추가하지 않고 false. */
     private fun addLocal(date: LocalDate, name: String, totalDays: Int?): Boolean {
         val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
         if (_state.value.isNameTaken(date, trimmedName)) return false
@@ -107,7 +105,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         _state.value = seedState()
     }
 
-    /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
     override suspend fun loadChallenges(date: LocalDate): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
@@ -126,7 +123,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 조회") }
     }
 
-    /** 추천 카탈로그를 조회해 [MiniChallengeStore]에 반영한다. [durationDays]가 null이면 전체 기간. */
     override suspend fun loadRecommended(durationDays: Int?): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
@@ -137,15 +133,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
     }
 
-    /**
-     * 추천 카탈로그의 [recommended]를 내 미니 챌린지로 추가한다.
-     *
-     * 서버(/api/mini-challenges) 요청에는 날짜 필드가 없어 항상 서버의 오늘 날짜부터 시작하는 챌린지가
-     * 생긴다 — [date](화면에서 보고 있던 탭)는 실제 생성 결과와 무관하다. 그래서 목데이터 모드에서만 [date]
-     * 그대로, 서버 모드에서는 항상 오늘 날짜를 반환한다. 성공 시 반환되는 날짜가 실제로 새 항목이 추가된
-     * 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
-     * 중복 이름 등으로 추가되지 않았으면 null.
-     */
     override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = addRecommendedLocal(date, recommended)
@@ -167,10 +154,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(추천)") }
     }
 
-    /**
-     * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게, 서버 모드에서는 항상 오늘 날짜부터
-     * 생성되므로 [date]가 아니라 실제 반영된 날짜를 반환한다. 중복 이름 등으로 추가되지 않았으면 null.
-     */
     override suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = addLocal(date, name, totalDays)
@@ -191,7 +174,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(커스텀)") }
     }
 
-    /** [id]의 미니 챌린지를 삭제한다. */
     override suspend fun remove(date: LocalDate, id: String): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             removeLocal(date, id)
@@ -207,7 +189,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 삭제") }
     }
 
-    /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다(PUT은 멱등이라 재시도해도 안전). */
     override suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             toggleLocal(date, id)
@@ -250,7 +231,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         )
     }
 
-    /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */
     private fun rethrowIfCancelled(error: Throwable, action: String) {
         if (error is CancellationException) throw error
         Log.e(TAG, "$action 네트워크 오류", error)
@@ -258,10 +238,8 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
 }
 
-/** 도메인의 "오늘만"(totalDays == null)은 서버에서 durationDays=1로 표현된다. */
 private fun Int?.toDurationDays(): Int = this ?: 1
 
-/** durationDays=1은 도메인에서 "오늘만"(totalDays == null)로 표현한다. */
 private fun Int.toTotalDaysOrNull(): Int? = if (this == 1) null else this
 
 private fun MiniChallengeItemDto.toDomain(): MiniChallengeEntry = MiniChallengeEntry(

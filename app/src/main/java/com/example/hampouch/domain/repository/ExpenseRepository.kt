@@ -9,10 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.YearMonth
 
-// 지출 도메인
 interface ExpenseRepository {
 
-    /** id → 지출 내역 캐시. */
     val records: StateFlow<Map<String, ExpenseRecord>>
 
     fun recordsForDate(date: LocalDate): List<ExpenseRecord>
@@ -27,7 +25,6 @@ interface ExpenseRepository {
 
     suspend fun loadExpenseDetail(id: String): Result<ExpenseRecord>
 
-    /** [date] 하루치 목록을 서버에서 받아 캐시의 해당 날짜를 통째로 교체한다. */
     suspend fun loadDay(date: LocalDate): Result<Unit>
 
     suspend fun loadWeekSummary(standardDate: LocalDate): Result<ExpensePeriodSummary>
@@ -50,10 +47,6 @@ interface ExpenseRepository {
 
     suspend fun loadTrend(month: YearMonth): Result<ExpenseTrendResult>
 
-    /**
-     * "오늘 지출 없음"을 기록한다. 대응하는 서버 API가 없어 로컬 캐시에만 0원 항목을 남긴다
-     * — 앱을 다시 켜면 사라진다.
-     */
     fun markNoSpending(date: LocalDate)
 
     fun resetForAccount()

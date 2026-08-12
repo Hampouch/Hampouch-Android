@@ -36,7 +36,6 @@ class AccountDataCoordinator @Inject constructor(
             return
         }
 
-        // 온보딩만 마치고 가입한 새 계정이면, 예약해 둔 온보딩 결과로 첫 챌린지를 시작한다.
         val request = onboardingLocalStore.takeReservedRequest(account.email)
         challengeRepository.resetEmpty()
         if (request != null) {

@@ -19,7 +19,6 @@ sealed interface NextChallengeEvent {
     data class ShowMessage(val message: String) : NextChallengeEvent
 }
 
-/** 다음 챌린지 시작 화면(일반·휴식 후) 공용. */
 @HiltViewModel
 class NextChallengeViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository

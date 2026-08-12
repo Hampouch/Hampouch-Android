@@ -66,10 +66,6 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "LoginScreen"
 
-/**
- * 소셜 로그인 실패를 사용자에게 보여줄 메시지로 변환한다.
- * 사용자가 직접 취소한 경우는 오류가 아니므로 null을 돌려주고 아무 메시지도 띄우지 않는다.
- */
 private fun socialSignInErrorMessage(error: Throwable, fallback: String): String? = when (error) {
     is SocialSignInCancelledException -> null
     is GetCredentialCancellationException -> null

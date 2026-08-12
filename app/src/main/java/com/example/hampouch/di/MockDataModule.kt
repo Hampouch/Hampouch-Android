@@ -24,7 +24,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-// 목데이터 공급자 연결
 @Module
 @InstallIn(SingletonComponent::class)
 object MockDataModule {

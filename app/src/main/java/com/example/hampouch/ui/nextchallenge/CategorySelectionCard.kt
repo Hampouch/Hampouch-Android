@@ -40,10 +40,6 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 
-/**
- * 챌린지 시작/쉬어가기 화면이 공유하는 카테고리 선택 카드.
- * 라벨은 모두 정해진 문구라 직접입력 항목이 없다.
- */
 @Composable
 internal fun CategorySelectionCard(
     selectedCategoryIds: Set<String>,
@@ -66,7 +62,6 @@ internal fun CategorySelectionCard(
             )
         )
         Spacer(modifier = Modifier.height(14.dp))
-        // 30dp 아이콘이 가로로 붙는 칩이라 한 칸이 더 넓어야 한다.
         ChipGrid(items = HomeCategoryCatalog.categories, minColumnWidth = 96.dp) { category ->
             CategoryIconChip(
                 label = stringResource(category.labelResId),

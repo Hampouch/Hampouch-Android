@@ -6,7 +6,6 @@ import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.domain.model.HamBattleStatus
 import java.time.LocalDate
 
-// TODO: 서버팀 햄배틀 API 연동 시 목데이터 대신 실제 응답으로 대체.
 object HamBattleMockFixtures {
 
     fun seedChallenges(): List<HamBattleChallenge> =

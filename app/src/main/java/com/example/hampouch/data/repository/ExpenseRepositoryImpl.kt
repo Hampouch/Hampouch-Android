@@ -96,7 +96,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         _records.value = if (ExpenseConfig.USE_SERVER_EXPENSE) emptyMap() else mockDataSource.initialRecords()
     }
 
-    // ----- 서버 enum ↔ 앱 내부 id 매핑 -----
 
     private val localCategoryToServer: Map<String, String> = mapOf(
         "delivery" to "DELIVERY",
@@ -147,7 +146,6 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     private fun sundayOfWeek(date: LocalDate): LocalDate = date.minusDays((date.dayOfWeek.value % 7).toLong())
 
-    // ----- 사진 업로드 -----
 
     private data class LocalImagePayload(val bytes: ByteArray, val contentType: String)
 
@@ -212,7 +210,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    // DTO → 도메인 매핑
 
     private fun ExpenseDetailData.toExpenseRecord(): ExpenseRecord {
         val (categoryId, customCategoryName) = categoryFieldsFromServer(category, customCategory)
@@ -271,7 +268,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         dailyBreakdown = dailyBreakdown.map { DailyAmount(LocalDate.parse(it.date), it.amount) }
     )
 
-    // ----- 조회/변경 -----
 
     override suspend fun createExpense(record: ExpenseRecord): Result<ExpenseRecord> {
         if (!ExpenseConfig.USE_SERVER_EXPENSE) {
@@ -408,7 +404,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    /** 목데이터 모드에서 로컬 캐시로부터 기간 요약을 계산한다. */
     private fun localPeriodSummary(start: LocalDate, end: LocalDate): ExpensePeriodSummary {
         val records = _records.value.values.toList().inPeriod(start, end)
         val days = (ChronoUnit.DAYS.between(start, end).toInt() + 1).coerceAtLeast(1)
@@ -585,7 +580,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    /** 목데이터 모드의 카테고리·이유별 집계. [pick]으로 해당 태그의 내역만 걸러낸다. */
     private fun localTagResult(
         id: String,
         periodStart: LocalDate,
@@ -614,7 +608,6 @@ class ExpenseRepositoryImpl @Inject constructor(
                 ExpenseTrendResult(
                     month = month,
                     totalAmount = currentTotal,
-                    // 값이 0인 달도 분모에 포함한다.
                     monthlyAverage = if (totals.isEmpty()) 0 else totals.sumOf { it.amount } / totals.size,
                     diffRateFromLastMonth = if (previousTotal <= 0) {
                         null

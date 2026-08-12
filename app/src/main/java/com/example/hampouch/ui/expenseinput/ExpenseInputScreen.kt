@@ -627,7 +627,6 @@ private fun ExpenseInputCategoryStep(
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(10.dp))
-        // 30dp 아이콘이 가로로 붙는 칩이라 수정 화면 칩보다 한 칸이 더 넓어야 한다.
         ChipGrid(items = inputCategoryOptions, minColumnWidth = 96.dp) { option ->
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
@@ -645,7 +644,6 @@ private fun ExpenseInputCategoryStep(
                     } else {
                         stringResource(R.string.expensedetail_option_custom_input)
                     },
-                    // 사용자가 직접 입력한 카테고리명이라 길이 제한이 없다. 칩이 세로로 길어지지 않도록 2줄에서 말줄임.
                     maxLines = 2,
                     selected = isCustomCategory,
                     onClick = onCustomCategoryClick
@@ -765,7 +763,6 @@ private fun ExpenseInputReasonStep(
                 },
                 selected = isCustomReason,
                 onClick = onCustomReasonClick,
-                // 사용자가 직접 입력한 이유라 길이 제한이 없다. 버튼이 세로로 길어지지 않도록 2줄에서 말줄임.
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )

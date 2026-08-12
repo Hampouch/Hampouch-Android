@@ -19,11 +19,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
-/**
- * 지출 분석 화면들(기간 분석·월별 추이·카테고리 상세·이유 상세)이 공유하는 ViewModel.
- *
- * 목데이터 모드에서는 서버 결과가 비고, 화면이 [records]로부터 직접 계산한다.
- */
 @HiltViewModel
 class ExpenseAnalysisViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository

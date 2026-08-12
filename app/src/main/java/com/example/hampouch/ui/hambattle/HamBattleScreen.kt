@@ -144,9 +144,6 @@ fun HamBattleScreen(
         }
     }
 
-    // 아래의 만료/탈락/취소 감지는 로컬 지출 기록(ExpenseDetailStore)을 기준으로 목데이터를 스스로 갱신하는
-    // 시뮬레이션이다. 서버 모드에서는 이 상태들을 서버가 이미 계산해서 내려주고(READY/ONGOING/TERMINATED,
-    // isValid 등), 되돌려 보낼 수 있는 대응 API도 아직 없어서 목데이터 모드에서만 동작시킨다.
     if (!BattleConfig.USE_SERVER_BATTLE) {
         val expiredWaitingChallenge = remember(waitingChallenges) {
             waitingChallenges.firstOrNull { it.isExpired() }

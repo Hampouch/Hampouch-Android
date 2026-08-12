@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// TODO: 서버팀 알림 설정 API 연동 시 로컬 상태 대신 서버 응답으로 채우도록 교체.
 @Singleton
 class NotificationSettingsRepositoryImpl @Inject constructor() :
     NotificationSettingsRepository, AccountScopedState {

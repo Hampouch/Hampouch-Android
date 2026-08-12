@@ -18,7 +18,6 @@ private const val TEST_CHANNEL_ID = "hampouch_test_channel"
 
 const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
 
-// TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면 알림 팝업 디자인을 실기기에서 확인하기 위한 임시 목데이터 알림 발송기.
 object SystemNotificationSender {
 
     private fun ensureChannel(context: Context) {

@@ -21,7 +21,6 @@ data class TakeABreakUiState(
     val errorMessage: String? = null
 )
 
-/** 휴식 시작/연장이 성공해 화면을 떠나야 할 때 한 번만 전달되는 신호. */
 sealed interface TakeABreakEvent {
     data object BreakStarted : TakeABreakEvent
 }
@@ -48,9 +47,6 @@ class TakeABreakViewModel @Inject constructor(
         )
     }
 
-    /**
-     * [isExtending]이 true면 이미 휴식 중(홈 팝업의 "더 쉬기")이라 시작이 아니라 연장을 호출한다.
-     */
     fun submit(isExtending: Boolean) {
         if (_uiState.value.isSubmitting) return
         val state = _uiState.value

@@ -1,5 +1,4 @@
 <resources>
-    <!-- 앱 전역 / 2개 이상의 ui 기능에서 공용으로 쓰이는 문자열 -->
     <string name="app_name">Hampouch</string>
 
     <string name="cd_back">뒤로 가기</string>

@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 커뮤니티 목록 화면(홈·카테고리·인기·포치픽). */
 @HiltViewModel
 class HamTipsViewModel @Inject constructor(
     private val hamTipsRepository: HamTipsRepository
@@ -42,11 +41,9 @@ class HamTipsViewModel @Inject constructor(
         hamTipsRepository.loadPochipickPosts(sortOrder)
     }
 
-    /** 마이페이지의 "내가 쓴 글". */
     fun loadMyPosts(sortOrder: HamTipsSortOrder = HamTipsSortOrder.LATEST) =
         load("내가 쓴 글을 불러오지 못했습니다.") { hamTipsRepository.loadMyPosts(sortOrder) }
 
-    /** 마이페이지의 "저장한 글". */
     fun loadSavedPosts(sortOrder: HamTipsSortOrder = HamTipsSortOrder.LATEST) =
         load("저장한 글을 불러오지 못했습니다.") { hamTipsRepository.loadSavedPosts(sortOrder) }
 

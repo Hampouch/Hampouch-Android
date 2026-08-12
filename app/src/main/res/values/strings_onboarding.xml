@@ -1,5 +1,4 @@
 <resources>
-    <!-- 온보딩 -->
     <string name="cd_hampouch_logo">햄파우치 로고</string>
     <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
     <string name="cd_loading_text">로딩 중</string>

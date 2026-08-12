@@ -16,7 +16,6 @@ interface NotificationSettingsRepository {
 interface RecordAlarmRepository {
     val state: StateFlow<RecordAlarmSettingsState>
 
-    /** 기록 누락 리마인더를 마지막으로 닫은 날짜. 오늘이면 다시 띄우지 않는다. */
     val dismissedDate: StateFlow<LocalDate?>
 
     fun update(transform: (RecordAlarmSettingsState) -> RecordAlarmSettingsState)
@@ -25,7 +24,6 @@ interface RecordAlarmRepository {
 }
 
 interface MyPageProfileRepository {
-    /** 아직 편집한 적이 없으면 null. 화면은 [defaultProfileFor]로 기본값을 만든다. */
     val profile: StateFlow<MyPageProfile?>
 
     fun defaultProfileFor(user: User): MyPageProfile
