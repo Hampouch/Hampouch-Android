@@ -1,9 +1,9 @@
 package com.example.hampouch.ui.notification
 
-import com.example.hampouch.data.model.NotificationCategory
-import com.example.hampouch.data.model.NotificationItem
-import com.example.hampouch.data.model.NotificationSection
-import com.example.hampouch.data.model.NotificationTarget
+import com.example.hampouch.domain.model.NotificationCategory
+import com.example.hampouch.domain.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationSection
+import com.example.hampouch.domain.model.NotificationTarget
 import java.time.LocalDate
 
 object NotificationMockData {

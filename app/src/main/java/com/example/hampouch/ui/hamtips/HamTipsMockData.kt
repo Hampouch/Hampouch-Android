@@ -1,21 +1,20 @@
 package com.example.hampouch.ui.hamtips
 
-import com.example.hampouch.data.model.BattleRecruitInfo
-import com.example.hampouch.data.model.MenuRatingInfo
-import com.example.hampouch.data.model.TipCategory
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.model.TipReply
-import com.example.hampouch.data.repository.HamTipsRepository
-import com.example.hampouch.ui.login.LoginMockData
+import com.example.hampouch.domain.model.BattleRecruitInfo
+import com.example.hampouch.domain.model.MenuRatingInfo
+import com.example.hampouch.domain.model.TipCategory
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostType
+import com.example.hampouch.domain.model.TipReply
+import com.example.hampouch.data.local.AccountMockDataSource
 
 object HamTipsMockData {
 
-    private const val HERO_AUTHOR_ID = HamTipsRepository.CURRENT_USER_ID
-    private const val HERO_AUTHOR_NAME = HamTipsRepository.CURRENT_USER_NAME
-    private val EDITOR_AUTHOR_ID = LoginMockData.editorUser.id
-    private val EDITOR_AUTHOR_NAME = LoginMockData.editorUser.name
+    private val HERO_AUTHOR_ID = AccountMockDataSource.normalUser.id
+    private val HERO_AUTHOR_NAME = AccountMockDataSource.normalUser.name
+    private val EDITOR_AUTHOR_ID = AccountMockDataSource.editorUser.id
+    private val EDITOR_AUTHOR_NAME = AccountMockDataSource.editorUser.name
 
     fun allPosts(): List<TipPost> = listOf(
         TipPost(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,8 +32,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import coil.compose.AsyncImage
+import com.example.hampouch.R
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -71,14 +76,25 @@ fun TypeBadge(text: String, muted: Boolean = false) {
     }
 }
 
+/** avatarUrl이 null이거나 로드에 실패하면 기본 아바타([R.drawable.icon_normal_avatar])를 보여준다. */
 @Composable
-fun ParticipantAvatar(size: Dp) {
+fun ParticipantAvatar(size: Dp, avatarUrl: String? = null) {
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
             .background(HPGray4)
-    )
+    ) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.icon_normal_avatar),
+            error = painterResource(R.drawable.icon_normal_avatar),
+            fallback = painterResource(R.drawable.icon_normal_avatar),
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable
@@ -99,7 +115,7 @@ fun ParticipantAvatarLabel(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ParticipantAvatar(size = 22.dp)
+                ParticipantAvatar(size = 22.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
@@ -136,7 +152,7 @@ private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending, 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ParticipantAvatar(size = 22.dp)
+                ParticipantAvatar(size = 22.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
@@ -207,7 +223,7 @@ fun RankedParticipantList(
                     style = MaterialTheme.typography.bodyMedium,
                     color = HPBlack
                 )
-                ParticipantAvatar(size = 24.dp)
+                ParticipantAvatar(size = 24.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     participant.name,
@@ -267,7 +283,7 @@ private fun DisqualifiedParticipantRow(participant: HamBattleParticipantSpending
             fontSize = 14.sp,
             modifier = Modifier.width(28.dp)
         )
-        ParticipantAvatar(size = 24.dp)
+        ParticipantAvatar(size = 24.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             participant.name,

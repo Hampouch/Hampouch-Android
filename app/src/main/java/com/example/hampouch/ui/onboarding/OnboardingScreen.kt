@@ -14,8 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.hampouch.data.model.ChallengePeriodType
-import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriodType
+import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
 import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep

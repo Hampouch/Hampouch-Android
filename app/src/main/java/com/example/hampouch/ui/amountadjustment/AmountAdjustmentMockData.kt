@@ -1,13 +1,13 @@
 package com.example.hampouch.ui.amountadjustment
 
-import com.example.hampouch.data.model.AmountAdjustmentChallenge
-import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.model.AmountAdjustmentChallenge
+import com.example.hampouch.domain.model.ChallengeState
 import java.time.LocalDate
 
 object AmountAdjustmentMockData {
-    fun challenge(): AmountAdjustmentChallenge {
-        val active = requireNotNull(ChallengeRepository.activeChallenge) {
+    /** @param spentOnDate 해당 날짜의 지출 합계. */
+    fun challenge(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): AmountAdjustmentChallenge {
+        val active = requireNotNull(challengeState.activeChallenge) {
             "진행중인 챌린지가 없는 상태에서 목표 금액 조정 화면에 진입했습니다."
         }
         val today = LocalDate.now()
@@ -15,8 +15,7 @@ object AmountAdjustmentMockData {
         val overAmount = generateSequence(active.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
             .sumOf { day ->
-                val spent = ExpenseDetailStore.recordsForDate(day).sumOf { it.amount }
-                (spent - active.dailyLimitOn(day)).coerceAtLeast(0)
+                (spentOnDate(day) - active.dailyLimitOn(day)).coerceAtLeast(0)
             }
         return AmountAdjustmentChallenge(
             id = active.id,

@@ -32,7 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -44,7 +45,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleEndedChallengesScreen(
-    endedChallenges: List<HamBattleChallenge> = HamBattleMockData.endedChallenges(),
+    endedChallenges: List<HamBattleChallenge> = emptyList(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {}
@@ -103,7 +104,9 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
 @Composable
 private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
-    val winnerName = ranked.firstOrNull()?.name.orEmpty()
+    // 목록 조회(/api/battles)는 TERMINATED 항목에 participants 없이 winnerNickname만 내려주므로,
+    // 참가자 상세를 못 받은 경우엔 그 값으로 대체한다.
+    val winnerName = ranked.firstOrNull()?.name ?: challenge.winnerName.orEmpty()
 
     Column(
         modifier = Modifier
@@ -135,7 +138,7 @@ private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Uni
         Spacer(modifier = Modifier.height(16.dp))
         if (challenge.isOneVsOne && challenge.participants.size == 2) {
             OneVsOneRow(first = challenge.participants[0], second = challenge.participants[1])
-        } else {
+        } else if (ranked.isNotEmpty()) {
             RankedParticipantList(participants = ranked)
         }
 
@@ -158,7 +161,7 @@ private fun EndedChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             EndedChallengeCard(
-                challenge = HamBattleMockData.endedChallenges()[0],
+                challenge = HamBattleMockFixtures.endedChallenges()[0],
                 onClick = {}
             )
         }
@@ -169,6 +172,6 @@ private fun EndedChallengeCardPreview() {
 @Composable
 private fun HamBattleEndedChallengesScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesScreen()
+        HamBattleEndedChallengesScreen(endedChallenges = HamBattleMockFixtures.endedChallenges())
     }
 }

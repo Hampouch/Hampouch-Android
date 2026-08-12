@@ -1,7 +1,7 @@
 package com.example.hampouch.ui.minichallenge
 
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
 
 object MiniChallengeMockData {
 

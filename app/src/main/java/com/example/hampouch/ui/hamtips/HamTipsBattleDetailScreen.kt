@@ -17,6 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.example.hampouch.ui.common.SessionViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,20 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipReply
-import com.example.hampouch.data.repository.HamTipsRepository
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.dialog.HamBattleRoomFullDialog
-import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -143,7 +144,9 @@ fun HamTipsBattleDetailScreen(
     onNavigateToBattleLink: (String) -> Unit,
     onNavigateToHamBattleTab: () -> Unit = {},
     onEditClick: (TipPost) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sessionViewModel: SessionViewModel = hiltViewModel(),
+    viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var showJoinConfirm by remember { mutableStateOf(false) }
@@ -155,16 +158,25 @@ fun HamTipsBattleDetailScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(post.id) {
-        HamTipsRepository.loadPostDetail(post.id)
+    LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HamTipsDetailEvent.PostDeleted -> onDeleted()
+                is HamTipsDetailEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    val isAuthor = post.authorId == UserSession.currentUser.id
-    val canDeletePost = HamTipsRepository.canDeletePost(post)
+    val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
+    val isAuthor = post.authorId == currentUser.id
+    val canDeletePost = viewModel.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
+    val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInfo = post.battleInfo
     val linkedChallenge = battleInfo?.link?.let { link ->
-        HamBattleMockData.challenges.find { it.link == link }
+        battleViewModel.mockChallenges.value.find { it.battleCode == link }
     }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
@@ -195,10 +207,7 @@ fun HamTipsBattleDetailScreen(
                     val submittedReplyTarget = replyTarget
                     commentInput = ""
                     replyTarget = null
-                    coroutineScope.launch {
-                        submitHamTipsComment(post, submittedReplyTarget, submittedInput)
-                            .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                    }
+                    submitHamTipsComment(viewModel, post, submittedReplyTarget, submittedInput)
                 }
             )
         }
@@ -228,8 +237,8 @@ fun HamTipsBattleDetailScreen(
                 }
                 HamTipsEngagementRow(
                     post = post,
-                    onLikeClick = { coroutineScope.launch { HamTipsRepository.toggleLike(post.id) } },
-                    onScrapClick = { coroutineScope.launch { HamTipsRepository.toggleSave(post.id) } }
+                    onLikeClick = { viewModel.toggleLike(post.id) },
+                    onScrapClick = { viewModel.toggleSave(post.id) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -265,11 +274,7 @@ fun HamTipsBattleDetailScreen(
                             isDestructive = true,
                             onClick = {
                                 showPostMenu = false
-                                coroutineScope.launch {
-                                    HamTipsRepository.deletePost(post.id)
-                                        .onSuccess { onDeleted() }
-                                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                                }
+                                viewModel.deletePost(post.id)
                             }
                         )
                     )
@@ -303,17 +308,20 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    val joinedChallenge = HamBattleMockData.joinChallengeFromCommunityPost(
+                    // TODO: 서버 모드에서는 POST /api/battles/invitations/{battleCode}(BattleRepository.join)
+                    // 로 교체해야 한다. battleInfo.link에서 battleCode를 안정적으로 파싱할 수 있는 형식이
+                    // community 도메인 쪽에서 확정되면 함께 정리한다.
+                    val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
                         authorName = post.authorName,
                         title = post.title,
                         penalty = battleInfo.penalty,
-                        link = battleInfo.link,
+                        battleCode = battleInfo.link,
                         totalCount = battleInfo.capacity
                     )
                     if (joinedChallenge == null) {
                         showRoomFull = true
                     } else {
-                        HamTipsRepository.joinBattle(post.id)
+                        viewModel.joinBattle(post.id)
                         if (joinedChallenge.isFull) {
                             onNavigateToHamBattleTab()
                         } else {

@@ -1,14 +1,13 @@
 package com.example.hampouch.ui.challengeresult
 
-import com.example.hampouch.data.model.ActiveChallenge
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
-import com.example.hampouch.data.model.EmotionStat
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.data.model.SpendingEmotion
-import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.DailyRecordStatus.SUCCESS
+import com.example.hampouch.domain.model.EmotionStat
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.SpendingEmotion
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -31,20 +30,26 @@ object ChallengeResultMockData {
         }
     }
 
-    fun forChallenge(challenge: ActiveChallenge, referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState {
+    /** @param recordsForDate 해당 날짜의 지출 내역. */
+    fun forChallenge(
+        challenge: ActiveChallenge,
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate = LocalDate.now()
+    ): ChallengeResultUiState {
         val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
-            .flatMap { ExpenseDetailStore.recordsForDate(it) }
+            .flatMap { recordsForDate(it) }
             .toList()
         val actualAmount = recordsInPeriod.sumOf { it.amount }
 
-        val progress = ChallengeRepository.computeProgress(referenceToday, challenge) { date ->
-            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        val progress = challengeState.computeProgress(referenceToday, challenge) { date ->
+            recordsForDate(date).sumOf { it.amount }
         }
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
 
-        val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge?.id
+        val isActiveChallenge = challenge.id == challengeState.activeChallenge?.id
         val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
 
         val status = when {
@@ -77,13 +82,17 @@ object ChallengeResultMockData {
             dailyLimit = challenge.dailyLimit,
             emotionStats = computeEmotionStats(recordsInPeriod),
             dailyRecords = progress.dailyRecords,
-            isEditable = isActiveChallenge && ChallengeRepository.hasOngoingChallenge
+            isEditable = isActiveChallenge && challengeState.hasOngoingChallenge
         )
     }
 
-    fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
-        forChallenge(ChallengeRepository.activeChallenge!!, referenceToday)
+    fun inProgress(
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate = LocalDate.now()
+    ): ChallengeResultUiState =
+        forChallenge(challengeState.activeChallenge!!, challengeState, recordsForDate, referenceToday)
 
     fun recommendedTightenedTarget(actualAmount: Int): Int =
-        ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
+        com.example.hampouch.domain.model.recommendedTightenedTarget(actualAmount)
 }

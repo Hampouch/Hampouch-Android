@@ -41,8 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.hampouch.R
-import com.example.hampouch.data.model.NotificationItem
-import com.example.hampouch.data.model.NotificationSection
+import com.example.hampouch.domain.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationSection
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.notification.components.NotificationListItem
 import com.example.hampouch.ui.notification.components.NotificationTopBar

@@ -1,13 +1,11 @@
 package com.example.hampouch.ui.mypage
 
-import com.example.hampouch.data.model.ChallengeRecord
-import com.example.hampouch.data.model.ChallengeStatus
-import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
-import com.example.hampouch.data.repository.HamTipsRepository
-import com.example.hampouch.ui.session.UserSession
+import com.example.hampouch.domain.model.ChallengeRecord
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.ChallengeStatus
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.User
+import com.example.hampouch.domain.model.TipPost
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -16,8 +14,7 @@ object MyPageMockData {
     private val takenNicknames = listOf("햄포치")
     private val challengeHistoryPeriodFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd.")
 
-    fun defaultProfile(): MyPageProfile {
-        val user = UserSession.currentUser
+    fun defaultProfile(user: User): MyPageProfile {
         return MyPageProfile(
             name = user.name,
             handle = user.email,
@@ -27,17 +24,18 @@ object MyPageMockData {
 
     fun isNicknameTaken(name: String): Boolean = name in takenNicknames
 
-    fun challengeHistory(): List<ChallengeRecord> {
+    /** @param spentOnDate 해당 날짜의 지출 합계. */
+    fun challengeHistory(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): List<ChallengeRecord> {
         val referenceToday = LocalDate.now()
-        return ChallengeRepository.challenges
+        return challengeState.challenges
             .sortedByDescending { it.periodStart }
             .map { challenge ->
-                val isOngoing = challenge.id == ChallengeRepository.activeChallenge?.id &&
+                val isOngoing = challenge.id == challengeState.activeChallenge?.id &&
                     !referenceToday.isAfter(challenge.effectivePeriodEnd)
                 val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
                 val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
                     .takeWhile { !it.isAfter(trackedEnd) }
-                    .sumOf { day -> ExpenseDetailStore.recordsForDate(day).sumOf { it.amount } }
+                    .sumOf { day -> spentOnDate(day) }
                 ChallengeRecord(
                     id = challenge.id,
                     status = when {
@@ -59,9 +57,9 @@ object MyPageMockData {
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 
-    fun myTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.authorId == UserSession.currentUser.id }
+    fun myTips(posts: List<TipPost>, userId: String): List<TipPost> = posts.filter { it.authorId == userId }
 
-    fun savedTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.isSaved }
+    fun savedTips(posts: List<TipPost>): List<TipPost> = posts.filter { it.isSaved }
 
     fun emptyTips(): List<TipPost> = emptyList()
 }

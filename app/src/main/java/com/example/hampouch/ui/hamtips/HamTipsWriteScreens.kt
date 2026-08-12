@@ -24,6 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,13 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MenuRatingInfo
-import com.example.hampouch.data.model.MenuRatingType
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipShareCategory
-import com.example.hampouch.data.repository.HamTipsRepository
+import com.example.hampouch.domain.model.MenuRatingInfo
+import com.example.hampouch.domain.model.MenuRatingType
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipShareCategory
 import com.example.hampouch.ui.dialog.ConfirmActionCard
-import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.domain.model.HamBattleStatus
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldCard
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldLabel
@@ -159,7 +162,8 @@ private fun HamTipsWriteHintSection(modifier: Modifier = Modifier) {
 fun HamTipsWriteTipScreen(
     editingPost: TipPost? = null,
     onBackClick: () -> Unit,
-    onSubmitted: () -> Unit
+    onSubmitted: () -> Unit,
+    viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
     var category by remember {
         mutableStateOf(TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING)
@@ -170,6 +174,15 @@ fun HamTipsWriteTipScreen(
     var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HamTipsWriteEvent.Submitted -> onSubmitted()
+                is HamTipsWriteEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank()
@@ -235,15 +248,7 @@ fun HamTipsWriteTipScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                coroutineScope.launch {
-                    val result = if (editingPost != null) {
-                        HamTipsRepository.updateTipPost(editingPost.id, category.category, title, content, photoUris, photoKeys)
-                    } else {
-                        HamTipsRepository.createTipPost(category.category, title, content, photoUris)
-                    }
-                    result.onSuccess { onSubmitted() }
-                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                }
+                viewModel.submitTip(editingPost, category.category, title, content, photoUris, photoKeys)
             }
         )
     }
@@ -253,7 +258,8 @@ fun HamTipsWriteTipScreen(
 fun HamTipsWriteMenuScreen(
     editingPost: TipPost? = null,
     onBackClick: () -> Unit,
-    onSubmitted: () -> Unit
+    onSubmitted: () -> Unit,
+    viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
     var menuName by remember { mutableStateOf(editingPost?.menuName.orEmpty()) }
     var place by remember { mutableStateOf(editingPost?.place.orEmpty()) }
@@ -266,6 +272,15 @@ fun HamTipsWriteMenuScreen(
     var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HamTipsWriteEvent.Submitted -> onSubmitted()
+                is HamTipsWriteEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val previewTitle = formatMenuTitle(menuName, place, price)
@@ -373,21 +388,9 @@ fun HamTipsWriteMenuScreen(
             onConfirm = {
                 showConfirmDialog = false
                 val rating = MenuRatingInfo(taste = taste, costEffectiveness = costEffectiveness, mood = mood)
-                coroutineScope.launch {
-                    val result = if (editingPost != null) {
-                        HamTipsRepository.updateMenuPost(
-                            postId = editingPost.id, title = previewTitle, menuName = menuName, place = place,
-                            price = price, rating = rating, comment = comment, imageUris = photoUris, imageKeys = photoKeys
-                        )
-                    } else {
-                        HamTipsRepository.createMenuPost(
-                            title = previewTitle, menuName = menuName, place = place, price = price,
-                            rating = rating, comment = comment, imageUris = photoUris
-                        )
-                    }
-                    result.onSuccess { onSubmitted() }
-                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                }
+                viewModel.submitMenu(
+                    editingPost, previewTitle, menuName, place, price, rating, comment, photoUris, photoKeys
+                )
             }
         )
     }
@@ -399,14 +402,30 @@ fun HamTipsWriteBattleScreen(
     onBackClick: () -> Unit,
     onSubmitted: () -> Unit,
     initialLink: String = "",
-    waitingChallengeLinks: List<String> = HamBattleMockData.waitingChallenges().map { it.link }
+    viewModel: HamTipsWriteViewModel = hiltViewModel(),
+    battleViewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    val waitingChallengeLinks: List<String>? =
+        if (BattleConfig.USE_SERVER_BATTLE) {
+            null
+        } else {
+            battleViewModel.mockChallengesWith(HamBattleStatus.WAITING).mapNotNull { it.battleCode }
+        }
     var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
     var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
     var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }
     var showLinkNotFoundError by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HamTipsWriteEvent.Submitted -> onSubmitted()
+                is HamTipsWriteEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
@@ -418,7 +437,7 @@ fun HamTipsWriteBattleScreen(
                 text = stringResource(R.string.hamtips_write_submit),
                 enabled = isSubmitEnabled,
                 onClick = {
-                    if (link.trim() in waitingChallengeLinks) {
+                    if (waitingChallengeLinks == null || link.trim() in waitingChallengeLinks) {
                         showLinkNotFoundError = false
                         showConfirmDialog = true
                     } else {
@@ -480,15 +499,7 @@ fun HamTipsWriteBattleScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                coroutineScope.launch {
-                    val result = if (editingPost != null) {
-                        HamTipsRepository.updateBattlePost(editingPost.id, title = title, content = content, link = link.trim())
-                    } else {
-                        HamTipsRepository.createBattlePost(title = title, content = content, link = link.trim())
-                    }
-                    result.onSuccess { onSubmitted() }
-                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                }
+                viewModel.submitBattle(editingPost, title, content, link.trim())
             }
         )
     }

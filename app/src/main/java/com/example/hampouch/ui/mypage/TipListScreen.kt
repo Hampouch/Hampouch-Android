@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.hamtips.HamTipsMockData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,11 +18,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.TipPostCard
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
@@ -74,7 +76,7 @@ private fun MyTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
-            tips = MyPageMockData.myTips(),
+            tips = MyPageMockData.myTips(HamTipsMockData.allPosts(), AccountMockDataSource.normalUser.id),
             onBackClick = {}
         )
     }
@@ -100,7 +102,7 @@ private fun SavedTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
-            tips = MyPageMockData.savedTips(),
+            tips = MyPageMockData.savedTips(HamTipsMockData.allPosts()),
             onBackClick = {}
         )
     }

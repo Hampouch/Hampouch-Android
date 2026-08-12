@@ -30,20 +30,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.ExpenseEntry
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.data.model.HomeUiState
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.data.repository.MiniChallengeRepository
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.ExpenseEntry
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.ui.home.HomeUiState
+import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
+import com.example.hampouch.ui.common.previewChallengeState
 import com.example.hampouch.ui.dialog.ChallengeEndedDialog
 import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.HamTipsScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
 import com.example.hampouch.ui.home.components.CharacterGaugeSection
@@ -54,11 +57,12 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
+import com.example.hampouch.ui.minichallenge.MiniChallengeEvent
+import com.example.hampouch.ui.minichallenge.MiniChallengeViewModel
 import com.example.hampouch.ui.mypage.MyPageScreen
-import com.example.hampouch.ui.mypage.RecordAlarmStore
-import com.example.hampouch.ui.session.UserSession
-import com.example.hampouch.ui.takeabreak.TakeABreakStore
+import com.example.hampouch.domain.model.HamBattleStatus
+import com.example.hampouch.domain.model.isMissingReminderDue
+import com.example.hampouch.ui.mypage.RecordAlarmViewModel
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -106,40 +110,59 @@ fun HomeScreen(
     onNavigateToAmountAdjustment: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onLoggedOut: () -> Unit = {},
-    onChallengeEndedFinishClick: () -> Unit = {}
+    onChallengeEndedFinishClick: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val referenceToday = remember { LocalDate.now() }
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        // 휴식 도메인엔 상태 조회 API가 없어, GET /api/challenges/current의 rest 블록으로 앱 재시작 후 상태를 보정한다.
-        TakeABreakStore.syncStatus()
-    }
+    val restState by viewModel.restState.collectAsStateWithLifecycle()
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
+    val homeContext = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HomeEvent.ResumedFromBreak -> onStartChallengeClick()
+                HomeEvent.ChallengeEndAcknowledged -> onChallengeEndedFinishClick()
+                is HomeEvent.ShowMessage ->
+                    Toast.makeText(homeContext, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     var pendingOpenHamTipsWriteBattle by remember { mutableStateOf(openHamTipsWriteBattleOnStart) }
     var pendingMyTipDetailPostId by remember { mutableStateOf(initialMyTipDetailPostId) }
     var pendingPopularPostId by remember { mutableStateOf(initialPopularPostId) }
     var selectedDate by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(referenceToday) }
     val context = LocalContext.current
-    val miniChallengeRepository = remember { MiniChallengeRepository.getInstance(context) }
-    LaunchedEffect(selectedDate) {
-        miniChallengeRepository.loadChallenges(selectedDate).onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("미니 챌린지 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
+    val miniChallengeViewModel: MiniChallengeViewModel = hiltViewModel()
+    val miniChallengeState by miniChallengeViewModel.state.collectAsStateWithLifecycle()
+    val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val recordAlarmViewModel: RecordAlarmViewModel = hiltViewModel()
+    val recordAlarmState by recordAlarmViewModel.state.collectAsStateWithLifecycle()
+    val reminderDismissedDate by recordAlarmViewModel.dismissedDate.collectAsStateWithLifecycle()
+    val battleState by battleViewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(selectedDate) { miniChallengeViewModel.loadChallenges(selectedDate) }
+    LaunchedEffect(miniChallengeViewModel) {
+        miniChallengeViewModel.events.collect { event ->
+            if (event is MiniChallengeEvent.ShowMessage) {
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
-    LaunchedEffect(Unit) {
-        ChallengeRepository.loadCurrentChallenge().onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("챌린지 현황 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
-        }
+    LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
+    // 햄배틀 탭에 들어올 때만 목록을 받아온다.
+    LaunchedEffect(selectedBottomTab) {
+        if (selectedBottomTab == BottomNavItem.HAM_BATTLE) battleViewModel.loadMyBattles()
     }
-    LaunchedEffect(selectedDate) {
-        ExpenseDetailStore.loadDay(selectedDate).onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("지출 내역 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
-        }
+    val records by viewModel.records.collectAsStateWithLifecycle()
+    val challengeState by viewModel.challengeState.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val recordsForDate: (LocalDate) -> List<ExpenseRecord> = { date ->
+        records.values.filter { it.date == date }
     }
-    val baseUiState = remember(selectedDate, ChallengeRepository.activeChallenge?.id) {
-        mockStateForDate(selectedDate, referenceToday)
+    val baseUiState = remember(selectedDate, challengeState, currentUser) {
+        mockStateForDate(challengeState, currentUser.name, selectedDate, referenceToday)
     }
-    val storeExpenses = ExpenseDetailStore.recordsForDate(selectedDate).map { record ->
+    val storeExpenses = recordsForDate(selectedDate).map { record ->
         ExpenseEntry(
             id = record.id,
             categoryId = record.categoryId,
@@ -150,13 +173,13 @@ fun HomeScreen(
         )
     }
     val uiState = baseUiState.copy(expenses = storeExpenses)
-    val resolvedChallenge = ChallengeRepository.challengeFor(selectedDate)
+    val resolvedChallenge = challengeState.challengeFor(selectedDate)
     val liveChallenge = uiState.challenge?.let { challenge ->
         val liveDailyLimit = resolvedChallenge?.dailyLimitOn(selectedDate) ?: challenge.dailyLimit
         val todaySpent = uiState.expenses.sumOf { it.amount }
         val progress = resolvedChallenge?.let { rc ->
-            ChallengeRepository.computeProgress(referenceToday, rc) { date ->
-                ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+            challengeState.computeProgress(referenceToday, rc) { date ->
+                recordsForDate(date).sumOf { it.amount }
             }
         }
         challenge.copy(
@@ -168,7 +191,7 @@ fun HomeScreen(
     }
     val displayedUiState = uiState.copy(
         challenge = liveChallenge,
-        miniChallenges = MiniChallengeStore.challengesFor(selectedDate)
+        miniChallenges = miniChallengeState.challengesFor(selectedDate)
     )
 
     Scaffold(
@@ -192,18 +215,8 @@ fun HomeScreen(
                     referenceToday = referenceToday,
                     onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
                     onToggleMiniChallenge = { id ->
-                        val target = MiniChallengeStore.challengesFor(selectedDate).find { it.id == id }
-                        if (target != null) {
-                            coroutineScope.launch {
-                                miniChallengeRepository.setChecked(selectedDate, id, !target.isChecked)
-                                    .onFailure { error ->
-                                        Toast.makeText(
-                                            context,
-                                            error.toUserMessage("미니 챌린지 처리에 실패했습니다."),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                            }
+                        miniChallengeState.challengesFor(selectedDate).find { it.id == id }?.let { target ->
+                            miniChallengeViewModel.setChecked(selectedDate, id, !target.isChecked)
                         }
                     },
                     onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
@@ -218,54 +231,39 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding)
                 )
 
-                val hasExpenseToday = ExpenseDetailStore.recordsForDate(referenceToday).isNotEmpty()
+                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty()
                 when {
-                    TakeABreakStore.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
-                        onStartNowClick = {
-                            coroutineScope.launch {
-                                TakeABreakStore.resumeNow()
-                                    .onSuccess { onStartChallengeClick() }
-                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(지금 바로) 실패", it) }
-                            }
-                        },
-                        onStartTomorrowClick = {
-                            coroutineScope.launch {
-                                TakeABreakStore.postponeOneDay()
-                                    .onFailure { Log.e("HomeScreen", "휴식 복귀(내일부터) 실패", it) }
-                            }
-                        },
+                    restState.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
+                        onStartNowClick = viewModel::resumeNow,
+                        onStartTomorrowClick = viewModel::postponeOneDay,
                         onRestMoreClick = onExtendBreak
                     )
 
-                    ChallengeRepository.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
-                        totalDays = ChallengeRepository.activeChallenge!!.totalDays,
-                        hasVisitedExpenseEdit = ChallengeRepository.hasVisitedExpenseEditAfterEnd,
+                    challengeState.isChallengeJustEnded(referenceToday) -> ChallengeEndedDialog(
+                        totalDays = challengeState.activeChallenge!!.totalDays,
+                        hasVisitedExpenseEdit = challengeState.hasVisitedExpenseEditAfterEnd,
                         onEditExpenseClick = onNavigateToChallengeEndExpenseCalendar,
-                        onFinishChallengeClick = {
-                            coroutineScope.launch {
-                                ChallengeRepository.acknowledgeChallengeEnd().onFailure { error ->
-                                    Toast.makeText(context, error.toUserMessage("챌린지 종료 처리에 실패했습니다."), Toast.LENGTH_SHORT).show()
-                                }
-                                onChallengeEndedFinishClick()
-                            }
-                        }
+                        onFinishChallengeClick = viewModel::acknowledgeChallengeEnd
                     )
 
-                    RecordAlarmStore.isMissingReminderDue(referenceToday, LocalTime.now(), hasExpenseToday) ->
+                    recordAlarmState.isMissingReminderDue(
+                        dismissedDate = reminderDismissedDate,
+                        referenceToday = referenceToday,
+                        currentTime = LocalTime.now(),
+                        hasExpenseToday = hasExpenseToday
+                    ) ->
                         MissingExpenseReminderDialog(
                             onInputNowClick = {
-                                RecordAlarmStore.dismissForToday(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
                                 onAddExpenseClick()
                             },
                             onNoSpendingTodayClick = {
-                                ExpenseDetailStore.upsert(
-                                    ExpenseRecord(id = UUID.randomUUID().toString(), date = referenceToday, amount = 0)
-                                )
-                                RecordAlarmStore.dismissForToday(referenceToday)
+                                viewModel.markNoSpending(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
                             },
                             onLaterClick = {
-                                RecordAlarmStore.dismissForToday(referenceToday)
-                                ChallengeRepository.markNoRecord(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
+                                viewModel.markNoRecord(referenceToday)
                             }
                         )
                 }
@@ -276,6 +274,16 @@ fun HomeScreen(
                 onItemSelected = { selectedBottomTab = it },
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
+                activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
+                    battleState.ongoingBattles
+                } else {
+                    battleViewModel.mockChallengesWith(HamBattleStatus.ACTIVE)
+                },
+                waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
+                    battleState.readyBattles
+                } else {
+                    battleViewModel.mockChallengesWith(HamBattleStatus.WAITING)
+                },
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
                 onNotificationClick = onNotificationClick,
                 onChallengeClick = onHamBattleChallengeClick,
@@ -326,8 +334,12 @@ fun HomeScreen(
     }
 }
 
-private fun mockStateForDate(date: LocalDate, referenceToday: LocalDate): HomeUiState =
-    HomeMockData.freshDayState(UserSession.currentUser.name, date)
+private fun mockStateForDate(
+    challengeState: ChallengeState,
+    userName: String,
+    date: LocalDate,
+    referenceToday: LocalDate
+): HomeUiState = HomeMockData.freshDayState(challengeState, userName, date)
 
 @Composable
 private fun HomeContent(
@@ -431,28 +443,28 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
 @Composable
 private fun HomeScreenChubbyPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.freshDayState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.freshDayState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "2. 지출 반영 예시 - 통통(86%)")
 @Composable
 private fun HomeScreenDecreasingPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.decreasingBalanceState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.decreasingBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "3. 보통(36%)")
 @Composable
 private fun HomeScreenNormalPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.normalBalanceState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.normalBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "4-5. 홀쭉(15%) + 경고 배너")
 @Composable
 private fun HomeScreenWarningPreview() {
     val today = remember { LocalDate.now() }
-    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.lowBalanceWithWarningState(MOCK_USER_NAME, today), today) }
+    HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.lowBalanceWithWarningState(previewChallengeState(today), MOCK_USER_NAME, today), today) }
 }
 
 @Preview(showBackground = true, name = "6. 진행 중인 챌린지 없음")

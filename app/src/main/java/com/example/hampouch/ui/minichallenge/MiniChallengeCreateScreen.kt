@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import com.example.hampouch.domain.model.normalizeMiniChallengeName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -71,7 +72,7 @@ fun MiniChallengeCreateScreen(
         bottomBar = {
             Button(
                 onClick = {
-                    if (existingNames.any { MiniChallengeStore.normalizeName(it) == MiniChallengeStore.normalizeName(name) }) {
+                    if (existingNames.any { normalizeMiniChallengeName(it) == normalizeMiniChallengeName(name) }) {
                         showDuplicateNameError = true
                     } else {
                         showDuplicateNameError = false

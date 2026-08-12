@@ -34,7 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.dialog.ExpenseEditConfirmDialog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPMain
@@ -138,7 +139,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_category)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = categoryOptions) { option ->
+                        ChipGrid(items = categoryOptions) { option ->
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
@@ -172,7 +173,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_reason)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = reasonOptions) { option ->
+                        ChipGrid(items = reasonOptions) { option ->
                             when (option) {
                                 is ReasonOption.Preset -> ChoiceChip(
                                     label = stringResource(option.reason.labelResId),

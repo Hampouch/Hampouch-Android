@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.amountadjustment
 
+import com.example.hampouch.ui.common.previewChallengeState
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,9 +52,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.AmountAdjustmentChallenge
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.AmountAdjustmentChallenge
+import com.example.hampouch.domain.model.toUserMessage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.dialog.AbandonChallengeConfirmDialog
 import com.example.hampouch.ui.dialog.AmountAdjustmentConfirmDialog
@@ -92,7 +94,8 @@ fun AmountAdjustmentRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> },
-    onGoalAmountUpdated: () -> Unit = {}
+    onGoalAmountUpdated: () -> Unit = {},
+    viewModel: AmountAdjustmentViewModel = hiltViewModel()
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
@@ -103,6 +106,17 @@ fun AmountAdjustmentRoute(
     var showAbandonConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is AmountAdjustmentEvent.ChallengeAbandoned ->
+                    onChallengeAbandoned(event.challengeId, event.suggestedTargetAmount)
+                AmountAdjustmentEvent.GoalAmountUpdated -> onGoalAmountUpdated()
+                is AmountAdjustmentEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
     val selectedAmount = customAmount
@@ -247,8 +261,7 @@ fun AmountAdjustmentRoute(
             onConfirm = {
                 showConfirmDialog = false
                 editCount = (editCount + 1).coerceAtMost(challenge.maxEditCount)
-                ChallengeRepository.updateTargetAmount(selectedAmount)
-                onGoalAmountUpdated()
+                viewModel.updateTargetAmount(selectedAmount)
             },
             subtext = if (isLastEdit) stringResource(R.string.amountadjustment_last_edit_warning) else null
         )
@@ -259,18 +272,7 @@ fun AmountAdjustmentRoute(
             onCancel = { showAbandonConfirmDialog = false },
             onConfirm = {
                 showAbandonConfirmDialog = false
-                coroutineScope.launch {
-                    ChallengeRepository.abandonChallenge()
-                        .onSuccess {
-                            val actualAmount =
-                                ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
-                            val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
-                            onChallengeAbandoned(challenge.id, suggestedTargetAmount)
-                        }
-                        .onFailure { error ->
-                            Toast.makeText(context, error.toUserMessage("중도 포기 처리에 실패했습니다."), Toast.LENGTH_SHORT).show()
-                        }
-                }
+                viewModel.abandonChallenge(challenge.id)
             }
         )
     }
@@ -472,7 +474,7 @@ private fun DailyFoodGoalCard(amount: Int, modifier: Modifier = Modifier) {
 private fun AmountAdjustmentScreenPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 0),
+            challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 0),
             onBackClick = {}
         )
     }
@@ -483,7 +485,7 @@ private fun AmountAdjustmentScreenPreview() {
 private fun AmountAdjustmentScreenMaxEditPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 1),
+            challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 1),
             onBackClick = {}
         )
     }
