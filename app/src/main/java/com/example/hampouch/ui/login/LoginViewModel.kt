@@ -121,11 +121,11 @@ class LoginViewModel @Inject constructor(
         val nickname = _uiState.value.socialNickname
         viewModelScope.launch {
             authRepository.checkNicknameAvailability(nickname)
-                .onSuccess { data ->
+                .onSuccess { available ->
                     _uiState.value = _uiState.value.copy(
-                        isSocialNicknameAvailable = data.available,
+                        isSocialNicknameAvailable = available,
                         socialNicknameCheckMessage =
-                            if (data.available) "사용 가능한 닉네임입니다." else "이미 존재하는 닉네임입니다."
+                            if (available) "사용 가능한 닉네임입니다." else "이미 존재하는 닉네임입니다."
                     )
                 }
                 .onFailure { error ->

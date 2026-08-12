@@ -290,12 +290,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun ExpensePeriodSummaryData.toPeriodSummary(
-        fallbackStart: LocalDate,
-        fallbackEnd: LocalDate
-    ): ExpensePeriodSummary = ExpensePeriodSummary(
-        periodStart = periodStart?.let { LocalDate.parse(it) } ?: fallbackStart,
-        periodEnd = periodEnd?.let { LocalDate.parse(it) } ?: fallbackEnd,
+    private fun ExpensePeriodSummaryData.toPeriodSummary(): ExpensePeriodSummary = ExpensePeriodSummary(
+        periodStart = LocalDate.parse(periodStart),
+        periodEnd = LocalDate.parse(periodEnd),
         totalAmount = totalAmount,
         dailyAverage = dailyAverage,
         dailyBreakdown = dailyBreakdown.map { DailyAmount(LocalDate.parse(it.date), it.amount) }
@@ -463,8 +460,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             val response = apiService.getExpenseWeekSummary(standardDate.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                val weekStart = sundayOfWeek(standardDate)
-                Result.success(data.toPeriodSummary(fallbackStart = weekStart, fallbackEnd = weekStart.plusDays(6)))
+                Result.success(data.toPeriodSummary())
             } else {
                 Result.failure(response.toApiException("주간 기록을 불러오지 못했습니다."))
             }
@@ -482,12 +478,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             val response = apiService.getExpenseMonthSummary(standardMonth.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                Result.success(
-                    data.toPeriodSummary(
-                        fallbackStart = standardMonth.atDay(1),
-                        fallbackEnd = standardMonth.atEndOfMonth()
-                    )
-                )
+                Result.success(data.toPeriodSummary())
             } else {
                 Result.failure(response.toApiException("월간 기록을 불러오지 못했습니다."))
             }

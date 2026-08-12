@@ -62,8 +62,8 @@ private val StatusBadgeText = Color(0xFF729739)
 @Composable
 fun HamBattleChallengesResultScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit
 ) {
     val sorted = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val ranked = remember(sorted) {
@@ -349,6 +349,9 @@ private fun OneVsOnePenaltyBoxPreview() {
 @Composable
 private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
+        HamBattleChallengesResultScreen(
+            challenge = HamBattleMockFixtures.activeChallenges()[0],
+            onBackClick = {}, onStartNewChallengeClick = {}
+        )
     }
 }

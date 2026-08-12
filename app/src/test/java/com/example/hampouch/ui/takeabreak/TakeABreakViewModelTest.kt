@@ -3,6 +3,7 @@ package com.example.hampouch.ui.takeabreak
 import com.example.hampouch.MainDispatcherRule
 import com.example.hampouch.domain.model.BreakDuration
 import com.example.hampouch.domain.model.RestState
+import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.repository.RestRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,17 +47,17 @@ class TakeABreakViewModelTest {
     private class FakeRestRepository(
         private val startResult: Result<Unit> = Result.success(Unit)
     ) : RestRepository {
-        override val restState: StateFlow<RestState> = MutableStateFlow(RestState())
+        override val restState: StateFlow<RestState> = MutableStateFlow(RestState.NotResting)
         var startCallCount: Int = 0
 
         override suspend fun syncStatus(): Result<Unit> = Result.success(Unit)
 
-        override suspend fun startBreak(duration: BreakDuration?, customDays: Int?): Result<Unit> {
+        override suspend fun startBreak(period: RestPeriod): Result<Unit> {
             startCallCount++
             return startResult
         }
 
-        override suspend fun extendBreak(duration: BreakDuration?, customDays: Int?): Result<Unit> =
+        override suspend fun extendBreak(period: RestPeriod): Result<Unit> =
             Result.success(Unit)
 
         override suspend fun resumeNow(): Result<Unit> = Result.success(Unit)

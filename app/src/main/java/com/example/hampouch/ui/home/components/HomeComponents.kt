@@ -404,7 +404,7 @@ fun TodayExpenseSection(
     onViewAllClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onExpenseClick: (String) -> Unit = {}
+    onExpenseClick: (String) -> Unit
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(title = stringResource(R.string.home_today_expense_title), onViewAllClick = onViewAllClick)
@@ -433,7 +433,7 @@ fun TodayExpenseSection(
 }
 
 @Composable
-fun ExpenseItemCard(entry: ExpenseEntry, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun ExpenseItemCard(entry: ExpenseEntry, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val category = HomeCategoryCatalog.byId(entry.categoryId)
     val icon = category?.icon ?: HomeCategoryCatalog.defaultIcon
     val accentColor = category?.accentColor ?: HomeCategoryCatalog.defaultColor
@@ -545,7 +545,7 @@ fun EmptyStateBlock(title: String, subtitle: String? = null, modifier: Modifier 
 @Composable
 fun WarningBannerList(
     warnings: List<HomeWarning>,
-    onSuggestionClick: (String) -> Unit = {},
+    onSuggestionClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -668,35 +668,43 @@ private fun ExpenseItemCardBranchPreview() {
         ) {
             // 이름 + 카테고리 + 이유
             ExpenseItemCard(
-                ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+                ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
+                onClick = {}
             )
             // 이유 없음
             ExpenseItemCard(
-                ExpenseEntry(id = "2", categoryId = "cafe", name = "스타벅스", amount = 4_500)
+                ExpenseEntry(id = "2", categoryId = "cafe", name = "스타벅스", amount = 4_500),
+                onClick = {}
             )
             // 카테고리 미선택
             ExpenseItemCard(
-                ExpenseEntry(id = "3", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+                ExpenseEntry(id = "3", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
+                onClick = {}
             )
             // '기타'를 명시적으로 선택
             ExpenseItemCard(
-                ExpenseEntry(id = "4", categoryId = "etc", name = "스타벅스", reasonTag = "스트레스", amount = 4_500)
+                ExpenseEntry(id = "4", categoryId = "etc", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
+                onClick = {}
             )
             // 이름 없음
             ExpenseItemCard(
-                ExpenseEntry(id = "5", categoryId = "cafe", reasonTag = "스트레스", amount = 4_500)
+                ExpenseEntry(id = "5", categoryId = "cafe", reasonTag = "스트레스", amount = 4_500),
+                onClick = {}
             )
             // 이름·카테고리 없음
             ExpenseItemCard(
-                ExpenseEntry(id = "6", reasonTag = "스트레스", amount = 4_500)
+                ExpenseEntry(id = "6", reasonTag = "스트레스", amount = 4_500),
+                onClick = {}
             )
             // 전부 없음
             ExpenseItemCard(
-                ExpenseEntry(id = "7", amount = 4_500)
+                ExpenseEntry(id = "7", amount = 4_500),
+                onClick = {}
             )
             // 직접 입력 카테고리 + 직접 입력 이유
             ExpenseItemCard(
-                ExpenseEntry(id = "8", customCategoryName = "직접입력한카테고리", name = "지출내역", reasonTag = "감정태깅", amount = 0)
+                ExpenseEntry(id = "8", customCategoryName = "직접입력한카테고리", name = "지출내역", reasonTag = "감정태깅", amount = 0),
+                onClick = {}
             )
         }
     }

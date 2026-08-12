@@ -11,6 +11,17 @@ import com.example.hampouch.data.remote.CommunityApi
 import com.example.hampouch.data.remote.ExpenseApi
 import com.example.hampouch.data.remote.MiniChallengeApi
 import com.example.hampouch.data.remote.RestApi
+import com.example.hampouch.data.remote.dto.BattleSummaryDtoDeserializer
+import com.example.hampouch.data.remote.dto.MyBattleSummaryDto
+import com.example.hampouch.data.remote.dto.ExpensePeriodSummaryData
+import com.example.hampouch.data.remote.dto.ExpenseAnalysisData
+import com.example.hampouch.data.remote.dto.ExpenseTrendData
+import com.example.hampouch.data.remote.dto.MiniChallengeItemDto
+import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeDto
+import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
+import com.example.hampouch.data.remote.dto.RequiredFieldsDeserializer
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,10 +66,59 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit = Retrofit.Builder()
+    fun provideGson(): Gson = GsonBuilder()
+        .registerTypeAdapter(MyBattleSummaryDto::class.java, BattleSummaryDtoDeserializer())
+        .registerTypeAdapter(
+            ExpensePeriodSummaryData::class.java,
+            RequiredFieldsDeserializer(
+                ExpensePeriodSummaryData::class.java,
+                "periodStart", "periodEnd", "totalAmount", "dailyAverage", "dailyBreakdown"
+            )
+        )
+        .registerTypeAdapter(
+            ExpenseAnalysisData::class.java,
+            RequiredFieldsDeserializer(
+                ExpenseAnalysisData::class.java,
+                "periodStart", "periodEnd", "totalAmount", "categoryBreakdown", "emotionBreakdown",
+                "weekdayBreakdown", "weekdayInsight", "pouchInsight"
+            )
+        )
+        .registerTypeAdapter(
+            ExpenseTrendData::class.java,
+            RequiredFieldsDeserializer(
+                ExpenseTrendData::class.java,
+                "month", "totalAmount", "monthlyAverage", "trend", "trendInsight"
+            )
+        )
+        .registerTypeAdapter(
+            MiniChallengeItemDto::class.java,
+            RequiredFieldsDeserializer(
+                MiniChallengeItemDto::class.java,
+                "miniChallengeId", "title", "durationDays", "progressDays", "itemStreak", "checked"
+            )
+        )
+        .registerTypeAdapter(
+            RecommendedMiniChallengeDto::class.java,
+            RequiredFieldsDeserializer(
+                RecommendedMiniChallengeDto::class.java,
+                "recommendedId", "title", "durationDays"
+            )
+        )
+        .registerTypeAdapter(
+            MiniChallengeCreatedData::class.java,
+            RequiredFieldsDeserializer(
+                MiniChallengeCreatedData::class.java,
+                "miniChallengeId", "title", "durationDays", "startDate", "endDate"
+            )
+        )
+        .create()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit = Retrofit.Builder()
         .baseUrl(BuildConfig.BASE_URL)
         .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 
     @Provides

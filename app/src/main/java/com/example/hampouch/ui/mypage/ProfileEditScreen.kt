@@ -76,7 +76,7 @@ fun ProfileEditScreen(
     onBackClick: () -> Unit,
     onSubmit: (newName: String, newAvatarUri: String?) -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit
 ) {
     var isEditingName by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
@@ -333,7 +333,7 @@ private fun ProfileEditScreenPreview() {
             currentAvatarUri = null,
             onValidateNickname = { Result.success(it == "햄포치") },
             onBackClick = {},
-            onSubmit = { _, _ -> }
+            onSubmit = { _, _ -> }, onNotificationClick = {}
         )
     }
 }

@@ -108,8 +108,8 @@ fun ExpenseCalendarRoute(
     referenceToday: LocalDate = LocalDate.now(),
     /** null이면 진행 중 챌린지 기간을 쓴다. */
     challengePeriod: ExpenseChallengePeriod? = null,
-    onExpenseAnalysisClick: () -> Unit = {},
-    onAddExpenseClick: (LocalDate) -> Unit = {},
+    onExpenseAnalysisClick: () -> Unit,
+    onAddExpenseClick: (LocalDate) -> Unit,
     restrictToChallengePeriod: Boolean = false,
     viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
@@ -715,7 +715,7 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
 @Composable
 private fun ExpenseCalendarMonthlyPreview() {
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {})
+        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
     }
 }
 
@@ -727,6 +727,8 @@ private fun ExpenseCalendarEmptyDayPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today
         )
     }
@@ -740,6 +742,8 @@ private fun ExpenseCalendarChallengeEndedPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today,
             challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today)
         )
@@ -750,7 +754,7 @@ private fun ExpenseCalendarChallengeEndedPreview() {
 @Composable
 private fun ExpenseCalendarWeeklyPreview() {
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {})
+        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
     }
 }
 
@@ -762,6 +766,8 @@ private fun ExpenseCalendarChallengeEndEditPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today,
             challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today),
             restrictToChallengePeriod = true

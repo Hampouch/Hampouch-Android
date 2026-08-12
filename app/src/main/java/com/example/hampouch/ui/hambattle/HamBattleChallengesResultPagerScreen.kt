@@ -31,8 +31,8 @@ private const val PAGE_COUNT = 2
 @Composable
 fun HamBattleChallengesResultPagerScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit
 ) {
     val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
 
@@ -107,7 +107,8 @@ private fun ResultPageIndicatorPreview() {
 private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
         HamBattleChallengesResultPagerScreen(
-            challenge = HamBattleMockFixtures.activeChallenges().first()
+            challenge = HamBattleMockFixtures.activeChallenges().first(),
+            onBackClick = {}, onStartNewChallengeClick = {}
         )
     }
 }

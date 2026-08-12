@@ -78,13 +78,13 @@ fun MyPageScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToHamBattleLink: (String) -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onLoggedOut: () -> Unit = {},
-    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
-    onNavigateToAmountAdjustment: () -> Unit = {},
-    onNavigateToTakeABreak: () -> Unit = {},
-    onStartNewChallengeClick: (Int) -> Unit = {},
+    onNavigateToHamBattleLink: (String) -> Unit,
+    onNotificationClick: () -> Unit,
+    onLoggedOut: () -> Unit,
+    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit,
+    onNavigateToAmountAdjustment: () -> Unit,
+    onNavigateToTakeABreak: () -> Unit,
+    onStartNewChallengeClick: (Int) -> Unit,
     initialTipDetailPostId: String? = null,
     initialTipDetailScrollToComments: Boolean = false
 ) {
@@ -290,6 +290,7 @@ fun MyPageScreen(
                         onNavigateToChallengeExpenseAnalysis(state.totalDays, state.periodStart, state.periodEnd)
                     },
                     onAdjustGoalClick = onNavigateToAmountAdjustment,
+                    onShareClick = { route = MyPageRoute.MY_TIPS },
                     onStartNewChallengeClick = onStartNewChallengeClick,
                     onTakeABreakClick = onNavigateToTakeABreak
                 )
@@ -347,6 +348,7 @@ fun MyPageScreen(
                     onBackClick = { route = previousListRoute },
                     onEditClick = { route = MyPageRoute.EDIT_BATTLE },
                     onDeleted = { route = previousListRoute },
+                    onNavigateToHamBattleTab = { onItemSelected(BottomNavItem.HAM_BATTLE) },
                     onNavigateToBattleLink = onNavigateToHamBattleLink
                 )
             }
@@ -401,7 +403,7 @@ private fun MyPageMainContent(
     onSavedTipsClick: () -> Unit,
     onAllSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onNotificationClick: () -> Unit = {},
+    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -462,7 +464,10 @@ private fun MyPageScreenPreview() {
         MyPageScreen(
             selectedBottomTab = BottomNavItem.MY_PAGE,
             onItemSelected = {},
-            onAddClick = {}
+            onAddClick = {},
+            onNavigateToHamBattleLink = {}, onNotificationClick = {}, onLoggedOut = {},
+            onNavigateToChallengeExpenseAnalysis = { _, _, _ -> }, onNavigateToAmountAdjustment = {},
+            onNavigateToTakeABreak = {}, onStartNewChallengeClick = {}
         )
     }
 }

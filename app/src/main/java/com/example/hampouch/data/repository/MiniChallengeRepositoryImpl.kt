@@ -8,6 +8,8 @@ import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.MiniChallengeRepository
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.MiniChallengeDuration
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.data.local.MiniChallengeMockDataSource
 import com.example.hampouch.data.remote.MiniChallengeApi
@@ -80,7 +82,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     }
 
     /** 중복 이름이면 추가하지 않고 false. */
-    private fun addLocal(date: LocalDate, name: String, totalDays: Int?): Boolean {
+    private fun addLocal(date: LocalDate, name: String, duration: MiniChallengeDuration): Boolean {
         val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
         if (_state.value.isNameTaken(date, trimmedName)) return false
         setChallengesForDate(
@@ -88,7 +90,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             challengesFor(date) + MiniChallengeEntry(
                 id = UUID.randomUUID().toString(),
                 name = trimmedName,
-                totalDays = totalDays,
+                duration = duration,
                 achievedDays = 0,
                 isChecked = false,
                 startDate = date
@@ -98,7 +100,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     }
 
     private fun addRecommendedLocal(date: LocalDate, recommended: RecommendedMiniChallenge): Boolean {
-        val added = addLocal(date, recommended.name, recommended.totalDays)
+        val added = addLocal(date, recommended.name, recommended.duration)
         if (added) removeRecommended(recommended.id)
         return added
     }
@@ -146,10 +148,12 @@ class MiniChallengeRepositoryImpl @Inject constructor(
      * 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
      * 중복 이름 등으로 추가되지 않았으면 null.
      */
-    override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate?> {
+    override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = addRecommendedLocal(date, recommended)
-            return Result.success(if (added) date else null)
+            return if (added) Result.success(date) else Result.failure(
+                ApiException(code = "MINI_DUPLICATE", message = "이미 추가된 미니 챌린지입니다.")
+            )
         }
         return runCatching {
             requireAuthentication()
@@ -170,16 +174,22 @@ class MiniChallengeRepositoryImpl @Inject constructor(
      * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게, 서버 모드에서는 항상 오늘 날짜부터
      * 생성되므로 [date]가 아니라 실제 반영된 날짜를 반환한다. 중복 이름 등으로 추가되지 않았으면 null.
      */
-    override suspend fun addCustom(date: LocalDate, name: String, totalDays: Int?): Result<LocalDate?> {
+    override suspend fun addCustom(
+        date: LocalDate,
+        name: String,
+        duration: MiniChallengeDuration
+    ): Result<LocalDate> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = addLocal(date, name, totalDays)
-            return Result.success(if (added) date else null)
+            val added = addLocal(date, name, duration)
+            return if (added) Result.success(date) else Result.failure(
+                ApiException(code = "MINI_DUPLICATE", message = "이미 추가된 미니 챌린지입니다.")
+            )
         }
         return runCatching {
             requireAuthentication()
             val response = apiService.addCustomMiniChallenge(
                 AddCustomMiniChallengeRequest(
-                    custom = CustomMiniChallengeBody(title = name.trim(), durationDays = totalDays.toDurationDays())
+                    custom = CustomMiniChallengeBody(title = name.trim(), durationDays = duration.serverDays)
                 )
             )
             requireBody(response, "미니 챌린지 추가에 실패했습니다.")
@@ -242,22 +252,16 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
 }
 
-/** 도메인의 "오늘만"(totalDays == null)은 서버에서 durationDays=1로 표현된다. */
-private fun Int?.toDurationDays(): Int = this ?: 1
-
-/** durationDays=1은 도메인에서 "오늘만"(totalDays == null)로 표현한다. */
-private fun Int.toTotalDaysOrNull(): Int? = if (this == 1) null else this
-
 private fun MiniChallengeItemDto.toDomain(): MiniChallengeEntry = MiniChallengeEntry(
     id = miniChallengeId.toString(),
     name = title,
-    totalDays = durationDays?.toTotalDaysOrNull(),
+    duration = miniChallengeDuration(durationDays),
     achievedDays = progressDays,
     isChecked = checked
 )
 
 private fun RecommendedMiniChallengeDto.toDomain(): RecommendedMiniChallenge = RecommendedMiniChallenge(
     id = recommendedId.toString(),
-    totalDays = durationDays?.toTotalDaysOrNull(),
+    duration = miniChallengeDuration(durationDays),
     name = title
 )

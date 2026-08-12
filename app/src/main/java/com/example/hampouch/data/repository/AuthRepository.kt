@@ -14,6 +14,7 @@ import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
 import com.example.hampouch.data.remote.AuthApi
 import com.example.hampouch.data.remote.toApiException
+import com.example.hampouch.core.network.PendingAuth
 import com.example.hampouch.di.AuthDataStore
 import javax.inject.Inject
 import javax.inject.Provider
@@ -22,18 +23,14 @@ import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.data.remote.dto.AuthMeData
-import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.domain.model.EmailVerificationPurpose
-import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
 import com.example.hampouch.data.remote.dto.LogoutRequest
-import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
-import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
 import com.example.hampouch.data.local.AccountMockDataSource
@@ -184,7 +181,7 @@ class AuthRepository @Inject constructor(
         }
         return try {
             val response = apiService.setNickname(
-                authorization = "${session.tokenType} ${session.accessToken}",
+                pendingAuth = PendingAuth("${session.tokenType} ${session.accessToken}"),
                 request = SetNicknameRequest(nickname = nickname)
             )
 
@@ -243,7 +240,7 @@ class AuthRepository @Inject constructor(
     suspend fun sendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<EmailSendData> {
+    ): Result<Int> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockSendEmailVerificationCode(email, purpose)
         }
@@ -254,7 +251,7 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                Result.success(body)
+                Result.success(body.expiresInSeconds)
             } else {
                 Result.failure(response.toApiException("인증번호 발송에 실패했습니다."))
             }
@@ -270,7 +267,7 @@ class AuthRepository @Inject constructor(
         email: String,
         code: String,
         purpose: EmailVerificationPurpose
-    ): Result<EmailVerifyData> {
+    ): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockVerifyEmailCode(email, code, purpose)
         }
@@ -281,7 +278,9 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                Result.success(body)
+                if (body.verified) Result.success(Unit) else {
+                    Result.failure(ApiException("INVALID_CODE", "인증번호를 다시 확인해주세요."))
+                }
             } else {
                 Result.failure(response.toApiException("인증번호를 다시 확인해주세요."))
             }
@@ -293,7 +292,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun checkNicknameAvailability(nickname: String): Result<NicknameCheckData> {
+    suspend fun checkNicknameAvailability(nickname: String): Result<Boolean> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockCheckNicknameAvailability(nickname)
         }
@@ -302,7 +301,7 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                Result.success(body)
+                Result.success(body.available)
             } else {
                 Result.failure(response.toApiException("닉네임 확인에 실패했습니다."))
             }
@@ -314,7 +313,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun signUp(email: String, password: String, nickname: String): Result<SignUpData> {
+    suspend fun signUp(email: String, password: String, nickname: String): Result<Unit> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockSignUp(email, password, nickname)
         }
@@ -326,7 +325,7 @@ class AuthRepository @Inject constructor(
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
                 onboardingLocalStore.reserveForNewAccount(email)
-                Result.success(body)
+                Result.success(Unit)
             } else {
                 Result.failure(response.toApiException("회원가입에 실패했습니다."))
             }
@@ -368,7 +367,7 @@ class AuthRepository @Inject constructor(
 
     private suspend fun fetchAuthMe(tokenType: String, accessToken: String): AuthMeData? {
         return try {
-            val response = apiService.getMe(authorization = "$tokenType $accessToken")
+            val response = apiService.getMe(PendingAuth("$tokenType $accessToken"))
             if (response.isSuccessful) response.body()?.data else null
         } catch (e: CancellationException) {
             throw e
@@ -384,7 +383,7 @@ class AuthRepository @Inject constructor(
         }
         return try {
             val response = apiService.getMe(
-                authorization = "${session.tokenType} ${session.accessToken}"
+                pendingAuth = PendingAuth("${session.tokenType} ${session.accessToken}")
             )
             val data = response.body()?.data
             when {
@@ -581,40 +580,33 @@ class AuthRepository @Inject constructor(
     private fun mockSendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<EmailSendData> {
+    ): Result<Int> {
         checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
-        return Result.success(EmailSendData(expiresInSeconds = 180))
+        return Result.success(180)
     }
 
     private fun mockVerifyEmailCode(
         email: String,
         code: String,
         purpose: EmailVerificationPurpose
-    ): Result<EmailVerifyData> {
+    ): Result<Unit> {
         checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
         return if (code == "123456") {
-            Result.success(EmailVerifyData(email = email, purpose = purpose.name, verified = true))
+            Result.success(Unit)
         } else {
             Result.failure(ApiException(code = "INVALID_CODE", message = "인증번호를 다시 확인해주세요. (목데이터 모드: 123456)"))
         }
     }
 
-    private fun mockCheckNicknameAvailability(nickname: String): Result<NicknameCheckData> {
+    private fun mockCheckNicknameAvailability(nickname: String): Result<Boolean> {
         val taken = AccountMockDataSource.accounts.any { it.name == nickname }
-        return Result.success(NicknameCheckData(nickname = nickname, available = !taken))
+        return Result.success(!taken)
     }
 
-    private fun mockSignUp(email: String, password: String, nickname: String): Result<SignUpData> {
+    private fun mockSignUp(email: String, password: String, nickname: String): Result<Unit> {
         AccountMockDataSource.register(email = email, password = password, nickname = nickname)
         onboardingLocalStore.reserveForNewAccount(email)
-        return Result.success(
-            SignUpData(
-                userId = email.hashCode().toLong(),
-                email = email,
-                nickname = nickname,
-                provider = AuthProvider.LOCAL.name
-            )
-        )
+        return Result.success(Unit)
     }
 
     suspend fun saveSession(session: AuthSession) {

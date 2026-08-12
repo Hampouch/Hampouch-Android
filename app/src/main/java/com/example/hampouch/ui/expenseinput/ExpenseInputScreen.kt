@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.ChoiceChip
+import com.example.hampouch.ui.expensedetail.ChoiceChipIcon
 import com.example.hampouch.ui.expensedetail.ExpensePhotoEditSection
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
@@ -560,7 +561,7 @@ private fun ExpenseInputDetailStep(
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
-                    iconRes = categoryChipIconRes[option.category.id],
+                    icon = categoryChipIconRes[option.category.id]?.let(ChoiceChipIcon::Resource),
                     iconSize = 30.dp,
                     iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,

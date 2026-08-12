@@ -57,8 +57,8 @@ import com.example.hampouch.ui.theme.HampouchTheme
 @Composable
 fun HamBattleWaitingChallengeDetailScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onShareToCommunityClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onShareToCommunityClick: () -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -275,6 +275,9 @@ private fun WaitingInfoCardPreview() {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockFixtures.waitingChallenges().first())
+        HamBattleWaitingChallengeDetailScreen(
+            challenge = HamBattleMockFixtures.waitingChallenges().first(),
+            onBackClick = {}, onShareToCommunityClick = {}
+        )
     }
 }

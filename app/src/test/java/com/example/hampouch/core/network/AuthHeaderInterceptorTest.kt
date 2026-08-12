@@ -36,11 +36,11 @@ class AuthHeaderInterceptorTest {
     }
 
     @Test
-    fun `호출부가 지정한 임시 header는 덮어쓰지 않는다`() {
+    fun `호출부가 지정한 pending auth tag를 임시 header로 변환한다`() {
         val interceptor = interceptor("Bearer stored-token")
         val request = request("https://api.hampouch.com/api/auth/nickname")
             .newBuilder()
-            .header(AUTHORIZATION_HEADER, "Bearer pending-token")
+            .tag(PendingAuth::class.java, PendingAuth("Bearer pending-token"))
             .build()
         val chain = RecordingChain(request)
 

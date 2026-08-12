@@ -95,9 +95,9 @@ fun ExpenseAnalysisRoute(
     headerMode: ExpenseAnalysisHeaderMode,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onMonthlyViewClick: () -> Unit = {},
-    onCategoryDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
-    onReasonDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
+    onMonthlyViewClick: () -> Unit,
+    onCategoryDetailClick: (LocalDate, LocalDate) -> Unit,
+    onReasonDetailClick: (LocalDate, LocalDate) -> Unit,
     referenceToday: LocalDate = LocalDate.now(),
     viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
     allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
@@ -744,6 +744,9 @@ private fun ExpenseAnalysisMonthPreview() {
         ExpenseAnalysisRoute(
             headerMode = ExpenseAnalysisHeaderMode.Month(YearMonth.of(2026, 5)),
             onBackClick = {},
+            onMonthlyViewClick = {},
+            onCategoryDetailClick = { _, _ -> },
+            onReasonDetailClick = { _, _ -> },
             referenceToday = referenceToday
         )
     }
@@ -761,6 +764,9 @@ private fun ExpenseAnalysisChallengePreview() {
                 periodEnd = LocalDate.of(2026, 5, 14)
             ),
             onBackClick = {},
+            onMonthlyViewClick = {},
+            onCategoryDetailClick = { _, _ -> },
+            onReasonDetailClick = { _, _ -> },
             referenceToday = referenceToday
         )
     }

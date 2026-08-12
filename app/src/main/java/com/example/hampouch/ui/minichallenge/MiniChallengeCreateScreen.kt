@@ -43,13 +43,15 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import com.example.hampouch.domain.model.MiniChallengeDuration
+import com.example.hampouch.domain.model.miniChallengeDuration
 
 @Composable
 fun MiniChallengeCreateScreen(
     modifier: Modifier = Modifier,
     existingNames: List<String> = emptyList(),
-    onBackClick: () -> Unit = {},
-    onAddChallengeClick: (name: String, totalDays: Int?) -> Unit = { _, _ -> }
+    onBackClick: () -> Unit,
+    onAddChallengeClick: (name: String, duration: MiniChallengeDuration) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     val durationOptions = listOf(
@@ -62,7 +64,12 @@ fun MiniChallengeCreateScreen(
     var selectedDurationIndex by remember { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showDuplicateNameError by remember { mutableStateOf(false) }
-    val selectedTotalDays = selectedDurationIndex?.let { MiniChallengeDurationDayValues[it] }
+    val selectedDurationDays = MiniChallengeDurationDayValues.getOrNull(selectedDurationIndex ?: -1)
+    val selectedDuration = if (selectedDurationDays == null) {
+        null
+    } else {
+        miniChallengeDuration(selectedDurationDays)
+    }
     val isFormValid = name.isNotBlank() && selectedDurationIndex != null
 
     Scaffold(
@@ -179,11 +186,15 @@ fun MiniChallengeCreateScreen(
     if (showConfirmDialog) {
         MiniChallengeAddConfirmDialog(
             name = name,
-            periodLabel = if (selectedTotalDays == null) "오늘만" else "${selectedTotalDays}일간",
+            periodLabel = when (val duration = selectedDuration) {
+                MiniChallengeDuration.Today -> "오늘만"
+                is MiniChallengeDuration.Period -> "${duration.serverDays}일간"
+                null -> ""
+            },
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                onAddChallengeClick(name, selectedTotalDays)
+                onAddChallengeClick(name, requireNotNull(selectedDuration))
             }
         )
     }
@@ -193,6 +204,6 @@ fun MiniChallengeCreateScreen(
 @Composable
 private fun MiniChallengeCreateScreenPreview() {
     HampouchTheme {
-        MiniChallengeCreateScreen()
+        MiniChallengeCreateScreen(onBackClick = {}, onAddChallengeClick = { _, _ -> })
     }
 }

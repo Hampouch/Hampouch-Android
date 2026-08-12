@@ -67,8 +67,8 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SignUpScreen(
-    onSignUpSuccess: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {},
+    onSignUpSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -331,6 +331,6 @@ private fun TermsCheckIcon(checked: Boolean) {
 @Composable
 fun SignUpScreenPreview() {
     HampouchTheme {
-        SignUpScreen()
+        SignUpScreen(onSignUpSuccess = {}, onNavigateToLogin = {})
     }
 }

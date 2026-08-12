@@ -7,6 +7,8 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.ExpenseTagAnalysisResult
 import com.example.hampouch.domain.model.ExpenseTrendResult
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,29 +44,61 @@ class ExpenseAnalysisViewModel @Inject constructor(
     private val _tagResult = MutableStateFlow<ExpenseTagAnalysisResult?>(null)
     val tagResult: StateFlow<ExpenseTagAnalysisResult?> = _tagResult.asStateFlow()
 
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private var retryAction: (() -> Unit)? = null
+
+    fun retry() = retryAction?.invoke()
+
     fun loadSummary(periodStart: LocalDate, periodEnd: LocalDate) {
+        retryAction = { loadSummary(periodStart, periodEnd) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _summary.value = expenseRepository.loadAnalysis(periodStart, periodEnd).getOrNull()
+            expenseRepository.loadAnalysis(periodStart, periodEnd)
+                .onSuccess {
+                    _summary.value = it
+                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("지출 분석을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadTrend(month: YearMonth) {
+        retryAction = { loadTrend(month) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _trend.value = expenseRepository.loadTrend(month).getOrNull()
+            expenseRepository.loadTrend(month)
+                .onSuccess {
+                    _trend.value = it
+                    _loadState.value = LoadState.Content(it.trend.isEmpty())
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("월별 추이를 불러오지 못했습니다.")) }
         }
     }
 
     fun loadCategoryAnalysis(categoryId: String, periodStart: LocalDate, periodEnd: LocalDate) {
+        retryAction = { loadCategoryAnalysis(categoryId, periodStart, periodEnd) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _tagResult.value =
-                expenseRepository.loadCategoryAnalysis(categoryId, periodStart, periodEnd).getOrNull()
+            expenseRepository.loadCategoryAnalysis(categoryId, periodStart, periodEnd)
+                .onSuccess {
+                    _tagResult.value = it
+                    _loadState.value = LoadState.Content(it.records.isEmpty())
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("카테고리 분석을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadEmotionAnalysis(reasonId: String, periodStart: LocalDate, periodEnd: LocalDate) {
+        retryAction = { loadEmotionAnalysis(reasonId, periodStart, periodEnd) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _tagResult.value =
-                expenseRepository.loadEmotionAnalysis(reasonId, periodStart, periodEnd).getOrNull()
+            expenseRepository.loadEmotionAnalysis(reasonId, periodStart, periodEnd)
+                .onSuccess {
+                    _tagResult.value = it
+                    _loadState.value = LoadState.Content(it.records.isEmpty())
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("감정 분석을 불러오지 못했습니다.")) }
         }
     }
 }

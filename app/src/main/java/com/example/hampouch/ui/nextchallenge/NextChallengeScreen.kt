@@ -85,6 +85,7 @@ import com.example.hampouch.R
 import com.example.hampouch.domain.model.ChallengeResultStatus
 import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriod
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -398,9 +399,12 @@ fun NextChallengeRoute(
             onConfirm = {
                 showStartConfirmDialog = false
                 val request = OnboardingRequest(
-                    dateFixed = dateFixed,
-                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
-                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
+                    period = if (dateFixed) {
+                        ChallengePeriod.FixedStart(requireNotNull(startDate))
+                    } else {
+                        ChallengePeriod.Duration(effectivePeriodDays)
+                    },
+                    dailyTargetAmount = (targetAmount ?: suggestedTargetAmount) / effectivePeriodDays,
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
@@ -630,7 +634,7 @@ internal fun CustomPeriodDaysInput(
     value: Int?,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    onStartEditing: () -> Unit = {}
+    onStartEditing: () -> Unit
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var hasFocusedOnce by remember { mutableStateOf(false) }

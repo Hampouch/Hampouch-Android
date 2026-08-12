@@ -68,5 +68,5 @@ class MyPageProfileViewModel @Inject constructor(
 
     /** 서버에 닉네임 사용 가능 여부를 묻는다. 성공하면 "이미 쓰이는 중인가"를 돌려준다. */
     suspend fun isNicknameTaken(nickname: String): Result<Boolean> =
-        authRepository.checkNicknameAvailability(nickname).map { !it.available }
+        authRepository.checkNicknameAvailability(nickname).map { !it }
 }

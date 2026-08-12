@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostDetail
 import com.example.hampouch.domain.model.TipPostType
 import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.domain.model.ApiException
@@ -135,7 +136,9 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     private fun CommunityPostSummaryData.toTipPost(isEditorAuthor: Boolean? = null): TipPost = TipPost(
         id = postId.toString(),
-        type = mapServerPostType(postType),
+        detail = mapServerPostType(postType).let { type ->
+            if (type == TipPostType.TIP) TipPostDetail.Tip else TipPostDetail.Summary(type)
+        },
         category = mapServerCategory(category),
         title = title,
         subtitle = content,
@@ -174,7 +177,36 @@ class HamTipsRepositoryImpl @Inject constructor(
 
     private fun CommunityPostDetailData.toTipPost(isEditorAuthor: Boolean): TipPost = TipPost(
         id = postId.toString(),
-        type = mapServerPostType(postType),
+        detail = when (mapServerPostType(postType)) {
+            TipPostType.TIP -> TipPostDetail.Tip
+            TipPostType.MENU -> {
+                val food = foodDetail
+                    ?: throw ApiException("CONTRACT_VIOLATION", "MENU 상세 응답에 foodDetail이 없습니다.")
+                TipPostDetail.Menu(
+                    menuName = food.menuName,
+                    place = food.placeName,
+                    price = food.price,
+                    rating = MenuRatingInfo(
+                        taste = food.tasteRating,
+                        costEffectiveness = food.costRating,
+                        mood = food.moodRating
+                    )
+                )
+            }
+            TipPostType.BATTLE -> {
+                val recruit = recruitDetail
+                    ?: throw ApiException("CONTRACT_VIOLATION", "BATTLE 상세 응답에 recruitDetail이 없습니다.")
+                TipPostDetail.Battle(
+                    BattleRecruitInfo(
+                        link = recruit.battleUrl,
+                        durationDays = recruit.durationDays,
+                        capacity = recruit.maxMemberCount,
+                        penalty = recruit.penalty,
+                        currentMemberCount = recruit.currentMemberCount
+                    )
+                )
+            }
+        },
         category = mapServerCategory(category),
         title = title,
         subtitle = content,
@@ -189,21 +221,6 @@ class HamTipsRepositoryImpl @Inject constructor(
         hasImage = images.isNotEmpty(),
         imageUris = images.map { it.imageUrl },
         imageKeys = images.map { it.imageKey },
-        menuName = foodDetail?.menuName.orEmpty(),
-        place = foodDetail?.placeName.orEmpty(),
-        price = foodDetail?.price ?: 0,
-        menuRating = foodDetail?.let {
-            MenuRatingInfo(taste = it.tasteRating, costEffectiveness = it.costRating, mood = it.moodRating)
-        },
-        battleInfo = recruitDetail?.let {
-            BattleRecruitInfo(
-                link = it.battleUrl,
-                durationDays = it.durationDays,
-                capacity = it.maxMemberCount,
-                penalty = it.penalty,
-                currentMemberCount = it.currentMemberCount
-            )
-        },
         comments = comments.map { it.toTipComment() },
         isLiked = isLiked,
         isSaved = isBookmarked
@@ -411,7 +428,6 @@ class HamTipsRepositoryImpl @Inject constructor(
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
                 id = newId("tip"),
-                type = TipPostType.TIP,
                 category = category,
                 title = title,
                 subtitle = content,
@@ -435,7 +451,6 @@ class HamTipsRepositoryImpl @Inject constructor(
             if (response.isSuccessful && data != null) {
                 val post = TipPost(
                     id = data.postId.toString(),
-                    type = TipPostType.TIP,
                     category = category,
                     title = title,
                     subtitle = content,
@@ -516,7 +531,6 @@ class HamTipsRepositoryImpl @Inject constructor(
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
                 id = newId("menu"),
-                type = TipPostType.MENU,
                 category = TipCategory.WHAT_TO_EAT,
                 title = title,
                 subtitle = comment,
@@ -526,10 +540,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                 isEditorAuthor = authRepository.isEditor,
                 hasImage = imageUris.isNotEmpty(),
                 imageUris = imageUris,
-                menuName = menuName,
-                place = place,
-                price = price,
-                menuRating = rating
+                detail = TipPostDetail.Menu(menuName, place, price, rating)
             )
             prepend(post)
             return Result.success(post)
@@ -548,7 +559,6 @@ class HamTipsRepositoryImpl @Inject constructor(
             if (response.isSuccessful && data != null) {
                 val post = TipPost(
                     id = data.postId.toString(),
-                    type = TipPostType.MENU,
                     category = TipCategory.WHAT_TO_EAT,
                     title = title,
                     subtitle = comment,
@@ -559,10 +569,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                     hasImage = imageUris.isNotEmpty(),
                     imageUris = imageUris,
                     imageKeys = keys,
-                    menuName = menuName,
-                    place = place,
-                    price = price,
-                    menuRating = rating
+                    detail = TipPostDetail.Menu(menuName, place, price, rating)
                 )
                 prepend(post)
                 Result.success(post)
@@ -588,7 +595,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                 post.copy(
                     title = title, subtitle = comment, content = comment,
                     hasImage = imageUris.isNotEmpty(), imageUris = imageUris,
-                    menuName = menuName, place = place, price = price, menuRating = rating
+                    detail = TipPostDetail.Menu(menuName, place, price, rating)
                 )
             }
             val post = postById(postId) ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
@@ -611,7 +618,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                     post.copy(
                         title = title, subtitle = comment, content = comment,
                         hasImage = imageUris.isNotEmpty(), imageUris = imageUris, imageKeys = keys,
-                        menuName = menuName, place = place, price = price, menuRating = rating
+                        detail = TipPostDetail.Menu(menuName, place, price, rating)
                     )
                 }
                 Result.success(postById(postId)!!)
@@ -625,19 +632,19 @@ class HamTipsRepositoryImpl @Inject constructor(
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
                 id = newId("battle"),
-                type = TipPostType.BATTLE,
                 category = TipCategory.RECRUIT,
                 title = title,
                 subtitle = content,
                 content = content,
                 authorId = activeUserId,
                 authorName = activeUserName,
-                battleInfo = BattleRecruitInfo(
+                detail = TipPostDetail.Battle(BattleRecruitInfo(
                     link = link,
                     durationDays = DEFAULT_BATTLE_DURATION_DAYS,
                     capacity = DEFAULT_BATTLE_CAPACITY,
-                    penalty = ""
-                )
+                    penalty = "",
+                    currentMemberCount = 0
+                ))
             )
             prepend(post)
             return Result.success(post)
@@ -651,19 +658,19 @@ class HamTipsRepositoryImpl @Inject constructor(
             if (response.isSuccessful && data != null) {
                 val post = TipPost(
                     id = data.postId.toString(),
-                    type = TipPostType.BATTLE,
                     category = TipCategory.RECRUIT,
                     title = title,
                     subtitle = content,
                     content = content,
                     authorId = activeUserId,
                     authorName = activeUserName,
-                    battleInfo = BattleRecruitInfo(
+                    detail = TipPostDetail.Battle(BattleRecruitInfo(
                         link = link,
                         durationDays = DEFAULT_BATTLE_DURATION_DAYS,
                         capacity = DEFAULT_BATTLE_CAPACITY,
-                        penalty = ""
-                    )
+                        penalty = "",
+                        currentMemberCount = 0
+                    ))
                 )
                 prepend(post)
                 Result.success(post)
@@ -680,9 +687,10 @@ class HamTipsRepositoryImpl @Inject constructor(
                     title = title,
                     subtitle = content,
                     content = content,
-                    battleInfo = post.battleInfo?.copy(link = link) ?: BattleRecruitInfo(
-                        link = link, durationDays = DEFAULT_BATTLE_DURATION_DAYS, capacity = DEFAULT_BATTLE_CAPACITY, penalty = ""
-                    )
+                    detail = TipPostDetail.Battle(post.battleInfo?.copy(link = link) ?: BattleRecruitInfo(
+                        link = link, durationDays = DEFAULT_BATTLE_DURATION_DAYS, capacity = DEFAULT_BATTLE_CAPACITY,
+                        penalty = "", currentMemberCount = 0
+                    ))
                 )
             }
             val post = postById(postId) ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
@@ -700,9 +708,10 @@ class HamTipsRepositoryImpl @Inject constructor(
                         title = title,
                         content = content,
                         subtitle = content,
-                        battleInfo = post.battleInfo?.copy(link = link) ?: BattleRecruitInfo(
-                            link = link, durationDays = DEFAULT_BATTLE_DURATION_DAYS, capacity = DEFAULT_BATTLE_CAPACITY, penalty = ""
-                        )
+                        detail = TipPostDetail.Battle(post.battleInfo?.copy(link = link) ?: BattleRecruitInfo(
+                            link = link, durationDays = DEFAULT_BATTLE_DURATION_DAYS, capacity = DEFAULT_BATTLE_CAPACITY,
+                            penalty = "", currentMemberCount = 0
+                        ))
                     )
                 }
                 Result.success(postById(postId)!!)
@@ -925,13 +934,12 @@ class HamTipsRepositoryImpl @Inject constructor(
         mutate(postId) { post ->
             val info = post.battleInfo ?: return@mutate post
             if (info.isFull) return@mutate post
-            val updatedInfo = if (info.currentMemberCount != null) {
-                info.copy(currentMemberCount = info.currentMemberCount + 1)
-            } else {
-                if (activeUserId in info.participantIds) return@mutate post
-                info.copy(participantIds = info.participantIds + activeUserId)
-            }
-            post.copy(battleInfo = updatedInfo)
+            if (activeUserId in info.participantIds) return@mutate post
+            val updatedInfo = info.copy(
+                participantIds = info.participantIds + activeUserId,
+                currentMemberCount = info.currentMemberCount + 1
+            )
+            post.copy(detail = TipPostDetail.Battle(updatedInfo))
         }
     }
 

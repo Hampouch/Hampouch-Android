@@ -77,7 +77,8 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
-import retrofit2.http.Header
+import retrofit2.http.Tag
+import com.example.hampouch.core.network.PendingAuth
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -109,14 +110,12 @@ interface AuthApi {
 
     @PATCH("api/auth/nickname")
     suspend fun setNickname(
-        @Header("Authorization") authorization: String? = null,
+        @Tag pendingAuth: PendingAuth,
         @Body request: SetNicknameRequest
     ): Response<ApiResponse<SetNicknameData>>
 
     @GET("api/auth/me")
-    suspend fun getMe(
-        @Header("Authorization") authorization: String? = null
-    ): Response<ApiResponse<AuthMeData>>
+    suspend fun getMe(@Tag pendingAuth: PendingAuth? = null): Response<ApiResponse<AuthMeData>>
 
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<ApiResponse<RefreshTokenData>>

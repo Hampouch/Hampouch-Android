@@ -258,15 +258,18 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
 
 private val ChoiceChipMinHeight = 40.dp
 
+sealed interface ChoiceChipIcon {
+    data class Vector(val image: ImageVector, val tint: Color = HPText) : ChoiceChipIcon
+    data class Resource(val id: Int) : ChoiceChipIcon
+}
+
 @Composable
 fun ChoiceChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    iconRes: Int? = null,
-    iconTint: Color = HPText,
+    icon: ChoiceChipIcon? = null,
     iconSize: Dp = 16.dp,
     iconSpacing: Dp = 4.dp,
     /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 칩에서만 줄 수를 제한한다. */
@@ -291,20 +294,21 @@ fun ChoiceChip(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (iconRes != null) {
-            Image(
-                painter = painterResource(iconRes),
+        when (icon) {
+            is ChoiceChipIcon.Resource -> Image(
+                painter = painterResource(icon.id),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize)
             )
-            Spacer(modifier = Modifier.width(iconSpacing))
-        } else if (icon != null) {
-            Icon(
-                imageVector = icon,
+            is ChoiceChipIcon.Vector -> Icon(
+                imageVector = icon.image,
                 contentDescription = null,
-                tint = if (selected) HPWhite else iconTint,
+                tint = if (selected) HPWhite else icon.tint,
                 modifier = Modifier.size(iconSize)
             )
+            null -> Unit
+        }
+        if (icon != null) {
             Spacer(modifier = Modifier.width(iconSpacing))
         }
         Text(

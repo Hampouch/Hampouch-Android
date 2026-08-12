@@ -25,6 +25,12 @@ class AuthHeaderInterceptor @Inject constructor(
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        val pendingAuthorization = request.tag(PendingAuth::class.java)?.authorization
+        if (request.url.host == apiHost && pendingAuthorization != null) {
+            return chain.proceed(
+                request.newBuilder().header(AUTHORIZATION_HEADER, pendingAuthorization).build()
+            )
+        }
         if (
             request.url.host != apiHost ||
             request.header(AUTHORIZATION_HEADER) != null ||

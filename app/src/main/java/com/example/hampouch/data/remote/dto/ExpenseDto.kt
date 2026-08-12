@@ -82,8 +82,8 @@ data class ExpenseDaySummaryData(
 data class ExpenseDailyAmountData(val date: String, val amount: Int)
 
 data class ExpensePeriodSummaryData(
-    val periodStart: String? = null,
-    val periodEnd: String? = null,
+    val periodStart: String,
+    val periodEnd: String,
     val totalAmount: Int,
     val dailyAverage: Int,
     val dailyBreakdown: List<ExpenseDailyAmountData>
@@ -102,8 +102,8 @@ data class ExpenseAnalysisData(
     val categoryBreakdown: List<ExpenseCategoryAmountData>,
     val emotionBreakdown: List<ExpenseEmotionAmountData>,
     val weekdayBreakdown: List<ExpenseWeekdayAmountData>,
-    val weekdayInsight: String? = null,
-    val pouchInsight: String? = null
+    val weekdayInsight: String,
+    val pouchInsight: String
 )
 
 data class ExpenseTagAnalysisItemData(
@@ -141,5 +141,5 @@ data class ExpenseTrendData(
     val monthlyAverage: Int,
     val diffRateFromLastMonth: Int? = null,
     val trend: List<ExpenseTrendPointData>,
-    val trendInsight: String? = null
+    val trendInsight: String
 )

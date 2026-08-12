@@ -3,6 +3,7 @@ package com.example.hampouch.data.repository
 import android.content.Context
 import com.example.hampouch.domain.model.ChallengePeriodType
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriod
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
@@ -42,16 +43,21 @@ class OnboardingLocalStore @Inject constructor(
         restoredFromPrefs = true
         val p = prefs()
         if (!p.getBoolean(KEY_HAS_PENDING, false)) return
+        val period = if (p.getBoolean(KEY_DATE_FIXED, true)) {
+            if (!p.contains(KEY_START_DATE_EPOCH_DAY)) return
+            ChallengePeriod.FixedStart(LocalDate.ofEpochDay(p.getLong(KEY_START_DATE_EPOCH_DAY, 0L)))
+        } else {
+            if (!p.contains(KEY_CUSTOM_PERIOD_DAYS)) return
+            p.getInt(KEY_CUSTOM_PERIOD_DAYS, 0).takeIf { it > 0 }?.let(ChallengePeriod::Duration) ?: return
+        }
+        if (!p.contains(KEY_DAILY_TARGET) || !p.contains(KEY_TOTAL_TARGET)) return
         pendingRequest = OnboardingRequest(
-            lastMonthFoodExpense = p.getInt(KEY_LAST_MONTH_EXPENSE, -1).takeIf { it >= 0 },
-            challengePeriodType = runCatching {
-                ChallengePeriodType.valueOf(p.getString(KEY_PERIOD_TYPE, null).orEmpty())
-            }.getOrDefault(ChallengePeriodType.ONE_MONTH),
-            customPeriodDays = p.getInt(KEY_CUSTOM_PERIOD_DAYS, -1).takeIf { it >= 0 },
-            dateFixed = p.getBoolean(KEY_DATE_FIXED, true),
-            startDate = p.getLong(KEY_START_DATE_EPOCH_DAY, -1L).takeIf { it >= 0 }?.let(LocalDate::ofEpochDay),
-            dailyTargetAmount = p.getInt(KEY_DAILY_TARGET, -1).takeIf { it >= 0 },
-            totalTargetAmount = p.getInt(KEY_TOTAL_TARGET, -1).takeIf { it >= 0 },
+            lastMonthFoodExpense = p.getInt(KEY_LAST_MONTH_EXPENSE, 0).takeIf {
+                p.contains(KEY_LAST_MONTH_EXPENSE)
+            },
+            period = period,
+            dailyTargetAmount = p.getInt(KEY_DAILY_TARGET, 0),
+            totalTargetAmount = p.getInt(KEY_TOTAL_TARGET, 0),
             topSpendingCategoryIds = p.getString(KEY_CATEGORY_IDS, "").orEmpty()
                 .split(",")
                 .filter { it.isNotEmpty() }
@@ -60,18 +66,25 @@ class OnboardingLocalStore @Inject constructor(
 
     fun captureOnboardingComplete(request: OnboardingRequest) {
         pendingRequest = request
-        prefs().edit()
+        val editor = prefs().edit()
             .putBoolean(KEY_HAS_COMPLETED, true)
             .putBoolean(KEY_HAS_PENDING, true)
-            .putInt(KEY_LAST_MONTH_EXPENSE, request.lastMonthFoodExpense ?: -1)
             .putString(KEY_PERIOD_TYPE, request.challengePeriodType.name)
-            .putInt(KEY_CUSTOM_PERIOD_DAYS, request.customPeriodDays ?: -1)
             .putBoolean(KEY_DATE_FIXED, request.dateFixed)
-            .putLong(KEY_START_DATE_EPOCH_DAY, request.startDate?.toEpochDay() ?: -1L)
-            .putInt(KEY_DAILY_TARGET, request.dailyTargetAmount ?: -1)
-            .putInt(KEY_TOTAL_TARGET, request.totalTargetAmount ?: -1)
+            .putInt(KEY_DAILY_TARGET, request.dailyTargetAmount)
+            .putInt(KEY_TOTAL_TARGET, request.totalTargetAmount)
             .putString(KEY_CATEGORY_IDS, request.topSpendingCategoryIds.joinToString(","))
-            .apply()
+        request.lastMonthFoodExpense?.let { editor.putInt(KEY_LAST_MONTH_EXPENSE, it) }
+            ?: editor.remove(KEY_LAST_MONTH_EXPENSE)
+        when (val period = request.period) {
+            is ChallengePeriod.FixedStart -> editor
+                .putLong(KEY_START_DATE_EPOCH_DAY, period.startDate.toEpochDay())
+                .remove(KEY_CUSTOM_PERIOD_DAYS)
+            is ChallengePeriod.Duration -> editor
+                .putInt(KEY_CUSTOM_PERIOD_DAYS, period.days)
+                .remove(KEY_START_DATE_EPOCH_DAY)
+        }
+        editor.apply()
     }
 
     fun markOnboardingSkipped() {

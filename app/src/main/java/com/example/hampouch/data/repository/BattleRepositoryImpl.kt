@@ -15,6 +15,7 @@ import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
 import com.example.hampouch.domain.model.BattleInvitationPreview
 import com.example.hampouch.domain.model.BattleState
+import com.example.hampouch.domain.model.HamBattleServerState
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.BattleRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,11 +93,10 @@ class BattleRepositoryImpl @Inject constructor(
             val ongoing = mutableListOf<HamBattleChallenge>()
             val terminated = mutableListOf<HamBattleChallenge>()
             body.battles.forEach { dto ->
-                val challenge = dto.toDomain(myUserId)
-                when (dto.status) {
-                    "READY" -> ready += challenge
-                    "ONGOING" -> ongoing += challenge
-                    else -> terminated += challenge
+                when (dto) {
+                    is MyBattleSummaryDto.Ready -> ready += dto.toDomain()
+                    is MyBattleSummaryDto.Ongoing -> ongoing += dto.toDomain(myUserId)
+                    is MyBattleSummaryDto.Terminated -> terminated += dto.toDomain()
                 }
             }
             replaceLists(ready, ongoing, terminated)
@@ -139,9 +139,9 @@ class BattleRepositoryImpl @Inject constructor(
         }
         return runCatching {
             requireAuthentication()
-            val startDate = request.startDateMillis?.let {
-                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
-            } ?: LocalDate.now()
+            val startDate = Instant.ofEpochMilli(request.startDateMillis)
+                .atZone(ZoneOffset.UTC)
+                .toLocalDate()
             val response = apiService.createBattle(
                 CreateBattleRequest(
                     title = request.challengeName,
@@ -161,11 +161,15 @@ class BattleRepositoryImpl @Inject constructor(
                 penalty = body.penalty,
                 totalCount = body.capacity,
                 durationDays = body.durationDays,
-                startDate = runCatching { LocalDate.parse(body.startDate) }.getOrNull(),
+                startDate = parseServerDate(body.startDate, "createBattle.startDate"),
                 battleId = body.battleId,
                 battleCode = body.battleCode,
-                serverStatus = body.status,
-                joinedCountOverride = 1
+                serverState = when (body.status) {
+                    "READY" -> HamBattleServerState.Ready(joinedCount = 1)
+                    "ONGOING" -> HamBattleServerState.Ongoing
+                    "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+                    else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: ${body.status}")
+                }
             )
         }.onFailure { rethrowIfCancelled(it, "햄배틀 생성") }
     }
@@ -200,10 +204,15 @@ private fun parseParticipantTotalCount(option: String): Int =
 private fun parseDurationDays(option: String): Int =
     option.removeSuffix("일").toIntOrNull() ?: 7
 
-private fun durationDaysBetween(startDate: String, endDate: String): Int =
-    runCatching {
-        (ChronoUnit.DAYS.between(LocalDate.parse(startDate), LocalDate.parse(endDate)) + 1).toInt()
-    }.getOrDefault(1)
+private fun durationDaysBetween(startDate: String, endDate: String): Int {
+    val start = parseServerDate(startDate, "battle.startDate")
+    val end = parseServerDate(endDate, "battle.endDate")
+    val days = (ChronoUnit.DAYS.between(start, end) + 1).toInt()
+    if (days <= 0) {
+        throw ApiException("CONTRACT_VIOLATION", "battle 종료일은 시작일보다 빠를 수 없습니다.")
+    }
+    return days
+}
 
 /** 참가자 목록에서 나를 찾아 [ME_NAME]으로 라벨링한다(다른 화면 로직이 전부 "나" 문자열로 나를 식별한다). */
 private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantSpending {
@@ -218,29 +227,48 @@ private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantS
     )
 }
 
-private fun MyBattleSummaryDto.toDomain(myUserId: Long): HamBattleChallenge {
-    val participants = participants?.map { it.toDomain(myUserId) }.orEmpty()
-    val totalCount = when {
-        capacity != null -> capacity
-        participants.isNotEmpty() -> participants.size
-        else -> 0
-    }
+private fun MyBattleSummaryDto.Ready.toDomain(): HamBattleChallenge = HamBattleChallenge(
+    id = battleId.toString(),
+    type = if (capacity <= 2) "1 vs 1" else "그룹",
+    title = title,
+    penalty = penalty,
+    totalCount = capacity,
+    durationDays = durationDaysBetween(startDate, endDate),
+    startDate = parseServerDate(startDate, "battle.ready.startDate"),
+    battleId = battleId,
+    battleCode = battleCode,
+    serverState = HamBattleServerState.Ready(joinedCount)
+)
+
+private fun MyBattleSummaryDto.Ongoing.toDomain(myUserId: Long): HamBattleChallenge {
+    val domainParticipants = participants.map { it.toDomain(myUserId) }
     return HamBattleChallenge(
         id = battleId.toString(),
-        type = if (totalCount in 1..2) "1 vs 1" else "그룹",
+        type = if (domainParticipants.size <= 2) "1 vs 1" else "그룹",
         title = title,
         penalty = penalty,
-        participants = participants,
-        totalCount = totalCount,
+        participants = domainParticipants,
+        totalCount = domainParticipants.size,
         durationDays = durationDaysBetween(startDate, endDate),
-        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        startDate = parseServerDate(startDate, "battle.ongoing.startDate"),
         battleId = battleId,
         battleCode = battleCode,
-        serverStatus = status,
-        joinedCountOverride = joinedCount,
-        winnerName = winnerNickname
+        serverState = HamBattleServerState.Ongoing
     )
 }
+
+private fun MyBattleSummaryDto.Terminated.toDomain(): HamBattleChallenge = HamBattleChallenge(
+    id = battleId.toString(),
+    type = "종료",
+    title = title,
+    penalty = penalty,
+    totalCount = 0,
+    durationDays = durationDaysBetween(startDate, endDate),
+    startDate = parseServerDate(startDate, "battle.terminated.startDate"),
+    battleId = battleId,
+    battleCode = battleCode,
+    serverState = HamBattleServerState.Terminated(winnerNickname)
+)
 
 private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
     val domainParticipants = participants.map { it.toDomain(myUserId) }
@@ -252,11 +280,16 @@ private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
         participants = domainParticipants,
         totalCount = domainParticipants.size,
         durationDays = durationDaysBetween(startDate, endDate),
-        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        startDate = parseServerDate(startDate, "battle.detail.startDate"),
         battleId = battleId,
         battleCode = battleCode,
-        serverStatus = status,
-        penaltyUserName = penaltyUserNickname
+        serverState = when (status) {
+            "READY" -> HamBattleServerState.Ready(domainParticipants.size)
+            "ONGOING" -> HamBattleServerState.Ongoing
+            "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+            else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: $status")
+        },
+        penaltyUserName = penaltyTargetNickname
     )
 }
 
@@ -265,6 +298,15 @@ private fun BattleInvitationPreviewData.toDomain(): BattleInvitationPreview = Ba
     penalty = penalty,
     capacity = capacity,
     joinedCount = joinedCount,
-    startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+    startDate = parseServerDate(startDate, "battle.invitation.startDate"),
     durationDays = durationDays
 )
+
+private fun parseServerDate(value: String, field: String): LocalDate = try {
+    LocalDate.parse(value)
+} catch (error: Exception) {
+    throw ApiException(
+        code = "CONTRACT_VIOLATION",
+        message = "서버 응답의 $field 형식이 올바르지 않습니다."
+    ).also { it.initCause(error) }
+}
