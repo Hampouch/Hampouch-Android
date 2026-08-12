@@ -2,7 +2,7 @@ package com.example.hampouch.ui.challengeresult
 
 import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ChallengeResultStatus
-import com.example.hampouch.domain.model.ChallengeResultUiState
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.DailyRecordStatus.SUCCESS
 import com.example.hampouch.domain.model.EmotionStat

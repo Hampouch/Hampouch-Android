@@ -1,18 +1,18 @@
 package com.example.hampouch.data.repository
 
-import android.content.Context
 import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.example.hampouch.core.config.AuthConfig
 import com.example.hampouch.domain.model.AuthProvider
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
 import com.example.hampouch.data.remote.ApiService
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.example.hampouch.di.AuthDataStore
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -47,8 +47,6 @@ import kotlinx.coroutines.flow.map
 
 private const val TAG = "AuthRepository"
 
-private val Context.authDataStore by preferencesDataStore(name = "auth_session")
-
 sealed class SessionStatus {
     data class Valid(val needsNickname: Boolean) : SessionStatus()
     object Invalid : SessionStatus()
@@ -57,10 +55,11 @@ sealed class SessionStatus {
 
 @Singleton
 class AuthRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @AuthDataStore private val authDataStore: DataStore<Preferences>,
     private val apiService: ApiService,
     /** [AccountDataCoordinator]가 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
-    private val accountDataCoordinator: Provider<AccountDataCoordinator>
+    private val accountDataCoordinator: Provider<AccountDataCoordinator>,
+    private val onboardingLocalStore: OnboardingLocalStore
 ) {
 
     private object Keys {
@@ -92,7 +91,7 @@ class AuthRepository @Inject constructor(
 
     val isEditor: Boolean get() = _currentUser.value.role == UserRole.EDITOR
 
-    val userSession: Flow<AuthSession?> = context.authDataStore.data.map { preferences ->
+    val userSession: Flow<AuthSession?> = authDataStore.data.map { preferences ->
         val provider = preferences[Keys.PROVIDER]?.let { AuthProvider.valueOf(it) }
         val userId = preferences[Keys.USER_ID]
         val role = preferences[Keys.ROLE]
@@ -188,7 +187,7 @@ class AuthRepository @Inject constructor(
         if (!AuthConfig.USE_SERVER_AUTH) {
             val updatedSession = session.copy(nickname = nickname)
             AccountMockDataSource.register(email = updatedSession.email ?: "", password = "", nickname = nickname)
-            updatedSession.email?.let { OnboardingDataStore.reserveForNewAccount(context, it) }
+            updatedSession.email?.let { onboardingLocalStore.reserveForNewAccount(it) }
             saveSession(updatedSession)
             return Result.success(updatedSession)
         }
@@ -201,7 +200,7 @@ class AuthRepository @Inject constructor(
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
                 val updatedSession = session.copy(nickname = body.nickname)
-                updatedSession.email?.let { OnboardingDataStore.reserveForNewAccount(context, it) }
+                updatedSession.email?.let { onboardingLocalStore.reserveForNewAccount(it) }
                 saveSession(updatedSession)
                 Result.success(updatedSession)
             } else {
@@ -380,7 +379,7 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                OnboardingDataStore.reserveForNewAccount(context, email)
+                onboardingLocalStore.reserveForNewAccount(email)
                 Result.success(body)
             } else {
                 val error = response.errorBody()?.string()?.let {
@@ -709,7 +708,7 @@ class AuthRepository @Inject constructor(
 
     private fun mockSignUp(email: String, password: String, nickname: String): Result<SignUpData> {
         AccountMockDataSource.register(email = email, password = password, nickname = nickname)
-        OnboardingDataStore.reserveForNewAccount(context, email)
+        onboardingLocalStore.reserveForNewAccount(email)
         return Result.success(
             SignUpData(
                 userId = email.hashCode().toLong(),
@@ -721,7 +720,7 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun saveSession(session: AuthSession) {
-        context.authDataStore.edit { preferences ->
+        authDataStore.edit { preferences ->
             preferences[Keys.PROVIDER] = session.provider.name
             preferences[Keys.USER_ID] = session.userId
             preferences[Keys.ROLE] = session.role
@@ -737,7 +736,7 @@ class AuthRepository @Inject constructor(
         }
         _currentUser.value = sessionToUser(session)
         _isLoggedIn.value = true
-        accountDataCoordinator.get().syncIfNeeded(context, session.userId.toString(), session.email)
+        accountDataCoordinator.get().syncIfNeeded(session.userId.toString(), session.email)
     }
 
     private fun sessionToUser(session: AuthSession): User = User(
@@ -754,7 +753,7 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun clearSession() {
-        context.authDataStore.edit { it.clear() }
+        authDataStore.edit { it.clear() }
         _currentUser.value = AccountMockDataSource.normalUser
         _isLoggedIn.value = false
     }

@@ -39,7 +39,9 @@ enum class DayOfWeekLabel(val labelResId: Int) {
     THU(R.string.day_thursday),
     FRI(R.string.day_friday),
     SAT(R.string.day_saturday),
-    SUN(R.string.day_sunday)
+    SUN(R.string.day_sunday);
+
+    companion object
 }
 
 data class NotificationSettingsState(
@@ -63,3 +65,26 @@ data class RecordAlarmSettingsState(
     val hour: Int = 20,
     val minute: Int = 0
 )
+
+fun DayOfWeekLabel.Companion.of(dayOfWeek: java.time.DayOfWeek): DayOfWeekLabel = when (dayOfWeek) {
+    java.time.DayOfWeek.MONDAY -> DayOfWeekLabel.MON
+    java.time.DayOfWeek.TUESDAY -> DayOfWeekLabel.TUE
+    java.time.DayOfWeek.WEDNESDAY -> DayOfWeekLabel.WED
+    java.time.DayOfWeek.THURSDAY -> DayOfWeekLabel.THU
+    java.time.DayOfWeek.FRIDAY -> DayOfWeekLabel.FRI
+    java.time.DayOfWeek.SATURDAY -> DayOfWeekLabel.SAT
+    java.time.DayOfWeek.SUNDAY -> DayOfWeekLabel.SUN
+}
+
+/** 오늘 기록 누락 리마인더를 띄워야 하는지. [dismissedDate]가 오늘이면 이미 닫은 것으로 본다. */
+fun RecordAlarmSettingsState.isMissingReminderDue(
+    dismissedDate: java.time.LocalDate?,
+    referenceToday: java.time.LocalDate,
+    currentTime: java.time.LocalTime,
+    hasExpenseToday: Boolean
+): Boolean {
+    if (!missingReminderEnabled || hasExpenseToday) return false
+    if (dismissedDate == referenceToday) return false
+    if (DayOfWeekLabel.of(referenceToday.dayOfWeek) !in selectedDays) return false
+    return !currentTime.isBefore(java.time.LocalTime.of(hour, minute))
+}

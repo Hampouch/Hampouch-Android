@@ -31,15 +31,18 @@ import com.example.hampouch.ui.mypage.components.SettingsNavigateCard
 import com.example.hampouch.ui.mypage.components.SettingsToggleCard
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AllSettingsScreen(
     onBackClick: () -> Unit,
     onRecordAlarmClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    viewModel: AllSettingsViewModel = hiltViewModel()
 ) {
-    val notificationState = AllSettingsStore.state
+    val notificationState by viewModel.state.collectAsStateWithLifecycle()
     var showComingSoonDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -71,22 +74,22 @@ fun AllSettingsScreen(
                     title = stringResource(R.string.settings_challenge_alarm_title),
                     subtitle = stringResource(R.string.settings_challenge_alarm_subtitle),
                     checked = notificationState.challengeAlarmEnabled,
-                    onCheckedChange = { AllSettingsStore.state = AllSettingsStore.state.copy(challengeAlarmEnabled = it) },
-                    onRowClick = { AllSettingsStore.state = AllSettingsStore.state.copy(challengeAlarmEnabled = !notificationState.challengeAlarmEnabled) }
+                    onCheckedChange = viewModel::setChallengeAlarmEnabled,
+                    onRowClick = { viewModel.setChallengeAlarmEnabled(!notificationState.challengeAlarmEnabled) }
                 )
                 SettingsToggleCard(
                     title = stringResource(R.string.settings_hambattle_alarm_title),
                     subtitle = stringResource(R.string.settings_hambattle_alarm_subtitle),
                     checked = notificationState.hamBattleAlarmEnabled,
-                    onCheckedChange = { AllSettingsStore.state = AllSettingsStore.state.copy(hamBattleAlarmEnabled = it) },
-                    onRowClick = { AllSettingsStore.state = AllSettingsStore.state.copy(hamBattleAlarmEnabled = !notificationState.hamBattleAlarmEnabled) }
+                    onCheckedChange = viewModel::setHamBattleAlarmEnabled,
+                    onRowClick = { viewModel.setHamBattleAlarmEnabled(!notificationState.hamBattleAlarmEnabled) }
                 )
                 SettingsToggleCard(
                     title = stringResource(R.string.settings_community_alarm_title),
                     subtitle = stringResource(R.string.settings_community_alarm_subtitle),
                     checked = notificationState.communityAlarmEnabled,
-                    onCheckedChange = { AllSettingsStore.state = AllSettingsStore.state.copy(communityAlarmEnabled = it) },
-                    onRowClick = { AllSettingsStore.state = AllSettingsStore.state.copy(communityAlarmEnabled = !notificationState.communityAlarmEnabled) }
+                    onCheckedChange = viewModel::setCommunityAlarmEnabled,
+                    onRowClick = { viewModel.setCommunityAlarmEnabled(!notificationState.communityAlarmEnabled) }
                 )
             }
 

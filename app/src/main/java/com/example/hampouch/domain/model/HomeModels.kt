@@ -62,12 +62,3 @@ data class HomeWarning(
     val title: String,
     val message: String
 )
-
-data class HomeUiState(
-    val userName: String,
-    val selectedDate: LocalDate,
-    val challenge: HomeChallenge?,
-    val expenses: List<ExpenseEntry> = emptyList(),
-    val miniChallenges: List<MiniChallengeEntry> = emptyList(),
-    val warnings: List<HomeWarning> = emptyList()
-)

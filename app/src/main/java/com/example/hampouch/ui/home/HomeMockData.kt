@@ -15,7 +15,7 @@ import com.example.hampouch.R
 import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.HomeChallenge
-import com.example.hampouch.domain.model.HomeUiState
+import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.HomeWarning
 import com.example.hampouch.domain.model.MiniChallengeEntry

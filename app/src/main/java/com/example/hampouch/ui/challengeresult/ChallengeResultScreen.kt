@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ChallengeResultStatus
-import com.example.hampouch.domain.model.ChallengeResultUiState
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.domain.model.DailyRecordStatus
 import com.example.hampouch.domain.model.EmotionStat
 import com.example.hampouch.domain.model.SpendingEmotion

@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
@@ -160,7 +161,7 @@ private fun EndedChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             EndedChallengeCard(
-                challenge = HamBattleMockData.previewEndedChallenges()[0],
+                challenge = HamBattleMockFixtures.endedChallenges()[0],
                 onClick = {}
             )
         }
@@ -171,6 +172,6 @@ private fun EndedChallengeCardPreview() {
 @Composable
 private fun HamBattleEndedChallengesScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesScreen(endedChallenges = HamBattleMockData.previewEndedChallenges())
+        HamBattleEndedChallengesScreen(endedChallenges = HamBattleMockFixtures.endedChallenges())
     }
 }

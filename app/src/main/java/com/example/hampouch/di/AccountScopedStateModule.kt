@@ -3,12 +3,12 @@ package com.example.hampouch.di
 import com.example.hampouch.data.repository.BattleRepositoryImpl
 import com.example.hampouch.data.repository.HamTipsRepositoryImpl
 import com.example.hampouch.data.repository.MiniChallengeRepositoryImpl
+import com.example.hampouch.data.repository.MyPageProfileRepositoryImpl
 import com.example.hampouch.data.repository.NotificationRepositoryImpl
+import com.example.hampouch.data.repository.NotificationSettingsRepositoryImpl
+import com.example.hampouch.data.repository.RecordAlarmRepositoryImpl
 import com.example.hampouch.domain.repository.AccountScopedState
-import com.example.hampouch.ui.hambattle.HamBattleMockData
-import com.example.hampouch.ui.mypage.AllSettingsStore
-import com.example.hampouch.ui.mypage.MyPageProfileStore
-import com.example.hampouch.ui.mypage.RecordAlarmStore
+import com.example.hampouch.data.local.HamBattleMockStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,15 +25,19 @@ object AccountScopedStateModule {
         notificationRepository: NotificationRepositoryImpl,
         miniChallengeRepository: MiniChallengeRepositoryImpl,
         hamTipsRepository: HamTipsRepositoryImpl,
-        battleRepository: BattleRepositoryImpl
+        battleRepository: BattleRepositoryImpl,
+        recordAlarmRepository: RecordAlarmRepositoryImpl,
+        myPageProfileRepository: MyPageProfileRepositoryImpl,
+        notificationSettingsRepository: NotificationSettingsRepositoryImpl,
+        hamBattleMockStore: HamBattleMockStore
     ): Set<AccountScopedState> = setOf(
         hamTipsRepository,
         battleRepository,
         notificationRepository,
         miniChallengeRepository,
-        RecordAlarmStore,
-        MyPageProfileStore,
-        AllSettingsStore,
-        HamBattleMockData
+        recordAlarmRepository,
+        myPageProfileRepository,
+        notificationSettingsRepository,
+        hamBattleMockStore
     )
 }

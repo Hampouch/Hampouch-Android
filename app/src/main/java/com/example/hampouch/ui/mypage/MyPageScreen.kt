@@ -106,7 +106,9 @@ fun MyPageScreen(
         }
     }
     val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
-    val profile = MyPageProfileStore.profileFor(currentUser)
+    val profileViewModel: MyPageProfileViewModel = hiltViewModel()
+    val storedProfile by profileViewModel.profile.collectAsStateWithLifecycle()
+    val profile = profileViewModel.profileFor(currentUser, storedProfile)
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }
@@ -216,7 +218,7 @@ fun MyPageScreen(
                 isNicknameTaken = MyPageMockData::isNicknameTaken,
                 onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmit = { newName, newAvatarUri ->
-                    MyPageProfileStore.update(currentUser, newName, newAvatarUri)
+                    profileViewModel.update(currentUser, newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
                 onNotificationClick = onNotificationClick,

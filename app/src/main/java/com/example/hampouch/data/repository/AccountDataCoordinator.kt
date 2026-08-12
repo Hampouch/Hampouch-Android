@@ -1,6 +1,5 @@
 package com.example.hampouch.data.repository
 
-import android.content.Context
 import android.util.Log
 import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.domain.repository.AccountScopedState
@@ -17,12 +16,13 @@ class AccountDataCoordinator @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val restRepository: RestRepository,
     private val challengeRepository: ChallengeRepository,
-    private val accountScopedStates: Set<@JvmSuppressWildcards AccountScopedState>
+    private val accountScopedStates: Set<@JvmSuppressWildcards AccountScopedState>,
+    private val onboardingLocalStore: OnboardingLocalStore
 ) {
 
     private var syncedUserId: String? = null
 
-    suspend fun syncIfNeeded(context: Context, userId: String, email: String?) {
+    suspend fun syncIfNeeded(userId: String, email: String?) {
         if (userId == syncedUserId) return
         syncedUserId = userId
 
@@ -37,7 +37,7 @@ class AccountDataCoordinator @Inject constructor(
         }
 
         // 온보딩만 마치고 가입한 새 계정이면, 예약해 둔 온보딩 결과로 첫 챌린지를 시작한다.
-        val request = OnboardingDataStore.takeReservedRequest(account.email)
+        val request = onboardingLocalStore.takeReservedRequest(account.email)
         challengeRepository.resetEmpty()
         if (request != null) {
             challengeRepository.startNewChallenge(request).onFailure { error ->

@@ -31,12 +31,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleStatus
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
 import com.example.hampouch.ui.hambattle.HamBattleEvent
-import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
@@ -44,7 +44,6 @@ import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.NotificationTarget
-import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -91,7 +90,7 @@ private fun rememberHamBattleChallenge(
     viewModel: HamBattleViewModel
 ): HamBattleChallenge? {
     if (!BattleConfig.USE_SERVER_BATTLE) {
-        return HamBattleMockData.challenges.find { it.id == challengeId }
+        return viewModel.mockChallenges.value.find { it.id == challengeId }
     }
     val battleState by viewModel.state.collectAsStateWithLifecycle()
     val battleId = remember(challengeId) { challengeId?.toLongOrNull() }
@@ -233,11 +232,11 @@ fun AppNavHost(
             OnboardingRoute(
                 onOnboardingComplete = { request ->
                     Log.d(TAG, "Onboarding finished with mock request: $request")
-                    OnboardingDataStore.captureOnboardingComplete(context, request)
+                    startDestinationViewModel.captureOnboardingComplete(request)
                     goToLogin()
                 },
                 onNavigateToLogin = {
-                    OnboardingDataStore.markOnboardingSkipped(context)
+                    startDestinationViewModel.markOnboardingSkipped()
                     goToLogin()
                 }
             )
@@ -621,12 +620,12 @@ fun AppNavHost(
                 activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
                     battleState.ongoingBattles
                 } else {
-                    HamBattleMockData.activeChallenges()
+                    battleViewModel.mockChallengesWith(HamBattleStatus.ACTIVE)
                 },
                 waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
                     battleState.readyBattles
                 } else {
-                    HamBattleMockData.waitingChallenges()
+                    battleViewModel.mockChallengesWith(HamBattleStatus.WAITING)
                 },
                 onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) },
                 onChallengeClick = { challengeId ->
@@ -687,7 +686,7 @@ fun AppNavHost(
                     endedChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
                         battleState.terminatedBattles
                     } else {
-                        HamBattleMockData.endedChallenges()
+                        battleViewModel.mockChallengesWith(HamBattleStatus.ENDED)
                     },
                     onBackClick = { navController.popBackStack() },
                     onNotificationClick = { navController.navigate(Screen.Notification.route) },

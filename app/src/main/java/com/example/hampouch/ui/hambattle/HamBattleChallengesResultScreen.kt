@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
@@ -348,6 +349,6 @@ private fun OneVsOnePenaltyBoxPreview() {
 @Composable
 private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
     }
 }

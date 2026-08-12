@@ -50,6 +50,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
@@ -75,7 +77,8 @@ private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
 fun HamBattleChallengesPodiumResultScreen(
     challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onStartNewChallengeClick: () -> Unit = {},
+    viewModel: HamBattleViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge, selectedTab) {
@@ -85,7 +88,7 @@ fun HamBattleChallengesPodiumResultScreen(
             if (BattleConfig.USE_SERVER_BATTLE) {
                 challenge.participants.map { it.copy(amount = it.todayAmount ?: it.amount) }
             } else {
-                HamBattleMockData.participantsForToday(challenge)
+                viewModel.participantsForToday(challenge)
             }
         } else {
             challenge.participants
@@ -435,7 +438,7 @@ private fun ResultTabTogglePreview() {
 private fun PodiumChartPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
-            PodiumChart(ranked = HamBattleMockData.previewActiveChallenges()[1].participants)
+            PodiumChart(ranked = HamBattleMockFixtures.activeChallenges()[1].participants)
         }
     }
 }
@@ -444,7 +447,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
     }
 }
 
@@ -452,6 +455,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1])
     }
 }

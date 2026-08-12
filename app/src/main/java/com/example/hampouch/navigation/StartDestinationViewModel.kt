@@ -1,14 +1,13 @@
 package com.example.hampouch.navigation
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
-import com.example.hampouch.data.repository.OnboardingDataStore
+import com.example.hampouch.data.repository.OnboardingLocalStore
 import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.domain.model.AuthSession
+import com.example.hampouch.domain.model.OnboardingRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,8 +23,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class StartDestinationViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val onboardingLocalStore: OnboardingLocalStore
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -39,10 +38,10 @@ class StartDestinationViewModel @Inject constructor(
     }
 
     private suspend fun resolve() {
-        OnboardingDataStore.restorePendingIfNeeded(context)
+        onboardingLocalStore.restorePendingIfNeeded()
         val session = authRepository.userSession.first()
         _startDestination.value = when {
-            session == null && OnboardingDataStore.hasCompletedOnboarding(context) -> Screen.Login.route
+            session == null && onboardingLocalStore.hasCompletedOnboarding() -> Screen.Login.route
             session == null -> Screen.Onboarding.route
             else -> resolveForSession(session)
         }
@@ -62,7 +61,7 @@ class StartDestinationViewModel @Inject constructor(
             }
             SessionStatus.Invalid -> {
                 authRepository.clearSession()
-                if (OnboardingDataStore.hasCompletedOnboarding(context)) {
+                if (onboardingLocalStore.hasCompletedOnboarding()) {
                     Screen.Login.route
                 } else {
                     Screen.Onboarding.route
@@ -73,6 +72,14 @@ class StartDestinationViewModel @Inject constructor(
                 Screen.Home.route
             }
         }
+
+    fun captureOnboardingComplete(request: OnboardingRequest) {
+        onboardingLocalStore.captureOnboardingComplete(request)
+    }
+
+    fun markOnboardingSkipped() {
+        onboardingLocalStore.markOnboardingSkipped()
+    }
 
     fun consumePendingNicknameSession() {
         _pendingNicknameSession.value = null

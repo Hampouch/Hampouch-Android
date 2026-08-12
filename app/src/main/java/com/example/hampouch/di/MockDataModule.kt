@@ -14,7 +14,7 @@ import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailMockData
-import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.data.local.HamBattleMockStore
 import com.example.hampouch.ui.hamtips.HamTipsMockData
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.notification.NotificationMockData
@@ -66,8 +66,10 @@ object MockDataModule {
 
     @Provides
     @Singleton
-    fun provideBattleMockDataSource(): BattleMockDataSource = object : BattleMockDataSource {
+    fun provideBattleMockDataSource(
+        mockStore: HamBattleMockStore
+    ): BattleMockDataSource = object : BattleMockDataSource {
         override fun startNewChallenge(request: HamBattleChallengeRequest): HamBattleChallenge =
-            HamBattleMockData.startNewChallenge(request)
+            mockStore.startNewChallenge(request)
     }
 }

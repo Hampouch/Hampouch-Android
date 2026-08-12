@@ -46,7 +46,7 @@ import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.dialog.HamBattleRoomFullDialog
-import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
 import com.example.hampouch.ui.hamtips.components.HamTipsMoreMenuSheet
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
@@ -173,9 +173,10 @@ fun HamTipsBattleDetailScreen(
     val isAuthor = post.authorId == currentUser.id
     val canDeletePost = viewModel.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
+    val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInfo = post.battleInfo
     val linkedChallenge = battleInfo?.link?.let { link ->
-        HamBattleMockData.challenges.find { it.battleCode == link }
+        battleViewModel.mockChallenges.value.find { it.battleCode == link }
     }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
@@ -310,7 +311,7 @@ fun HamTipsBattleDetailScreen(
                     // TODO: 서버 모드에서는 POST /api/battles/invitations/{battleCode}(BattleRepository.join)
                     // 로 교체해야 한다. battleInfo.link에서 battleCode를 안정적으로 파싱할 수 있는 형식이
                     // community 도메인 쪽에서 확정되면 함께 정리한다.
-                    val joinedChallenge = HamBattleMockData.joinChallengeFromCommunityPost(
+                    val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
                         authorName = post.authorName,
                         title = post.title,
                         penalty = battleInfo.penalty,

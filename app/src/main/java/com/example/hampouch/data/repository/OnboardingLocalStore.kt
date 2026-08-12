@@ -1,12 +1,12 @@
 package com.example.hampouch.data.repository
 
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.example.hampouch.domain.model.ChallengePeriodType
 import com.example.hampouch.domain.model.OnboardingRequest
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val PREFS_NAME = "hampouch_onboarding"
 private const val KEY_HAS_COMPLETED = "has_completed_onboarding"
@@ -21,23 +21,26 @@ private const val KEY_TOTAL_TARGET = "total_target"
 private const val KEY_CATEGORY_IDS = "category_ids"
 
 // TODO: 서버팀 회원가입/로그인 API 연동 시, 계정별 첫 온보딩 데이터 저장을 서버 응답 기반으로 교체.
-object OnboardingDataStore {
+@Singleton
+class OnboardingLocalStore @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
-    private var pendingRequest: OnboardingRequest? by mutableStateOf(null)
+    private var pendingRequest: OnboardingRequest? = null
 
     private val reservedByEmail = mutableMapOf<String, OnboardingRequest>()
     private var restoredFromPrefs = false
 
-    private fun prefs(context: Context) =
+    private fun prefs() =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun hasCompletedOnboarding(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_HAS_COMPLETED, false)
+    fun hasCompletedOnboarding(): Boolean =
+        prefs().getBoolean(KEY_HAS_COMPLETED, false)
 
-    fun restorePendingIfNeeded(context: Context) {
+    fun restorePendingIfNeeded() {
         if (restoredFromPrefs) return
         restoredFromPrefs = true
-        val p = prefs(context)
+        val p = prefs()
         if (!p.getBoolean(KEY_HAS_PENDING, false)) return
         pendingRequest = OnboardingRequest(
             lastMonthFoodExpense = p.getInt(KEY_LAST_MONTH_EXPENSE, -1).takeIf { it >= 0 },
@@ -55,9 +58,9 @@ object OnboardingDataStore {
         )
     }
 
-    fun captureOnboardingComplete(context: Context, request: OnboardingRequest) {
+    fun captureOnboardingComplete(request: OnboardingRequest) {
         pendingRequest = request
-        prefs(context).edit()
+        prefs().edit()
             .putBoolean(KEY_HAS_COMPLETED, true)
             .putBoolean(KEY_HAS_PENDING, true)
             .putInt(KEY_LAST_MONTH_EXPENSE, request.lastMonthFoodExpense ?: -1)
@@ -71,18 +74,18 @@ object OnboardingDataStore {
             .apply()
     }
 
-    fun markOnboardingSkipped(context: Context) {
+    fun markOnboardingSkipped() {
         pendingRequest = null
-        prefs(context).edit()
+        prefs().edit()
             .putBoolean(KEY_HAS_COMPLETED, true)
             .putBoolean(KEY_HAS_PENDING, false)
             .apply()
     }
 
-    fun reserveForNewAccount(context: Context, email: String) {
+    fun reserveForNewAccount(email: String) {
         val pending = pendingRequest ?: return
         pendingRequest = null
-        prefs(context).edit().putBoolean(KEY_HAS_PENDING, false).apply()
+        prefs().edit().putBoolean(KEY_HAS_PENDING, false).apply()
         reservedByEmail[email] = pending
     }
 

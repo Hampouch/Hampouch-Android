@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.ui.theme.Body16Bold
@@ -265,7 +266,7 @@ private fun WaitingPenaltyBox(penalty: String) {
 private fun WaitingInfoCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingInfoCard(challenge = HamBattleMockData.previewWaitingChallenges().first())
+            WaitingInfoCard(challenge = HamBattleMockFixtures.waitingChallenges().first())
         }
     }
 }
@@ -274,6 +275,6 @@ private fun WaitingInfoCardPreview() {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.previewWaitingChallenges().first())
+        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockFixtures.waitingChallenges().first())
     }
 }

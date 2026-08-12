@@ -35,7 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.ExpenseRecord
-import com.example.hampouch.domain.model.HomeUiState
+import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.navigation.BottomNavBar
@@ -45,7 +45,6 @@ import com.example.hampouch.ui.dialog.ChallengeEndedDialog
 import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
-import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.HamTipsScreen
@@ -61,7 +60,9 @@ import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeEvent
 import com.example.hampouch.ui.minichallenge.MiniChallengeViewModel
 import com.example.hampouch.ui.mypage.MyPageScreen
-import com.example.hampouch.ui.mypage.RecordAlarmStore
+import com.example.hampouch.domain.model.HamBattleStatus
+import com.example.hampouch.domain.model.isMissingReminderDue
+import com.example.hampouch.ui.mypage.RecordAlarmViewModel
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -135,6 +136,9 @@ fun HomeScreen(
     val miniChallengeViewModel: MiniChallengeViewModel = hiltViewModel()
     val miniChallengeState by miniChallengeViewModel.state.collectAsStateWithLifecycle()
     val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val recordAlarmViewModel: RecordAlarmViewModel = hiltViewModel()
+    val recordAlarmState by recordAlarmViewModel.state.collectAsStateWithLifecycle()
+    val reminderDismissedDate by recordAlarmViewModel.dismissedDate.collectAsStateWithLifecycle()
     val battleState by battleViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(selectedDate) { miniChallengeViewModel.loadChallenges(selectedDate) }
     LaunchedEffect(miniChallengeViewModel) {
@@ -242,18 +246,23 @@ fun HomeScreen(
                         onFinishChallengeClick = viewModel::acknowledgeChallengeEnd
                     )
 
-                    RecordAlarmStore.isMissingReminderDue(referenceToday, LocalTime.now(), hasExpenseToday) ->
+                    recordAlarmState.isMissingReminderDue(
+                        dismissedDate = reminderDismissedDate,
+                        referenceToday = referenceToday,
+                        currentTime = LocalTime.now(),
+                        hasExpenseToday = hasExpenseToday
+                    ) ->
                         MissingExpenseReminderDialog(
                             onInputNowClick = {
-                                RecordAlarmStore.dismissForToday(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
                                 onAddExpenseClick()
                             },
                             onNoSpendingTodayClick = {
                                 viewModel.markNoSpending(referenceToday)
-                                RecordAlarmStore.dismissForToday(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
                             },
                             onLaterClick = {
-                                RecordAlarmStore.dismissForToday(referenceToday)
+                                recordAlarmViewModel.dismissForToday(referenceToday)
                                 viewModel.markNoRecord(referenceToday)
                             }
                         )
@@ -268,12 +277,12 @@ fun HomeScreen(
                 activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
                     battleState.ongoingBattles
                 } else {
-                    HamBattleMockData.activeChallenges()
+                    battleViewModel.mockChallengesWith(HamBattleStatus.ACTIVE)
                 },
                 waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
                     battleState.readyBattles
                 } else {
-                    HamBattleMockData.waitingChallenges()
+                    battleViewModel.mockChallengesWith(HamBattleStatus.WAITING)
                 },
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
                 onNotificationClick = onNotificationClick,

@@ -48,7 +48,8 @@ import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipShareCategory
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.core.config.BattleConfig
-import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.domain.model.HamBattleStatus
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldCard
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldLabel
@@ -401,10 +402,15 @@ fun HamTipsWriteBattleScreen(
     onBackClick: () -> Unit,
     onSubmitted: () -> Unit,
     initialLink: String = "",
-    waitingChallengeLinks: List<String>? =
-        if (BattleConfig.USE_SERVER_BATTLE) null else HamBattleMockData.waitingChallenges().mapNotNull { it.battleCode },
-    viewModel: HamTipsWriteViewModel = hiltViewModel()
+    viewModel: HamTipsWriteViewModel = hiltViewModel(),
+    battleViewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    val waitingChallengeLinks: List<String>? =
+        if (BattleConfig.USE_SERVER_BATTLE) {
+            null
+        } else {
+            battleViewModel.mockChallengesWith(HamBattleStatus.WAITING).mapNotNull { it.battleCode }
+        }
     var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
     var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
     var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }

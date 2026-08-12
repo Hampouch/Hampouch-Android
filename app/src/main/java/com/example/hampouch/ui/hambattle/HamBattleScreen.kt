@@ -62,8 +62,12 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.ui.common.NotificationBellIcon
+import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.HamBattleStatus
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.HamBattleChallengeCancelledDialog
@@ -97,7 +101,9 @@ fun HamBattleScreen(
     onChallengeClick: (String) -> Unit = {},
     onWaitingChallengeClick: (String) -> Unit = {},
     onViewEndedChallengeDetailClick: (String) -> Unit = {},
+    viewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    val mockChallenges by viewModel.mockChallenges.collectAsStateWithLifecycle()
     Scaffold(
         modifier = modifier,
         containerColor = HPWhite,
@@ -151,21 +157,21 @@ fun HamBattleScreen(
                 val me = challenge.participants.find { it.name == "나" }
                 if (me != null &&
                     me.status != HamBattleParticipantStatus.DISQUALIFIED &&
-                    HamBattleMockData.myMissedStreakDays(challenge) >= 3
+                    viewModel.myMissedStreakDays(challenge) >= 3
                 ) {
-                    HamBattleMockData.disqualifyMe(challenge.id)
+                    viewModel.disqualifyMe(challenge.id)
                 }
             }
-            HamBattleMockData.activeChallenges().forEach { challenge ->
+            viewModel.mockChallengesWith(HamBattleStatus.ACTIVE).forEach { challenge ->
                 val remaining = challenge.participants.count { it.status != HamBattleParticipantStatus.DISQUALIFIED }
                 if (remaining <= 1) {
-                    HamBattleMockData.cancelChallenge(challenge.id)
+                    viewModel.cancelChallenge(challenge.id)
                 }
             }
         }
 
-        val justCancelledChallenge = HamBattleMockData.challenges.firstOrNull { challenge ->
-            challenge.cancelled && !HamBattleMockData.isCancellationAcknowledged(challenge.id)
+        val justCancelledChallenge = mockChallenges.firstOrNull { challenge ->
+            challenge.cancelled && !viewModel.isCancellationAcknowledged(challenge.id)
         }
         val justDisqualifiedChallenge = if (justCancelledChallenge != null) {
             null
@@ -173,15 +179,15 @@ fun HamBattleScreen(
             activeChallenges.firstOrNull { challenge ->
                 val me = challenge.participants.find { it.name == "나" }
                 me?.status == HamBattleParticipantStatus.DISQUALIFIED &&
-                    !HamBattleMockData.isDisqualificationAcknowledged(challenge.id)
+                    !viewModel.isDisqualificationAcknowledged(challenge.id)
             }
         }
         val missedWarningChallenge = if (justCancelledChallenge != null || justDisqualifiedChallenge != null) {
             null
         } else {
             activeChallenges.firstOrNull { challenge ->
-                HamBattleMockData.myMissedStreakDays(challenge) == 2 &&
-                    !HamBattleMockData.wasMissedWarningShownToday(challenge.id)
+                viewModel.myMissedStreakDays(challenge) == 2 &&
+                    !viewModel.wasMissedWarningShownToday(challenge.id)
             }
         }
 
@@ -189,22 +195,22 @@ fun HamBattleScreen(
             expiredWaitingChallenge != null -> HamBattleWaitingChallengeExpiredDialog(
                 challengeTitle = expiredWaitingChallenge.title,
                 onRecreateClick = {
-                    HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
+                    viewModel.removeWaitingChallenge(expiredWaitingChallenge.id)
                     onStartNewChallengeClick()
                 },
                 onConfirmClick = {
-                    HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
+                    viewModel.removeWaitingChallenge(expiredWaitingChallenge.id)
                 }
             )
 
             justCancelledChallenge != null -> HamBattleChallengeCancelledDialog(
                 challengeTitle = justCancelledChallenge.title,
                 onRecreateClick = {
-                    HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
+                    viewModel.acknowledgeCancellation(justCancelledChallenge.id)
                     onStartNewChallengeClick()
                 },
                 onConfirmClick = {
-                    HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
+                    viewModel.acknowledgeCancellation(justCancelledChallenge.id)
                     onViewEndedChallengeDetailClick(justCancelledChallenge.id)
                 }
             )
@@ -212,18 +218,18 @@ fun HamBattleScreen(
             justDisqualifiedChallenge != null -> HamBattleParticipationInvalidatedDialog(
                 challengeTitle = justDisqualifiedChallenge.title,
                 onConfirmClick = {
-                    HamBattleMockData.acknowledgeDisqualification(justDisqualifiedChallenge.id)
+                    viewModel.acknowledgeDisqualification(justDisqualifiedChallenge.id)
                 }
             )
 
             missedWarningChallenge != null -> HamBattleMissedSpendingDialog(
                 challengeTitle = missedWarningChallenge.title,
                 onInputSpendingClick = {
-                    HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
+                    viewModel.markMissedWarningShown(missedWarningChallenge.id)
                     onAddClick()
                 },
                 onConfirmClick = {
-                    HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
+                    viewModel.markMissedWarningShown(missedWarningChallenge.id)
                 }
             )
         }
@@ -611,8 +617,8 @@ fun HamBattleScreenPreview() {
             selectedBottomTab = BottomNavItem.HAM_BATTLE,
             onItemSelected = {},
             onAddClick = {},
-            activeChallenges = HamBattleMockData.previewActiveChallenges(),
-            waitingChallenges = HamBattleMockData.previewWaitingChallenges()
+            activeChallenges = HamBattleMockFixtures.activeChallenges(),
+            waitingChallenges = HamBattleMockFixtures.waitingChallenges()
         )
     }
 }
@@ -630,7 +636,7 @@ fun HamBattleEmptyContentPreview() {
 fun ActiveChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            ActiveChallengeCard(challenge = HamBattleMockData.previewActiveChallenges()[0])
+            ActiveChallengeCard(challenge = HamBattleMockFixtures.activeChallenges()[0])
         }
     }
 }
@@ -640,7 +646,7 @@ fun ActiveChallengeCardPreview() {
 fun WaitingChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingChallengeCard(challenge = HamBattleMockData.previewWaitingChallenges()[0])
+            WaitingChallengeCard(challenge = HamBattleMockFixtures.waitingChallenges()[0])
         }
     }
 }

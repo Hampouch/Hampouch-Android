@@ -40,6 +40,8 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 private fun daysForMode(mode: ReminderDayMode): Set<DayOfWeekLabel> = when (mode) {
     ReminderDayMode.WEEKDAY -> setOf(
@@ -56,38 +58,45 @@ private fun formatTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour
 fun RecordAlarmScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    viewModel: RecordAlarmViewModel = hiltViewModel()
 ) {
-    var state by RecordAlarmStore.stateHolder
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     fun onMasterToggle(enabled: Boolean) {
-        state = state.copy(
-            receiveEnabled = enabled,
-            missingReminderEnabled = enabled,
-            limitOverEnabled = enabled
-        )
+        viewModel.update {
+            it.copy(
+                receiveEnabled = enabled,
+                missingReminderEnabled = enabled,
+                limitOverEnabled = enabled
+            )
+        }
     }
 
     fun onMissingReminderToggle(enabled: Boolean) {
-        state = state.copy(
-            missingReminderEnabled = enabled,
-            receiveEnabled = enabled && state.limitOverEnabled
-        )
+        viewModel.update {
+            it.copy(
+                missingReminderEnabled = enabled,
+                receiveEnabled = enabled && it.limitOverEnabled
+            )
+        }
     }
 
     fun onLimitOverToggle(enabled: Boolean) {
-        state = state.copy(
-            limitOverEnabled = enabled,
-            receiveEnabled = enabled && state.missingReminderEnabled
-        )
+        viewModel.update {
+            it.copy(
+                limitOverEnabled = enabled,
+                receiveEnabled = enabled && it.missingReminderEnabled
+            )
+        }
     }
 
     val timePickerDialog = remember(state.hour, state.minute) {
         TimePickerDialog(
             context,
             R.style.Theme_Hampouch_SpinnerTimePicker,
-            { _, hourOfDay, minute -> state = state.copy(hour = hourOfDay, minute = minute) },
+            { _, hourOfDay, minute -> viewModel.update { it.copy(hour = hourOfDay, minute = minute) } },
             state.hour,
             state.minute,
             false
@@ -139,7 +148,7 @@ fun RecordAlarmScreen(
                             ReminderModeSegmentedRow(
                                 selectedMode = state.dayMode,
                                 onModeSelected = { mode ->
-                                    state = state.copy(dayMode = mode, selectedDays = daysForMode(mode))
+                                    viewModel.update { it.copy(dayMode = mode, selectedDays = daysForMode(mode)) }
                                 }
                             )
                             Spacer(modifier = Modifier.height(10.dp))
@@ -151,7 +160,7 @@ fun RecordAlarmScreen(
                                     } else {
                                         state.selectedDays + day
                                     }
-                                    state = state.copy(dayMode = ReminderDayMode.CUSTOM, selectedDays = updated)
+                                    viewModel.update { it.copy(dayMode = ReminderDayMode.CUSTOM, selectedDays = updated) }
                                 }
                             )
                             Spacer(modifier = Modifier.height(14.dp))
