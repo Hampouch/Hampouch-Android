@@ -38,7 +38,6 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.core.config.BattleConfig
-import com.example.hampouch.data.repository.BattleRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.common.previewChallengeState
@@ -48,7 +47,7 @@ import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleMockData
 import com.example.hampouch.ui.hambattle.HamBattleScreen
-import com.example.hampouch.ui.hambattle.HamBattleStore
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.HamTipsScreen
 import com.example.hampouch.ui.home.components.ChallengeBanner
 import com.example.hampouch.ui.home.components.CharacterGaugeSection
@@ -135,7 +134,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val miniChallengeViewModel: MiniChallengeViewModel = hiltViewModel()
     val miniChallengeState by miniChallengeViewModel.state.collectAsStateWithLifecycle()
-    val battleRepository = remember { BattleRepository.getInstance(context) }
+    val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val battleState by battleViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(selectedDate) { miniChallengeViewModel.loadChallenges(selectedDate) }
     LaunchedEffect(miniChallengeViewModel) {
         miniChallengeViewModel.events.collect { event ->
@@ -147,11 +147,7 @@ fun HomeScreen(
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
     // 햄배틀 탭에 들어올 때만 목록을 받아온다.
     LaunchedEffect(selectedBottomTab) {
-        if (selectedBottomTab == BottomNavItem.HAM_BATTLE) {
-            battleRepository.loadMyBattles().onFailure { error ->
-                Toast.makeText(context, error.toUserMessage("햄배틀 목록 조회에 실패했습니다."), Toast.LENGTH_SHORT).show()
-            }
-        }
+        if (selectedBottomTab == BottomNavItem.HAM_BATTLE) battleViewModel.loadMyBattles()
     }
     val records by viewModel.records.collectAsStateWithLifecycle()
     val challengeState by viewModel.challengeState.collectAsStateWithLifecycle()
@@ -270,12 +266,12 @@ fun HomeScreen(
                 onAddClick = onAddExpenseClick,
                 modifier = Modifier.padding(innerPadding),
                 activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
-                    HamBattleStore.ongoingBattles
+                    battleState.ongoingBattles
                 } else {
                     HamBattleMockData.activeChallenges()
                 },
                 waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
-                    HamBattleStore.readyBattles
+                    battleState.readyBattles
                 } else {
                     HamBattleMockData.waitingChallenges()
                 },

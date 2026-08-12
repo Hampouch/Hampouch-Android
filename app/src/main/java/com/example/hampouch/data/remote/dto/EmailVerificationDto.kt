@@ -1,7 +1,5 @@
 package com.example.hampouch.data.remote.dto
 
-import com.example.hampouch.domain.model.EmailVerificationPurpose
-
 data class EmailSendRequest(
     val email: String,
     val purpose: String

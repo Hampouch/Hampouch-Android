@@ -10,11 +10,6 @@ data class BattleParticipantDto(
     val isValid: Boolean? = null
 )
 
-/** GET /api/battles 목록 항목. 상태별로 채워지는 필드가 다르다.
- * - READY: capacity/joinedCount만 채워짐, participants는 null
- * - ONGOING: participants가 채워짐 (capacity/joinedCount는 없음)
- * - TERMINATED: winnerNickname만 채워짐
- */
 data class MyBattleSummaryDto(
     val battleId: Long,
     val battleCode: String,

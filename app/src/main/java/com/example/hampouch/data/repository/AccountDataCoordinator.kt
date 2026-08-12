@@ -12,10 +12,6 @@ import javax.inject.Singleton
 
 private const val TAG = "AccountDataCoordinator"
 
-/**
- * 로그인 계정이 바뀌었을 때 이전 계정의 캐시를 비운다.
- * 무엇을 비울지는 [AccountScopedState] 구현들의 등록으로 정해진다.
- */
 @Singleton
 class AccountDataCoordinator @Inject constructor(
     private val expenseRepository: ExpenseRepository,
@@ -33,7 +29,6 @@ class AccountDataCoordinator @Inject constructor(
         expenseRepository.resetForAccount()
         restRepository.resetForAccount()
         accountScopedStates.forEach { it.resetForAccount() }
-        HamTipsRepository.resetForAccount()
 
         val account = email?.let { e -> AccountMockDataSource.accounts.find { it.email == e } }
         if (account == null || account.isExistingMember) {

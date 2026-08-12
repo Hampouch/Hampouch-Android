@@ -348,6 +348,6 @@ private fun OneVsOnePenaltyBoxPreview() {
 @Composable
 private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[0])
     }
 }

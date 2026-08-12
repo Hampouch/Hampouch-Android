@@ -89,8 +89,8 @@ fun HamBattleScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    activeChallenges: List<HamBattleChallenge> = HamBattleMockData.activeChallenges(),
-    waitingChallenges: List<HamBattleChallenge> = HamBattleMockData.waitingChallenges(),
+    activeChallenges: List<HamBattleChallenge> = emptyList(),
+    waitingChallenges: List<HamBattleChallenge> = emptyList(),
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onViewEndedChallengesClick: () -> Unit = {},
@@ -552,14 +552,18 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
                 fontWeight = FontWeight.Bold,
                 color = HPMain
             )
+            val battleCode = challenge.battleCode
             TextButton(
+                enabled = !battleCode.isNullOrBlank(),
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(challenge.link))
-                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (battleCode != null) {
+                        clipboardManager.setText(AnnotatedString(battleCode))
+                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             ) {
                 Text(
-                    "링크 다시 복사",
+                    "코드 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = StatusWhoWonText
@@ -606,7 +610,9 @@ fun HamBattleScreenPreview() {
         HamBattleScreen(
             selectedBottomTab = BottomNavItem.HAM_BATTLE,
             onItemSelected = {},
-            onAddClick = {}
+            onAddClick = {},
+            activeChallenges = HamBattleMockData.previewActiveChallenges(),
+            waitingChallenges = HamBattleMockData.previewWaitingChallenges()
         )
     }
 }
@@ -624,7 +630,7 @@ fun HamBattleEmptyContentPreview() {
 fun ActiveChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            ActiveChallengeCard(challenge = HamBattleMockData.activeChallenges()[0])
+            ActiveChallengeCard(challenge = HamBattleMockData.previewActiveChallenges()[0])
         }
     }
 }
@@ -634,7 +640,7 @@ fun ActiveChallengeCardPreview() {
 fun WaitingChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingChallengeCard(challenge = HamBattleMockData.waitingChallenges()[0])
+            WaitingChallengeCard(challenge = HamBattleMockData.previewWaitingChallenges()[0])
         }
     }
 }

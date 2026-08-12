@@ -7,12 +7,15 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.hampouch.core.config.AuthConfig
-import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.domain.model.AuthProvider
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
-import com.example.hampouch.di.legacyEntryPoint
+import com.example.hampouch.data.remote.ApiService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Provider
+import javax.inject.Singleton
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
@@ -52,11 +55,13 @@ sealed class SessionStatus {
     object Unknown : SessionStatus()
 }
 
-/**
- * 로그인 세션을 DataStore에 저장/조회하는 앱 전역 저장소.
- * [getInstance]로 어느 파일에서든 같은 인스턴스를 얻어 세션을 읽거나 갱신할 수 있다.
- */
-class AuthRepository private constructor(private val context: Context) {
+@Singleton
+class AuthRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val apiService: ApiService,
+    /** [AccountDataCoordinator]가 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
+    private val accountDataCoordinator: Provider<AccountDataCoordinator>
+) {
 
     private object Keys {
         val PROVIDER = stringPreferencesKey("provider")
@@ -120,7 +125,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockLoginWithSocial(credential)
         }
         return try {
-            val response = NetworkModule.apiService.loginWithSocial(
+            val response = apiService.loginWithSocial(
                 SocialLoginRequest(
                     provider = credential.provider.name,
                     providerToken = credential.providerToken
@@ -188,7 +193,7 @@ class AuthRepository private constructor(private val context: Context) {
             return Result.success(updatedSession)
         }
         return try {
-            val response = NetworkModule.apiService.setNickname(
+            val response = apiService.setNickname(
                 authorization = "${session.tokenType} ${session.accessToken}",
                 request = SetNicknameRequest(nickname = nickname)
             )
@@ -224,7 +229,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockLogin(email, password)
         }
         return try {
-            val response = NetworkModule.apiService.login(LoginRequest(email = email, password = password))
+            val response = apiService.login(LoginRequest(email = email, password = password))
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
@@ -271,7 +276,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockSendEmailVerificationCode(email, purpose)
         }
         return try {
-            val response = NetworkModule.apiService.sendEmailVerificationCode(
+            val response = apiService.sendEmailVerificationCode(
                 EmailSendRequest(email = email, purpose = purpose.name)
             )
 
@@ -307,7 +312,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockVerifyEmailCode(email, code, purpose)
         }
         return try {
-            val response = NetworkModule.apiService.verifyEmailCode(
+            val response = apiService.verifyEmailCode(
                 EmailVerifyRequest(email = email, code = code, purpose = purpose.name)
             )
 
@@ -339,7 +344,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockCheckNicknameAvailability(nickname)
         }
         return try {
-            val response = NetworkModule.apiService.checkNickname(nickname)
+            val response = apiService.checkNickname(nickname)
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
@@ -369,7 +374,7 @@ class AuthRepository private constructor(private val context: Context) {
             return mockSignUp(email, password, nickname)
         }
         return try {
-            val response = NetworkModule.apiService.signUp(
+            val response = apiService.signUp(
                 SignUpRequest(email = email, password = password, nickname = nickname)
             )
 
@@ -408,7 +413,7 @@ class AuthRepository private constructor(private val context: Context) {
             }
         }
         return try {
-            val response = NetworkModule.apiService.resetPassword(
+            val response = apiService.resetPassword(
                 PasswordResetRequest(email = email, newPassword = newPassword)
             )
 
@@ -436,7 +441,7 @@ class AuthRepository private constructor(private val context: Context) {
 
     private suspend fun fetchAuthMe(tokenType: String, accessToken: String): AuthMeData? {
         return try {
-            val response = NetworkModule.apiService.getMe(authorization = "$tokenType $accessToken")
+            val response = apiService.getMe(authorization = "$tokenType $accessToken")
             if (response.isSuccessful) response.body()?.data else null
         } catch (e: CancellationException) {
             throw e
@@ -451,7 +456,7 @@ class AuthRepository private constructor(private val context: Context) {
             return SessionStatus.Valid(needsNickname = false)
         }
         return try {
-            val response = NetworkModule.apiService.getMe(
+            val response = apiService.getMe(
                 authorization = "${session.tokenType} ${session.accessToken}"
             )
             val data = response.body()?.data
@@ -485,7 +490,7 @@ class AuthRepository private constructor(private val context: Context) {
             return Result.success(session)
         }
         return try {
-            val response = NetworkModule.apiService.refreshToken(
+            val response = apiService.refreshToken(
                 RefreshTokenRequest(refreshToken = session.refreshToken)
             )
 
@@ -541,7 +546,7 @@ class AuthRepository private constructor(private val context: Context) {
             return Result.success(Unit)
         }
         return try {
-            val response = NetworkModule.apiService.logout(
+            val response = apiService.logout(
                 authorization = "${session.tokenType} ${session.accessToken}",
                 request = LogoutRequest(refreshToken = session.refreshToken)
             )
@@ -581,7 +586,7 @@ class AuthRepository private constructor(private val context: Context) {
             return Result.success(Unit)
         }
         return try {
-            val response = NetworkModule.apiService.withdraw(
+            val response = apiService.withdraw(
                 authorization = "${session.tokenType} ${session.accessToken}"
             )
             if (response.isSuccessful) {
@@ -732,8 +737,7 @@ class AuthRepository private constructor(private val context: Context) {
         }
         _currentUser.value = sessionToUser(session)
         _isLoggedIn.value = true
-        context.legacyEntryPoint().accountDataCoordinator()
-            .syncIfNeeded(context, session.userId.toString(), session.email)
+        accountDataCoordinator.get().syncIfNeeded(context, session.userId.toString(), session.email)
     }
 
     private fun sessionToUser(session: AuthSession): User = User(
@@ -755,13 +759,4 @@ class AuthRepository private constructor(private val context: Context) {
         _isLoggedIn.value = false
     }
 
-    companion object {
-        @Volatile
-        private var instance: AuthRepository? = null
-
-        fun getInstance(context: Context): AuthRepository =
-            instance ?: synchronized(this) {
-                instance ?: AuthRepository(context.applicationContext).also { instance = it }
-            }
-    }
 }

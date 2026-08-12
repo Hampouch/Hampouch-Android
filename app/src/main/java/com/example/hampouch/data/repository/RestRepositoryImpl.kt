@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 private const val TAG = "RestRepository"
 
-/** 서버(restDays·extendDays) 방어 상한. "계속 쉬기"는 서버에 무기한 개념이 없어 이 상한으로 대체 전송한다. */
+// 서버(restDays·extendDays) 방어 상한. "계속 쉬기"는 서버에 무기한 개념이 없어 이 상한으로 대체 전송한다.
 private const val MAX_REST_DAYS = 3650
 
 @Singleton

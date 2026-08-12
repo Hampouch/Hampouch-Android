@@ -435,7 +435,7 @@ private fun ResultTabTogglePreview() {
 private fun PodiumChartPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
-            PodiumChart(ranked = HamBattleMockData.activeChallenges()[1].participants)
+            PodiumChart(ranked = HamBattleMockData.previewActiveChallenges()[1].participants)
         }
     }
 }
@@ -444,7 +444,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[0])
     }
 }
 
@@ -452,6 +452,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.previewActiveChallenges()[1])
     }
 }

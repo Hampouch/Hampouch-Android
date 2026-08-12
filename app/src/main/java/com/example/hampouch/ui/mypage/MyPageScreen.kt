@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.hamtips.HamTipsViewModel
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -53,7 +54,6 @@ import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
 import com.example.hampouch.ui.hamtips.HamTipsDetailScreen
-import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.hamtips.HamTipsWriteBattleScreen
 import com.example.hampouch.ui.hamtips.HamTipsWriteMenuScreen
 import com.example.hampouch.ui.hamtips.HamTipsWriteTipScreen
@@ -121,8 +121,10 @@ fun MyPageScreen(
         }
     }
     val challengeRecords = MyPageMockData.challengeHistory(challengeState, expenseLookup::spentOnDate)
-    val myTips = MyPageMockData.myTips(currentUser.id)
-    val savedTips = MyPageMockData.savedTips()
+    val hamTipsViewModel: HamTipsViewModel = hiltViewModel()
+    val communityPosts by hamTipsViewModel.posts.collectAsStateWithLifecycle()
+    val myTips = MyPageMockData.myTips(communityPosts, currentUser.id)
+    val savedTips = MyPageMockData.savedTips(communityPosts)
 
     val onTipClick: (TipPost) -> Unit = { tip ->
         selectedPostId = tip.id
@@ -294,7 +296,7 @@ fun MyPageScreen(
 
         MyPageRoute.MY_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
-            LaunchedEffect(Unit) { HamTipsRepository.loadMyPosts() }
+            LaunchedEffect(Unit) { hamTipsViewModel.loadMyPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_my_tips),
                 emptyMessage = stringResource(R.string.my_tips_empty_message),
@@ -308,7 +310,7 @@ fun MyPageScreen(
 
         MyPageRoute.SAVED_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
-            LaunchedEffect(Unit) { HamTipsRepository.loadSavedPosts() }
+            LaunchedEffect(Unit) { hamTipsViewModel.loadSavedPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_saved_tips),
                 emptyMessage = stringResource(R.string.saved_tips_empty_message),
@@ -321,7 +323,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.TIP_DETAIL -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = previousListRoute }
                 HamTipsDetailScreen(
@@ -335,7 +337,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.BATTLE_DETAIL -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = previousListRoute }
                 HamTipsBattleDetailScreen(
@@ -349,7 +351,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_TIP -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.TIP_DETAIL }
                 HamTipsWriteTipScreen(
@@ -361,7 +363,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_MENU -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.TIP_DETAIL }
                 HamTipsWriteMenuScreen(
@@ -373,7 +375,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_BATTLE -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.BATTLE_DETAIL }
                 HamTipsWriteBattleScreen(

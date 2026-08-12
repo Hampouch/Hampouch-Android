@@ -559,6 +559,6 @@ private fun EndedRankRowPreview() {
 @Composable
 private fun HamBattleEndedChallengesDetailScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.endedChallenges()[1])
+        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockData.previewEndedChallenges()[1])
     }
 }

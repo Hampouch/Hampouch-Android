@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.hamtips.HamTipsMockData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,7 +76,7 @@ private fun MyTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
-            tips = MyPageMockData.myTips(AccountMockDataSource.normalUser.id),
+            tips = MyPageMockData.myTips(HamTipsMockData.allPosts(), AccountMockDataSource.normalUser.id),
             onBackClick = {}
         )
     }
@@ -101,7 +102,7 @@ private fun SavedTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
-            tips = MyPageMockData.savedTips(),
+            tips = MyPageMockData.savedTips(HamTipsMockData.allPosts()),
             onBackClick = {}
         )
     }

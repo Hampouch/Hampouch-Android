@@ -161,27 +161,18 @@ interface ApiService {
         @Path("battleCode") battleCode: String
     ): Response<ApiResponse<JoinBattleData>>
 
-    /**
-     * 참가자 전용 상세 조회. READY/ONGOING/TERMINATED 모두 이 응답 하나로 표현된다.
-     */
     @GET("api/battles/{battleId}")
     suspend fun getBattleDetail(
         @Header("Authorization") authorization: String,
         @Path("battleId") battleId: Long
     ): Response<ApiResponse<BattleDetailData>>
 
-    /**
-     * date를 생략하면 서버가 오늘 날짜로 조회한다. 형식은 yyyy-MM-dd.
-     */
     @GET("api/mini-challenges")
     suspend fun getMiniChallenges(
         @Header("Authorization") authorization: String,
         @Query("date") date: String? = null
     ): Response<ApiResponse<MiniChallengeDayData>>
 
-    /**
-     * durationDays를 생략하면 전체 기간의 추천 목록을 돌려준다.
-     */
     @GET("api/mini-challenges/recommended")
     suspend fun getRecommendedMiniChallenges(
         @Header("Authorization") authorization: String,

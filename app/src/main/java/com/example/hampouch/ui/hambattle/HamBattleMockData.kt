@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hambattle
 
+import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.domain.repository.AccountScopedState
 import androidx.compose.runtime.mutableStateOf
 import com.example.hampouch.domain.repository.ExpenseRepository
@@ -29,7 +30,7 @@ object HamBattleMockData : AccountScopedState {
 
     private const val DEFAULT_DURATION_DAYS = 7
     private const val ME_NAME = "나"
-    private val linkTokenChars = ('a'..'z') + ('0'..'9')
+    private val battleCodeChars = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
     private fun mySpentInRange(start: LocalDate, endInclusive: LocalDate): Int {
         if (endInclusive.isBefore(start)) return 0
@@ -148,10 +149,9 @@ object HamBattleMockData : AccountScopedState {
     private fun participantTypeLabel(option: String): String =
         if (option == "1 vs 1") "1 vs 1" else "그룹"
 
-    private fun generateRandomBattleLink(): String {
-        val token = (1..8).map { linkTokenChars.random() }.joinToString("")
-        return "hampouch.app/battle/$token"
-    }
+    /** 서버가 발급하는 battleCode와 같은 형식(영숫자 7자). */
+    private fun generateRandomBattleCode(): String =
+        (1..7).map { battleCodeChars.random() }.joinToString("")
 
     private fun buildSeedChallenges(): List<HamBattleChallenge> =
         listOf(
@@ -229,14 +229,26 @@ object HamBattleMockData : AccountScopedState {
             )
         )
 
-    private val challengesState = mutableStateOf(buildSeedChallenges())
+    private fun seedChallenges(): List<HamBattleChallenge> =
+        if (BattleConfig.USE_SERVER_BATTLE) emptyList() else buildSeedChallenges()
+
+    private val challengesState = mutableStateOf(seedChallenges())
 
     override fun resetForAccount() {
-        challengesState.value = buildSeedChallenges()
+        challengesState.value = seedChallenges()
         acknowledgedDisqualifications.value = emptySet()
         missedWarningShownDates.value = emptyMap()
         acknowledgedCancellations.value = emptySet()
     }
+
+    fun previewActiveChallenges(referenceToday: LocalDate = LocalDate.now()): List<HamBattleChallenge> =
+        buildSeedChallenges().filter { it.status(referenceToday) == HamBattleStatus.ACTIVE }
+
+    fun previewWaitingChallenges(referenceToday: LocalDate = LocalDate.now()): List<HamBattleChallenge> =
+        buildSeedChallenges().filter { it.status(referenceToday) == HamBattleStatus.WAITING }
+
+    fun previewEndedChallenges(referenceToday: LocalDate = LocalDate.now()): List<HamBattleChallenge> =
+        buildSeedChallenges().filter { it.status(referenceToday) == HamBattleStatus.ENDED }
 
     val challenges: List<HamBattleChallenge>
         get() {
@@ -270,7 +282,7 @@ object HamBattleMockData : AccountScopedState {
             totalCount = parseParticipantTotalCount(request.participantCount),
             durationDays = parseDurationDays(request.durationDays),
             startDate = startDate,
-            link = generateRandomBattleLink()
+            battleCode = generateRandomBattleCode()
         )
         challengesState.value = challengesState.value + newChallenge
         return newChallenge
@@ -280,11 +292,11 @@ object HamBattleMockData : AccountScopedState {
         authorName: String,
         title: String,
         penalty: String,
-        link: String,
+        battleCode: String,
         totalCount: Int,
         referenceToday: LocalDate = LocalDate.now()
     ): HamBattleChallenge? {
-        val existing = challengesState.value.find { it.link == link }
+        val existing = challengesState.value.find { it.battleCode == battleCode }
         if (existing != null) {
             return if (existing.isFull) null else existing
         }
@@ -301,7 +313,7 @@ object HamBattleMockData : AccountScopedState {
             totalCount = totalCount,
             durationDays = DEFAULT_DURATION_DAYS,
             startDate = referenceToday,
-            link = link
+            battleCode = battleCode
         )
         challengesState.value = challengesState.value + newChallenge
         return newChallenge

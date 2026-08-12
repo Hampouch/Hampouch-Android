@@ -4,7 +4,7 @@ import com.example.hampouch.domain.model.BreakDuration
 import com.example.hampouch.domain.model.RestState
 import kotlinx.coroutines.flow.StateFlow
 
-/** 휴식(쉬어가기) 도메인. 서버 연동인지 목데이터인지는 구현체가 감춘다. */
+// 쉬어가기 도메인
 interface RestRepository {
 
     /** 현재 휴식 상태. 앱 전역에서 공유된다. */

@@ -6,7 +6,6 @@ import com.example.hampouch.domain.model.ChallengeStatus
 import com.example.hampouch.domain.model.MyPageProfile
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.TipPost
-import com.example.hampouch.data.repository.HamTipsRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -58,9 +57,9 @@ object MyPageMockData {
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 
-    fun myTips(userId: String): List<TipPost> = HamTipsRepository.allPosts.filter { it.authorId == userId }
+    fun myTips(posts: List<TipPost>, userId: String): List<TipPost> = posts.filter { it.authorId == userId }
 
-    fun savedTips(): List<TipPost> = HamTipsRepository.allPosts.filter { it.isSaved }
+    fun savedTips(posts: List<TipPost>): List<TipPost> = posts.filter { it.isSaved }
 
     fun emptyTips(): List<TipPost> = emptyList()
 }

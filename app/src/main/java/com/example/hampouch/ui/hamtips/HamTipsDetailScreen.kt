@@ -61,7 +61,6 @@ import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
 import com.example.hampouch.domain.model.TipReply
-import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentInputBar
 import com.example.hampouch.ui.hamtips.components.HamTipsCommentRow
 import com.example.hampouch.ui.hamtips.components.HamTipsMenuSheetItem
@@ -293,12 +292,17 @@ internal fun HamTipsEngagementRow(
     }
 }
 
-internal suspend fun submitHamTipsComment(post: TipPost, replyTarget: TipComment?, content: String): Result<Unit> {
+internal fun submitHamTipsComment(
+    viewModel: HamTipsDetailViewModel,
+    post: TipPost,
+    replyTarget: TipComment?,
+    content: String
+) {
     val target = replyTarget
-    return if (target != null) {
-        HamTipsRepository.addReply(post.id, target.id, content)
+    if (target != null) {
+        viewModel.addReply(post.id, target.id, content)
     } else {
-        HamTipsRepository.addComment(post.id, content)
+        viewModel.addComment(post.id, content)
     }
 }
 
@@ -347,22 +351,18 @@ internal fun HamTipsCommentListColumn(
 internal fun HamTipsCommentMoreMenuHost(
     post: TipPost,
     target: TipComment?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     target?.let { comment ->
         val items = buildList {
-            if (HamTipsRepository.canDeleteComment(post, comment)) {
+            if (viewModel.canDeleteComment(post, comment)) {
                 add(
                     HamTipsMenuSheetItem(
                         label = stringResource(R.string.hamtips_more_menu_delete),
                         isDestructive = true,
                         onClick = {
-                            coroutineScope.launch {
-                                HamTipsRepository.deleteComment(post.id, comment.id)
-                                    .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                            }
+                            viewModel.deleteComment(post.id, comment.id)
                             onDismiss()
                         }
                     )
@@ -383,22 +383,18 @@ internal fun HamTipsCommentMoreMenuHost(
 internal fun HamTipsReplyMoreMenuHost(
     post: TipPost,
     target: Pair<TipComment, TipReply>?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     target?.let { (comment, reply) ->
         val items = buildList {
-            if (HamTipsRepository.canDeleteReply(post, reply)) {
+            if (viewModel.canDeleteReply(post, reply)) {
                 add(
                     HamTipsMenuSheetItem(
                         label = stringResource(R.string.hamtips_more_menu_delete),
                         isDestructive = true,
                         onClick = {
-                            coroutineScope.launch {
-                                HamTipsRepository.deleteReply(post.id, comment.id, reply.id)
-                                    .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                            }
+                            viewModel.deleteReply(post.id, comment.id, reply.id)
                             onDismiss()
                         }
                     )
@@ -423,7 +419,8 @@ fun HamTipsDetailScreen(
     onDeleted: () -> Unit,
     scrollToComments: Boolean = false,
     modifier: Modifier = Modifier,
-    sessionViewModel: SessionViewModel = hiltViewModel()
+    sessionViewModel: SessionViewModel = hiltViewModel(),
+    viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
     var showPostMenu by remember { mutableStateOf(false) }
     var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
@@ -444,13 +441,20 @@ fun HamTipsDetailScreen(
         }
     }
 
-    LaunchedEffect(post.id) {
-        HamTipsRepository.loadPostDetail(post.id)
+    LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HamTipsDetailEvent.PostDeleted -> onDeleted()
+                is HamTipsDetailEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
     val isAuthor = post.authorId == currentUser.id
-    val canDeletePost = HamTipsRepository.canDeletePost(post)
+    val canDeletePost = viewModel.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
 
     Scaffold(
@@ -474,10 +478,7 @@ fun HamTipsDetailScreen(
                     val submittedReplyTarget = replyTarget
                     commentInput = ""
                     replyTarget = null
-                    coroutineScope.launch {
-                        submitHamTipsComment(post, submittedReplyTarget, submittedInput)
-                            .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                    }
+                    submitHamTipsComment(viewModel, post, submittedReplyTarget, submittedInput)
                 }
             )
         }
@@ -506,8 +507,8 @@ fun HamTipsDetailScreen(
                 }
                 HamTipsEngagementRow(
                     post = post,
-                    onLikeClick = { coroutineScope.launch { HamTipsRepository.toggleLike(post.id) } },
-                    onScrapClick = { coroutineScope.launch { HamTipsRepository.toggleSave(post.id) } }
+                    onLikeClick = { viewModel.toggleLike(post.id) },
+                    onScrapClick = { viewModel.toggleSave(post.id) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -534,11 +535,7 @@ fun HamTipsDetailScreen(
                             isDestructive = true,
                             onClick = {
                                 showPostMenu = false
-                                coroutineScope.launch {
-                                    HamTipsRepository.deletePost(post.id)
-                                        .onSuccess { onDeleted() }
-                                        .onFailure { error -> Toast.makeText(context, error.message, Toast.LENGTH_SHORT).show() }
-                                }
+                                viewModel.deletePost(post.id)
                             }
                         )
                     )

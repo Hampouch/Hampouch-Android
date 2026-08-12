@@ -25,20 +25,9 @@ import com.kakao.sdk.user.UserApiClient
 
 private const val TAG = "SocialAuthManager"
 
-/**
- * 사용자가 직접 로그인을 취소한 경우. 오류가 아니므로 화면에 실패 메시지를 띄우지 않는다.
- * 카카오 문서는 취소를 "의도적인 로그인 취소"로 보고 다른 로그인 수단으로 넘어가지 말라고 안내한다.
- */
 class SocialSignInCancelledException : Exception("사용자가 로그인을 취소했습니다.")
 
 object SocialAuthManager {
-
-    /**
-     * Credential Manager를 통한 Sign in with Google.
-     *
-     * 로그인 버튼을 눌러 시작하는 명시적 흐름이므로 [GetSignInWithGoogleOption]을 사용한다.
-     * (자동 로그인용 바텀시트 흐름인 GetGoogleIdOption과 구분된다.)
-     */
     suspend fun signInWithGoogle(context: Context): Result<SocialCredential> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return Result.success(mockCredential(AuthProvider.GOOGLE))

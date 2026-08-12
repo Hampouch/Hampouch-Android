@@ -106,7 +106,7 @@ private fun ResultPageIndicatorPreview() {
 private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
         HamBattleChallengesResultPagerScreen(
-            challenge = HamBattleMockData.activeChallenges().first()
+            challenge = HamBattleMockData.previewActiveChallenges().first()
         )
     }
 }

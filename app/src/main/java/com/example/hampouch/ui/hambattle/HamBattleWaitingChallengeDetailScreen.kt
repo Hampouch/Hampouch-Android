@@ -96,11 +96,17 @@ fun HamBattleWaitingChallengeDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+            val battleCode = challenge.battleCode
             Button(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(challenge.link))
-                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (battleCode.isNullOrBlank()) {
+                        Toast.makeText(context, "초대 코드를 아직 받지 못했어요.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        clipboardManager.setText(AnnotatedString(battleCode))
+                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    }
                 },
+                enabled = !battleCode.isNullOrBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -259,7 +265,7 @@ private fun WaitingPenaltyBox(penalty: String) {
 private fun WaitingInfoCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges().first())
+            WaitingInfoCard(challenge = HamBattleMockData.previewWaitingChallenges().first())
         }
     }
 }
@@ -268,6 +274,6 @@ private fun WaitingInfoCardPreview() {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges().first())
+        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.previewWaitingChallenges().first())
     }
 }

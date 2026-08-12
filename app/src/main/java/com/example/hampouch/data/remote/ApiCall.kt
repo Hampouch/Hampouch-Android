@@ -11,7 +11,6 @@ import retrofit2.Response
 
 private val errorBodyGson = Gson()
 
-/** 실패 응답의 body를 [ApiErrorBody]로 파싱해 [ApiException]으로 바꾼다. 파싱 실패 시 [fallbackMessage]. */
 fun Response<*>.toApiException(fallbackMessage: String): ApiException {
     val error = errorBody()?.string()?.let {
         runCatching { errorBodyGson.fromJson(it, ApiErrorBody::class.java) }.getOrNull()
@@ -23,12 +22,6 @@ fun Response<*>.toApiException(fallbackMessage: String): ApiException {
     )
 }
 
-/**
- * 네트워크 호출 중 튀어나온 예외를 [ApiException] 실패로 정규화한다.
- *
- * [CancellationException]은 코루틴 취소 신호이므로 삼키지 않고 그대로 전파한다 — 이걸 실패로
- * 바꿔버리면 화면을 벗어난 뒤에도 에러 토스트가 뜬다.
- */
 inline fun <T> runCatchingNetwork(tag: String, action: () -> Result<T>): Result<T> = try {
     action()
 } catch (e: CancellationException) {

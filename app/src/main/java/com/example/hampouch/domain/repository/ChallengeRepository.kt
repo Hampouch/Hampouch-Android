@@ -6,11 +6,7 @@ import com.example.hampouch.domain.model.OnboardingRequest
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 
-/**
- * 챌린지 도메인.
- *
- * 상태는 [state] 하나로 노출되고, 파생 계산(진행 중 챌린지·진척도 등)은 [ChallengeState]에 있다.
- */
+// 본 챌린지 도메인.
 interface ChallengeRepository {
 
     val state: StateFlow<ChallengeState>

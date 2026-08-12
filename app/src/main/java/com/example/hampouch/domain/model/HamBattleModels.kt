@@ -49,10 +49,13 @@ data class HamBattleChallenge(
     val totalCount: Int,
     val durationDays: Int,
     val startDate: LocalDate? = null,
-    val link: String = "",
     val cancelled: Boolean = false,
-    /** 서버 연동 시에만 채워짐. battleId/battleCode는 참가자 전용 리소스라 목데이터에는 없다. */
+    /** 서버 연동 시에만 채워짐. 참가자 전용 리소스다. */
     val battleId: Long? = null,
+    /**
+     * 초대 코드. 생성 시 1회 발급되며 재발급되지 않는다(서버 명세).
+     * "링크 다시 복사하기"가 클립보드에 넣는 값이자, 커뮤니티 배틀 글이 배틀을 지목하는 키다.
+     */
     val battleCode: String? = null,
     /** 서버가 내려준 상태(READY/ONGOING/TERMINATED)가 있으면 날짜 기반 추정 대신 이 값을 그대로 쓴다. */
     val serverStatus: String? = null,

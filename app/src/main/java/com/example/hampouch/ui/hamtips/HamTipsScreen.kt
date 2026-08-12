@@ -29,6 +29,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +53,6 @@ import com.example.hampouch.domain.model.HamTipsSortOrder
 import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
-import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryTabRow
@@ -101,7 +104,8 @@ fun HamTipsScreen(
     openWriteBattleOnStart: Boolean = false,
     initialWriteBattleLink: String = "",
     onExitWriteBattle: () -> Unit = {},
-    initialPopularPostId: String? = null
+    initialPopularPostId: String? = null,
+    viewModel: HamTipsViewModel = hiltViewModel()
 ) {
     var route by remember {
         mutableStateOf(
@@ -116,11 +120,17 @@ fun HamTipsScreen(
     var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
     var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
+    val hamTipsContext = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { message ->
+            Toast.makeText(hamTipsContext, message, Toast.LENGTH_SHORT).show()
+        }
+    }
     var showFabMenu by remember { mutableStateOf(false) }
     var selectedPostId by remember { mutableStateOf<String?>(null) }
     var editingPostId by remember { mutableStateOf<String?>(null) }
 
-    val allPosts = HamTipsRepository.allPosts
+    val allPosts by viewModel.posts.collectAsStateWithLifecycle()
     val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }
     val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
@@ -250,7 +260,7 @@ fun HamTipsScreen(
             ) { innerPadding ->
                 when (currentRoute) {
                     HamTipsRoute.MAIN -> {
-                        LaunchedEffect(sortOrder) { HamTipsRepository.loadHome(sortOrder) }
+                        LaunchedEffect(sortOrder) { viewModel.loadHome(sortOrder) }
                         HamTipsMainContent(
                             query = searchQuery,
                             onQueryChange = { searchQuery = it },
@@ -273,7 +283,7 @@ fun HamTipsScreen(
                         BackHandler(onBack = onBackToMain)
                         val category = selectedCategoryTab.category
                         LaunchedEffect(category, sortOrder) {
-                            if (category != null) HamTipsRepository.loadCategoryPosts(category, sortOrder)
+                            if (category != null) viewModel.loadCategoryPosts(category, sortOrder)
                         }
                         HamTipsFeedRouteContent(
                             title = stringResource(R.string.hamtips_title),
@@ -293,7 +303,7 @@ fun HamTipsScreen(
 
                     HamTipsRoute.POPULAR_ALL -> {
                         BackHandler(onBack = onBackToMain)
-                        LaunchedEffect(sortOrder) { HamTipsRepository.loadPopularPosts(sortOrder) }
+                        LaunchedEffect(sortOrder) { viewModel.loadPopularPosts(sortOrder) }
                         HamTipsFeedRouteContent(
                             title = stringResource(R.string.hamtips_popular_title),
                             query = searchQuery,
@@ -313,7 +323,7 @@ fun HamTipsScreen(
 
                     HamTipsRoute.POCHIPICK_ALL -> {
                         BackHandler(onBack = onBackToMain)
-                        LaunchedEffect(sortOrder) { HamTipsRepository.loadPochipickPosts(sortOrder) }
+                        LaunchedEffect(sortOrder) { viewModel.loadPochipickPosts(sortOrder) }
                         HamTipsFeedRouteContent(
                             title = stringResource(R.string.hamtips_pochipick_title),
                             query = searchQuery,

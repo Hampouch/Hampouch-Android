@@ -2,7 +2,6 @@ package com.example.hampouch.data.repository
 
 import android.util.Log
 import com.example.hampouch.core.config.MiniChallengeConfig
-import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.domain.model.MiniChallengeDaySummary
 import com.example.hampouch.domain.model.MiniChallengeState
 import com.example.hampouch.domain.repository.AccountScopedState
@@ -11,6 +10,7 @@ import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.data.local.MiniChallengeMockDataSource
+import com.example.hampouch.data.remote.ApiService
 import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiErrorBody
@@ -34,14 +34,18 @@ import retrofit2.Response
 
 private const val TAG = "MiniChallengeRepository"
 
-/** 미니 챌린지(/api/mini-challenges*) 연동. 목데이터 모드에서는 로컬 상태만 갱신한다. */
+// 미니 챌린지 연동
 @Singleton
 class MiniChallengeRepositoryImpl @Inject constructor(
+    private val apiService: ApiService,
     private val authRepository: AuthRepository,
     private val mockDataSource: MiniChallengeMockDataSource
 ) : MiniChallengeRepository, AccountScopedState {
 
-    private val _state = MutableStateFlow(mockDataSource.initialState())
+    private fun seedState(): MiniChallengeState =
+        if (MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) MiniChallengeState() else mockDataSource.initialState()
+
+    private val _state = MutableStateFlow(seedState())
     override val state: StateFlow<MiniChallengeState> = _state.asStateFlow()
 
     private fun challengesFor(date: LocalDate) = _state.value.challengesFor(date)
@@ -100,7 +104,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     }
 
     override fun resetForAccount() {
-        _state.value = mockDataSource.initialState()
+        _state.value = seedState()
     }
 
     /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
@@ -108,7 +112,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
-            val response = NetworkModule.apiService.getMiniChallenges(authorization, date.toString())
+            val response = apiService.getMiniChallenges(authorization, date.toString())
             val body = requireBody(response, "미니 챌린지 조회에 실패했습니다.")
             setChallengesForDate(date, body.items.map { it.toDomain() })
             setSummaryForDate(
@@ -127,7 +131,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
             val authorization = requireAuthorizationHeader()
-            val response = NetworkModule.apiService.getRecommendedMiniChallenges(authorization, durationDays)
+            val response = apiService.getRecommendedMiniChallenges(authorization, durationDays)
             val body = requireBody(response, "추천 목록 조회에 실패했습니다.")
             replaceRecommendedChallenges(body.items.map { it.toDomain() })
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
@@ -151,7 +155,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             val authorization = requireAuthorizationHeader()
             val recommendedId = recommended.id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_RECOMMENDED_NOT_FOUND", message = "추천 미니 챌린지를 찾을 수 없습니다.")
-            val response = NetworkModule.apiService.addRecommendedMiniChallenge(
+            val response = apiService.addRecommendedMiniChallenge(
                 authorization,
                 AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
             )
@@ -174,7 +178,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }
         return runCatching {
             val authorization = requireAuthorizationHeader()
-            val response = NetworkModule.apiService.addCustomMiniChallenge(
+            val response = apiService.addCustomMiniChallenge(
                 authorization,
                 AddCustomMiniChallengeRequest(
                     custom = CustomMiniChallengeBody(title = name.trim(), durationDays = totalDays.toDurationDays())
@@ -197,7 +201,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             val authorization = requireAuthorizationHeader()
             val miniChallengeId = id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_NOT_FOUND", message = "미니 챌린지를 찾을 수 없습니다.")
-            val response = NetworkModule.apiService.deleteMiniChallenge(authorization, miniChallengeId)
+            val response = apiService.deleteMiniChallenge(authorization, miniChallengeId)
             if (!response.isSuccessful) throw parseError(response.errorBody()?.string(), "미니 챌린지 삭제에 실패했습니다.")
             loadChallenges(date).getOrThrow()
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 삭제") }
@@ -213,7 +217,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             val authorization = requireAuthorizationHeader()
             val miniChallengeId = id.toLongOrNull()
                 ?: throw ApiException(code = "MINI_NOT_FOUND", message = "미니 챌린지를 찾을 수 없습니다.")
-            val response = NetworkModule.apiService.checkMiniChallenge(
+            val response = apiService.checkMiniChallenge(
                 authorization,
                 miniChallengeId,
                 MiniChallengeCheckRequest(date = date.toString(), checked = checked)

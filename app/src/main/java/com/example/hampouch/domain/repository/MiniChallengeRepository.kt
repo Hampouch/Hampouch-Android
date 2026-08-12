@@ -5,7 +5,7 @@ import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 
-/** 미니 챌린지 도메인. 서버 연동인지 목데이터인지는 구현체가 감춘다. */
+// 미니 챌린지 도메인
 interface MiniChallengeRepository {
 
     val state: StateFlow<MiniChallengeState>

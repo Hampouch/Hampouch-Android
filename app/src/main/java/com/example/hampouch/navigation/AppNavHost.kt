@@ -31,21 +31,19 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.HamBattleChallenge
-import com.example.hampouch.data.repository.AuthRepository
-import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesScreen
+import com.example.hampouch.ui.hambattle.HamBattleEvent
 import com.example.hampouch.ui.hambattle.HamBattleMockData
+import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
-import com.example.hampouch.ui.hambattle.HamBattleStore
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.NotificationTarget
-import com.example.hampouch.data.repository.BattleRepository
 import com.example.hampouch.data.repository.OnboardingDataStore
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
@@ -87,27 +85,20 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "AppNavHost"
 
-/**
- * 서버 모드([BattleConfig.USE_SERVER_BATTLE])에서는 [challengeId](battleId 문자열)로 상세를 조회해
- * [HamBattleStore]에서 읽고, 목데이터 모드에서는 기존처럼 [HamBattleMockData]에서 바로 찾는다.
- */
 @Composable
 private fun rememberHamBattleChallenge(
     challengeId: String?,
-    battleRepository: BattleRepository
+    viewModel: HamBattleViewModel
 ): HamBattleChallenge? {
     if (!BattleConfig.USE_SERVER_BATTLE) {
         return HamBattleMockData.challenges.find { it.id == challengeId }
     }
+    val battleState by viewModel.state.collectAsStateWithLifecycle()
     val battleId = remember(challengeId) { challengeId?.toLongOrNull() }
     LaunchedEffect(battleId) {
-        if (battleId != null) {
-            battleRepository.loadBattleDetail(battleId).onFailure { error ->
-                Log.e(TAG, "햄배틀 상세 조회 실패", error)
-            }
-        }
+        if (battleId != null) viewModel.loadBattleDetail(battleId)
     }
-    return battleId?.let { HamBattleStore.detailFor(it) }
+    return battleId?.let { battleState.detailFor(it) }
 }
 
 @Composable
@@ -120,48 +111,28 @@ fun AppNavHost(
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val authRepository = remember { AuthRepository.getInstance(context) }
-    val battleRepository = remember { BattleRepository.getInstance(context) }
+    val startDestinationViewModel: StartDestinationViewModel = hiltViewModel()
+    val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val battleState by battleViewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(battleViewModel) {
+        battleViewModel.events.collect { event ->
+            when (event) {
+                HamBattleEvent.Created -> navController.popBackStack()
+                is HamBattleEvent.Joined -> Unit
+                is HamBattleEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val notificationViewModel: NotificationViewModel = hiltViewModel()
-    var startDestination by remember { mutableStateOf<String?>(null) }
-    var pendingNicknameSession by remember { mutableStateOf<AuthSession?>(null) }
+    val startDestination by startDestinationViewModel.startDestination.collectAsStateWithLifecycle()
+    val pendingNicknameSession by startDestinationViewModel.pendingNicknameSession.collectAsStateWithLifecycle()
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(Unit) {
-        OnboardingDataStore.restorePendingIfNeeded(context)
-        val session = authRepository.userSession.first()
-        startDestination = if (session != null) {
-            when (val status = authRepository.checkSessionStatus(session)) {
-                is SessionStatus.Valid -> {
-                    if (status.needsNickname) {
-                        pendingNicknameSession = session
-                        Screen.Login.route
-                    } else {
-                        // checkSessionStatus가 nickname을 갱신했을 수 있으니 최신 세션을 다시 읽어서 동기화한다.
-                        authRepository.saveSession(authRepository.userSession.first() ?: session)
-                        Screen.Home.route
-                    }
-                }
-                SessionStatus.Invalid -> {
-                    authRepository.clearSession()
-                    if (OnboardingDataStore.hasCompletedOnboarding(context)) Screen.Login.route else Screen.Onboarding.route
-                }
-                SessionStatus.Unknown -> {
-                    authRepository.saveSession(session)
-                    Screen.Home.route
-                }
-            }
-        } else if (OnboardingDataStore.hasCompletedOnboarding(context)) {
-            Screen.Login.route
-        } else {
-            Screen.Onboarding.route
-        }
-    }
 
     val resolvedStartDestination = startDestination
     if (resolvedStartDestination == null) {
@@ -283,7 +254,7 @@ fun AppNavHost(
                 completeDialogMessage = message,
                 pendingNicknameSession = pendingNicknameSession,
                 onLoginSuccess = {
-                    pendingNicknameSession = null
+                    startDestinationViewModel.consumePendingNicknameSession()
                     navController.navigate(Screen.Loading.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -422,7 +393,7 @@ fun AppNavHost(
                 },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {
-                    coroutineScope.launch { authRepository.clearSession() }
+                    startDestinationViewModel.logout()
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -642,22 +613,18 @@ fun AppNavHost(
         }
 
         composable(Screen.HamBattle.route) {
-            LaunchedEffect(Unit) {
-                battleRepository.loadMyBattles().onFailure { error ->
-                    Log.e(TAG, "햄배틀 목록 조회 실패", error)
-                }
-            }
+            LaunchedEffect(Unit) { battleViewModel.loadMyBattles() }
             HamBattleScreen(
                 selectedBottomTab = BottomNavItem.HAM_BATTLE,
                 onItemSelected = onBottomNavItemSelected,
                 onAddClick = {},
                 activeChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
-                    HamBattleStore.ongoingBattles
+                    battleState.ongoingBattles
                 } else {
                     HamBattleMockData.activeChallenges()
                 },
                 waitingChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
-                    HamBattleStore.readyBattles
+                    battleState.readyBattles
                 } else {
                     HamBattleMockData.waitingChallenges()
                 },
@@ -684,13 +651,7 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onStartClick = { request ->
                     Log.d(TAG, "HamBattle challenge started: $request")
-                    coroutineScope.launch {
-                        battleRepository.create(request)
-                            .onSuccess { navController.popBackStack() }
-                            .onFailure { error ->
-                                Toast.makeText(context, error.toUserMessage(genericErrorMessage), Toast.LENGTH_SHORT).show()
-                            }
-                    }
+                    battleViewModel.create(request)
                 }
             )
         }
@@ -700,7 +661,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = rememberHamBattleChallenge(challengeId, battleRepository)
+            val challenge = rememberHamBattleChallenge(challengeId, battleViewModel)
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
@@ -724,7 +685,7 @@ fun AppNavHost(
             ) {
                 HamBattleEndedChallengesScreen(
                     endedChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
-                        HamBattleStore.terminatedBattles
+                        battleState.terminatedBattles
                     } else {
                         HamBattleMockData.endedChallenges()
                     },
@@ -744,7 +705,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = rememberHamBattleChallenge(challengeId, battleRepository)
+            val challenge = rememberHamBattleChallenge(challengeId, battleViewModel)
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
@@ -765,7 +726,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
         ) { backStackEntry ->
             val challengeId = backStackEntry.arguments?.getString("challengeId")
-            val challenge = rememberHamBattleChallenge(challengeId, battleRepository)
+            val challenge = rememberHamBattleChallenge(challengeId, battleViewModel)
             if (challenge != null) {
                 BottomNavScaffold(
                     selectedItem = BottomNavItem.HAM_BATTLE,
@@ -778,7 +739,7 @@ fun AppNavHost(
                         onShareToCommunityClick = {
                             pendingHomeTab = null
                             openCommunityWriteBattle = true
-                            pendingWriteBattleLink = challenge.link
+                            pendingWriteBattleLink = challenge.battleCode.orEmpty()
                             navController.navigate(Screen.Home.route)
                         }
                     )

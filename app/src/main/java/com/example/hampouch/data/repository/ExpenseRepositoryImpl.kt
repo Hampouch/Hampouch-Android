@@ -212,7 +212,7 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
     }
 
-    // ----- DTO → 도메인 매핑 -----
+    // DTO → 도메인 매핑
 
     private fun ExpenseDetailData.toExpenseRecord(): ExpenseRecord {
         val (categoryId, customCategoryName) = categoryFieldsFromServer(category, customCategory)

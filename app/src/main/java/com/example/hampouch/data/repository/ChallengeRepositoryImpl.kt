@@ -105,7 +105,6 @@ class ChallengeRepositoryImpl @Inject constructor(
         _state.update { it.copy(hasVisitedExpenseEditAfterEnd = true) }
     }
 
-    /** [entry]가 이미 있으면 교체, 없으면 추가한 뒤 periodStart 오름차순으로 정렬한다(마지막이 곧 진행 중 챌린지). */
     private fun upsertChallenge(entry: ActiveChallenge) {
         _state.update { state ->
             val existingIndex = state.challenges.indexOfFirst { it.id == entry.id }
@@ -118,7 +117,6 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
-    /** 서버가 "진행 중인 챌린지 없음"을 알려오면, 로컬에 남은 미종료 항목(이전 조회의 잔재)을 지운다. */
     private fun clearActiveChallenge() {
         val today = LocalDate.now()
         _state.update { state ->
@@ -131,12 +129,6 @@ class ChallengeRepositoryImpl @Inject constructor(
     }
 
     private fun weakCategoryLabelFor(id: String): String = weakCategoryLabels[id] ?: id
-
-    /**
-     * 날짜 고정 모드에서는 지정한 날짜가 "다음 시작점"의 기준일 뿐, 챌린지는 항상 오늘 즉시 시작한다.
-     * 기준일이 아직 오지 않았다면 그 전날까지를 첫 주기로 잡고, 이후 acknowledge 시점마다
-     * (직전 종료일 + 1일)을 다음 시작일로 삼아 매월 같은 날짜로 반복한다.
-     */
     private fun resolvePeriod(
         request: OnboardingRequest,
         referenceToday: LocalDate

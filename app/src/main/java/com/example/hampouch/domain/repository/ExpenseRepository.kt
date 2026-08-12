@@ -9,12 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.YearMonth
 
-/**
- * 지출 도메인.
- *
- * [records]는 앱이 지금까지 받아 둔 지출 내역 캐시다. 화면은 이 흐름을 구독하고,
- * 필요한 시점에 load* 를 불러 서버와 맞춘다.
- */
+// 지출 도메인
 interface ExpenseRepository {
 
     /** id → 지출 내역 캐시. */

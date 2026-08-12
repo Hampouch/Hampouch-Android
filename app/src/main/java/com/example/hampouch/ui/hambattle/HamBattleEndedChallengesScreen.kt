@@ -44,7 +44,7 @@ import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamBattleEndedChallengesScreen(
-    endedChallenges: List<HamBattleChallenge> = HamBattleMockData.endedChallenges(),
+    endedChallenges: List<HamBattleChallenge> = emptyList(),
     onBackClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {}
@@ -160,7 +160,7 @@ private fun EndedChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
             EndedChallengeCard(
-                challenge = HamBattleMockData.endedChallenges()[0],
+                challenge = HamBattleMockData.previewEndedChallenges()[0],
                 onClick = {}
             )
         }
@@ -171,6 +171,6 @@ private fun EndedChallengeCardPreview() {
 @Composable
 private fun HamBattleEndedChallengesScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesScreen()
+        HamBattleEndedChallengesScreen(endedChallenges = HamBattleMockData.previewEndedChallenges())
     }
 }

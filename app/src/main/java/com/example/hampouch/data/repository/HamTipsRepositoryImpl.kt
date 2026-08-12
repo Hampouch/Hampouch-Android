@@ -1,18 +1,26 @@
 package com.example.hampouch.data.repository
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import com.example.hampouch.core.config.CommunityConfig
-import com.example.hampouch.core.network.NetworkModule
 import com.example.hampouch.domain.model.BattleRecruitInfo
 import com.example.hampouch.domain.model.HamTipsSortOrder
 import com.example.hampouch.domain.model.MenuRatingInfo
 import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.TipComment
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.example.hampouch.data.local.HamTipsMockDataSource
-import com.example.hampouch.di.legacyEntryPoint
+import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.domain.repository.AccountScopedState
+import com.example.hampouch.domain.repository.HamTipsRepository
+import okhttp3.OkHttpClient
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+import javax.inject.Singleton
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
 import com.example.hampouch.domain.model.TipReply
@@ -43,43 +51,48 @@ import java.time.temporal.ChronoUnit
 
 private const val TAG = "HamTipsRepository"
 
-object HamTipsRepository {
+private const val DEFAULT_BATTLE_DURATION_DAYS = 7
+private const val DEFAULT_BATTLE_CAPACITY = 5
+private const val JUST_NOW_LABEL = "방금"
+private const val DEFAULT_PAGE_SIZE = 20
 
-    const val CURRENT_USER_ID = "user_me"
-    const val CURRENT_USER_NAME = "절약왕민준"
-    private const val DEFAULT_BATTLE_DURATION_DAYS = 7
-    private const val DEFAULT_BATTLE_CAPACITY = 5
-    private const val JUST_NOW_LABEL = "방금"
-    private const val DEFAULT_PAGE_SIZE = 20
+@Singleton
+class HamTipsRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val apiService: ApiService,
+    private val okHttpClient: OkHttpClient,
+    private val authRepository: AuthRepository,
+    private val mockDataSource: HamTipsMockDataSource
+) : HamTipsRepository, AccountScopedState {
 
     private val activeUserId: String get() = authRepository.currentUser.value.id
     private val activeUserName: String get() = authRepository.currentUser.value.name
 
-    private val posts = mutableStateListOf<TipPost>().apply { addAll(mockDataSource.allPosts()) }
+    private val _posts = MutableStateFlow(mockDataSource.allPosts())
+    override val posts: StateFlow<List<TipPost>> = _posts.asStateFlow()
+
     private var nextId = 1000
 
-    private lateinit var appContext: Context
-    private val authRepository: AuthRepository get() = AuthRepository.getInstance(appContext)
-    private val mockDataSource: HamTipsMockDataSource get() = appContext.legacyEntryPoint().hamTipsMockDataSource()
-
-    fun attach(context: Context) {
-        appContext = context.applicationContext
-    }
-
-    val allPosts: List<TipPost> get() = posts
-
-    fun postById(id: String): TipPost? = posts.find { it.id == id }
+    override fun postById(id: String): TipPost? = _posts.value.find { it.id == id }
 
     private fun newId(prefix: String): String = "${prefix}_${nextId++}"
 
     private fun mutate(postId: String, transform: (TipPost) -> TipPost) {
-        val index = posts.indexOfFirst { it.id == postId }
-        if (index != -1) posts[index] = transform(posts[index])
+        _posts.update { list -> list.map { if (it.id == postId) transform(it) else it } }
     }
 
     private fun upsert(post: TipPost) {
-        val index = posts.indexOfFirst { it.id == post.id }
-        if (index != -1) posts[index] = post else posts.add(post)
+        _posts.update { list ->
+            if (list.any { it.id == post.id }) list.map { if (it.id == post.id) post else it } else list + post
+        }
+    }
+
+    private fun prepend(post: TipPost) {
+        _posts.update { listOf(post) + it.filterNot { existing -> existing.id == post.id } }
+    }
+
+    private fun removeById(postId: String) {
+        _posts.update { list -> list.filterNot { it.id == postId } }
     }
 
 
@@ -227,11 +240,11 @@ object HamTipsRepository {
     }
 
 
-    suspend fun loadHome(sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadHome(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCommunityHome(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityHome(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.popularPosts.forEach { upsert(it.toTipPost()) }
@@ -244,11 +257,11 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadCategoryPosts(category: TipCategory, sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadCategoryPosts(category: TipCategory, sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCommunityPosts(
+            val response = apiService.getCommunityPosts(
                 header, category.toServerCategory(), sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE
             )
             val data = response.body()?.data
@@ -261,11 +274,11 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadPopularPosts(sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadPopularPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCommunityPopularPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityPopularPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -276,11 +289,11 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadPochipickPosts(sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadPochipickPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCommunityPochiPicks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getCommunityPochiPicks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost(isEditorAuthor = true)) }
@@ -291,11 +304,11 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadMyPosts(sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadMyPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getMyCommunityPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getMyCommunityPosts(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -306,11 +319,11 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadSavedPosts(sortType: HamTipsSortOrder = HamTipsSortOrder.LATEST): Result<Unit> {
+    override suspend fun loadSavedPosts(sortType: HamTipsSortOrder): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) return Result.success(Unit)
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getMyCommunityBookmarks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
+            val response = apiService.getMyCommunityBookmarks(header, sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.content.forEach { upsert(it.toTipPost()) }
@@ -321,7 +334,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun loadPostDetail(postId: String): Result<TipPost> {
+    override suspend fun loadPostDetail(postId: String): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { it.copy(viewCount = it.viewCount + 1) }
             val post = postById(postId)
@@ -331,7 +344,7 @@ object HamTipsRepository {
             ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.getCommunityPostDetail(header, id)
+            val response = apiService.getCommunityPostDetail(header, id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val isEditorAuthor = postById(postId)?.isEditorAuthor ?: false
@@ -349,7 +362,7 @@ object HamTipsRepository {
 
     private suspend fun readLocalImage(uriString: String): LocalImagePayload = withContext(Dispatchers.IO) {
         val uri = Uri.parse(uriString)
-        val resolver = appContext.contentResolver
+        val resolver = context.contentResolver
         val bytes = resolver.openInputStream(uri)?.use { it.readBytes() }
             ?: throw ApiException("COMMUNITY_IMAGE_UPLOAD_FAILED", "이미지를 읽을 수 없습니다.")
         LocalImagePayload(bytes = bytes, contentType = resolver.getType(uri) ?: "image/jpeg")
@@ -360,7 +373,7 @@ object HamTipsRepository {
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
             val payloads = localUris.map { readLocalImage(it) }
-            val response = NetworkModule.apiService.presignCommunityImages(
+            val response = apiService.presignCommunityImages(
                 header,
                 CommunityImagePresignRequest(
                     files = payloads.map { CommunityImagePresignFileRequest(it.contentType, it.bytes.size.toLong()) }
@@ -374,7 +387,7 @@ object HamTipsRepository {
                 data.files.forEachIndexed { index, file ->
                     val body = payloads[index].bytes.toRequestBody(payloads[index].contentType.toMediaTypeOrNull())
                     val request = Request.Builder().url(file.uploadUrl).put(body).build()
-                    NetworkModule.okHttpClient.newCall(request).execute().use { httpResponse ->
+                    okHttpClient.newCall(request).execute().use { httpResponse ->
                         if (!httpResponse.isSuccessful) {
                             throw ApiException("COMMUNITY_IMAGE_UPLOAD_FAILED", "이미지 업로드에 실패했습니다.")
                         }
@@ -395,12 +408,12 @@ object HamTipsRepository {
     }
 
 
-    suspend fun createTipPost(
+    override suspend fun createTipPost(
         category: TipCategory,
         title: String,
         content: String,
         imageUris: List<String>,
-        imageKeys: List<String> = emptyList()
+        imageKeys: List<String>
     ): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
@@ -416,13 +429,13 @@ object HamTipsRepository {
                 hasImage = imageUris.isNotEmpty(),
                 imageUris = imageUris
             )
-            posts.add(0, post)
+            prepend(post)
             return Result.success(post)
         }
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.createCommunityTipPost(
+            val response = apiService.createCommunityTipPost(
                 header, CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
             )
             val data = response.body()?.data
@@ -441,7 +454,7 @@ object HamTipsRepository {
                     imageUris = imageUris,
                     imageKeys = keys
                 )
-                posts.add(0, post)
+                prepend(post)
                 Result.success(post)
             } else {
                 Result.failure(errorFrom(response, "꿀팁 작성에 실패했습니다."))
@@ -449,13 +462,13 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun updateTipPost(
+    override suspend fun updateTipPost(
         postId: String,
         category: TipCategory,
         title: String,
         content: String,
         imageUris: List<String>,
-        imageKeys: List<String> = emptyList()
+        imageKeys: List<String>
     ): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
@@ -475,7 +488,7 @@ object HamTipsRepository {
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.updateCommunityTipPost(
+            val response = apiService.updateCommunityTipPost(
                 header, id, CommunityTipWriteRequest(category.toServerCategory(), title, content, keys)
             )
             if (response.isSuccessful && response.body()?.data != null) {
@@ -497,7 +510,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun createMenuPost(
+    override suspend fun createMenuPost(
         title: String,
         menuName: String,
         place: String,
@@ -505,7 +518,7 @@ object HamTipsRepository {
         rating: MenuRatingInfo,
         comment: String,
         imageUris: List<String>,
-        imageKeys: List<String> = emptyList()
+        imageKeys: List<String>
     ): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
@@ -525,13 +538,13 @@ object HamTipsRepository {
                 price = price,
                 menuRating = rating
             )
-            posts.add(0, post)
+            prepend(post)
             return Result.success(post)
         }
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.createCommunityFoodPost(
+            val response = apiService.createCommunityFoodPost(
                 header,
                 CommunityFoodWriteRequest(
                     title = title, menuName = menuName, placeName = place, price = price,
@@ -559,7 +572,7 @@ object HamTipsRepository {
                     price = price,
                     menuRating = rating
                 )
-                posts.add(0, post)
+                prepend(post)
                 Result.success(post)
             } else {
                 Result.failure(errorFrom(response, "뭐먹지 글 작성에 실패했습니다."))
@@ -567,7 +580,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun updateMenuPost(
+    override suspend fun updateMenuPost(
         postId: String,
         title: String,
         menuName: String,
@@ -576,7 +589,7 @@ object HamTipsRepository {
         rating: MenuRatingInfo,
         comment: String,
         imageUris: List<String>,
-        imageKeys: List<String> = emptyList()
+        imageKeys: List<String>
     ): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
@@ -593,7 +606,7 @@ object HamTipsRepository {
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         val keys = resolveImageKeys(imageUris, imageKeys).getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.updateCommunityFoodPost(
+            val response = apiService.updateCommunityFoodPost(
                 header, id,
                 CommunityFoodWriteRequest(
                     title = title, menuName = menuName, placeName = place, price = price,
@@ -616,7 +629,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun createBattlePost(title: String, content: String, link: String): Result<TipPost> {
+    override suspend fun createBattlePost(title: String, content: String, link: String): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             val post = TipPost(
                 id = newId("battle"),
@@ -634,12 +647,12 @@ object HamTipsRepository {
                     penalty = ""
                 )
             )
-            posts.add(0, post)
+            prepend(post)
             return Result.success(post)
         }
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.createCommunityRecruitPost(
+            val response = apiService.createCommunityRecruitPost(
                 header, CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
             )
             val data = response.body()?.data
@@ -660,7 +673,7 @@ object HamTipsRepository {
                         penalty = ""
                     )
                 )
-                posts.add(0, post)
+                prepend(post)
                 Result.success(post)
             } else {
                 Result.failure(errorFrom(response, "햄배틀 모집 글 작성에 실패했습니다."))
@@ -668,7 +681,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun updateBattlePost(postId: String, title: String, content: String, link: String): Result<TipPost> {
+    override suspend fun updateBattlePost(postId: String, title: String, content: String, link: String): Result<TipPost> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 post.copy(
@@ -686,7 +699,7 @@ object HamTipsRepository {
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.updateCommunityRecruitPost(
+            val response = apiService.updateCommunityRecruitPost(
                 header, id, CommunityRecruitWriteRequest(title = title, content = content, battleUrl = link)
             )
             if (response.isSuccessful && response.body()?.data != null) {
@@ -707,17 +720,17 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun deletePost(postId: String): Result<Unit> {
+    override suspend fun deletePost(postId: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
-            posts.removeAll { it.id == postId }
+            removeById(postId)
             return Result.success(Unit)
         }
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.deleteCommunityPost(header, id)
+            val response = apiService.deleteCommunityPost(header, id)
             if (response.isSuccessful) {
-                posts.removeAll { it.id == postId }
+                removeById(postId)
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "게시글 삭제에 실패했습니다."))
@@ -726,7 +739,7 @@ object HamTipsRepository {
     }
 
 
-    suspend fun toggleLike(postId: String): Result<Unit> {
+    override suspend fun toggleLike(postId: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 val liked = !post.isLiked
@@ -737,7 +750,7 @@ object HamTipsRepository {
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.toggleCommunityLike(header, id)
+            val response = apiService.toggleCommunityLike(header, id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 mutate(postId) { it.copy(isLiked = data.isLiked, likeCount = data.likeCount) }
@@ -748,7 +761,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun toggleSave(postId: String): Result<Unit> {
+    override suspend fun toggleSave(postId: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { it.copy(isSaved = !it.isSaved) }
             return Result.success(Unit)
@@ -756,7 +769,7 @@ object HamTipsRepository {
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.toggleCommunityBookmark(header, id)
+            val response = apiService.toggleCommunityBookmark(header, id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 mutate(postId) { it.copy(isSaved = data.isBookmarked) }
@@ -768,7 +781,7 @@ object HamTipsRepository {
     }
 
 
-    suspend fun addComment(postId: String, content: String): Result<Unit> {
+    override suspend fun addComment(postId: String, content: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 val comment = TipComment(
@@ -782,7 +795,7 @@ object HamTipsRepository {
         val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.createCommunityComment(
+            val response = apiService.createCommunityComment(
                 header, id, CommunityCommentWriteRequest(parentCommentId = null, content = content)
             )
             val data = response.body()?.data
@@ -801,7 +814,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun addReply(postId: String, commentId: String, content: String): Result<Unit> {
+    override suspend fun addReply(postId: String, commentId: String, content: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 val reply = TipReply(
@@ -820,7 +833,7 @@ object HamTipsRepository {
             ?: return Result.failure(ApiException("COMMUNITY_PARENT_COMMENT_NOT_FOUND", "부모 댓글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.createCommunityComment(
+            val response = apiService.createCommunityComment(
                 header, postIdLong, CommunityCommentWriteRequest(parentCommentId = parentId, content = content)
             )
             val data = response.body()?.data
@@ -842,7 +855,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun deleteComment(postId: String, commentId: String): Result<Unit> {
+    override suspend fun deleteComment(postId: String, commentId: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 val comments = post.comments.map { comment ->
@@ -855,7 +868,7 @@ object HamTipsRepository {
         val id = commentId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.deleteCommunityComment(header, id)
+            val response = apiService.deleteCommunityComment(header, id)
             if (response.isSuccessful) {
                 mutate(postId) { post ->
                     val comments = post.comments.map { comment ->
@@ -870,7 +883,7 @@ object HamTipsRepository {
         }
     }
 
-    suspend fun deleteReply(postId: String, commentId: String, replyId: String): Result<Unit> {
+    override suspend fun deleteReply(postId: String, commentId: String, replyId: String): Result<Unit> {
         if (!CommunityConfig.USE_SERVER_COMMUNITY) {
             mutate(postId) { post ->
                 val comments = post.comments.map { comment ->
@@ -887,7 +900,7 @@ object HamTipsRepository {
         val id = replyId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))
         val header = requireAuthHeader().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = NetworkModule.apiService.deleteCommunityComment(header, id)
+            val response = apiService.deleteCommunityComment(header, id)
             if (response.isSuccessful) {
                 mutate(postId) { post ->
                     val comments = post.comments.map { comment ->
@@ -907,16 +920,16 @@ object HamTipsRepository {
     }
 
 
-    fun canDeletePost(post: TipPost): Boolean =
+    override fun canDeletePost(post: TipPost): Boolean =
         post.authorId == activeUserId || authRepository.isEditor
 
-    fun canDeleteComment(post: TipPost, comment: TipComment): Boolean =
+    override fun canDeleteComment(post: TipPost, comment: TipComment): Boolean =
         post.authorId == activeUserId || comment.authorId == activeUserId || authRepository.isEditor
 
-    fun canDeleteReply(post: TipPost, reply: TipReply): Boolean =
+    override fun canDeleteReply(post: TipPost, reply: TipReply): Boolean =
         post.authorId == activeUserId || reply.authorId == activeUserId || authRepository.isEditor
 
-    fun joinBattle(postId: String) {
+    override fun joinBattle(postId: String) {
         mutate(postId) { post ->
             val info = post.battleInfo ?: return@mutate post
             if (info.isFull) return@mutate post
@@ -930,11 +943,8 @@ object HamTipsRepository {
         }
     }
 
-    fun resetForAccount() {
-        posts.clear()
-        if (!CommunityConfig.USE_SERVER_COMMUNITY) {
-            posts.addAll(mockDataSource.allPosts())
-        }
+    override fun resetForAccount() {
+        _posts.value = if (CommunityConfig.USE_SERVER_COMMUNITY) emptyList() else mockDataSource.allPosts()
         nextId = 1000
     }
 }
