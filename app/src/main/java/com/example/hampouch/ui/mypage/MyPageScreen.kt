@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.hamtips.HamTipsViewModel
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -26,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,11 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MyPageProfile
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostType
+import com.example.hampouch.domain.model.toUserMessage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.ui.common.ExpenseLookupViewModel
+import com.example.hampouch.ui.common.SessionViewModel
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -49,7 +54,6 @@ import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.ui.hamtips.HamTipsBattleDetailScreen
 import com.example.hampouch.ui.hamtips.HamTipsDetailScreen
-import com.example.hampouch.data.repository.HamTipsRepository
 import com.example.hampouch.ui.hamtips.HamTipsWriteBattleScreen
 import com.example.hampouch.ui.hamtips.HamTipsWriteMenuScreen
 import com.example.hampouch.ui.hamtips.HamTipsWriteTipScreen
@@ -58,9 +62,9 @@ import com.example.hampouch.ui.mypage.components.MyPageMenuRow
 import com.example.hampouch.ui.mypage.components.ProfileCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private enum class MyPageRoute {
@@ -85,23 +89,44 @@ fun MyPageScreen(
     initialTipDetailScrollToComments: Boolean = false
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var route by rememberSaveable {
         mutableStateOf(if (initialTipDetailPostId != null) MyPageRoute.TIP_DETAIL else MyPageRoute.MAIN)
     }
     var previousListRoute by rememberSaveable { mutableStateOf(MyPageRoute.MY_TIPS) }
-    val profile = MyPageProfileStore.profile
+    val sessionViewModel: SessionViewModel = hiltViewModel()
+    val accountViewModel: AccountSettingsViewModel = hiltViewModel()
+    LaunchedEffect(accountViewModel) {
+        accountViewModel.events.collect { event ->
+            when (event) {
+                AccountSettingsEvent.LoggedOut -> onLoggedOut()
+                is AccountSettingsEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
+    val profileViewModel: MyPageProfileViewModel = hiltViewModel()
+    val storedProfile by profileViewModel.profile.collectAsStateWithLifecycle()
+    val profile = profileViewModel.profileFor(currentUser, storedProfile)
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }
     var selectedChallengeId by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) {
-        ChallengeRepository.loadHistory().onFailure { error ->
-            Toast.makeText(context, error.toUserMessage("지난 챌린지 목록을 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
+    val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+    val myPageViewModel: MyPageChallengeViewModel = hiltViewModel()
+    val challengeState by myPageViewModel.challengeState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { myPageViewModel.loadHistory() }
+    LaunchedEffect(myPageViewModel) {
+        myPageViewModel.messages.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
-    val challengeRecords = MyPageMockData.challengeHistory()
-    val myTips = MyPageMockData.myTips()
-    val savedTips = MyPageMockData.savedTips()
+    val challengeRecords = MyPageMockData.challengeHistory(challengeState, expenseLookup::spentOnDate)
+    val hamTipsViewModel: HamTipsViewModel = hiltViewModel()
+    val communityPosts by hamTipsViewModel.posts.collectAsStateWithLifecycle()
+    val myTips = MyPageMockData.myTips(communityPosts, currentUser.id)
+    val savedTips = MyPageMockData.savedTips(communityPosts)
 
     val onTipClick: (TipPost) -> Unit = { tip ->
         selectedPostId = tip.id
@@ -153,8 +178,7 @@ fun MyPageScreen(
                             onCancel = { showLogoutConfirm = false },
                             onConfirm = {
                                 showLogoutConfirm = false
-                                UserSession.logout(context)
-                                onLoggedOut()
+                                accountViewModel.logout()
                             }
                         )
                     }
@@ -194,7 +218,7 @@ fun MyPageScreen(
                 isNicknameTaken = MyPageMockData::isNicknameTaken,
                 onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
                 onSubmit = { newName, newAvatarUri ->
-                    MyPageProfileStore.update(newName, newAvatarUri)
+                    profileViewModel.update(currentUser, newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
                 onNotificationClick = onNotificationClick,
@@ -252,15 +276,13 @@ fun MyPageScreen(
         MyPageRoute.CHALLENGE_RESULT -> {
             BackHandler { route = MyPageRoute.CHALLENGE_HISTORY }
             LaunchedEffect(selectedChallengeId) {
-                selectedChallengeId?.let { id ->
-                    ChallengeRepository.loadResult(id).onFailure { error ->
-                        Toast.makeText(context, error.toUserMessage("챌린지 결과를 불러오지 못했습니다."), Toast.LENGTH_SHORT).show()
-                    }
-                }
+                selectedChallengeId?.let(myPageViewModel::loadResult)
             }
-            val challenge = selectedChallengeId?.let { id -> ChallengeRepository.challenges.find { it.id == id } }
+            val challenge = selectedChallengeId?.let { id -> challengeState.challengeById(id) }
             if (challenge != null) {
-                val state = ChallengeResultMockData.forChallenge(challenge)
+                val state = ChallengeResultMockData.forChallenge(
+                    challenge, challengeState, expenseLookup::recordsForDate
+                )
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY },
@@ -276,7 +298,7 @@ fun MyPageScreen(
 
         MyPageRoute.MY_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
-            LaunchedEffect(Unit) { HamTipsRepository.loadMyPosts() }
+            LaunchedEffect(Unit) { hamTipsViewModel.loadMyPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_my_tips),
                 emptyMessage = stringResource(R.string.my_tips_empty_message),
@@ -290,7 +312,7 @@ fun MyPageScreen(
 
         MyPageRoute.SAVED_TIPS -> {
             BackHandler { route = MyPageRoute.MAIN }
-            LaunchedEffect(Unit) { HamTipsRepository.loadSavedPosts() }
+            LaunchedEffect(Unit) { hamTipsViewModel.loadSavedPosts() }
             TipListScreen(
                 title = stringResource(R.string.mypage_menu_saved_tips),
                 emptyMessage = stringResource(R.string.saved_tips_empty_message),
@@ -303,7 +325,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.TIP_DETAIL -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = previousListRoute }
                 HamTipsDetailScreen(
@@ -317,7 +339,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.BATTLE_DETAIL -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = previousListRoute }
                 HamTipsBattleDetailScreen(
@@ -331,7 +353,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_TIP -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.TIP_DETAIL }
                 HamTipsWriteTipScreen(
@@ -343,7 +365,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_MENU -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.TIP_DETAIL }
                 HamTipsWriteMenuScreen(
@@ -355,7 +377,7 @@ fun MyPageScreen(
         }
 
         MyPageRoute.EDIT_BATTLE -> {
-            val post = HamTipsRepository.allPosts.find { it.id == selectedPostId }
+            val post = communityPosts.find { it.id == selectedPostId }
             if (post != null) {
                 BackHandler { route = MyPageRoute.BATTLE_DETAIL }
                 HamTipsWriteBattleScreen(

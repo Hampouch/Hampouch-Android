@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,9 +49,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -75,12 +77,19 @@ private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
 fun HamBattleChallengesPodiumResultScreen(
     challenge: HamBattleChallenge,
     onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onStartNewChallengeClick: () -> Unit = {},
+    viewModel: HamBattleViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge, selectedTab) {
+        // 서버는 todayAmount/totalAmount를 한 응답에 함께 내려주므로, 오늘/전체 토글은 재호출 없이
+        // 로컬에서 값만 바꿔치기한다. 목데이터 모드에서는 todayAmount가 없어 실시간 계산으로 대체한다.
         val participants = if (selectedTab == ResultTab.TODAY) {
-            HamBattleMockData.participantsForToday(challenge)
+            if (BattleConfig.USE_SERVER_BATTLE) {
+                challenge.participants.map { it.copy(amount = it.todayAmount ?: it.amount) }
+            } else {
+                viewModel.participantsForToday(challenge)
+            }
         } else {
             challenge.participants
         }
@@ -243,12 +252,7 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
             Spacer(modifier = Modifier.height(32.dp))
         }
 
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(HPGray4)
-        )
+        ParticipantAvatar(size = 50.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.height(8.dp))
         Column(
             modifier = Modifier
@@ -373,12 +377,7 @@ private fun ExtraRankRow(rank: Int, participant: HamBattleParticipantSpending) {
             color = HPText,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(HPGray4)
-        )
+        ParticipantAvatar(size = 36.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,
@@ -419,7 +418,7 @@ private fun StartNewChallengeButton(onClick: () -> Unit, modifier: Modifier = Mo
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = HPMain)
     ) {
-        Text("새 챌린지 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+        Text("새 햄배틀 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
     }
 }
 
@@ -439,7 +438,7 @@ private fun ResultTabTogglePreview() {
 private fun PodiumChartPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
-            PodiumChart(ranked = HamBattleMockData.activeChallenges()[1].participants)
+            PodiumChart(ranked = HamBattleMockFixtures.activeChallenges()[1].participants)
         }
     }
 }
@@ -448,7 +447,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
     }
 }
 
@@ -456,6 +455,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockData.activeChallenges()[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1])
     }
 }

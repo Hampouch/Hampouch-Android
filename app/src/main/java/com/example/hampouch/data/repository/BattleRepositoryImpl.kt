@@ -1,0 +1,285 @@
+package com.example.hampouch.data.repository
+
+import android.util.Log
+import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.data.remote.dto.ApiErrorBody
+import com.example.hampouch.data.remote.dto.ApiResponse
+import com.example.hampouch.data.remote.dto.BattleDetailData
+import com.example.hampouch.data.local.BattleMockDataSource
+import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
+import com.example.hampouch.domain.model.BattleInvitationPreview
+import com.example.hampouch.domain.model.BattleState
+import com.example.hampouch.domain.repository.AccountScopedState
+import com.example.hampouch.domain.repository.BattleRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+import javax.inject.Singleton
+import com.example.hampouch.data.remote.dto.BattleParticipantDto
+import com.example.hampouch.data.remote.dto.CreateBattleRequest
+import com.example.hampouch.data.remote.dto.MyBattleSummaryDto
+import com.google.gson.Gson
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
+import retrofit2.Response
+
+private const val TAG = "BattleRepository"
+
+// 로그인한 사용자의 userId와 일치하는 참가자만 나 표시
+private const val ME_NAME = "나"
+
+@Singleton
+class BattleRepositoryImpl @Inject constructor(
+    private val apiService: ApiService,
+    private val authRepository: AuthRepository,
+    private val mockDataSource: BattleMockDataSource
+) : BattleRepository, AccountScopedState {
+
+    private val _state = MutableStateFlow(BattleState())
+    override val state: StateFlow<BattleState> = _state.asStateFlow()
+    private var capacityByBattleId: Map<Long, Int> = emptyMap()
+
+    private fun replaceLists(
+        ready: List<HamBattleChallenge>,
+        ongoing: List<HamBattleChallenge>,
+        terminated: List<HamBattleChallenge>
+    ) {
+        val readyCapacities = ready.mapNotNull { c -> c.battleId?.let { it to c.totalCount } }
+        capacityByBattleId = capacityByBattleId + readyCapacities
+        _state.update {
+            it.copy(readyBattles = ready, ongoingBattles = ongoing, terminatedBattles = terminated)
+        }
+    }
+
+    private fun rememberCapacity(battleId: Long, capacity: Int) {
+        capacityByBattleId = capacityByBattleId + (battleId to capacity)
+    }
+
+    private fun setDetail(battleId: Long, detail: HamBattleChallenge) {
+        val knownCapacity = capacityByBattleId[battleId]
+        val merged = if (knownCapacity != null && knownCapacity > detail.totalCount) {
+            detail.copy(totalCount = knownCapacity)
+        } else {
+            detail
+        }
+        _state.update { it.copy(detailByBattleId = it.detailByBattleId + (battleId to merged)) }
+    }
+
+    override fun resetForAccount() {
+        capacityByBattleId = emptyMap()
+        _state.value = BattleState()
+    }
+
+    override suspend fun loadMyBattles(): Result<Unit> {
+        if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
+        return runCatching {
+            val authorization = requireAuthorizationHeader()
+            val myUserId = requireUserId()
+            val response = apiService.getMyBattles(authorization)
+            val body = requireBody(response, "햄배틀 목록 조회에 실패했습니다.")
+            val ready = mutableListOf<HamBattleChallenge>()
+            val ongoing = mutableListOf<HamBattleChallenge>()
+            val terminated = mutableListOf<HamBattleChallenge>()
+            body.battles.forEach { dto ->
+                val challenge = dto.toDomain(myUserId)
+                when (dto.status) {
+                    "READY" -> ready += challenge
+                    "ONGOING" -> ongoing += challenge
+                    else -> terminated += challenge
+                }
+            }
+            replaceLists(ready, ongoing, terminated)
+        }.onFailure { rethrowIfCancelled(it, "햄배틀 목록 조회") }
+    }
+
+    override suspend fun loadBattleDetail(battleId: Long): Result<Unit> {
+        if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
+        return runCatching {
+            val authorization = requireAuthorizationHeader()
+            val myUserId = requireUserId()
+            val response = apiService.getBattleDetail(authorization, battleId)
+            val body = requireBody(response, "햄배틀 상세 조회에 실패했습니다.")
+            setDetail(battleId, body.toDomain(myUserId))
+        }.onFailure { rethrowIfCancelled(it, "햄배틀 상세 조회") }
+    }
+
+    override suspend fun loadInvitationPreview(battleCode: String): Result<BattleInvitationPreview> {
+        return runCatching {
+            val authorization = requireAuthorizationHeader()
+            val response = apiService.getBattleInvitation(authorization, battleCode)
+            requireBody(response, "초대 정보를 불러오지 못했습니다.").toDomain()
+        }.onFailure { rethrowIfCancelled(it, "햄배틀 초대 조회") }
+    }
+
+    override suspend fun join(battleCode: String): Result<Long> {
+        return runCatching {
+            val authorization = requireAuthorizationHeader()
+            val response = apiService.joinBattle(authorization, battleCode)
+            val body = requireBody(response, "햄배틀 참가에 실패했습니다.")
+            loadMyBattles().getOrThrow()
+            body.battleId
+        }.onFailure { rethrowIfCancelled(it, "햄배틀 참가") }
+    }
+
+    // 햄배틀 생성
+    override suspend fun create(request: HamBattleChallengeRequest): Result<HamBattleChallenge> {
+        if (!BattleConfig.USE_SERVER_BATTLE) {
+            return Result.success(mockDataSource.startNewChallenge(request))
+        }
+        return runCatching {
+            val authorization = requireAuthorizationHeader()
+            val startDate = request.startDateMillis?.let {
+                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+            } ?: LocalDate.now()
+            val response = apiService.createBattle(
+                authorization,
+                CreateBattleRequest(
+                    title = request.challengeName,
+                    capacity = parseParticipantTotalCount(request.participantCount),
+                    durationDays = parseDurationDays(request.durationDays),
+                    startDate = startDate.toString(),
+                    penalty = request.penalty
+                )
+            )
+            val body = requireBody(response, "햄배틀 생성에 실패했습니다.")
+            rememberCapacity(body.battleId, body.capacity)
+            loadMyBattles().getOrThrow()
+            HamBattleChallenge(
+                id = body.battleId.toString(),
+                type = if (body.capacity <= 2) "1 vs 1" else "그룹",
+                title = body.title,
+                penalty = body.penalty,
+                totalCount = body.capacity,
+                durationDays = body.durationDays,
+                startDate = runCatching { LocalDate.parse(body.startDate) }.getOrNull(),
+                battleId = body.battleId,
+                battleCode = body.battleCode,
+                serverStatus = body.status,
+                joinedCountOverride = 1
+            )
+        }.onFailure { rethrowIfCancelled(it, "햄배틀 생성") }
+    }
+
+    private suspend fun requireAuthorizationHeader(): String {
+        val session = authRepository.userSession.first()
+            ?: throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
+        return "${session.tokenType} ${session.accessToken}"
+    }
+
+    private suspend fun requireUserId(): Long {
+        val session = authRepository.userSession.first()
+            ?: throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
+        return session.userId
+    }
+
+    private fun <T> requireBody(response: Response<ApiResponse<T>>, fallbackMessage: String): T {
+        val body = response.body()?.data
+        if (response.isSuccessful && body != null) return body
+        throw parseError(response.errorBody()?.string(), fallbackMessage)
+    }
+
+    private fun parseError(errorBodyString: String?, fallbackMessage: String): ApiException {
+        val error = errorBodyString?.let {
+            runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
+        }
+        return ApiException(
+            code = error?.code ?: "UNKNOWN",
+            message = error?.message ?: fallbackMessage,
+            fieldErrors = error?.fieldErrors
+        )
+    }
+
+    /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */
+    private fun rethrowIfCancelled(error: Throwable, action: String) {
+        if (error is CancellationException) throw error
+        Log.e(TAG, "$action 네트워크 오류", error)
+    }
+
+}
+
+private fun parseParticipantTotalCount(option: String): Int =
+    if (option == "1 vs 1") 2 else option.removeSuffix("인").toIntOrNull() ?: 2
+
+private fun parseDurationDays(option: String): Int =
+    option.removeSuffix("일").toIntOrNull() ?: 7
+
+private fun durationDaysBetween(startDate: String, endDate: String): Int =
+    runCatching {
+        (ChronoUnit.DAYS.between(LocalDate.parse(startDate), LocalDate.parse(endDate)) + 1).toInt()
+    }.getOrDefault(1)
+
+/** 참가자 목록에서 나를 찾아 [ME_NAME]으로 라벨링한다(다른 화면 로직이 전부 "나" 문자열로 나를 식별한다). */
+private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantSpending {
+    val disqualified = isValid == false
+    return HamBattleParticipantSpending(
+        name = if (userId == myUserId) ME_NAME else nickname,
+        amount = totalAmount,
+        status = if (disqualified) HamBattleParticipantStatus.DISQUALIFIED else HamBattleParticipantStatus.NORMAL,
+        avatarUrl = avatarUrl,
+        userId = userId,
+        todayAmount = todayAmount
+    )
+}
+
+private fun MyBattleSummaryDto.toDomain(myUserId: Long): HamBattleChallenge {
+    val participants = participants?.map { it.toDomain(myUserId) }.orEmpty()
+    val totalCount = when {
+        capacity != null -> capacity
+        participants.isNotEmpty() -> participants.size
+        else -> 0
+    }
+    return HamBattleChallenge(
+        id = battleId.toString(),
+        type = if (totalCount in 1..2) "1 vs 1" else "그룹",
+        title = title,
+        penalty = penalty,
+        participants = participants,
+        totalCount = totalCount,
+        durationDays = durationDaysBetween(startDate, endDate),
+        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        battleId = battleId,
+        battleCode = battleCode,
+        serverStatus = status,
+        joinedCountOverride = joinedCount,
+        winnerName = winnerNickname
+    )
+}
+
+private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
+    val domainParticipants = participants.map { it.toDomain(myUserId) }
+    return HamBattleChallenge(
+        id = battleId.toString(),
+        type = if (domainParticipants.size <= 2) "1 vs 1" else "그룹",
+        title = title,
+        penalty = penalty,
+        participants = domainParticipants,
+        totalCount = domainParticipants.size,
+        durationDays = durationDaysBetween(startDate, endDate),
+        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        battleId = battleId,
+        battleCode = battleCode,
+        serverStatus = status,
+        penaltyUserName = penaltyUserNickname
+    )
+}
+
+private fun BattleInvitationPreviewData.toDomain(): BattleInvitationPreview = BattleInvitationPreview(
+    title = title,
+    penalty = penalty,
+    capacity = capacity,
+    joinedCount = joinedCount,
+    startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+    durationDays = durationDays
+)

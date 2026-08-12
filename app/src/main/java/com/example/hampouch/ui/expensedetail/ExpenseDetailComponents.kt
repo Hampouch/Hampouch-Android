@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -247,28 +249,7 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
     }
 }
 
-@Composable
-fun <T> ThreeColumnChipGrid(
-    items: List<T>,
-    modifier: Modifier = Modifier,
-    chip: @Composable (T) -> Unit
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items.chunked(3).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                rowItems.forEach { item ->
-                    Box(modifier = Modifier.weight(1f)) { chip(item) }
-                }
-                repeat(3 - rowItems.size) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
+private val ChoiceChipMinHeight = 40.dp
 
 @Composable
 fun ChoiceChip(
@@ -280,14 +261,17 @@ fun ChoiceChip(
     iconRes: Int? = null,
     iconTint: Color = HPText,
     iconSize: Dp = 16.dp,
-    iconSpacing: Dp = 4.dp
+    iconSpacing: Dp = 4.dp,
+    /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 칩에서만 줄 수를 제한한다. */
+    maxLines: Int = Int.MAX_VALUE
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
     val contentColor = if (selected) HPWhite else HPBlack
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .fillMaxHeight()
+            .heightIn(min = ChoiceChipMinHeight)
             .clip(RoundedCornerShape(50))
             .background(backgroundColor)
             .border(
@@ -296,7 +280,7 @@ fun ChoiceChip(
                 shape = RoundedCornerShape(50)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -318,10 +302,13 @@ fun ChoiceChip(
         }
         Text(
             label,
+            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -634,7 +621,7 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun ExpenseSummaryCard(
-    record: com.example.hampouch.data.model.ExpenseRecord,
+    record: com.example.hampouch.domain.model.ExpenseRecord,
     modifier: Modifier = Modifier
 ) {
     val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)

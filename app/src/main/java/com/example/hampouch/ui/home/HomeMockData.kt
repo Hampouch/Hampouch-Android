@@ -12,14 +12,14 @@ import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ActiveChallenge
-import com.example.hampouch.data.model.ExpenseEntry
-import com.example.hampouch.data.model.HomeChallenge
-import com.example.hampouch.data.model.HomeUiState
-import com.example.hampouch.data.model.HomeWarning
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.WarningVariant
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ExpenseEntry
+import com.example.hampouch.domain.model.HomeChallenge
+import com.example.hampouch.ui.home.HomeUiState
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.HomeWarning
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.WarningVariant
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
@@ -76,8 +76,9 @@ private fun buildChallenge(
 
 object HomeMockData {
 
-    fun freshDayState(userName: String, date: LocalDate): HomeUiState {
-        val challenge = ChallengeRepository.challengeFor(date)
+
+    fun freshDayState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState {
+        val challenge = challengeState.challengeFor(date)
         return HomeUiState(
             userName = userName,
             selectedDate = date,
@@ -88,10 +89,10 @@ object HomeMockData {
         )
     }
 
-    fun lowBalanceWithWarningState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun lowBalanceWithWarningState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -136,10 +137,10 @@ object HomeMockData {
         )
     )
 
-    fun normalBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun normalBalanceState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 7_300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 7_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -152,10 +153,10 @@ object HomeMockData {
         warnings = emptyList()
     )
 
-    fun decreasingBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun decreasingBalanceState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 17_300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 17_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 2_700),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 1_500),

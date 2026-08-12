@@ -38,8 +38,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.domain.model.BreakDuration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -73,23 +75,57 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-enum class BreakDuration(val label: String) {
-    THREE_DAYS("3일 쉬기"),
-    ONE_WEEK("1주 쉬기"),
-    TWO_WEEKS("2주 쉬기"),
-    CONTINUOUS("계속 쉬기")
+/** [BreakDuration]의 사용자 노출 문구. */
+internal val BreakDuration.label: String
+    get() = when (this) {
+        BreakDuration.THREE_DAYS -> "3일 쉬기"
+        BreakDuration.ONE_WEEK -> "1주 쉬기"
+        BreakDuration.TWO_WEEKS -> "2주 쉬기"
+        BreakDuration.CONTINUOUS -> "계속 쉬기"
+    }
+
+/**
+ * 휴식 화면 진입점. ViewModel을 붙이고 상태·이벤트를 화면에 흘려준다.
+ *
+ * @param isExtending 이미 휴식 중이라 시작이 아니라 연장을 해야 하는 경우(홈 팝업의 "더 쉬기").
+ */
+@Composable
+fun TakeABreakRoute(
+    isExtending: Boolean,
+    onBack: () -> Unit,
+    onKeepChallenge: () -> Unit,
+    onBreakStarted: () -> Unit,
+    viewModel: TakeABreakViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                TakeABreakEvent.BreakStarted -> onBreakStarted()
+            }
+        }
+    }
+
+    TakeABreakScreen(
+        uiState = uiState,
+        onBack = onBack,
+        onKeepChallenge = onKeepChallenge,
+        onSelectDuration = viewModel::selectDuration,
+        onCustomDaysChange = viewModel::changeCustomDays,
+        onSubmit = { viewModel.submit(isExtending) }
+    )
 }
 
 @Composable
 fun TakeABreakScreen(
+    uiState: TakeABreakUiState = TakeABreakUiState(),
     onBack: () -> Unit = {},
     onKeepChallenge: () -> Unit = {},
-    onStartBreak: (BreakDuration?, customDays: Int?) -> Unit = { _, _ -> },
-    errorMessage: String? = null
+    onSelectDuration: (BreakDuration) -> Unit = {},
+    onCustomDaysChange: (String) -> Unit = {},
+    onSubmit: () -> Unit = {}
 ) {
-    var selectedDuration by rememberSaveable { mutableStateOf<BreakDuration?>(BreakDuration.ONE_WEEK) }
-    var customDaysInput by rememberSaveable { mutableStateOf("") }
-
     Scaffold(containerColor = HPSub3) { innerPadding ->
         Column(
             modifier = Modifier
@@ -114,23 +150,17 @@ fun TakeABreakScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
             BreakDurationPicker(
-                selected = selectedDuration,
-                customDaysInput = customDaysInput,
-                onSelect = { duration ->
-                    selectedDuration = duration
-                    customDaysInput = ""
-                },
-                onCustomDaysChange = { value ->
-                    customDaysInput = value
-                    selectedDuration = null
-                }
+                selected = uiState.selectedDuration,
+                customDaysInput = uiState.customDaysInput,
+                onSelect = onSelectDuration,
+                onCustomDaysChange = onCustomDaysChange
             )
 
             Spacer(modifier = Modifier.height(10.dp))
             BreakChangesNotice()
 
             Spacer(modifier = Modifier.height(30.dp))
-            errorMessage?.let { message ->
+            uiState.errorMessage?.let { message ->
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodySmall,
@@ -142,10 +172,8 @@ fun TakeABreakScreen(
             }
             BreakPrimaryButton(
                 text = "쉬어가기",
-                onClick = {
-                    val customDays = customDaysInput.toIntOrNull()
-                    onStartBreak(selectedDuration, customDays)
-                }
+                enabled = !uiState.isSubmitting,
+                onClick = onSubmit
             )
 
             TextButton(

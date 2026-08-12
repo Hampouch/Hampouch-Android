@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.common.previewChallengeState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeRecord
+import com.example.hampouch.domain.model.ChallengeRecord
 import com.example.hampouch.ui.mypage.components.ChallengeRecordCard
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.theme.HPGray2
@@ -71,7 +72,7 @@ fun ChallengeHistoryScreen(
 @Composable
 private fun ChallengeHistoryScreenFilledPreview() {
     HampouchTheme {
-        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(), onBackClick = {})
+        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {})
     }
 }
 

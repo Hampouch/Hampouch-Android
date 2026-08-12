@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,12 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantSpending
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
-import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
@@ -98,11 +97,17 @@ fun HamBattleWaitingChallengeDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+            val battleCode = challenge.battleCode
             Button(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(challenge.link))
-                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (battleCode.isNullOrBlank()) {
+                        Toast.makeText(context, "초대 코드를 아직 받지 못했어요.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        clipboardManager.setText(AnnotatedString(battleCode))
+                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    }
                 },
+                enabled = !battleCode.isNullOrBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -202,12 +207,7 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
             color = if (isMe) HPWhite else HPText,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(if (isMe) HPWhite else HPGray4)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -218,7 +218,7 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
                 overflow = TextOverflow.Ellipsis,
                 color = if (isMe) HPMain else HPBlack
             )
-            Text("0", style = Body16Bold, color = if (isMe) HPMain else HPBlack)
+            Text(formatWon(participant.amount), style = Body16Bold, color = if (isMe) HPMain else HPBlack)
         }
     }
 }
@@ -266,7 +266,7 @@ private fun WaitingPenaltyBox(penalty: String) {
 private fun WaitingInfoCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingInfoCard(challenge = HamBattleMockData.waitingChallenges().first())
+            WaitingInfoCard(challenge = HamBattleMockFixtures.waitingChallenges().first())
         }
     }
 }
@@ -275,6 +275,6 @@ private fun WaitingInfoCardPreview() {
 @Composable
 private fun HamBattleWaitingChallengeDetailScreenPreview() {
     HampouchTheme {
-        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockData.waitingChallenges().first())
+        HamBattleWaitingChallengeDetailScreen(challenge = HamBattleMockFixtures.waitingChallenges().first())
     }
 }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,15 +82,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.OnboardingRequest
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
+import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
-import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
 import com.example.hampouch.ui.onboarding.components.FocusHandoffDelayMillis
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
@@ -196,7 +194,8 @@ fun NextChallengeRoute(
     suggestedTargetAmount: Int,
     onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
     var periodEnabled by remember(previousResult) { mutableStateOf(true) }
     var periodDays by remember(previousResult) { mutableStateOf<Int?>(previousResult.totalDays) }
@@ -208,6 +207,15 @@ fun NextChallengeRoute(
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                NextChallengeEvent.Started -> onStartChallengeClick()
+                is NextChallengeEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val recommendationMessage = remember(previousResult, suggestedTargetAmount) {
@@ -338,48 +346,16 @@ fun NextChallengeRoute(
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
-            ) {
-                Text("카테고리", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(6.dp))
-                OnboardingBulletList(
-                    lines = listOf(
-                        "중복 선택 가능",
-                        "선택한 카테고리 소비 시 개입이 강해져요."
-                    )
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                HomeCategoryCatalog.categories.chunked(3).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        row.forEach { category ->
-                            CategoryIconChip(
-                                label = stringResource(category.labelResId),
-                                iconRes = CategoryIconRes[category.id] ?: R.drawable.icon_etc,
-                                selected = category.id in selectedCategoryIds,
-                                onClick = {
-                                    selectedCategoryIds = if (category.id in selectedCategoryIds) {
-                                        selectedCategoryIds - category.id
-                                    } else {
-                                        selectedCategoryIds + category.id
-                                    }
-                                }
-                            )
-                        }
-                        repeat(3 - row.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+            CategorySelectionCard(
+                selectedCategoryIds = selectedCategoryIds,
+                onToggleCategory = { categoryId ->
+                    selectedCategoryIds = if (categoryId in selectedCategoryIds) {
+                        selectedCategoryIds - categoryId
+                    } else {
+                        selectedCategoryIds + categoryId
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
-            }
+            )
             Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = { showStartConfirmDialog = true },
@@ -428,13 +404,7 @@ fun NextChallengeRoute(
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
-                coroutineScope.launch {
-                    ChallengeRepository.startNewChallenge(request)
-                        .onSuccess { onStartChallengeClick() }
-                        .onFailure { error ->
-                            Toast.makeText(context, error.toUserMessage("챌린지 시작에 실패했습니다."), Toast.LENGTH_SHORT).show()
-                        }
-                }
+                viewModel.startNewChallenge(request)
             }
         )
     }
@@ -654,48 +624,6 @@ internal fun switchColors(): SwitchColors = SwitchDefaults.colors(
     uncheckedThumbColor = HPWhite,
     uncheckedTrackColor = HPGray5
 )
-
-@Composable
-internal fun RowScope.CategoryIconChip(
-    label: String,
-    iconRes: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .weight(1f)
-            .height(40.dp)
-            .background(
-                color = if (selected) HPMain else HPWhite,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = if (selected) HPMain else HPGray5,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) HPWhite else HPText,
-            fontSize = 16.sp,
-            maxLines = 1
-        )
-    }
-}
 
 @Composable
 internal fun CustomPeriodDaysInput(

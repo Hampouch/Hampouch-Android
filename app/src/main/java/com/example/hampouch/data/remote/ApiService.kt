@@ -4,6 +4,8 @@ import com.example.hampouch.data.remote.dto.AddCustomMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
+import com.example.hampouch.data.remote.dto.BattleDetailData
+import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
 import com.example.hampouch.data.remote.dto.ChallengeCloseData
 import com.example.hampouch.data.remote.dto.ChallengeCreateData
 import com.example.hampouch.data.remote.dto.ChallengeCreateRequest
@@ -40,12 +42,17 @@ import com.example.hampouch.data.remote.dto.CommunityPostPageData
 import com.example.hampouch.data.remote.dto.CommunityPostSummaryData
 import com.example.hampouch.data.remote.dto.CommunityRecruitWriteRequest
 import com.example.hampouch.data.remote.dto.CommunityTipWriteRequest
+import com.example.hampouch.data.remote.dto.CreateBattleData
+import com.example.hampouch.data.remote.dto.CreateBattleRequest
 import com.example.hampouch.data.remote.dto.EmailSendData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.data.remote.dto.EmailVerifyData
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
+import com.example.hampouch.data.remote.dto.JoinBattleData
 import com.example.hampouch.data.remote.dto.LoginData
 import com.example.hampouch.data.remote.dto.LoginRequest
+import com.example.hampouch.data.remote.dto.LogoutRequest
+import com.example.hampouch.data.remote.dto.MyBattlesData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
@@ -53,6 +60,8 @@ import com.example.hampouch.data.remote.dto.MiniChallengeDayData
 import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
+import com.example.hampouch.data.remote.dto.RefreshTokenData
+import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.RestResumeData
 import com.example.hampouch.data.remote.dto.RestResumeRequest
 import com.example.hampouch.data.remote.dto.RestStartData
@@ -108,18 +117,62 @@ interface ApiService {
         @Header("Authorization") authorization: String
     ): Response<ApiResponse<AuthMeData>>
 
+    @POST("api/auth/refresh")
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<ApiResponse<RefreshTokenData>>
+
+    @POST("api/auth/logout")
+    suspend fun logout(
+        @Header("Authorization") authorization: String,
+        @Body request: LogoutRequest
+    ): Response<ApiResponse<Unit>>
+
+    @DELETE("api/auth/me")
+    suspend fun withdraw(
+        @Header("Authorization") authorization: String
+    ): Response<ApiResponse<Unit>>
+
     /**
-     * date를 생략하면 서버가 오늘 날짜로 조회한다. 형식은 yyyy-MM-dd.
+     * 로그인한 사용자가 참가 중인 햄배틀을 상태별로 조회한다. status를 생략하면 전체 상태를 조회한다.
      */
+    @GET("api/battles")
+    suspend fun getMyBattles(
+        @Header("Authorization") authorization: String,
+        @Query("status") status: String? = null
+    ): Response<ApiResponse<MyBattlesData>>
+
+    @POST("api/battles")
+    suspend fun createBattle(
+        @Header("Authorization") authorization: String,
+        @Body request: CreateBattleRequest
+    ): Response<ApiResponse<CreateBattleData>>
+
+    /**
+     * battleCode로 참가 전 미리보기를 조회한다. battleId는 참가자 전용 리소스라 응답에 포함되지 않는다.
+     */
+    @GET("api/battles/invitations/{battleCode}")
+    suspend fun getBattleInvitation(
+        @Header("Authorization") authorization: String,
+        @Path("battleCode") battleCode: String
+    ): Response<ApiResponse<BattleInvitationPreviewData>>
+
+    @POST("api/battles/invitations/{battleCode}")
+    suspend fun joinBattle(
+        @Header("Authorization") authorization: String,
+        @Path("battleCode") battleCode: String
+    ): Response<ApiResponse<JoinBattleData>>
+
+    @GET("api/battles/{battleId}")
+    suspend fun getBattleDetail(
+        @Header("Authorization") authorization: String,
+        @Path("battleId") battleId: Long
+    ): Response<ApiResponse<BattleDetailData>>
+
     @GET("api/mini-challenges")
     suspend fun getMiniChallenges(
         @Header("Authorization") authorization: String,
         @Query("date") date: String? = null
     ): Response<ApiResponse<MiniChallengeDayData>>
 
-    /**
-     * durationDays를 생략하면 전체 기간의 추천 목록을 돌려준다.
-     */
     @GET("api/mini-challenges/recommended")
     suspend fun getRecommendedMiniChallenges(
         @Header("Authorization") authorization: String,

@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import com.example.hampouch.domain.model.normalizeMiniChallengeName
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -30,10 +33,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.RecommendedMiniChallenge
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.MiniChallengeRepository
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.dialog.MiniChallengeAddConfirmDialog
 import com.example.hampouch.ui.home.components.EmptyStateBlock
 import com.example.hampouch.ui.home.components.SectionHeader
@@ -57,64 +59,49 @@ fun MiniChallengeScreen(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit = {},
+    viewModel: MiniChallengeViewModel = hiltViewModel()
 ) {
     var step by remember { mutableStateOf(MiniChallengeStep.DASHBOARD) }
     var selectedDate by remember(initialDate) { mutableStateOf(initialDate) }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val repository = remember { MiniChallengeRepository.getInstance(context) }
-    val genericErrorMessage = stringResource(R.string.minichallenge_action_failed)
+    val miniChallengeState by viewModel.state.collectAsStateWithLifecycle()
     val futureDateMessage = stringResource(R.string.minichallenge_future_date_blocked)
 
-    fun showError(error: Throwable) {
-        Toast.makeText(context, error.toUserMessage(genericErrorMessage), Toast.LENGTH_SHORT).show()
-    }
-
-    LaunchedEffect(selectedDate) {
-        repository.loadChallenges(selectedDate).onFailure(::showError)
-    }
-    LaunchedEffect(Unit) {
-        repository.loadRecommended().onFailure(::showError)
+    LaunchedEffect(selectedDate) { viewModel.loadChallenges(selectedDate) }
+    LaunchedEffect(Unit) { viewModel.loadRecommended() }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is MiniChallengeEvent.Added -> {
+                    selectedDate = event.date
+                    step = MiniChallengeStep.DASHBOARD
+                }
+                is MiniChallengeEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     when (step) {
         MiniChallengeStep.CREATE -> MiniChallengeCreateScreen(
             modifier = modifier,
-            existingNames = MiniChallengeStore.challengesFor(selectedDate).map { it.name },
+            existingNames = miniChallengeState.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onAddChallengeClick = { name, totalDays ->
-                coroutineScope.launch {
-                    repository.addCustom(selectedDate, name, totalDays)
-                        .onSuccess { addedDate ->
-                            if (addedDate != null) {
-                                selectedDate = addedDate
-                                step = MiniChallengeStep.DASHBOARD
-                            }
-                        }
-                        .onFailure(::showError)
-                }
+                viewModel.addCustom(selectedDate, name, totalDays)
             }
         )
 
         MiniChallengeStep.RECOMMENDED_LIST -> MiniChallengeRecommendedListScreen(
             modifier = modifier,
-            recommendedChallenges = MiniChallengeStore.recommendedChallenges,
-            existingNames = MiniChallengeStore.challengesFor(selectedDate).map { it.name },
+            recommendedChallenges = miniChallengeState.recommendedChallenges,
+            existingNames = miniChallengeState.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
             onNotificationClick = onNotificationClick,
             onAddChallenge = { recommended: RecommendedMiniChallenge ->
-                coroutineScope.launch {
-                    repository.addRecommended(selectedDate, recommended)
-                        .onSuccess { addedDate ->
-                            if (addedDate != null) {
-                                selectedDate = addedDate
-                                step = MiniChallengeStep.DASHBOARD
-                            }
-                        }
-                        .onFailure(::showError)
-                }
+                viewModel.addRecommended(selectedDate, recommended)
             }
         )
 
@@ -128,28 +115,19 @@ fun MiniChallengeScreen(
                     selectedDate = date
                 }
             },
-            todayChallenges = MiniChallengeStore.challengesFor(selectedDate),
-            recommendedChallenges = MiniChallengeStore.recommendedChallenges,
-            streakDaysOverride = MiniChallengeStore.summaryFor(selectedDate)?.streakDays,
+            todayChallenges = miniChallengeState.challengesFor(selectedDate),
+            recommendedChallenges = miniChallengeState.recommendedChallenges,
+            streakDaysOverride = miniChallengeState.summaryFor(selectedDate)?.streakDays,
             onToggleChallenge = { id ->
-                val target = MiniChallengeStore.challengesFor(selectedDate).find { it.id == id }
-                if (target != null) {
-                    coroutineScope.launch {
-                        repository.setChecked(selectedDate, id, !target.isChecked).onFailure(::showError)
-                    }
+                miniChallengeState.challengesFor(selectedDate).find { it.id == id }?.let { target ->
+                    viewModel.setChecked(selectedDate, id, !target.isChecked)
                 }
             },
             onDeleteChallenge = { id ->
-                coroutineScope.launch {
-                    repository.remove(selectedDate, id).onFailure(::showError)
-                }
+                viewModel.remove(selectedDate, id)
             },
             onAddRecommendedChallenge = { recommended ->
-                coroutineScope.launch {
-                    repository.addRecommended(selectedDate, recommended)
-                        .onSuccess { addedDate -> if (addedDate != null) selectedDate = addedDate }
-                        .onFailure(::showError)
-                }
+                viewModel.addRecommended(selectedDate, recommended)
             },
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
@@ -254,7 +232,7 @@ private fun MiniChallengeDashboardScreen(
                         items = recommendedChallenges,
                         onAddClick = { id ->
                             val recommended = recommendedChallenges.find { it.id == id }
-                            if (recommended != null && todayChallenges.any { MiniChallengeStore.normalizeName(it.name) == MiniChallengeStore.normalizeName(recommended.name) }) {
+                            if (recommended != null && todayChallenges.any { normalizeMiniChallengeName(it.name) == normalizeMiniChallengeName(recommended.name) }) {
                                 Toast.makeText(context, duplicateNameMessage, Toast.LENGTH_SHORT).show()
                             } else {
                                 pendingChallenge = recommended

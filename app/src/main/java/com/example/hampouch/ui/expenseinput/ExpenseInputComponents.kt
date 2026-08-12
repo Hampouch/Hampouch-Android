@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -359,16 +360,21 @@ fun ExpenseInputSkipRestLink(onClick: () -> Unit, modifier: Modifier = Modifier)
     )
 }
 
+private val ReasonOptionButtonMinHeight = 64.dp
+
 @Composable
 fun ExpenseInputReasonOptionButton(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 버튼에서만 줄 수를 제한한다. */
+    maxLines: Int = Int.MAX_VALUE
 ) {
     Box(
         modifier = modifier
-            .height(64.dp)
+            .fillMaxHeight()
+            .heightIn(min = ReasonOptionButtonMinHeight)
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) HPMain else HPWhite)
             .border(
@@ -376,14 +382,18 @@ fun ExpenseInputReasonOptionButton(
                 color = if (selected) HPMain else HPGray4,
                 shape = RoundedCornerShape(14.dp)
             )
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) HPWhite else HPBlack
+            color = if (selected) HPWhite else HPBlack,
+            textAlign = TextAlign.Center,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

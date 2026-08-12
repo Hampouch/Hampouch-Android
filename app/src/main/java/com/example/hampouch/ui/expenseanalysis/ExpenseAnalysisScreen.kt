@@ -1,5 +1,13 @@
 package com.example.hampouch.ui.expenseanalysis
 
+import com.example.hampouch.domain.model.AmountBreakdownItem
+import com.example.hampouch.domain.model.ExpenseAnalysisEtcId
+import com.example.hampouch.domain.model.ExpenseAnalysisSummary
+import com.example.hampouch.domain.model.ExpenseTagAnalysisResult
+import com.example.hampouch.domain.model.ExpenseTrendResult
+import com.example.hampouch.domain.model.MonthlyTotal
+import com.example.hampouch.domain.model.WeekdayAmount
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +54,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -90,7 +99,8 @@ fun ExpenseAnalysisRoute(
     onCategoryDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     onReasonDetailClick: (LocalDate, LocalDate) -> Unit = { _, _ -> },
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var displayedMonth by rememberSaveable(stateSaver = YearMonthSaver) {
         mutableStateOf((headerMode as? ExpenseAnalysisHeaderMode.Month)?.initialMonth ?: YearMonth.from(referenceToday))
@@ -109,36 +119,14 @@ fun ExpenseAnalysisRoute(
         }
     }
 
-    var serverSummary by remember { mutableStateOf<ExpenseAnalysisSummary?>(null) }
-    LaunchedEffect(periodStart, periodEnd) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverSummary = ExpenseDetailStore.loadAnalysis(periodStart, periodEnd).getOrNull()
-        }
-    }
+    val summary by viewModel.summary.collectAsStateWithLifecycle()
+    LaunchedEffect(periodStart, periodEnd) { viewModel.loadSummary(periodStart, periodEnd) }
 
-    val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val totalAmount = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverSummary?.totalAmount ?: 0
-    } else {
-        periodRecords.sumOf { it.amount }
-    }
-    val categoryItems = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverSummary?.categoryBreakdown ?: emptyList()
-    } else {
-        remember(periodRecords) { periodRecords.categoryBreakdown() }
-    }
-    val reasonItemsSorted = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverSummary?.reasonBreakdown?.sortedByDescending { it.amount } ?: emptyList()
-    } else {
-        remember(periodRecords) {
-            periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder).sortedByDescending { it.amount }
-        }
-    }
-    val weekdayItems = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverSummary?.weekdayBreakdown ?: ExpenseAnalysisWeekdayOrder.map { WeekdayAmount(it, 0) }
-    } else {
-        remember(periodRecords) { periodRecords.weekdayBreakdown() }
-    }
+    val totalAmount = summary?.totalAmount ?: 0
+    val categoryItems = summary?.categoryBreakdown.orEmpty()
+    val reasonItemsSorted = summary?.reasonBreakdown?.sortedByDescending { it.amount }.orEmpty()
+    val weekdayItems = summary?.weekdayBreakdown
+        ?: ExpenseAnalysisWeekdayOrder.map { WeekdayAmount(it, 0) }
     val peakDays = remember(weekdayItems) {
         val maxAmount = weekdayItems.maxOfOrNull { it.amount } ?: 0
         if (maxAmount <= 0) emptySet() else weekdayItems.filter { it.amount == maxAmount }.map { it.dayOfWeek }.take(2).toSet()
@@ -222,7 +210,7 @@ fun ExpenseAnalysisRoute(
                 topReasonLabel = topReasonItem?.let { analysisReasonTabLabel(it.id) }.orEmpty(),
                 topReasonPercent = topReasonItem?.percent ?: 0,
                 peakWeekdayLabels = peakWeekdayNames.joinToString(", ").ifEmpty { null },
-                serverInsight = serverSummary?.pouchInsight
+                serverInsight = summary?.pouchInsight
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
@@ -447,32 +435,16 @@ fun MonthlyExpenseRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     val currentMonth = YearMonth.from(referenceToday)
-    var serverTrend by remember { mutableStateOf<ExpenseTrendResult?>(null) }
-    LaunchedEffect(currentMonth) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverTrend = ExpenseDetailStore.loadTrend(currentMonth).getOrNull()
-        }
-    }
-    val totals = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverTrend?.trend ?: emptyList()
-    } else {
-        remember(allRecords, referenceToday) { allRecords.monthlyTotals(referenceToday) }
-    }
-    val currentTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) serverTrend?.totalAmount ?: 0 else totals.lastOrNull()?.amount ?: 0
-    val average = when {
-        ExpenseConfig.USE_SERVER_EXPENSE -> serverTrend?.monthlyAverage ?: 0
-        totals.isNotEmpty() -> totals.sumOf { it.amount } / totals.size
-        else -> 0
-    }
-    val changePercent = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        serverTrend?.diffRateFromLastMonth ?: 0
-    } else {
-        val previousTotal = if (totals.size >= 2) totals[totals.size - 2].amount else 0
-        if (previousTotal > 0) Math.round((currentTotal - previousTotal) * 100f / previousTotal) else 0
-    }
+    val trend by viewModel.trend.collectAsStateWithLifecycle()
+    LaunchedEffect(currentMonth) { viewModel.loadTrend(currentMonth) }
+    val totals = trend?.trend.orEmpty()
+    val currentTotal = trend?.totalAmount ?: 0
+    val average = trend?.monthlyAverage ?: 0
+    val changePercent = trend?.diffRateFromLastMonth ?: 0
     val maxTotal = totals.maxOfOrNull { it.amount } ?: 0
 
     Scaffold(
@@ -629,30 +601,17 @@ fun CategoryDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var selectedId by remember { mutableStateOf(initialCategoryId) }
-    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    val tagResult by viewModel.tagResult.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverResult = ExpenseDetailStore.loadCategoryAnalysis(selectedId, periodStart, periodEnd).getOrNull()
-        }
+        viewModel.loadCategoryAnalysis(selectedId, periodStart, periodEnd)
     }
-    val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val selectedAmount: Int
-    val selectedPercent: Int
-    val records: List<ExpenseRecord>
-    if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        selectedAmount = serverResult?.totalAmount ?: 0
-        selectedPercent = serverResult?.percent ?: 0
-        records = serverResult?.records ?: emptyList()
-    } else {
-        val breakdown = remember(periodRecords) { periodRecords.categoryBreakdown(order = ExpenseAnalysisCategoryTabOrder) }
-        val selectedItem = breakdown.first { it.id == selectedId }
-        selectedAmount = selectedItem.amount
-        selectedPercent = selectedItem.percent
-        records = remember(periodRecords, selectedId) { periodRecords.recordsForCategory(selectedId) }
-    }
+    val selectedAmount = tagResult?.totalAmount ?: 0
+    val selectedPercent = tagResult?.percent ?: 0
+    val records = tagResult?.records.orEmpty()
 
     Scaffold(
         modifier = modifier,
@@ -704,30 +663,17 @@ fun ReasonDetailRoute(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    allRecords: List<ExpenseRecord> = remember(ExpenseDetailStore.recordsById) { ExpenseDetailStore.recordsById.values.toList() }
+    viewModel: ExpenseAnalysisViewModel = hiltViewModel(),
+    allRecords: List<ExpenseRecord> = viewModel.records.collectAsStateWithLifecycle().value
 ) {
     var selectedId by remember { mutableStateOf(initialReasonId) }
-    var serverResult by remember { mutableStateOf<ExpenseTagAnalysisResult?>(null) }
+    val tagResult by viewModel.tagResult.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            serverResult = ExpenseDetailStore.loadEmotionAnalysis(selectedId, periodStart, periodEnd).getOrNull()
-        }
+        viewModel.loadEmotionAnalysis(selectedId, periodStart, periodEnd)
     }
-    val periodRecords = remember(allRecords, periodStart, periodEnd) { allRecords.inPeriod(periodStart, periodEnd) }
-    val selectedAmount: Int
-    val selectedPercent: Int
-    val records: List<ExpenseRecord>
-    if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        selectedAmount = serverResult?.totalAmount ?: 0
-        selectedPercent = serverResult?.percent ?: 0
-        records = serverResult?.records ?: emptyList()
-    } else {
-        val breakdown = remember(periodRecords) { periodRecords.reasonBreakdown(order = ExpenseAnalysisReasonTabOrder) }
-        val selectedItem = breakdown.first { it.id == selectedId }
-        selectedAmount = selectedItem.amount
-        selectedPercent = selectedItem.percent
-        records = remember(periodRecords, selectedId) { periodRecords.recordsForReason(selectedId) }
-    }
+    val selectedAmount = tagResult?.totalAmount ?: 0
+    val selectedPercent = tagResult?.percent ?: 0
+    val records = tagResult?.records.orEmpty()
 
     Scaffold(
         modifier = modifier,

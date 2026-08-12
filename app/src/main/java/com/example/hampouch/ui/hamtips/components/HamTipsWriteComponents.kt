@@ -43,8 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MenuRatingType
-import com.example.hampouch.data.model.TipShareCategory
+import com.example.hampouch.domain.model.MenuRatingType
+import com.example.hampouch.domain.model.TipShareCategory
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain

@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.hampouch.MainActivity
 import com.example.hampouch.R
-import com.example.hampouch.data.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationItem
 
 private const val TEST_CHANNEL_ID = "hampouch_test_channel"
 

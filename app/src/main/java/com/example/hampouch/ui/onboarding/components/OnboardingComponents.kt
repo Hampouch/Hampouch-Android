@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,6 +53,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.theme.HPBlack
@@ -463,8 +465,10 @@ fun PeriodPresetRow(
     }
 }
 
+private val CategoryChipMinHeight = 44.dp
+
 @Composable
-fun RowScope.CategoryChip(
+fun CategoryChip(
     label: String,
     icon: ImageVector?,
     accentColor: Color,
@@ -474,8 +478,9 @@ fun RowScope.CategoryChip(
 ) {
     Row(
         modifier = modifier
-            .weight(1f)
-            .height(44.dp)
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .heightIn(min = CategoryChipMinHeight)
             .background(
                 color = if (selected) HPMain else HPWhite,
                 shape = RoundedCornerShape(22.dp)
@@ -486,7 +491,7 @@ fun RowScope.CategoryChip(
                 shape = RoundedCornerShape(22.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -511,9 +516,11 @@ fun RowScope.CategoryChip(
         }
         Text(
             text = label,
+            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.labelLarge,
             color = if (selected) HPWhite else HPSub1,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

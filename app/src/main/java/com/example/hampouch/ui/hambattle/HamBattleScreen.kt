@@ -60,9 +60,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.ui.common.NotificationBellIcon
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
+import com.example.hampouch.domain.model.HamBattleStatus
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.dialog.HamBattleChallengeCancelledDialog
@@ -88,15 +93,17 @@ fun HamBattleScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    activeChallenges: List<HamBattleChallenge> = HamBattleMockData.activeChallenges(),
-    waitingChallenges: List<HamBattleChallenge> = HamBattleMockData.waitingChallenges(),
+    activeChallenges: List<HamBattleChallenge> = emptyList(),
+    waitingChallenges: List<HamBattleChallenge> = emptyList(),
     onStartNewChallengeClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onViewEndedChallengesClick: () -> Unit = {},
     onChallengeClick: (String) -> Unit = {},
     onWaitingChallengeClick: (String) -> Unit = {},
     onViewEndedChallengeDetailClick: (String) -> Unit = {},
+    viewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    val mockChallenges by viewModel.mockChallenges.collectAsStateWithLifecycle()
     Scaffold(
         modifier = modifier,
         containerColor = HPWhite,
@@ -137,90 +144,95 @@ fun HamBattleScreen(
         }
     }
 
-    val expiredWaitingChallenge = remember(waitingChallenges) {
-        waitingChallenges.firstOrNull { it.isExpired() }
-    }
+    // 아래의 만료/탈락/취소 감지는 로컬 지출 기록(ExpenseDetailStore)을 기준으로 목데이터를 스스로 갱신하는
+    // 시뮬레이션이다. 서버 모드에서는 이 상태들을 서버가 이미 계산해서 내려주고(READY/ONGOING/TERMINATED,
+    // isValid 등), 되돌려 보낼 수 있는 대응 API도 아직 없어서 목데이터 모드에서만 동작시킨다.
+    if (!BattleConfig.USE_SERVER_BATTLE) {
+        val expiredWaitingChallenge = remember(waitingChallenges) {
+            waitingChallenges.firstOrNull { it.isExpired() }
+        }
 
-    LaunchedEffect(activeChallenges) {
-        activeChallenges.forEach { challenge ->
-            val me = challenge.participants.find { it.name == "나" }
-            if (me != null &&
-                me.status != HamBattleParticipantStatus.DISQUALIFIED &&
-                HamBattleMockData.myMissedStreakDays(challenge) >= 3
-            ) {
-                HamBattleMockData.disqualifyMe(challenge.id)
+        LaunchedEffect(activeChallenges) {
+            activeChallenges.forEach { challenge ->
+                val me = challenge.participants.find { it.name == "나" }
+                if (me != null &&
+                    me.status != HamBattleParticipantStatus.DISQUALIFIED &&
+                    viewModel.myMissedStreakDays(challenge) >= 3
+                ) {
+                    viewModel.disqualifyMe(challenge.id)
+                }
+            }
+            viewModel.mockChallengesWith(HamBattleStatus.ACTIVE).forEach { challenge ->
+                val remaining = challenge.participants.count { it.status != HamBattleParticipantStatus.DISQUALIFIED }
+                if (remaining <= 1) {
+                    viewModel.cancelChallenge(challenge.id)
+                }
             }
         }
-        HamBattleMockData.activeChallenges().forEach { challenge ->
-            val remaining = challenge.participants.count { it.status != HamBattleParticipantStatus.DISQUALIFIED }
-            if (remaining <= 1) {
-                HamBattleMockData.cancelChallenge(challenge.id)
+
+        val justCancelledChallenge = mockChallenges.firstOrNull { challenge ->
+            challenge.cancelled && !viewModel.isCancellationAcknowledged(challenge.id)
+        }
+        val justDisqualifiedChallenge = if (justCancelledChallenge != null) {
+            null
+        } else {
+            activeChallenges.firstOrNull { challenge ->
+                val me = challenge.participants.find { it.name == "나" }
+                me?.status == HamBattleParticipantStatus.DISQUALIFIED &&
+                    !viewModel.isDisqualificationAcknowledged(challenge.id)
             }
         }
-    }
-
-    val justCancelledChallenge = HamBattleMockData.challenges.firstOrNull { challenge ->
-        challenge.cancelled && !HamBattleMockData.isCancellationAcknowledged(challenge.id)
-    }
-    val justDisqualifiedChallenge = if (justCancelledChallenge != null) {
-        null
-    } else {
-        activeChallenges.firstOrNull { challenge ->
-            val me = challenge.participants.find { it.name == "나" }
-            me?.status == HamBattleParticipantStatus.DISQUALIFIED &&
-                !HamBattleMockData.isDisqualificationAcknowledged(challenge.id)
+        val missedWarningChallenge = if (justCancelledChallenge != null || justDisqualifiedChallenge != null) {
+            null
+        } else {
+            activeChallenges.firstOrNull { challenge ->
+                viewModel.myMissedStreakDays(challenge) == 2 &&
+                    !viewModel.wasMissedWarningShownToday(challenge.id)
+            }
         }
-    }
-    val missedWarningChallenge = if (justCancelledChallenge != null || justDisqualifiedChallenge != null) {
-        null
-    } else {
-        activeChallenges.firstOrNull { challenge ->
-            HamBattleMockData.myMissedStreakDays(challenge) == 2 &&
-                !HamBattleMockData.wasMissedWarningShownToday(challenge.id)
+
+        when {
+            expiredWaitingChallenge != null -> HamBattleWaitingChallengeExpiredDialog(
+                challengeTitle = expiredWaitingChallenge.title,
+                onRecreateClick = {
+                    viewModel.removeWaitingChallenge(expiredWaitingChallenge.id)
+                    onStartNewChallengeClick()
+                },
+                onConfirmClick = {
+                    viewModel.removeWaitingChallenge(expiredWaitingChallenge.id)
+                }
+            )
+
+            justCancelledChallenge != null -> HamBattleChallengeCancelledDialog(
+                challengeTitle = justCancelledChallenge.title,
+                onRecreateClick = {
+                    viewModel.acknowledgeCancellation(justCancelledChallenge.id)
+                    onStartNewChallengeClick()
+                },
+                onConfirmClick = {
+                    viewModel.acknowledgeCancellation(justCancelledChallenge.id)
+                    onViewEndedChallengeDetailClick(justCancelledChallenge.id)
+                }
+            )
+
+            justDisqualifiedChallenge != null -> HamBattleParticipationInvalidatedDialog(
+                challengeTitle = justDisqualifiedChallenge.title,
+                onConfirmClick = {
+                    viewModel.acknowledgeDisqualification(justDisqualifiedChallenge.id)
+                }
+            )
+
+            missedWarningChallenge != null -> HamBattleMissedSpendingDialog(
+                challengeTitle = missedWarningChallenge.title,
+                onInputSpendingClick = {
+                    viewModel.markMissedWarningShown(missedWarningChallenge.id)
+                    onAddClick()
+                },
+                onConfirmClick = {
+                    viewModel.markMissedWarningShown(missedWarningChallenge.id)
+                }
+            )
         }
-    }
-
-    when {
-        expiredWaitingChallenge != null -> HamBattleWaitingChallengeExpiredDialog(
-            challengeTitle = expiredWaitingChallenge.title,
-            onRecreateClick = {
-                HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
-                onStartNewChallengeClick()
-            },
-            onConfirmClick = {
-                HamBattleMockData.removeWaitingChallenge(expiredWaitingChallenge.id)
-            }
-        )
-
-        justCancelledChallenge != null -> HamBattleChallengeCancelledDialog(
-            challengeTitle = justCancelledChallenge.title,
-            onRecreateClick = {
-                HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
-                onStartNewChallengeClick()
-            },
-            onConfirmClick = {
-                HamBattleMockData.acknowledgeCancellation(justCancelledChallenge.id)
-                onViewEndedChallengeDetailClick(justCancelledChallenge.id)
-            }
-        )
-
-        justDisqualifiedChallenge != null -> HamBattleParticipationInvalidatedDialog(
-            challengeTitle = justDisqualifiedChallenge.title,
-            onConfirmClick = {
-                HamBattleMockData.acknowledgeDisqualification(justDisqualifiedChallenge.id)
-            }
-        )
-
-        missedWarningChallenge != null -> HamBattleMissedSpendingDialog(
-            challengeTitle = missedWarningChallenge.title,
-            onInputSpendingClick = {
-                HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
-                onAddClick()
-            },
-            onConfirmClick = {
-                HamBattleMockData.markMissedWarningShown(missedWarningChallenge.id)
-            }
-        )
     }
 }
 
@@ -344,7 +356,7 @@ private fun StartNewChallengeButton(onClick: () -> Unit) {
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = HPMain)
     ) {
-        Text("새 챌린지 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+        Text("새 햄배틀 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
     }
 }
 
@@ -546,14 +558,18 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
                 fontWeight = FontWeight.Bold,
                 color = HPMain
             )
+            val battleCode = challenge.battleCode
             TextButton(
+                enabled = !battleCode.isNullOrBlank(),
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(challenge.link))
-                    Toast.makeText(context, "링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (battleCode != null) {
+                        clipboardManager.setText(AnnotatedString(battleCode))
+                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             ) {
                 Text(
-                    "링크 다시 복사",
+                    "코드 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = StatusWhoWonText
@@ -600,7 +616,9 @@ fun HamBattleScreenPreview() {
         HamBattleScreen(
             selectedBottomTab = BottomNavItem.HAM_BATTLE,
             onItemSelected = {},
-            onAddClick = {}
+            onAddClick = {},
+            activeChallenges = HamBattleMockFixtures.activeChallenges(),
+            waitingChallenges = HamBattleMockFixtures.waitingChallenges()
         )
     }
 }
@@ -618,7 +636,7 @@ fun HamBattleEmptyContentPreview() {
 fun ActiveChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            ActiveChallengeCard(challenge = HamBattleMockData.activeChallenges()[0])
+            ActiveChallengeCard(challenge = HamBattleMockFixtures.activeChallenges()[0])
         }
     }
 }
@@ -628,7 +646,7 @@ fun ActiveChallengeCardPreview() {
 fun WaitingChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingChallengeCard(challenge = HamBattleMockData.waitingChallenges()[0])
+            WaitingChallengeCard(challenge = HamBattleMockFixtures.waitingChallenges()[0])
         }
     }
 }

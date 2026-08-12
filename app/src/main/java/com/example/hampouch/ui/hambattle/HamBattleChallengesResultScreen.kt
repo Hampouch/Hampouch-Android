@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,9 +40,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleChallenge
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -105,7 +105,7 @@ fun HamBattleChallengesResultScreen(
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain)
             ) {
-                Text("새 챌린지 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+                Text("새 햄배틀 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
             }
         }
     }
@@ -201,12 +201,7 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
             color = if (highlighted) HPMain else HPBlack,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(if (highlighted) HPWhite else HPGray4)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -248,12 +243,7 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
             fontSize = 14.sp,
             modifier = Modifier.width(28.dp)
         )
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(HPWhite)
-        )
+        ParticipantAvatar(size = 32.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             participant.name,
@@ -359,6 +349,6 @@ private fun OneVsOnePenaltyBoxPreview() {
 @Composable
 private fun HamBattleChallengesResultScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultScreen(challenge = HamBattleMockData.activeChallenges()[0])
+        HamBattleChallengesResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
     }
 }
