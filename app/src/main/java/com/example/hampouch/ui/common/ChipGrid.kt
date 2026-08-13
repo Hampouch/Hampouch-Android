@@ -6,11 +6,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -39,17 +40,14 @@ fun <T> ChipGrid(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(ChipGridSpacing)
+                    horizontalArrangement = Arrangement.spacedBy(ChipGridSpacing, Alignment.Start)
                 ) {
                     rowItems.forEach { item ->
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .width(scaledMinColumnWidth)
                                 .fillMaxHeight()
                         ) { chip(item) }
-                    }
-                    repeat(columns - rowItems.size) {
-                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }

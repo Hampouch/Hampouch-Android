@@ -89,16 +89,6 @@ private sealed interface InputCategoryOption {
 private val inputCategoryOptions: List<InputCategoryOption> =
     HomeCategoryCatalog.categories.map { InputCategoryOption.Preset(it) } + InputCategoryOption.CustomInput
 
-private val categoryChipIconRes: Map<String, Int> = mapOf(
-    "delivery" to R.drawable.icon_delivery,
-    "dining_out" to R.drawable.icon_eatout,
-    "convenience" to R.drawable.icon_conv,
-    "cafe" to R.drawable.icon_cafe,
-    "snack" to R.drawable.icon_snack,
-    "mart" to R.drawable.icon_shopping,
-    "drink" to R.drawable.icon_beer,
-    "etc" to R.drawable.icon_etc
-)
 
 private val presetReasons: List<ExpenseReasonCatalog.Reason> = ExpenseReasonCatalog.reasons
 
@@ -631,8 +621,8 @@ private fun ExpenseInputCategoryStep(
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
-                    iconRes = categoryChipIconRes[option.category.id],
-                    iconSize = 30.dp,
+                    iconRes = option.category.chipIconResId,
+                    iconSize = 20.dp,
                     iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,
                     onClick = { onCategorySelected(option.category.id) }
@@ -717,7 +707,7 @@ private fun ExpenseInputReasonStep(
                         Spacer(modifier = Modifier.weight(1f))
                         if (categoryLabel != null) {
                             ExpenseInputCategoryBadge(
-                                iconRes = categoryChipIconRes[categoryId] ?: R.drawable.icon_etc,
+                                iconRes = HomeCategoryCatalog.byId(categoryId)?.chipIconResId ?: R.drawable.icon_etc,
                                 label = categoryLabel
                             )
                         }

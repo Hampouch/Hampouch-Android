@@ -17,7 +17,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.domain.model.ChallengePeriodType
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
-import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
 import com.example.hampouch.ui.onboarding.steps.PeriodStep
@@ -67,7 +66,6 @@ fun OnboardingRoute(
             OnboardingStep.EXPENSE_DIAGNOSIS -> activity?.finish()
             OnboardingStep.PERIOD_SETTING -> step = OnboardingStep.EXPENSE_DIAGNOSIS
             OnboardingStep.GOAL_SETTING -> step = OnboardingStep.PERIOD_SETTING
-            OnboardingStep.CATEGORY_SELECT -> step = OnboardingStep.GOAL_SETTING
             else -> Unit
         }
     }
@@ -127,24 +125,9 @@ fun OnboardingRoute(
             OnboardingStep.GOAL_SETTING -> ChallengeGoalStep(
                 state = uiState,
                 onTotalTargetChange = { uiState = uiState.copy(totalTargetAmount = it) },
-                onNext = { step = OnboardingStep.CATEGORY_SELECT },
+                onNext = { onOnboardingComplete(buildOnboardingRequest(uiState)) },
                 onBack = { step = OnboardingStep.PERIOD_SETTING },
                 onNavigateToLogin = { showSkipConfirmDialog = true }
-            )
-
-            OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(
-                selectedCategoryIds = uiState.selectedCategoryIds,
-                onToggleCategory = { categoryId ->
-                    uiState = uiState.copy(
-                        selectedCategoryIds = if (categoryId in uiState.selectedCategoryIds) {
-                            uiState.selectedCategoryIds - categoryId
-                        } else {
-                            uiState.selectedCategoryIds + categoryId
-                        }
-                    )
-                },
-                onStart = { onOnboardingComplete(buildOnboardingRequest(uiState)) },
-                onBack = { step = OnboardingStep.GOAL_SETTING }
             )
         }
     }

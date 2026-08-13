@@ -230,7 +230,7 @@ private fun characterDrawableRes(state: CharacterState): Int = when (state) {
     CharacterState.CHUBBY -> R.drawable.img_hamster_chubby
     CharacterState.NORMAL -> R.drawable.img_hamster_normal
     CharacterState.THIN -> R.drawable.img_hamster_thin
-    CharacterState.OVER_LIMIT -> R.drawable.img_hamster_fail
+    CharacterState.OVER_LIMIT -> R.drawable.img_hamster_thin
 }
 
 @Composable

@@ -121,7 +121,7 @@ fun ChallengeGoalStep(
             SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
 
             OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_button_next),
+                text = stringResource(R.string.onboarding_start_bytecut),
                 enabled = true,
                 onClick = onNext
             )

@@ -139,12 +139,13 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_category)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ChipGrid(items = categoryOptions) { option ->
+                        ChipGrid(items = categoryOptions, minColumnWidth = 96.dp) { option ->
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
-                                    icon = option.category.icon,
-                                    iconTint = option.category.accentColor,
+                                    iconRes = option.category.chipIconResId,
+                                    iconSize = 20.dp,
+                                    iconSpacing = 6.dp,
                                     selected = !isCustomCategory && categoryId == option.category.id,
                                     onClick = {
                                         categoryId = option.category.id

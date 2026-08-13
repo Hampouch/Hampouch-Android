@@ -203,7 +203,6 @@ fun NextChallengeRoute(
     var dateFixed by remember(previousResult) { mutableStateOf(false) }
     var startDate by remember(previousResult) { mutableStateOf<LocalDate?>(null) }
     var targetAmount by remember(suggestedTargetAmount) { mutableStateOf<Int?>(suggestedTargetAmount) }
-    var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -242,8 +241,7 @@ fun NextChallengeRoute(
             (currentCustomPeriodDays < MinPeriodDays || currentCustomPeriodDays > MaxPeriodDays)
     val canStartChallenge = isPeriodOrDateSelected &&
             !customPeriodDaysOutOfRange &&
-            (targetAmount ?: 0) > 0 &&
-            selectedCategoryIds.isNotEmpty()
+            (targetAmount ?: 0) > 0
 
     Scaffold(
         modifier = modifier.imePadding(),
@@ -345,17 +343,6 @@ fun NextChallengeRoute(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(10.dp))
-            CategorySelectionCard(
-                selectedCategoryIds = selectedCategoryIds,
-                onToggleCategory = { categoryId ->
-                    selectedCategoryIds = if (categoryId in selectedCategoryIds) {
-                        selectedCategoryIds - categoryId
-                    } else {
-                        selectedCategoryIds + categoryId
-                    }
-                }
-            )
             Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = { showStartConfirmDialog = true },
@@ -401,8 +388,7 @@ fun NextChallengeRoute(
                     dateFixed = dateFixed,
                     startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
                     customPeriodDays = if (dateFixed) null else effectivePeriodDays,
-                    totalTargetAmount = targetAmount ?: suggestedTargetAmount,
-                    topSpendingCategoryIds = selectedCategoryIds.toList()
+                    totalTargetAmount = targetAmount ?: suggestedTargetAmount
                 )
                 viewModel.startNewChallenge(request)
             }

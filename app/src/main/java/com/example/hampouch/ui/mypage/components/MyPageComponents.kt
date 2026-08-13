@@ -98,7 +98,7 @@ fun MyPageMainTopBar(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack,
-            fontWeight = FontWeight.Normal,
+            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )

@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -120,10 +121,10 @@ fun ExpenseCalendarRoute(
     } else {
         referenceToday
     }
-    var viewMode by remember { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
-    var selectedDate by remember { mutableStateOf(initialSelectedDate) }
-    var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
-    var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
+    var viewMode by rememberSaveable { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
+    var selectedDate by rememberSaveable { mutableStateOf(initialSelectedDate) }
+    var displayedMonth by rememberSaveable { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
+    var displayedWeekStart by rememberSaveable { mutableStateOf(weekGridStart(referenceToday)) }
 
     val records by viewModel.records.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()

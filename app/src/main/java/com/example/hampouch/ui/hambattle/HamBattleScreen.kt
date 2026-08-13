@@ -79,7 +79,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub4
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -380,7 +380,7 @@ private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Un
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
@@ -426,7 +426,7 @@ private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Un
         }
 
         Spacer(modifier = Modifier.height(14.dp))
-        HorizontalDivider(color = HPText, thickness = 1.dp)
+        HorizontalDivider(color = HPGray3, thickness = 1.dp)
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -542,7 +542,7 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        HorizontalDivider(color = HPText, thickness = 1.dp)
+        HorizontalDivider(color = HPGray3, thickness = 1.dp)
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
