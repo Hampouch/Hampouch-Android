@@ -47,7 +47,7 @@ fun AccountSettingsScreen(
     onChangePasswordClick: () -> Unit,
     onLoggedOut: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {},
+    onNotificationClick: () -> Unit,
     viewModel: AccountSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -136,7 +136,7 @@ private fun AccountSettingsScreenPreview() {
             onBackClick = {},
             onProfileEditClick = {},
             onChangePasswordClick = {},
-            onLoggedOut = {}
+            onLoggedOut = {}, onNotificationClick = {}
         )
     }
 }

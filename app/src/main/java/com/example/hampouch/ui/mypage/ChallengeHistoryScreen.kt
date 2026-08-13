@@ -30,8 +30,8 @@ fun ChallengeHistoryScreen(
     records: List<ChallengeRecord>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onRecordClick: (ChallengeRecord) -> Unit = {},
-    onNotificationClick: () -> Unit = {}
+    onRecordClick: (ChallengeRecord) -> Unit,
+    onNotificationClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -72,7 +72,7 @@ fun ChallengeHistoryScreen(
 @Composable
 private fun ChallengeHistoryScreenFilledPreview() {
     HampouchTheme {
-        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {})
+        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})
     }
 }
 
@@ -80,6 +80,6 @@ private fun ChallengeHistoryScreenFilledPreview() {
 @Composable
 private fun ChallengeHistoryScreenEmptyPreview() {
     HampouchTheme {
-        ChallengeHistoryScreen(records = MyPageMockData.emptyChallengeHistory(), onBackClick = {})
+        ChallengeHistoryScreen(records = MyPageMockData.emptyChallengeHistory(), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})
     }
 }

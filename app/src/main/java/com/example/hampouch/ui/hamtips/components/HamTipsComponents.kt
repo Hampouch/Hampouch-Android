@@ -280,7 +280,7 @@ private fun HamTipsStatRow(post: TipPost, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun HamTipsCompactPostCard(post: TipPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .width(168.dp)
@@ -307,7 +307,7 @@ fun HamTipsCompactPostCard(post: TipPost, modifier: Modifier = Modifier, onClick
 }
 
 @Composable
-fun HamTipsFeedPostCard(post: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun HamTipsFeedPostCard(post: TipPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()

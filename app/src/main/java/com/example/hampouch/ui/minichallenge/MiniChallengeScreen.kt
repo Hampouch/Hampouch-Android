@@ -58,8 +58,8 @@ private enum class MiniChallengeStep { DASHBOARD, CREATE, RECOMMENDED_LIST }
 fun MiniChallengeScreen(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = LocalDate.now(),
-    onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
     viewModel: MiniChallengeViewModel = hiltViewModel()
 ) {
     var step by remember { mutableStateOf(MiniChallengeStep.DASHBOARD) }
@@ -89,8 +89,8 @@ fun MiniChallengeScreen(
             modifier = modifier,
             existingNames = miniChallengeState.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
-            onAddChallengeClick = { name, totalDays ->
-                viewModel.addCustom(selectedDate, name, totalDays)
+            onAddChallengeClick = { name, duration ->
+                viewModel.addCustom(selectedDate, name, duration)
             }
         )
 
@@ -148,10 +148,10 @@ private fun MiniChallengeDashboardScreen(
     onToggleChallenge: (String) -> Unit,
     onDeleteChallenge: (String) -> Unit,
     onAddRecommendedChallenge: (RecommendedMiniChallenge) -> Unit,
-    onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {},
-    onViewAllRecommendedClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit,
+    onViewAllRecommendedClick: () -> Unit
 ) {
     var pendingChallenge by remember { mutableStateOf<RecommendedMiniChallenge?>(null) }
     val context = LocalContext.current
@@ -281,6 +281,6 @@ private fun MiniChallengeDashboardScreen(
 @Composable
 private fun MiniChallengeScreenPreview() {
     HampouchTheme {
-        MiniChallengeScreen()
+        MiniChallengeScreen(onBackClick = {}, onNotificationClick = {})
     }
 }

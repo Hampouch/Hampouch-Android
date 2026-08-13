@@ -39,7 +39,7 @@ fun AllSettingsScreen(
     onBackClick: () -> Unit,
     onRecordAlarmClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {},
+    onNotificationClick: () -> Unit,
     viewModel: AllSettingsViewModel = hiltViewModel()
 ) {
     val notificationState by viewModel.state.collectAsStateWithLifecycle()
@@ -143,7 +143,7 @@ private fun AllSettingsScreenPreview() {
     HampouchTheme {
         AllSettingsScreen(
             onBackClick = {},
-            onRecordAlarmClick = {}
+            onRecordAlarmClick = {}, onNotificationClick = {}
         )
     }
 }

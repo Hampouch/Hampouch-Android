@@ -62,7 +62,7 @@ fun ChangePasswordScreen(
     onBackClick: () -> Unit,
     onSubmitSuccess: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit
 ) {
     var emailInput by rememberSaveable { mutableStateOf(email) }
     var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
@@ -240,6 +240,6 @@ fun ChangePasswordScreen(
 @Composable
 private fun ChangePasswordScreenPreview() {
     HampouchTheme {
-        ChangePasswordScreen(email = "hampouch@example.com", onBackClick = {}, onSubmitSuccess = {})
+        ChangePasswordScreen(email = "hampouch@example.com", onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {})
     }
 }

@@ -21,6 +21,7 @@
     <string name="profile_edit_nickname_placeholder">닉네임을 입력해주세요.</string>
     <string name="profile_edit_nickname_empty">닉네임을 입력해주세요.</string>
     <string name="profile_edit_nickname_duplicate">이미 존재하는 닉네임입니다.</string>
+    <string name="profile_edit_nickname_check_failed">닉네임 확인에 실패했습니다.</string>
     <string name="profile_edit_complete">완료</string>
     <string name="profile_edit_success_message">프로필이 수정되었습니다.</string>
     <string name="profile_edit_cd_camera">프로필 사진 변경</string>

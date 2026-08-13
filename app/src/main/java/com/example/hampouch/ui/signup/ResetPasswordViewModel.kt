@@ -93,14 +93,14 @@ class ResetPasswordViewModel @Inject constructor(
         update { copy(isSendingEmailCode = true) }
         viewModelScope.launch {
             authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.PASSWORD_RESET)
-                .onSuccess { data ->
+                .onSuccess { expiresInSeconds ->
                     update {
                         copy(
                             emailSendMessage = "인증번호가 발송되었습니다.",
                             hasSentEmailCode = true,
                             emailCode = "",
                             emailCodeExpiresAtMillis =
-                                System.currentTimeMillis() + data.expiresInSeconds * 1000L
+                                System.currentTimeMillis() + expiresInSeconds * 1000L
                         )
                     }
                 }

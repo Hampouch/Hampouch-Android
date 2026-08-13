@@ -347,7 +347,7 @@ fun StatusBadge(status: ChallengeStatus, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modifier: Modifier = Modifier) {
+fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val isSuccess = record.status == ChallengeStatus.SUCCESS
     val progressColor = if (isSuccess) HPStatusInProgressText else HPStatusSuccessText
     val progressFraction = if (record.targetAmount > 0) {
@@ -378,15 +378,11 @@ fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modif
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (record.endDateLabel != null) {
-                        stringResource(
-                            R.string.challenge_history_period_format,
-                            record.startDateLabel,
-                            record.endDateLabel
-                        )
-                    } else {
-                        stringResource(R.string.challenge_history_period_ongoing_format, record.startDateLabel)
-                    },
+                    text = stringResource(
+                        R.string.challenge_history_period_format,
+                        record.startDateLabel,
+                        record.endDateLabel
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = HPText
                 )
@@ -516,7 +512,7 @@ fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun TipPostCard(tip: TipPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()

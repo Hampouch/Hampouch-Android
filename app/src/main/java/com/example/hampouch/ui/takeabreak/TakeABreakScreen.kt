@@ -120,11 +120,11 @@ fun TakeABreakRoute(
 @Composable
 fun TakeABreakScreen(
     uiState: TakeABreakUiState = TakeABreakUiState(),
-    onBack: () -> Unit = {},
-    onKeepChallenge: () -> Unit = {},
-    onSelectDuration: (BreakDuration) -> Unit = {},
-    onCustomDaysChange: (String) -> Unit = {},
-    onSubmit: () -> Unit = {}
+    onBack: () -> Unit,
+    onKeepChallenge: () -> Unit,
+    onSelectDuration: (BreakDuration) -> Unit,
+    onCustomDaysChange: (String) -> Unit,
+    onSubmit: () -> Unit
 ) {
     Scaffold(containerColor = HPSub3) { innerPadding ->
         Column(
@@ -520,6 +520,12 @@ private fun Modifier.dashedBorder(
 @Composable
 private fun TakeABreakScreenPreview() {
     HampouchTheme {
-        TakeABreakScreen()
+        TakeABreakScreen(
+            onBack = {},
+            onKeepChallenge = {},
+            onSelectDuration = {},
+            onCustomDaysChange = {},
+            onSubmit = {}
+        )
     }
 }

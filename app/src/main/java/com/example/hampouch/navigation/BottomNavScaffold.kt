@@ -13,7 +13,7 @@ fun BottomNavScaffold(
     selectedItem: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
     modifier: Modifier = Modifier,
-    onAddClick: () -> Unit = {},
+    onAddClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     Scaffold(

@@ -91,9 +91,9 @@ private val LastPlaceBadgeText = Color(0xFFE17866)
 @Composable
 fun HamBattleEndedChallengesDetailScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onShareResultClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onShareResultClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit
 ) {
     val sorted = remember(challenge) { challenge.participants.sortedBy { it.amount } }
     val ranked = remember(sorted) {
@@ -560,6 +560,9 @@ private fun EndedRankRowPreview() {
 @Composable
 private fun HamBattleEndedChallengesDetailScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesDetailScreen(challenge = HamBattleMockFixtures.endedChallenges()[1])
+        HamBattleEndedChallengesDetailScreen(
+            challenge = HamBattleMockFixtures.endedChallenges()[1],
+            onBackClick = {}, onShareResultClick = {}, onStartNewChallengeClick = {}
+        )
     }
 }

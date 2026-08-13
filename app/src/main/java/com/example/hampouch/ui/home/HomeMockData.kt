@@ -19,6 +19,8 @@ import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.HomeWarning
 import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.MiniChallengeDuration
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.domain.model.WarningVariant
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
@@ -132,8 +134,8 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true)
         )
     )
 
@@ -147,8 +149,8 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 4, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = 7, achievedDays = 3, isChecked = false)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 4, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = false)
         ),
         warnings = emptyList()
     )
@@ -163,10 +165,10 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 1_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true),
-            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", totalDays = 7, achievedDays = 3, isChecked = true),
-            MiniChallengeEntry(id = "m4", name = "계단 이용하기", totalDays = 7, achievedDays = 0, isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true),
+            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = true),
+            MiniChallengeEntry(id = "m4", name = "계단 이용하기", duration = miniChallengeDuration(7), achievedDays = 0, isChecked = true)
         ),
         warnings = emptyList()
     )

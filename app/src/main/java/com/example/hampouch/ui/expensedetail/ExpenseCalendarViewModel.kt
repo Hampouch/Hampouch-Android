@@ -7,6 +7,8 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,19 +35,45 @@ class ExpenseCalendarViewModel @Inject constructor(
     private val _weekSummary = MutableStateFlow<ExpensePeriodSummary?>(null)
     val weekSummary: StateFlow<ExpensePeriodSummary?> = _weekSummary.asStateFlow()
 
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private var retryAction: (() -> Unit)? = null
+
+    fun retry() = retryAction?.invoke()
+
     fun loadMonthSummary(month: YearMonth) {
+        retryAction = { loadMonthSummary(month) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _monthSummary.value = expenseRepository.loadMonthSummary(month).getOrNull()
+            expenseRepository.loadMonthSummary(month)
+                .onSuccess {
+                    _monthSummary.value = it
+                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("월간 기록을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadWeekSummary(weekStart: LocalDate) {
+        retryAction = { loadWeekSummary(weekStart) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            _weekSummary.value = expenseRepository.loadWeekSummary(weekStart).getOrNull()
+            expenseRepository.loadWeekSummary(weekStart)
+                .onSuccess {
+                    _weekSummary.value = it
+                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("주간 기록을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadDay(date: LocalDate) {
-        viewModelScope.launch { expenseRepository.loadDay(date) }
+        retryAction = { loadDay(date) }
+        _loadState.value = LoadState.Loading
+        viewModelScope.launch {
+            expenseRepository.loadDay(date)
+                .onSuccess { _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty()) }
+                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("일간 기록을 불러오지 못했습니다.")) }
+        }
     }
 }

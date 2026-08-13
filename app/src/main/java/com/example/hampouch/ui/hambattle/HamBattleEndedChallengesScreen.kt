@@ -46,9 +46,9 @@ import com.example.hampouch.ui.theme.HampouchTheme
 @Composable
 fun HamBattleEndedChallengesScreen(
     endedChallenges: List<HamBattleChallenge> = emptyList(),
-    onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onChallengeClick: (String) -> Unit = {}
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onChallengeClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -172,6 +172,9 @@ private fun EndedChallengeCardPreview() {
 @Composable
 private fun HamBattleEndedChallengesScreenPreview() {
     HampouchTheme {
-        HamBattleEndedChallengesScreen(endedChallenges = HamBattleMockFixtures.endedChallenges())
+        HamBattleEndedChallengesScreen(
+            endedChallenges = HamBattleMockFixtures.endedChallenges(),
+            onBackClick = {}, onNotificationClick = {}, onChallengeClick = {}
+        )
     }
 }

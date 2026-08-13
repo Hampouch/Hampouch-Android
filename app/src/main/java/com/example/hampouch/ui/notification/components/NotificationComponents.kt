@@ -87,7 +87,7 @@ private fun categoryColor(category: NotificationCategory): Color = when (categor
 fun NotificationListItem(
     item: NotificationItem,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit
 ) {
     Column(
         modifier = modifier

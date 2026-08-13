@@ -20,7 +20,7 @@ data class ChallengeRecord(
     val status: ChallengeStatus,
     val totalDays: Int,
     val startDateLabel: String,
-    val endDateLabel: String?,
+    val endDateLabel: String,
     val targetAmount: Int,
     val actualAmount: Int
 )

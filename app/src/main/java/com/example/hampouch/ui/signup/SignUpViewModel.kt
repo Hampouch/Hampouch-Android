@@ -113,14 +113,14 @@ class SignUpViewModel @Inject constructor(
         update { copy(isSendingEmailCode = true) }
         viewModelScope.launch {
             authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.SIGNUP)
-                .onSuccess { data ->
+                .onSuccess { expiresInSeconds ->
                     update {
                         copy(
                             emailSendMessage = "인증번호가 발송되었습니다.",
                             hasSentEmailCode = true,
                             emailCode = "",
                             emailCodeExpiresAtMillis =
-                                System.currentTimeMillis() + data.expiresInSeconds * 1000L
+                                System.currentTimeMillis() + expiresInSeconds * 1000L
                         )
                     }
                 }
@@ -161,12 +161,12 @@ class SignUpViewModel @Inject constructor(
         val nickname = _uiState.value.nickname
         viewModelScope.launch {
             authRepository.checkNicknameAvailability(nickname)
-                .onSuccess { data ->
+                .onSuccess { available ->
                     update {
                         copy(
-                            isNicknameAvailable = data.available,
+                            isNicknameAvailable = available,
                             nicknameCheckMessage =
-                                if (data.available) "사용가능한 닉네임입니다." else "이미 존재하는 닉네임입니다."
+                                if (available) "사용가능한 닉네임입니다." else "이미 존재하는 닉네임입니다."
                         )
                     }
                 }

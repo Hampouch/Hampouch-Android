@@ -102,9 +102,16 @@ fun resolveCategoryColor(categoryId: String?): Color =
 
 @Composable
 fun resolveCategoryLabel(categoryId: String?, customCategoryName: String?): String =
-    customCategoryName
-        ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
+    resolveCategoryLabelOrNull(categoryId, customCategoryName)
         ?: stringResource(R.string.category_etc)
+
+/**
+ * 카테고리를 고르지 않았으면 null. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
+ * 라벨을 생략할 수 있는 화면(홈 카드, 저장 확인)에서 쓴다.
+ */
+@Composable
+fun resolveCategoryLabelOrNull(categoryId: String?, customCategoryName: String?): String? =
+    customCategoryName ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
 
 @Composable
 fun resolveReasonLabel(reasonId: String?, customReason: String?): String? =
@@ -251,15 +258,18 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
 
 private val ChoiceChipMinHeight = 40.dp
 
+sealed interface ChoiceChipIcon {
+    data class Vector(val image: ImageVector, val tint: Color = HPText) : ChoiceChipIcon
+    data class Resource(val id: Int) : ChoiceChipIcon
+}
+
 @Composable
 fun ChoiceChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    iconRes: Int? = null,
-    iconTint: Color = HPText,
+    icon: ChoiceChipIcon? = null,
     iconSize: Dp = 16.dp,
     iconSpacing: Dp = 4.dp,
     /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 칩에서만 줄 수를 제한한다. */
@@ -284,20 +294,21 @@ fun ChoiceChip(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (iconRes != null) {
-            Image(
-                painter = painterResource(iconRes),
+        when (icon) {
+            is ChoiceChipIcon.Resource -> Image(
+                painter = painterResource(icon.id),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize)
             )
-            Spacer(modifier = Modifier.width(iconSpacing))
-        } else if (icon != null) {
-            Icon(
-                imageVector = icon,
+            is ChoiceChipIcon.Vector -> Icon(
+                imageVector = icon.image,
                 contentDescription = null,
-                tint = if (selected) HPWhite else iconTint,
+                tint = if (selected) HPWhite else icon.tint,
                 modifier = Modifier.size(iconSize)
             )
+            null -> Unit
+        }
+        if (icon != null) {
             Spacer(modifier = Modifier.width(iconSpacing))
         }
         Text(
@@ -624,7 +635,7 @@ fun ExpenseSummaryCard(
     record: com.example.hampouch.domain.model.ExpenseRecord,
     modifier: Modifier = Modifier
 ) {
-    val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
+    val categoryLabel = resolveCategoryLabelOrNull(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
         modifier = modifier
@@ -652,21 +663,25 @@ fun ExpenseSummaryCard(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(
-                    record.expenseName ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = HPBlack,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    categoryLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HPText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (record.expenseName != null) {
+                    Text(
+                        record.expenseName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = HPBlack,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (categoryLabel != null) {
+                    Text(
+                        categoryLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         ReasonTagAndAmountColumn(
