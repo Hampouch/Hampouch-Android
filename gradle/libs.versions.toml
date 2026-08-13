@@ -25,6 +25,7 @@ credentials = "1.5.0"
 googleid = "1.2.0"
 datastorePreferences = "1.1.1"
 coil = "2.7.0"
+detekt = "1.23.8"
 
 [libraries]
 kakao-user = { group = "com.kakao.sdk", name = "v2-user", version.ref = "kakaoSdk" }
@@ -64,4 +65,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
