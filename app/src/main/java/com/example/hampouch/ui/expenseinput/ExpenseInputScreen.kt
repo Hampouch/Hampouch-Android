@@ -27,7 +27,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -66,7 +65,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-internal const val MaxExpenseAmount = 999_999_999L
+private const val MaxExpenseAmount = 999_999_999L
 private const val ExpenseInputPhotoMaxCount = 5
 
 private val inputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -76,11 +75,6 @@ private fun LocalDate.toEpochMillisUtc(): Long =
 
 private fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
-
-internal fun isExpenseInputDateSelectable(utcTimeMillis: Long, today: LocalDate): Boolean =
-    !utcTimeMillis.toLocalDateUtc().isAfter(today)
-
-internal fun isExpenseAmountValid(amount: Long): Boolean = amount in 0..MaxExpenseAmount
 
 private sealed interface InputCategoryOption {
     data class Preset(val category: HomeCategoryCatalog.Category) : InputCategoryOption
@@ -171,7 +165,7 @@ fun ExpenseInputRoute(
                 primaryButton = {
                     ExpenseInputPrimaryButton(
                         label = stringResource(R.string.expenseinput_next_button),
-                        enabled = form.amount > 0,
+                        enabled = form.amount > 0 && !showMaxAmountError,
                         onClick = { onStepChanged(step + 1) }
                     )
                 }
@@ -233,25 +227,14 @@ fun ExpenseInputRoute(
     }
 
     if (showDatePicker) {
-        val today = LocalDate.now()
         val datePickerState =
-            rememberDatePickerState(
-                initialSelectedDateMillis = form.date.coerceAtMost(today).toEpochMillisUtc(),
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                        isExpenseInputDateSelectable(utcTimeMillis, today)
-
-                    override fun isSelectableYear(year: Int): Boolean = year <= today.year
-                }
-            )
+            rememberDatePickerState(initialSelectedDateMillis = form.date.toEpochMillisUtc())
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        millis.toLocalDateUtc()
-                            .takeIf { !it.isAfter(today) }
-                            ?.let(onDateSelected)
+                        onDateSelected(millis.toLocalDateUtc())
                     }
                     showDatePicker = false
                 }) {

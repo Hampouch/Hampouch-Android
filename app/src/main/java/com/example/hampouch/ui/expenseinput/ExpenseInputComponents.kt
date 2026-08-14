@@ -156,28 +156,23 @@ fun ExpenseInputAmountDisplay(amount: Int, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = text.dropLast(1),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            fontSize = 34.sp,
-            color = color
-        )
-        AnimatedContent(
-            targetState = amount,
-            transitionSpec = {
-                (slideInVertically { height -> -height } + fadeIn()) togetherWith
-                        (slideOutVertically { height -> height } + fadeOut())
-            },
-            label = "amountLastDigit"
-        ) { animatedAmount ->
-            Text(
-                text = if (animatedAmount == 0) "0" else formatWon(animatedAmount).takeLast(1),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                fontSize = 34.sp,
-                color = if (animatedAmount == 0) HPText else HPBlack
-            )
+        text.forEachIndexed { index, char ->
+            AnimatedContent(
+                targetState = char,
+                transitionSpec = {
+                    (slideInVertically { height -> -height } + fadeIn()) togetherWith
+                            (slideOutVertically { height -> height } + fadeOut())
+                },
+                label = "amountDigit$index"
+            ) { animatedChar ->
+                Text(
+                    text = animatedChar.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 34.sp,
+                    color = color
+                )
+            }
         }
     }
 }

@@ -64,7 +64,7 @@ class ExpenseInputViewModel @Inject constructor(
 
     private val initialDate: LocalDate = LocalDate.ofEpochDay(
         savedStateHandle.get<Long>("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
-    ).coerceAtMost(LocalDate.now())
+    )
 
     private val _uiState = MutableStateFlow(buildInitialState())
     val uiState: StateFlow<ExpenseInputUiState> = _uiState.asStateFlow()
@@ -80,8 +80,7 @@ class ExpenseInputViewModel @Inject constructor(
             todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),
             form = ExpenseInputFormState(
                 step = savedStateHandle[StepKey] ?: 1,
-                date = LocalDate.ofEpochDay(savedStateHandle[DateKey] ?: initialDate.toEpochDay())
-                    .coerceAtMost(LocalDate.now()),
+                date = LocalDate.ofEpochDay(savedStateHandle[DateKey] ?: initialDate.toEpochDay()),
                 amount = savedStateHandle[AmountKey] ?: 0,
                 expenseName = savedStateHandle[ExpenseNameKey] ?: "",
                 categoryId = savedStateHandle[CategoryIdKey],
@@ -98,7 +97,7 @@ class ExpenseInputViewModel @Inject constructor(
     fun appendAmountDigit(digit: String) {
         val currentText = _uiState.value.form.amount.takeIf { it != 0 }?.toString().orEmpty()
         val nextAmount = (currentText + digit).trimStart('0').ifEmpty { "0" }.toLongOrNull() ?: return
-        if (!isExpenseAmountValid(nextAmount)) {
+        if (nextAmount > MaxExpenseAmount) {
             _uiState.value = _uiState.value.copy(showMaxAmountError = true)
         } else {
             updateForm { it.copy(amount = nextAmount.toInt()) }
@@ -109,7 +108,7 @@ class ExpenseInputViewModel @Inject constructor(
         it.copy(amount = it.amount / 10)
     }
 
-    fun changeDate(date: LocalDate) = updateForm { it.copy(date = date.coerceAtMost(LocalDate.now())) }
+    fun changeDate(date: LocalDate) = updateForm { it.copy(date = date) }
 
     fun changeStep(step: Int) = updateForm { it.copy(step = step.coerceAtLeast(1)) }
 
@@ -215,6 +214,7 @@ class ExpenseInputViewModel @Inject constructor(
     }
 
     companion object {
+        private const val MaxExpenseAmount = 999_999_999L
         private const val MaxPhotoCount = 5
         private const val StepKey = "expenseInput.step"
         private const val DateKey = "expenseInput.date"
