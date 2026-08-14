@@ -63,6 +63,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -434,7 +435,7 @@ private fun CalendarStatCard(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -653,7 +654,7 @@ private fun SelectedDayHeader(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(total)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
     }
 }

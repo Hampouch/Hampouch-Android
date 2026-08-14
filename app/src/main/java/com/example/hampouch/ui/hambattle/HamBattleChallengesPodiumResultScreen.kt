@@ -263,7 +263,7 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 color = HPMain
             )

@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,7 +44,29 @@ fun ExpenseDiagnosisStep(
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
 
     Scaffold(
-        modifier = modifier.fillMaxSize().imePadding()
+        modifier = modifier.fillMaxSize().imePadding(),
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SkipText(text = stringResource(R.string.onboarding_skip), onClick = onSkipClick)
+
+                OnboardingSecondaryButton(
+                    text = stringResource(R.string.onboarding_existing_login),
+                    onClick = onExistingMemberLogin
+                )
+
+                OnboardingPrimaryButton(
+                    text = stringResource(R.string.onboarding_button_next),
+                    enabled = state.lastMonthFoodExpense != null,
+                    onClick = onNext
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -54,7 +78,7 @@ fun ExpenseDiagnosisStep(
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            OnboardingProgressBar(currentStep = 1, totalSteps = 4)
+            OnboardingProgressBar(currentStep = 1, totalSteps = 3)
 
             OnboardingHeaderCard(
                 stepNumber = 1,
@@ -79,21 +103,6 @@ fun ExpenseDiagnosisStep(
                     stringResource(R.string.onboarding_step1_bullet1),
                     stringResource(R.string.onboarding_step1_bullet2)
                 )
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onSkipClick)
-
-            OnboardingSecondaryButton(
-                text = stringResource(R.string.onboarding_existing_login),
-                onClick = onExistingMemberLogin
-            )
-
-            OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_button_next),
-                enabled = state.lastMonthFoodExpense != null,
-                onClick = onNext
             )
         }
     }
