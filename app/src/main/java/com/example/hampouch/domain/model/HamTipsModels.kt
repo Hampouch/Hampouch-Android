@@ -16,6 +16,28 @@ enum class TipPostType {
     TIP, MENU, BATTLE
 }
 
+sealed interface TipPostDetail {
+    data object Tip : TipPostDetail
+
+    /** 목록 API에는 subtype 상세가 없으므로 종류만 보존하고, 상세 조회 결과와 혼동하지 않는다. */
+    data class Summary(val type: TipPostType) : TipPostDetail
+
+    data class Menu(
+        val menuName: String,
+        val place: String,
+        val price: Int,
+        val rating: MenuRatingInfo
+    ) : TipPostDetail {
+        init {
+            require(menuName.isNotBlank()) { "menu name은 비어 있을 수 없습니다." }
+            require(place.isNotBlank()) { "menu place는 비어 있을 수 없습니다." }
+            require(price >= 0) { "menu price는 0 이상이어야 합니다." }
+        }
+    }
+
+    data class Battle(val recruit: BattleRecruitInfo) : TipPostDetail
+}
+
 data class MenuRatingInfo(
     val taste: Int = 0,
     val costEffectiveness: Int = 0,
@@ -30,9 +52,9 @@ data class BattleRecruitInfo(
     val capacity: Int,
     val penalty: String,
     val participantIds: List<String> = emptyList(),
-    val currentMemberCount: Int? = null
+    val currentMemberCount: Int
 ) {
-    val isFull: Boolean get() = (currentMemberCount ?: participantIds.size) >= capacity
+    val isFull: Boolean get() = currentMemberCount >= capacity
 }
 
 data class TipReply(
@@ -56,7 +78,6 @@ data class TipComment(
 
 data class TipPost(
     val id: String,
-    val type: TipPostType = TipPostType.TIP,
     val category: TipCategory,
     val title: String,
     val subtitle: String,
@@ -71,15 +92,24 @@ data class TipPost(
     val hasImage: Boolean = false,
     val imageUris: List<String> = emptyList(),
     val imageKeys: List<String> = emptyList(),
-    val menuName: String = "",
-    val place: String = "",
-    val price: Int = 0,
-    val menuRating: MenuRatingInfo? = null,
-    val battleInfo: BattleRecruitInfo? = null,
+    val detail: TipPostDetail = TipPostDetail.Tip,
     val comments: List<TipComment> = emptyList(),
     val isLiked: Boolean = false,
     val isSaved: Boolean = false
-)
+) {
+    val type: TipPostType
+        get() = when (detail) {
+            TipPostDetail.Tip -> TipPostType.TIP
+            is TipPostDetail.Summary -> detail.type
+            is TipPostDetail.Menu -> TipPostType.MENU
+            is TipPostDetail.Battle -> TipPostType.BATTLE
+        }
+    val menuName: String get() = (detail as? TipPostDetail.Menu)?.menuName.orEmpty()
+    val place: String get() = (detail as? TipPostDetail.Menu)?.place.orEmpty()
+    val price: Int get() = (detail as? TipPostDetail.Menu)?.price ?: 0
+    val menuRating: MenuRatingInfo? get() = (detail as? TipPostDetail.Menu)?.rating
+    val battleInfo: BattleRecruitInfo? get() = (detail as? TipPostDetail.Battle)?.recruit
+}
 
 enum class HamTipsCategoryTab(val labelResId: Int, val category: TipCategory?) {
     ALL(R.string.hamtips_tab_all, null),

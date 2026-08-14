@@ -11,7 +11,6 @@ import java.time.format.DateTimeFormatter
 
 object MyPageMockData {
 
-    private val takenNicknames = listOf("햄포치")
     private val challengeHistoryPeriodFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd.")
 
     fun defaultProfile(user: User): MyPageProfile {
@@ -22,8 +21,7 @@ object MyPageMockData {
         )
     }
 
-    fun isNicknameTaken(name: String): Boolean = name in takenNicknames
-
+    /** @param spentOnDate 해당 날짜의 지출 합계. */
     fun challengeHistory(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): List<ChallengeRecord> {
         val referenceToday = LocalDate.now()
         return challengeState.challenges

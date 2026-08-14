@@ -39,7 +39,7 @@ object HamBattleMockFixtures {
                         status = HamBattleParticipantStatus.DISQUALIFIED
                     ),
                     HamBattleParticipantSpending(
-                        "최태양최태양최태양",
+                        "최태양",
                         1_152_600,
                         status = HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
                     )

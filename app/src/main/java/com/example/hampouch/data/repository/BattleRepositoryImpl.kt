@@ -7,14 +7,15 @@ import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.HamBattleParticipantSpending
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.domain.model.ApiException
-import com.example.hampouch.data.remote.dto.ApiErrorBody
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.BattleDetailData
 import com.example.hampouch.data.local.BattleMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.BattleApi
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
 import com.example.hampouch.domain.model.BattleInvitationPreview
 import com.example.hampouch.domain.model.BattleState
+import com.example.hampouch.domain.model.HamBattleServerState
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.BattleRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,6 @@ import javax.inject.Singleton
 import com.example.hampouch.data.remote.dto.BattleParticipantDto
 import com.example.hampouch.data.remote.dto.CreateBattleRequest
 import com.example.hampouch.data.remote.dto.MyBattleSummaryDto
-import com.google.gson.Gson
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -41,7 +41,7 @@ private const val ME_NAME = "나"
 
 @Singleton
 class BattleRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val apiService: BattleApi,
     private val authRepository: AuthRepository,
     private val mockDataSource: BattleMockDataSource
 ) : BattleRepository, AccountScopedState {
@@ -84,19 +84,18 @@ class BattleRepositoryImpl @Inject constructor(
     override suspend fun loadMyBattles(): Result<Unit> {
         if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val myUserId = requireUserId()
-            val response = apiService.getMyBattles(authorization)
+            val response = apiService.getMyBattles()
             val body = requireBody(response, "햄배틀 목록 조회에 실패했습니다.")
             val ready = mutableListOf<HamBattleChallenge>()
             val ongoing = mutableListOf<HamBattleChallenge>()
             val terminated = mutableListOf<HamBattleChallenge>()
             body.battles.forEach { dto ->
-                val challenge = dto.toDomain(myUserId)
-                when (dto.status) {
-                    "READY" -> ready += challenge
-                    "ONGOING" -> ongoing += challenge
-                    else -> terminated += challenge
+                when (dto) {
+                    is MyBattleSummaryDto.Ready -> ready += dto.toDomain()
+                    is MyBattleSummaryDto.Ongoing -> ongoing += dto.toDomain(myUserId)
+                    is MyBattleSummaryDto.Terminated -> terminated += dto.toDomain()
                 }
             }
             replaceLists(ready, ongoing, terminated)
@@ -106,9 +105,9 @@ class BattleRepositoryImpl @Inject constructor(
     override suspend fun loadBattleDetail(battleId: Long): Result<Unit> {
         if (!BattleConfig.USE_SERVER_BATTLE) return Result.success(Unit)
         return runCatching {
-            val authorization = requireAuthorizationHeader()
+            requireAuthentication()
             val myUserId = requireUserId()
-            val response = apiService.getBattleDetail(authorization, battleId)
+            val response = apiService.getBattleDetail(battleId)
             val body = requireBody(response, "햄배틀 상세 조회에 실패했습니다.")
             setDetail(battleId, body.toDomain(myUserId))
         }.onFailure { rethrowIfCancelled(it, "햄배틀 상세 조회") }
@@ -116,16 +115,16 @@ class BattleRepositoryImpl @Inject constructor(
 
     override suspend fun loadInvitationPreview(battleCode: String): Result<BattleInvitationPreview> {
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.getBattleInvitation(authorization, battleCode)
+            requireAuthentication()
+            val response = apiService.getBattleInvitation(battleCode)
             requireBody(response, "초대 정보를 불러오지 못했습니다.").toDomain()
         }.onFailure { rethrowIfCancelled(it, "햄배틀 초대 조회") }
     }
 
     override suspend fun join(battleCode: String): Result<Long> {
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val response = apiService.joinBattle(authorization, battleCode)
+            requireAuthentication()
+            val response = apiService.joinBattle(battleCode)
             val body = requireBody(response, "햄배틀 참가에 실패했습니다.")
             loadMyBattles().getOrThrow()
             body.battleId
@@ -137,12 +136,11 @@ class BattleRepositoryImpl @Inject constructor(
             return Result.success(mockDataSource.startNewChallenge(request))
         }
         return runCatching {
-            val authorization = requireAuthorizationHeader()
-            val startDate = request.startDateMillis?.let {
-                Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
-            } ?: LocalDate.now()
+            requireAuthentication()
+            val startDate = Instant.ofEpochMilli(request.startDateMillis)
+                .atZone(ZoneOffset.UTC)
+                .toLocalDate()
             val response = apiService.createBattle(
-                authorization,
                 CreateBattleRequest(
                     title = request.challengeName,
                     capacity = parseParticipantTotalCount(request.participantCount),
@@ -161,19 +159,23 @@ class BattleRepositoryImpl @Inject constructor(
                 penalty = body.penalty,
                 totalCount = body.capacity,
                 durationDays = body.durationDays,
-                startDate = runCatching { LocalDate.parse(body.startDate) }.getOrNull(),
+                startDate = parseServerDate(body.startDate, "createBattle.startDate"),
                 battleId = body.battleId,
                 battleCode = body.battleCode,
-                serverStatus = body.status,
-                joinedCountOverride = 1
+                serverState = when (body.status) {
+                    "READY" -> HamBattleServerState.Ready(joinedCount = 1)
+                    "ONGOING" -> HamBattleServerState.Ongoing
+                    "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+                    else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: ${body.status}")
+                }
             )
         }.onFailure { rethrowIfCancelled(it, "햄배틀 생성") }
     }
 
-    private suspend fun requireAuthorizationHeader(): String {
-        val session = authRepository.userSession.first()
-            ?: throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
-        return "${session.tokenType} ${session.accessToken}"
+    private suspend fun requireAuthentication() {
+        if (authRepository.userSession.first() == null) {
+            throw ApiException(code = "AUTH_UNAUTHORIZED", message = "로그인이 필요합니다.")
+        }
     }
 
     private suspend fun requireUserId(): Long {
@@ -183,20 +185,7 @@ class BattleRepositoryImpl @Inject constructor(
     }
 
     private fun <T> requireBody(response: Response<ApiResponse<T>>, fallbackMessage: String): T {
-        val body = response.body()?.data
-        if (response.isSuccessful && body != null) return body
-        throw parseError(response.errorBody()?.string(), fallbackMessage)
-    }
-
-    private fun parseError(errorBodyString: String?, fallbackMessage: String): ApiException {
-        val error = errorBodyString?.let {
-            runCatching { Gson().fromJson(it, ApiErrorBody::class.java) }.getOrNull()
-        }
-        return ApiException(
-            code = error?.code ?: "UNKNOWN",
-            message = error?.message ?: fallbackMessage,
-            fieldErrors = error?.fieldErrors
-        )
+        return response.toApiResult(fallbackMessage).getOrThrow()
     }
 
     private fun rethrowIfCancelled(error: Throwable, action: String) {
@@ -212,10 +201,15 @@ private fun parseParticipantTotalCount(option: String): Int =
 private fun parseDurationDays(option: String): Int =
     option.removeSuffix("일").toIntOrNull() ?: 7
 
-private fun durationDaysBetween(startDate: String, endDate: String): Int =
-    runCatching {
-        (ChronoUnit.DAYS.between(LocalDate.parse(startDate), LocalDate.parse(endDate)) + 1).toInt()
-    }.getOrDefault(1)
+private fun durationDaysBetween(startDate: String, endDate: String): Int {
+    val start = parseServerDate(startDate, "battle.startDate")
+    val end = parseServerDate(endDate, "battle.endDate")
+    val days = (ChronoUnit.DAYS.between(start, end) + 1).toInt()
+    if (days <= 0) {
+        throw ApiException("CONTRACT_VIOLATION", "battle 종료일은 시작일보다 빠를 수 없습니다.")
+    }
+    return days
+}
 
 private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantSpending {
     val disqualified = isValid == false
@@ -229,29 +223,48 @@ private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantS
     )
 }
 
-private fun MyBattleSummaryDto.toDomain(myUserId: Long): HamBattleChallenge {
-    val participants = participants?.map { it.toDomain(myUserId) }.orEmpty()
-    val totalCount = when {
-        capacity != null -> capacity
-        participants.isNotEmpty() -> participants.size
-        else -> 0
-    }
+private fun MyBattleSummaryDto.Ready.toDomain(): HamBattleChallenge = HamBattleChallenge(
+    id = battleId.toString(),
+    type = if (capacity <= 2) "1 vs 1" else "그룹",
+    title = title,
+    penalty = penalty,
+    totalCount = capacity,
+    durationDays = durationDaysBetween(startDate, endDate),
+    startDate = parseServerDate(startDate, "battle.ready.startDate"),
+    battleId = battleId,
+    battleCode = battleCode,
+    serverState = HamBattleServerState.Ready(joinedCount)
+)
+
+private fun MyBattleSummaryDto.Ongoing.toDomain(myUserId: Long): HamBattleChallenge {
+    val domainParticipants = participants.map { it.toDomain(myUserId) }
     return HamBattleChallenge(
         id = battleId.toString(),
-        type = if (totalCount in 1..2) "1 vs 1" else "그룹",
+        type = if (domainParticipants.size <= 2) "1 vs 1" else "그룹",
         title = title,
         penalty = penalty,
-        participants = participants,
-        totalCount = totalCount,
+        participants = domainParticipants,
+        totalCount = domainParticipants.size,
         durationDays = durationDaysBetween(startDate, endDate),
-        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        startDate = parseServerDate(startDate, "battle.ongoing.startDate"),
         battleId = battleId,
         battleCode = battleCode,
-        serverStatus = status,
-        joinedCountOverride = joinedCount,
-        winnerName = winnerNickname
+        serverState = HamBattleServerState.Ongoing
     )
 }
+
+private fun MyBattleSummaryDto.Terminated.toDomain(): HamBattleChallenge = HamBattleChallenge(
+    id = battleId.toString(),
+    type = "종료",
+    title = title,
+    penalty = penalty,
+    totalCount = 0,
+    durationDays = durationDaysBetween(startDate, endDate),
+    startDate = parseServerDate(startDate, "battle.terminated.startDate"),
+    battleId = battleId,
+    battleCode = battleCode,
+    serverState = HamBattleServerState.Terminated(winnerNickname)
+)
 
 private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
     val domainParticipants = participants.map { it.toDomain(myUserId) }
@@ -263,11 +276,16 @@ private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
         participants = domainParticipants,
         totalCount = domainParticipants.size,
         durationDays = durationDaysBetween(startDate, endDate),
-        startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+        startDate = parseServerDate(startDate, "battle.detail.startDate"),
         battleId = battleId,
         battleCode = battleCode,
-        serverStatus = status,
-        penaltyUserName = penaltyUserNickname
+        serverState = when (status) {
+            "READY" -> HamBattleServerState.Ready(domainParticipants.size)
+            "ONGOING" -> HamBattleServerState.Ongoing
+            "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+            else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: $status")
+        },
+        penaltyUserName = penaltyTargetNickname
     )
 }
 
@@ -276,6 +294,15 @@ private fun BattleInvitationPreviewData.toDomain(): BattleInvitationPreview = Ba
     penalty = penalty,
     capacity = capacity,
     joinedCount = joinedCount,
-    startDate = runCatching { LocalDate.parse(startDate) }.getOrNull(),
+    startDate = parseServerDate(startDate, "battle.invitation.startDate"),
     durationDays = durationDays
 )
+
+private fun parseServerDate(value: String, field: String): LocalDate = try {
+    LocalDate.parse(value)
+} catch (error: Exception) {
+    throw ApiException(
+        code = "CONTRACT_VIOLATION",
+        message = "서버 응답의 $field 형식이 올바르지 않습니다."
+    ).also { it.initCause(error) }
+}

@@ -8,7 +8,7 @@ data class HamBattleChallengeRequest(
     val challengeName: String,
     val participantCount: String,
     val durationDays: String,
-    val startDateMillis: Long?,
+    val startDateMillis: Long,
     val penalty: String
 )
 
@@ -35,6 +35,12 @@ enum class HamBattleStatus {
     WAITING, ACTIVE, ENDED
 }
 
+sealed interface HamBattleServerState {
+    data class Ready(val joinedCount: Int) : HamBattleServerState
+    data object Ongoing : HamBattleServerState
+    data class Terminated(val winnerName: String?) : HamBattleServerState
+}
+
 private val HamBattlePeriodDateFormatter = DateTimeFormatter.ofPattern("yy.MM.dd")
 private val HamBattleShortDateFormatter = DateTimeFormatter.ofPattern("MM.dd")
 
@@ -50,13 +56,16 @@ data class HamBattleChallenge(
     val cancelled: Boolean = false,
     val battleId: Long? = null,
     val battleCode: String? = null,
-    val serverStatus: String? = null,
-    val joinedCountOverride: Int? = null,
+    /** 서버 응답은 상태별 필수값을 각 subtype으로 보존한다. null은 목데이터의 날짜 기반 상태다. */
+    val serverState: HamBattleServerState? = null,
+    /** TERMINATED 상세 응답의 벌칙 대상자 닉네임(penaltyUserNickname). */
     val penaltyUserName: String? = null,
-    val winnerName: String? = null
 ) {
     val isOneVsOne: Boolean get() = type == "1 vs 1"
-    val joinedCount: Int get() = joinedCountOverride ?: participants.size
+    val joinedCount: Int
+        get() = (serverState as? HamBattleServerState.Ready)?.joinedCount ?: participants.size
+    val winnerName: String?
+        get() = (serverState as? HamBattleServerState.Terminated)?.winnerName
     val isFull: Boolean get() = totalCount > 0 && joinedCount >= totalCount
 
     fun effectiveStartDate(referenceToday: LocalDate = LocalDate.now()): LocalDate? =
@@ -67,10 +76,11 @@ data class HamBattleChallenge(
 
     fun status(referenceToday: LocalDate = LocalDate.now()): HamBattleStatus {
         if (cancelled) return HamBattleStatus.ENDED
-        when (serverStatus) {
-            "READY" -> return HamBattleStatus.WAITING
-            "ONGOING" -> return HamBattleStatus.ACTIVE
-            "TERMINATED", "FINISHED" -> return HamBattleStatus.ENDED
+        when (serverState) {
+            is HamBattleServerState.Ready -> return HamBattleStatus.WAITING
+            HamBattleServerState.Ongoing -> return HamBattleStatus.ACTIVE
+            is HamBattleServerState.Terminated -> return HamBattleStatus.ENDED
+            null -> Unit
         }
         if (!isFull) return HamBattleStatus.WAITING
         val start = effectiveStartDate(referenceToday) ?: return HamBattleStatus.WAITING

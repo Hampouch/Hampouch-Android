@@ -93,8 +93,8 @@ fun AmountAdjustmentRoute(
     challenge: AmountAdjustmentChallenge,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> },
-    onGoalAmountUpdated: () -> Unit = {},
+    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit,
+    onGoalAmountUpdated: () -> Unit,
     viewModel: AmountAdjustmentViewModel = hiltViewModel()
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
@@ -475,7 +475,7 @@ private fun AmountAdjustmentScreenPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
             challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 0),
-            onBackClick = {}
+            onBackClick = {}, onGoalAmountUpdated = {}, onChallengeAbandoned = { _, _ -> }
         )
     }
 }
@@ -486,7 +486,7 @@ private fun AmountAdjustmentScreenMaxEditPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
             challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 1),
-            onBackClick = {}
+            onBackClick = {}, onGoalAmountUpdated = {}, onChallengeAbandoned = { _, _ -> }
         )
     }
 }

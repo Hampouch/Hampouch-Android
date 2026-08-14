@@ -105,7 +105,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     pendingNotificationId: String? = null,
-    onPendingNotificationConsumed: () -> Unit = {}
+    onPendingNotificationConsumed: () -> Unit
 ) {
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
@@ -415,7 +415,10 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseDetailEvent.Finished -> navController.popBackStack()
-                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                        is ExpenseDetailEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -441,7 +444,10 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseDetailEvent.Finished -> navController.popBackStack()
-                        is ExpenseDetailEvent.ShowMessage -> Log.e(TAG, event.message)
+                        is ExpenseDetailEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -495,6 +501,7 @@ fun AppNavHost(
                 onAddExpenseClick = { date ->
                     navController.navigate(Screen.ExpenseInput.createRoute(date))
                 },
+                onExpenseAnalysisClick = { navController.navigate(Screen.ExpenseAnalysisMonthly.route) },
                 restrictToChallengePeriod = true
             )
         }
@@ -509,16 +516,41 @@ fun AppNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         ExpenseInputEvent.Saved -> navController.popBackStack()
-                        is ExpenseInputEvent.ShowMessage -> Log.e(TAG, event.message)
+                        ExpenseInputEvent.NoSpendSaved -> navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                        is ExpenseInputEvent.ShowMessage -> {
+                            Log.e(TAG, event.message)
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
             ExpenseInputRoute(
                 todayBalance = uiState.todayBalance,
                 dailyLimit = uiState.dailyLimit,
-                initialDate = uiState.initialDate,
-                onBackClick = { navController.popBackStack() },
-                onNoSpendingToday = { navController.popBackStack() },
+                form = uiState.form,
+                showMaxAmountError = uiState.showMaxAmountError,
+                onBackClick = {
+                    viewModel.discardDraft()
+                    navController.popBackStack()
+                },
+                onNoSpendingToday = { viewModel.markNoSpend(uiState.form.date) },
+                onDateSelected = viewModel::changeDate,
+                onAmountDigit = viewModel::appendAmountDigit,
+                onAmountDelete = viewModel::deleteAmountDigit,
+                onStepChanged = viewModel::changeStep,
+                onExpenseNameChange = viewModel::changeExpenseName,
+                onCategorySelected = viewModel::selectCategory,
+                onCustomCategoryConfirm = viewModel::confirmCustomCategory,
+                onCustomCategoryTextChange = viewModel::changeCustomCategory,
+                onReasonSelected = viewModel::selectReason,
+                onCustomReasonConfirm = viewModel::confirmCustomReason,
+                onCustomReasonTextChange = viewModel::changeCustomReason,
+                onMemoChange = viewModel::changeMemo,
+                onPhotosAdded = viewModel::addPhotos,
+                onPhotosRemoved = viewModel::removePhotos,
+                onPhotoReplaced = viewModel::replacePhoto,
                 onComplete = viewModel::save
             )
         }
@@ -532,13 +564,13 @@ fun AppNavHost(
             ExpenseAnalysisRoute(
                 headerMode = ExpenseAnalysisHeaderMode.Month(month),
                 onBackClick = { navController.popBackStack() },
-                onMonthlyViewClick = { navController.navigate(Screen.ExpenseAnalysisMonthly.route) },
                 onCategoryDetailClick = { start, end ->
                     navController.navigate(Screen.ExpenseAnalysisCategoryDetail.createRoute(start, end, "delivery"))
                 },
                 onReasonDetailClick = { start, end ->
                     navController.navigate(Screen.ExpenseAnalysisReasonDetail.createRoute(start, end, "stress"))
-                }
+                },
+                onMonthlyViewClick = { navController.navigate(Screen.ExpenseAnalysisMonthly.route) }
             )
         }
 
@@ -565,7 +597,8 @@ fun AppNavHost(
                 },
                 onReasonDetailClick = { start, end ->
                     navController.navigate(Screen.ExpenseAnalysisReasonDetail.createRoute(start, end, "stress"))
-                }
+                },
+                onMonthlyViewClick = { navController.navigate(Screen.ExpenseAnalysisMonthly.route) }
             )
         }
 
@@ -652,6 +685,10 @@ fun AppNavHost(
                             challengeId
                         )
                     )
+                },
+                onNotificationClick = { navController.navigate(Screen.Notification.route) },
+                onViewEndedChallengeDetailClick = { challengeId ->
+                    navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(challengeId))
                 }
             )
         }
@@ -726,6 +763,7 @@ fun AppNavHost(
                     HamBattleEndedChallengesDetailScreen(
                         challenge = challenge,
                         onBackClick = { navController.popBackStack() },
+                        onShareResultClick = { onBottomNavItemSelected(BottomNavItem.COMMUNITY) },
                         onStartNewChallengeClick = { navController.navigate(Screen.HamBattleAdd.route) }
                     )
                 }
@@ -785,6 +823,7 @@ fun AppNavHost(
                         )
                     },
                     onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
+                    onShareClick = { onBottomNavItemSelected(BottomNavItem.COMMUNITY) },
                     onStartNewChallengeClick = { suggestedTargetAmount ->
                         navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
                     },

@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -42,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,16 +50,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
-import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub
-import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -163,23 +156,28 @@ fun ExpenseInputAmountDisplay(amount: Int, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        text.forEachIndexed { index, char ->
-            AnimatedContent(
-                targetState = char,
-                transitionSpec = {
-                    (slideInVertically { height -> -height } + fadeIn()) togetherWith
-                            (slideOutVertically { height -> height } + fadeOut())
-                },
-                label = "amountDigit$index"
-            ) { animatedChar ->
-                Text(
-                    text = animatedChar.toString(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 34.sp,
-                    color = color
-                )
-            }
+        Text(
+            text = text.dropLast(1),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            fontSize = 34.sp,
+            color = color
+        )
+        AnimatedContent(
+            targetState = amount,
+            transitionSpec = {
+                (slideInVertically { height -> -height } + fadeIn()) togetherWith
+                        (slideOutVertically { height -> height } + fadeOut())
+            },
+            label = "amountLastDigit"
+        ) { animatedAmount ->
+            Text(
+                text = if (animatedAmount == 0) "0" else formatWon(animatedAmount).takeLast(1),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 34.sp,
+                color = if (animatedAmount == 0) HPText else HPBlack
+            )
         }
     }
 }
@@ -251,77 +249,6 @@ private fun NumPadKey(label: String, onClick: () -> Unit, modifier: Modifier = M
 }
 
 @Composable
-fun ExpenseInputAmountSummaryCard(
-    amount: Int,
-    balanceAfterExpense: Int,
-    modifier: Modifier = Modifier,
-    header: @Composable (() -> Unit)? = null
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(30.dp))
-            .background(HPSub4)
-            .padding(horizontal = 25.dp, vertical = 30.dp)
-    ) {
-        if (header != null) {
-            header()
-            Spacer(modifier = Modifier.height(14.dp))
-        }
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                formatWon(amount),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = HPBlack
-            )
-            Spacer(modifier = Modifier.padding(start = 4.dp))
-            Text("원", style = MaterialTheme.typography.bodyLarge, color = HPText)
-        }
-        Spacer(modifier = Modifier.height(5.dp))
-        DashedDivider(color = HPBlack)
-        Spacer(modifier = Modifier.height(5.dp))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                stringResource(R.string.expenseinput_balance_after_format),
-                style = MaterialTheme.typography.bodyMedium,
-                color = HPText
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                stringResource(R.string.expenseinput_won_format, formatWon(balanceAfterExpense)),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPSub
-            )
-        }
-    }
-}
-
-@Composable
-fun ExpenseInputCategoryBadge(
-    iconRes: Int,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(HPMain)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, fontSize = 16.sp, color = HPWhite)
-    }
-}
-
-@Composable
 fun ExpenseInputPrimaryButton(
     label: String,
     enabled: Boolean,
@@ -344,20 +271,6 @@ fun ExpenseInputPrimaryButton(
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
-}
-
-@Composable
-fun ExpenseInputSkipRestLink(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Text(
-        stringResource(R.string.expenseinput_skip_rest),
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.bodySmall,
-        color = HPText
-    )
 }
 
 private val ReasonOptionButtonMinHeight = 64.dp
@@ -394,46 +307,6 @@ fun ExpenseInputReasonOptionButton(
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis
         )
-    }
-}
-
-@Composable
-fun ExpenseInputPhotoAttachCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(HPSub4)
-            .border(width = 1.dp, shape = RoundedCornerShape(16.dp), color = HPMain)
-            .clickable(
-                onClickLabel = stringResource(R.string.cd_expenseinput_photo_attach),
-                onClick = onClick
-            )
-            .padding(18.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(R.drawable.icon_camera),
-            contentDescription = null,
-            modifier = Modifier
-                .width(51.dp)
-                .height(40.dp)
-        )
-        Spacer(modifier = Modifier.padding(start = 12.dp))
-        Column {
-            Text(
-                stringResource(R.string.expenseinput_photo_attach_title),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPMain
-            )
-            Text(
-                stringResource(R.string.expenseinput_photo_attach_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                color = HPMain
-            )
-        }
     }
 }
 

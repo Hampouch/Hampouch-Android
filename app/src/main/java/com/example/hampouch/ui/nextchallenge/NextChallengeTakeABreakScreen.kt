@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriod
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -248,9 +249,12 @@ fun NextChallengeTakeABreakRoute(
             onConfirm = {
                 showStartConfirmDialog = false
                 val request = OnboardingRequest(
-                    dateFixed = dateFixed,
-                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
-                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
+                    period = if (dateFixed) {
+                        ChallengePeriod.FixedStart(requireNotNull(startDate))
+                    } else {
+                        ChallengePeriod.Duration(effectivePeriodDays)
+                    },
+                    dailyTargetAmount = (targetAmount ?: 0) / effectivePeriodDays,
                     totalTargetAmount = targetAmount ?: 0,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )

@@ -75,13 +75,13 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 @Composable
 fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
-    onBackClick: () -> Unit = {},
+    onBackClick: () -> Unit,
     showBackButton: Boolean = true,
-    onExpenseAnalysisClick: () -> Unit = {},
-    onAdjustGoalClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
-    onStartNewChallengeClick: (Int) -> Unit = {},
-    onTakeABreakClick: () -> Unit = {}
+    onExpenseAnalysisClick: () -> Unit,
+    onAdjustGoalClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onStartNewChallengeClick: (Int) -> Unit,
+    onTakeABreakClick: () -> Unit
 ) {
     val isFinished = state.status != ChallengeResultStatus.IN_PROGRESS
     var showGoalAdjustmentDialog by remember { mutableStateOf(false) }
@@ -380,7 +380,11 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
 @Composable
 private fun ChallengeResultScreenInProgressPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }))
+        ChallengeResultScreen(
+            state = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }
 
@@ -428,7 +432,11 @@ private val PreviewFailState = PreviewCompleteState.copy(
 @Composable
 private fun ChallengeResultScreenCompletePreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = PreviewCompleteState)
+        ChallengeResultScreen(
+            state = PreviewCompleteState,
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }
 
@@ -436,6 +444,10 @@ private fun ChallengeResultScreenCompletePreview() {
 @Composable
 private fun ChallengeResultScreenFailPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = PreviewFailState)
+        ChallengeResultScreen(
+            state = PreviewFailState,
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }

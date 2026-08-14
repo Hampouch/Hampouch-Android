@@ -1,9 +1,6 @@
 package com.example.hampouch.ui.expenseinput
 
-import android.R.attr.top
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +27,12 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.ChoiceChip
+import com.example.hampouch.ui.expensedetail.ChoiceChipIcon
 import com.example.hampouch.ui.expensedetail.ExpensePhotoEditSection
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
@@ -67,10 +65,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
-const val ExpenseInputTotalSteps = 4
-private const val MaxExpenseAmount = 999_999_999L
+internal const val MaxExpenseAmount = 999_999_999L
 private const val ExpenseInputPhotoMaxCount = 5
 
 private val inputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -80,6 +76,11 @@ private fun LocalDate.toEpochMillisUtc(): Long =
 
 private fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
+
+internal fun isExpenseInputDateSelectable(utcTimeMillis: Long, today: LocalDate): Boolean =
+    !utcTimeMillis.toLocalDateUtc().isAfter(today)
+
+internal fun isExpenseAmountValid(amount: Long): Boolean = amount in 0..MaxExpenseAmount
 
 private sealed interface InputCategoryOption {
     data class Preset(val category: HomeCategoryCatalog.Category) : InputCategoryOption
@@ -99,76 +100,45 @@ fun ExpenseInputRoute(
     dailyLimit: Int,
     onBackClick: () -> Unit,
     onNoSpendingToday: () -> Unit,
-    onComplete: (ExpenseRecord) -> Unit,
+    onComplete: () -> Unit,
     modifier: Modifier = Modifier,
-    initialDate: LocalDate = LocalDate.now(),
-    initialStep: Int = 1
+    form: ExpenseInputFormState = ExpenseInputFormState(),
+    showMaxAmountError: Boolean = false,
+    onDateSelected: (LocalDate) -> Unit = {},
+    onAmountDigit: (String) -> Unit = {},
+    onAmountDelete: () -> Unit = {},
+    onStepChanged: (Int) -> Unit = {},
+    onExpenseNameChange: (String) -> Unit = {},
+    onCategorySelected: (String) -> Unit = {},
+    onCustomCategoryConfirm: () -> Unit = {},
+    onCustomCategoryTextChange: (String) -> Unit = {},
+    onReasonSelected: (String) -> Unit = {},
+    onCustomReasonConfirm: () -> Unit = {},
+    onCustomReasonTextChange: (String) -> Unit = {},
+    onMemoChange: (String) -> Unit = {},
+    onPhotosAdded: (List<String>) -> Unit = {},
+    onPhotosRemoved: (Set<Int>) -> Unit = {},
+    onPhotoReplaced: (Int, String) -> Unit = { _, _ -> }
 ) {
-    var step by remember { mutableIntStateOf(initialStep) }
-    var date by remember { mutableStateOf(initialDate) }
-    var amount by remember { mutableStateOf(0) }
-    var expenseName by remember { mutableStateOf("") }
-    var categoryId by remember { mutableStateOf<String?>(null) }
-    var isCustomCategory by remember { mutableStateOf(false) }
-    var customCategoryText by remember { mutableStateOf("") }
-    var reasonId by remember { mutableStateOf<String?>(null) }
-    var isCustomReason by remember { mutableStateOf(false) }
-    var customReasonText by remember { mutableStateOf("") }
-    var memo by remember { mutableStateOf("") }
-    var photoUris by remember { mutableStateOf(listOf<String>()) }
-
-    var showMaxAmountError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showSkipPromptDialog by remember { mutableStateOf(false) }
-    var showCategorySkipPromptDialog by remember { mutableStateOf(false) }
-    var showReasonSkipPromptDialog by remember { mutableStateOf(false) }
-    var showMemoSkipPromptDialog by remember { mutableStateOf(false) }
     var showCategoryCustomDialog by remember { mutableStateOf(false) }
     var showReasonCustomDialog by remember { mutableStateOf(false) }
     var showSaveConfirmDialog by remember { mutableStateOf(false) }
 
-    val balanceAfterExpense = todayBalance - amount
-    val isCategoryStepValid = expenseName.isNotBlank() &&
-        (categoryId != null || (isCustomCategory && customCategoryText.isNotBlank()))
-    val hasReasonSelected = reasonId != null || isCustomReason
-    val reasonNoneLabel = stringResource(R.string.expenseinput_reason_none_tag)
 
-    fun handleAmountDigit(digit: String) {
-        val currentText = if (amount == 0) "" else amount.toString()
-        val nextText = (currentText + digit).trimStart('0').ifEmpty { "0" }
-        val parsed = nextText.toLongOrNull() ?: return
-        if (parsed > MaxExpenseAmount) {
-            showMaxAmountError = true
-        } else {
-            amount = parsed.toInt()
-            showMaxAmountError = false
-        }
+    val step = form.step
+
+    BackHandler {
+        if (step > 1) onStepChanged(step - 1) else onBackClick()
     }
-
-    fun handleAmountDelete() {
-        amount /= 10
-        showMaxAmountError = false
-    }
-
-    fun buildRecord() = ExpenseRecord(
-        id = UUID.randomUUID().toString(),
-        date = date,
-        amount = amount,
-        categoryId = if (isCustomCategory) null else categoryId,
-        customCategoryName = if (isCustomCategory) customCategoryText.ifBlank { null } else null,
-        expenseName = expenseName.ifBlank { null },
-        reasonId = if (isCustomReason) null else reasonId,
-        customReason = if (isCustomReason) customReasonText.ifBlank { null } else null,
-        memo = memo.ifBlank { null },
-        photoUris = photoUris
-    )
 
     Scaffold(
         modifier = modifier,
         topBar = {
             ExpenseInputTopBar(
                 title = stringResource(R.string.expenseinput_title),
-                onBackClick = { if (step > 1) step-- else onBackClick() },
+                onBackClick = { if (step > 1) onStepChanged(step - 1) else onBackClick() },
                 containerColor = if (step == 1) HPSub4 else HPWhite
             )
         },
@@ -179,20 +149,20 @@ fun ExpenseInputRoute(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize(),
-                date = date,
+                date = form.date,
                 onDateClick = { showDatePicker = true },
                 balance = todayBalance,
                 dailyLimit = dailyLimit,
-                amount = amount,
-                onDigit = ::handleAmountDigit,
-                onDelete = ::handleAmountDelete,
+                amount = form.amount,
+                onDigit = onAmountDigit,
+                onDelete = onAmountDelete,
                 showMaxAmountError = showMaxAmountError,
                 onNoSpendingToday = { showSkipPromptDialog = true },
                 primaryButton = {
                     ExpenseInputPrimaryButton(
                         label = stringResource(R.string.expenseinput_next_button),
-                        enabled = amount > 0 && !showMaxAmountError,
-                        onClick = { step++ }
+                        enabled = form.amount > 0,
+                        onClick = { onStepChanged(step + 1) }
                     )
                 }
             )
@@ -211,54 +181,26 @@ fun ExpenseInputRoute(
                     .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
                     .padding(horizontal = 20.dp)
             ) {
-                when (step) {
-                    2 -> ExpenseInputCategoryStep(
-                        amount = amount,
-                        balanceAfterExpense = balanceAfterExpense,
-                        expenseName = expenseName,
-                        onExpenseNameChange = { expenseName = it },
-                        categoryId = categoryId,
-                        isCustomCategory = isCustomCategory,
-                        customCategoryText = customCategoryText,
-                        onCategorySelected = {
-                            categoryId = it
-                            isCustomCategory = false
-                        },
-                        onCustomCategoryClick = { showCategoryCustomDialog = true }
-                    )
-
-                    3 -> ExpenseInputReasonStep(
-                        amount = amount,
-                        balanceAfterExpense = balanceAfterExpense,
-                        expenseName = expenseName,
-                        categoryId = categoryId,
-                        isCustomCategory = isCustomCategory,
-                        customCategoryText = customCategoryText,
-                        reasonId = reasonId,
-                        isCustomReason = isCustomReason,
-                        customReasonText = customReasonText,
-                        onReasonSelected = {
-                            reasonId = it
-                            isCustomReason = false
-                        },
-                        onCustomReasonClick = { showReasonCustomDialog = true }
-                    )
-
-                    else -> ExpenseInputMemoStep(
-                        memo = memo,
-                        onMemoChange = { memo = it },
-                        photoUris = photoUris,
-                        onPhotosAdded = { added ->
-                            photoUris = (photoUris + added).take(ExpenseInputPhotoMaxCount)
-                        },
-                        onPhotosRemoved = { removed ->
-                            photoUris = photoUris.filterIndexed { index, _ -> index !in removed }
-                        },
-                        onPhotoReplaced = { index, newUri ->
-                            photoUris = photoUris.toMutableList().also { it[index] = newUri }
-                        }
-                    )
-                }
+                ExpenseInputDetailStep(
+                    expenseName = form.expenseName,
+                    onExpenseNameChange = onExpenseNameChange,
+                    categoryId = form.categoryId,
+                    isCustomCategory = form.isCustomCategory,
+                    customCategoryText = form.customCategoryText,
+                    onCategorySelected = onCategorySelected,
+                    onCustomCategoryClick = { showCategoryCustomDialog = true },
+                    reasonId = form.reasonId,
+                    isCustomReason = form.isCustomReason,
+                    customReasonText = form.customReasonText,
+                    onReasonSelected = onReasonSelected,
+                    onCustomReasonClick = { showReasonCustomDialog = true },
+                    memo = form.memo,
+                    onMemoChange = onMemoChange,
+                    photoUris = form.photoUris,
+                    onPhotosAdded = onPhotosAdded,
+                    onPhotosRemoved = onPhotosRemoved,
+                    onPhotoReplaced = onPhotoReplaced
+                )
                 Spacer(modifier = Modifier.height(120.dp))
             }
             Column(
@@ -269,30 +211,11 @@ fun ExpenseInputRoute(
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp)
             ) {
-                ExpenseInputSkipRestLink(
-                    onClick = {
-                        when (step) {
-                            2 -> showCategorySkipPromptDialog = true
-                            3 -> showReasonSkipPromptDialog = true
-                            4 -> showMemoSkipPromptDialog = true
-                            else -> showSaveConfirmDialog = true
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
                 ExpenseInputPrimaryButton(
                     label = stringResource(R.string.expenseinput_next_button),
-                    enabled = when (step) {
-                        2 -> isCategoryStepValid
-                        3 -> hasReasonSelected
-                        else -> true
-                    },
-                    onClick = {
-                        when {
-                            step < ExpenseInputTotalSteps -> step++
-                            else -> showSaveConfirmDialog = true
-                        }
-                    }
+                    // 모든 입력이 선택 사항이라 항상 저장할 수 있다.
+                    enabled = true,
+                    onClick = { showSaveConfirmDialog = true }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -300,14 +223,25 @@ fun ExpenseInputRoute(
     }
 
     if (showDatePicker) {
+        val today = LocalDate.now()
         val datePickerState =
-            rememberDatePickerState(initialSelectedDateMillis = date.toEpochMillisUtc())
+            rememberDatePickerState(
+                initialSelectedDateMillis = form.date.coerceAtMost(today).toEpochMillisUtc(),
+                selectableDates = object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                        isExpenseInputDateSelectable(utcTimeMillis, today)
+
+                    override fun isSelectableYear(year: Int): Boolean = year <= today.year
+                }
+            )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        date = millis.toLocalDateUtc()
+                        millis.toLocalDateUtc()
+                            .takeIf { !it.isAfter(today) }
+                            ?.let(onDateSelected)
                     }
                     showDatePicker = false
                 }) {
@@ -331,63 +265,24 @@ fun ExpenseInputRoute(
             onCancel = { showSkipPromptDialog = false },
             onSkip = {
                 showSkipPromptDialog = false
-                amount = 0
-                step = 2
+                // 0원 지출을 만드는 게 아니라 no_spend_day 기록이라 상세 입력 단계로 가지 않는다.
+                onNoSpendingToday()
             }
         )
     }
 
-    if (showCategorySkipPromptDialog) {
-        ExpenseInputSkipPromptDialog(
-            question = stringResource(R.string.expenseinput_category_skip_prompt_title),
-            confirmLabel = stringResource(R.string.expenseinput_category_skip_prompt_confirm),
-            onCancel = { showCategorySkipPromptDialog = false },
-            onSkip = {
-                showCategorySkipPromptDialog = false
-                expenseName = ""
-                categoryId = "etc"
-                isCustomCategory = false
-                step = 3
-            }
-        )
-    }
 
-    if (showReasonSkipPromptDialog) {
-        ExpenseInputSaveConfirmDialog(
-            record = buildRecord().copy(customReason = reasonNoneLabel),
-            onCancel = { showReasonSkipPromptDialog = false },
-            onSave = {
-                showReasonSkipPromptDialog = false
-                isCustomReason = true
-                customReasonText = reasonNoneLabel
-                step = 4
-            }
-        )
-    }
 
-    if (showMemoSkipPromptDialog) {
-        ExpenseInputSaveConfirmDialog(
-            record = buildRecord().copy(memo = null, photoUris = emptyList()),
-            onCancel = { showMemoSkipPromptDialog = false },
-            onSave = {
-                showMemoSkipPromptDialog = false
-                memo = ""
-                photoUris = emptyList()
-                onComplete(buildRecord().copy(memo = null, photoUris = emptyList()))
-            }
-        )
-    }
 
     if (showCategoryCustomDialog) {
         ExpenseInputTextEntryDialog(
             label = stringResource(R.string.expenseinput_category_label),
             placeholder = stringResource(R.string.expenseinput_category_placeholder),
-            value = customCategoryText,
-            onValueChange = { customCategoryText = it },
+            value = form.customCategoryText,
+            onValueChange = onCustomCategoryTextChange,
             onCancel = { showCategoryCustomDialog = false },
             onConfirm = {
-                isCustomCategory = true
-                categoryId = null
+                onCustomCategoryConfirm()
                 showCategoryCustomDialog = false
             }
         )
@@ -397,12 +292,11 @@ fun ExpenseInputRoute(
         ExpenseInputTextEntryDialog(
             label = stringResource(R.string.expenseinput_reason_label),
             placeholder = stringResource(R.string.expenseinput_reason_placeholder),
-            value = customReasonText,
-            onValueChange = { customReasonText = it },
+            value = form.customReasonText,
+            onValueChange = onCustomReasonTextChange,
             onCancel = { showReasonCustomDialog = false },
             onConfirm = {
-                isCustomReason = true
-                reasonId = null
+                onCustomReasonConfirm()
                 showReasonCustomDialog = false
             }
         )
@@ -410,11 +304,22 @@ fun ExpenseInputRoute(
 
     if (showSaveConfirmDialog) {
         ExpenseInputSaveConfirmDialog(
-            record = buildRecord(),
+            record = ExpenseRecord(
+                id = "expense-input-preview",
+                date = form.date,
+                amount = form.amount,
+                categoryId = if (form.isCustomCategory) null else form.categoryId,
+                customCategoryName = if (form.isCustomCategory) form.customCategoryText.ifBlank { null } else null,
+                expenseName = form.expenseName.ifBlank { null },
+                reasonId = if (form.isCustomReason) null else form.reasonId,
+                customReason = if (form.isCustomReason) form.customReasonText.ifBlank { null } else null,
+                memo = form.memo.ifBlank { null },
+                photoUris = form.photoUris
+            ),
             onCancel = { showSaveConfirmDialog = false },
             onSave = {
                 showSaveConfirmDialog = false
-                onComplete(buildRecord())
+                onComplete()
             }
         )
     }
@@ -569,9 +474,7 @@ private fun ExpenseInputAmountStep(
 }
 
 @Composable
-private fun ExpenseInputCategoryStep(
-    amount: Int,
-    balanceAfterExpense: Int,
+private fun ExpenseInputDetailStep(
     expenseName: String,
     onExpenseNameChange: (String) -> Unit,
     categoryId: String?,
@@ -579,6 +482,17 @@ private fun ExpenseInputCategoryStep(
     customCategoryText: String,
     onCategorySelected: (String) -> Unit,
     onCustomCategoryClick: () -> Unit,
+    reasonId: String?,
+    isCustomReason: Boolean,
+    customReasonText: String,
+    onReasonSelected: (String) -> Unit,
+    onCustomReasonClick: () -> Unit,
+    memo: String,
+    onMemoChange: (String) -> Unit,
+    photoUris: List<String>,
+    onPhotosAdded: (List<String>) -> Unit,
+    onPhotosRemoved: (Set<Int>) -> Unit,
+    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -592,12 +506,16 @@ private fun ExpenseInputCategoryStep(
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            stringResource(R.string.expenseinput_category_description),
+            stringResource(R.string.expenseinput_detail_description_line1),
             style = MaterialTheme.typography.bodySmall,
             color = HPText
         )
-        Spacer(modifier = Modifier.height(30.dp))
-        ExpenseInputAmountSummaryCard(amount = amount, balanceAfterExpense = balanceAfterExpense)
+        Text(
+            stringResource(R.string.expenseinput_detail_description_line2),
+            style = MaterialTheme.typography.bodySmall,
+            color = HPText
+        )
+
         Spacer(modifier = Modifier.height(30.dp))
         Text(
             stringResource(R.string.expenseinput_expense_name_label),
@@ -610,6 +528,7 @@ private fun ExpenseInputCategoryStep(
             onValueChange = onExpenseNameChange,
             placeholder = stringResource(R.string.expensedetail_expense_name_placeholder)
         )
+
         Spacer(modifier = Modifier.height(30.dp))
         Text(
             stringResource(R.string.expensedetail_field_category),
@@ -621,7 +540,7 @@ private fun ExpenseInputCategoryStep(
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
-                    iconRes = option.category.chipIconResId,
+                    icon = ChoiceChipIcon.Resource(option.category.chipIconResId),
                     iconSize = 20.dp,
                     iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,
@@ -640,90 +559,14 @@ private fun ExpenseInputCategoryStep(
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun ExpenseInputReasonStep(
-    amount: Int,
-    balanceAfterExpense: Int,
-    expenseName: String,
-    categoryId: String?,
-    isCustomCategory: Boolean,
-    customCategoryText: String,
-    reasonId: String?,
-    isCustomReason: Boolean,
-    customReasonText: String,
-    onReasonSelected: (String) -> Unit,
-    onCustomReasonClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val category = HomeCategoryCatalog.byId(categoryId)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        ExpenseInputOptionalBadge()
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         Text(
-            stringResource(R.string.expenseinput_reason_question),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            stringResource(R.string.expenseinput_reason_label),
+            style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.expenseinput_reason_description_line1),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Text(
-            stringResource(R.string.expenseinput_reason_description_line2),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(30.dp))
-        val categoryLabel = when {
-            isCustomCategory -> customCategoryText.ifBlank { null }
-            category != null -> stringResource(category.labelResId)
-            else -> null
-        }
-        ExpenseInputAmountSummaryCard(
-            amount = amount,
-            balanceAfterExpense = balanceAfterExpense,
-            header = if (expenseName.isNotBlank() || categoryLabel != null) {
-                {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (expenseName.isNotBlank()) {
-                            Text(
-                                expenseName,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = HPText
-                            )
-                        }
-                        Spacer(modifier = Modifier.weight(1f))
-                        if (categoryLabel != null) {
-                            ExpenseInputCategoryBadge(
-                                iconRes = HomeCategoryCatalog.byId(categoryId)?.chipIconResId ?: R.drawable.icon_etc,
-                                label = categoryLabel
-                            )
-                        }
-                    }
-                }
-            } else {
-                null
-            }
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            stringResource(R.string.expenseinput_reason_pick_one),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             presetReasons.chunked(2).forEach { pair ->
                 Row(
@@ -757,47 +600,14 @@ private fun ExpenseInputReasonStep(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
-}
 
-@Composable
-private fun ExpenseInputMemoStep(
-    memo: String,
-    onMemoChange: (String) -> Unit,
-    photoUris: List<String>,
-    onPhotosAdded: (List<String>) -> Unit,
-    onPhotosRemoved: (Set<Int>) -> Unit,
-    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = ExpenseInputPhotoMaxCount)
-    ) { uris -> if (uris.isNotEmpty()) onPhotosAdded(uris.map { it.toString() }) }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        ExpenseInputOptionalBadge()
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         Text(
-            stringResource(R.string.expenseinput_memo_question),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
+            stringResource(R.string.expenseinput_memo_label),
+            style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.expenseinput_memo_description_line1),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Text(
-            stringResource(R.string.expenseinput_memo_description_line2),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         ExpenseTextField(
             value = memo,
             onValueChange = onMemoChange,
@@ -805,22 +615,15 @@ private fun ExpenseInputMemoStep(
             singleLine = false,
             minLines = 5
         )
+
         Spacer(modifier = Modifier.height(30.dp))
-        if (photoUris.isEmpty()) {
-            ExpenseInputPhotoAttachCard(
-                onClick = {
-                    pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
-            )
-        } else {
-            ExpensePhotoEditSection(
-                photoUris = photoUris,
-                onPhotosAdded = onPhotosAdded,
-                onPhotosRemoved = onPhotosRemoved,
-                onPhotoReplaced = onPhotoReplaced,
-                maxCount = ExpenseInputPhotoMaxCount
-            )
-        }
+        ExpensePhotoEditSection(
+            photoUris = photoUris,
+            onPhotosAdded = onPhotosAdded,
+            onPhotosRemoved = onPhotosRemoved,
+            onPhotoReplaced = onPhotoReplaced,
+            maxCount = ExpenseInputPhotoMaxCount
+        )
     }
 }
 
@@ -834,14 +637,14 @@ private fun ExpenseInputAmountStepPreview() {
             onBackClick = {},
             onNoSpendingToday = {},
             onComplete = {},
-            initialStep = 1
+            form = ExpenseInputFormState(step = 1)
         )
     }
 }
 
-@Preview(showBackground = true, name = "2. 지출 입력 - 카테고리")
+@Preview(showBackground = true, name = "2. 지출 입력 - 상세(선택 사항)", heightDp = 1400)
 @Composable
-private fun ExpenseInputCategoryStepPreview() {
+private fun ExpenseInputDetailStepPreview() {
     HampouchTheme {
         ExpenseInputRoute(
             todayBalance = 7_300,
@@ -849,37 +652,7 @@ private fun ExpenseInputCategoryStepPreview() {
             onBackClick = {},
             onNoSpendingToday = {},
             onComplete = {},
-            initialStep = 2
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "3. 지출 입력 - 이유")
-@Composable
-private fun ExpenseInputReasonStepPreview() {
-    HampouchTheme {
-        ExpenseInputRoute(
-            todayBalance = 7_300,
-            dailyLimit = 20_000,
-            onBackClick = {},
-            onNoSpendingToday = {},
-            onComplete = {},
-            initialStep = 3
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "4. 지출 입력 - 메모/사진")
-@Composable
-private fun ExpenseInputMemoStepPreview() {
-    HampouchTheme {
-        ExpenseInputRoute(
-            todayBalance = 7_300,
-            dailyLimit = 20_000,
-            onBackClick = {},
-            onNoSpendingToday = {},
-            onComplete = {},
-            initialStep = 4
+            form = ExpenseInputFormState(step = 2, amount = 7_900)
         )
     }
 }

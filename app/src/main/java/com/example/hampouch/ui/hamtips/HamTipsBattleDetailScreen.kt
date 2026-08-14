@@ -42,6 +42,7 @@ import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostDetail
 import com.example.hampouch.domain.model.TipReply
 import com.example.hampouch.ui.dialog.ChallengeSummaryCard
 import com.example.hampouch.ui.dialog.ConfirmActionCard
@@ -72,7 +73,7 @@ private fun battleChallengeRequestFrom(
     startDateMillis = linkedChallenge?.startDate
         ?.atStartOfDay(ZoneOffset.UTC)
         ?.toInstant()
-        ?.toEpochMilli(),
+        ?.toEpochMilli() ?: 0L,
     penalty = linkedChallenge?.penalty ?: post.battleInfo?.penalty.orEmpty()
 )
 
@@ -142,8 +143,8 @@ fun HamTipsBattleDetailScreen(
     onBackClick: () -> Unit,
     onDeleted: () -> Unit,
     onNavigateToBattleLink: (String) -> Unit,
-    onNavigateToHamBattleTab: () -> Unit = {},
-    onEditClick: (TipPost) -> Unit = {},
+    onNavigateToHamBattleTab: () -> Unit,
+    onEditClick: (TipPost) -> Unit,
     modifier: Modifier = Modifier,
     sessionViewModel: SessionViewModel = hiltViewModel(),
     viewModel: HamTipsDetailViewModel = hiltViewModel()
@@ -369,6 +370,8 @@ private fun HamTipsBattleDetailScreenJoinablePreview() {
             post = HamTipsMockData.allPosts().first { it.id == "hamtip_13" },
             onBackClick = {},
             onDeleted = {},
+            onNavigateToHamBattleTab = {},
+            onEditClick = {},
             onNavigateToBattleLink = {}
         )
     }
@@ -397,12 +400,19 @@ private fun HamTipsBattleJoinConfirmPreview() {
 private fun HamTipsBattleDetailScreenFullPreview() {
     HampouchTheme {
         val fullPost = HamTipsMockData.allPosts().first { it.id == "hamtip_13" }.let { post ->
-            post.copy(battleInfo = post.battleInfo?.copy(participantIds = List(post.battleInfo.capacity) { "user_$it" }))
+            val info = requireNotNull(post.battleInfo)
+            post.copy(
+                detail = TipPostDetail.Battle(
+                    info.copy(participantIds = List(info.capacity) { "user_$it" })
+                )
+            )
         }
         HamTipsBattleDetailScreen(
             post = fullPost,
             onBackClick = {},
             onDeleted = {},
+            onNavigateToHamBattleTab = {},
+            onEditClick = {},
             onNavigateToBattleLink = {}
         )
     }

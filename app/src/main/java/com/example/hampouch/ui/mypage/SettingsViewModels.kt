@@ -5,6 +5,7 @@ import com.example.hampouch.domain.model.MyPageProfile
 import com.example.hampouch.domain.model.NotificationSettingsState
 import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import com.example.hampouch.domain.model.User
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.repository.MyPageProfileRepository
 import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
@@ -52,7 +53,8 @@ class RecordAlarmViewModel @Inject constructor(
 
 @HiltViewModel
 class MyPageProfileViewModel @Inject constructor(
-    private val myPageProfileRepository: MyPageProfileRepository
+    private val myPageProfileRepository: MyPageProfileRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     val profile: StateFlow<MyPageProfile?> = myPageProfileRepository.profile
@@ -63,4 +65,8 @@ class MyPageProfileViewModel @Inject constructor(
     fun update(user: User, name: String, avatarUri: String?) {
         myPageProfileRepository.update(user, name, avatarUri)
     }
+
+    /** 서버에 닉네임 사용 가능 여부를 묻는다. 성공하면 "이미 쓰이는 중인가"를 돌려준다. */
+    suspend fun isNicknameTaken(nickname: String): Result<Boolean> =
+        authRepository.checkNicknameAvailability(nickname).map { !it }
 }

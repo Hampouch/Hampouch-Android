@@ -11,9 +11,12 @@ import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -43,15 +46,34 @@ class HomeViewModel @Inject constructor(
 
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 
+    /** 지출이 있거나 "오늘은 안 썼어요"를 누른 날짜들. */
+    val daysWithRecord: StateFlow<Set<LocalDate>> = expenseRepository.daysWithRecord
+
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Loading)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private var retryAction: (() -> Unit)? = null
+
+    fun retry() = retryAction?.invoke()
+
     init {
         viewModelScope.launch { restRepository.syncStatus() }
+        loadCurrentChallenge()
+    }
+
+    private fun loadCurrentChallenge() {
+        retryAction = ::loadCurrentChallenge
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            challengeRepository.loadCurrentChallenge().onFailure { error ->
-                _events.send(HomeEvent.ShowMessage(error.toUserMessage("챌린지 현황 조회에 실패했습니다.")))
-            }
+            challengeRepository.loadCurrentChallenge()
+                .onSuccess { _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null) }
+                .onFailure { error ->
+                    val message = error.toUserMessage("챌린지 현황 조회에 실패했습니다.")
+                    _loadState.value = LoadState.Failure(message)
+                    _events.send(HomeEvent.ShowMessage(message))
+                }
         }
     }
 
@@ -75,14 +97,28 @@ class HomeViewModel @Inject constructor(
     }
 
     fun loadDay(date: LocalDate) {
+        retryAction = { loadDay(date) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            expenseRepository.loadDay(date).onFailure { error ->
-                _events.send(HomeEvent.ShowMessage(error.toUserMessage("지출 내역 조회에 실패했습니다.")))
-            }
+            expenseRepository.loadDay(date)
+                .onSuccess { _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty()) }
+                .onFailure { error ->
+                    val message = error.toUserMessage("지출 내역 조회에 실패했습니다.")
+                    _loadState.value = LoadState.Failure(message)
+                    _events.send(HomeEvent.ShowMessage(message))
+                }
         }
     }
 
-    fun markNoSpending(date: LocalDate) = expenseRepository.markNoSpending(date)
+    fun markNoSpending(date: LocalDate) {
+        viewModelScope.launch {
+            expenseRepository.markNoSpend(date).onFailure { error ->
+                _events.send(
+                    HomeEvent.ShowMessage(error.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
+                )
+            }
+        }
+    }
 
     fun postponeOneDay() {
         viewModelScope.launch {

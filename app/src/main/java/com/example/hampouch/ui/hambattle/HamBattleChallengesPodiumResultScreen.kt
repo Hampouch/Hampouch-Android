@@ -76,8 +76,8 @@ private val PodiumColors = mapOf(1 to HPSub1, 2 to HPMain, 3 to HPSub2)
 @Composable
 fun HamBattleChallengesPodiumResultScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {},
+    onBackClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit,
     viewModel: HamBattleViewModel = hiltViewModel()
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
@@ -445,7 +445,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0], onBackClick = {}, onStartNewChallengeClick = {})
     }
 }
 
@@ -453,6 +453,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1])
+        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1], onBackClick = {}, onStartNewChallengeClick = {})
     }
 }

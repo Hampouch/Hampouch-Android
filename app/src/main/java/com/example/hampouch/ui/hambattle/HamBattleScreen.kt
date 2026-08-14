@@ -95,12 +95,12 @@ fun HamBattleScreen(
     modifier: Modifier = Modifier,
     activeChallenges: List<HamBattleChallenge> = emptyList(),
     waitingChallenges: List<HamBattleChallenge> = emptyList(),
-    onStartNewChallengeClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onViewEndedChallengesClick: () -> Unit = {},
-    onChallengeClick: (String) -> Unit = {},
-    onWaitingChallengeClick: (String) -> Unit = {},
-    onViewEndedChallengeDetailClick: (String) -> Unit = {},
+    onStartNewChallengeClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onViewEndedChallengesClick: () -> Unit,
+    onChallengeClick: (String) -> Unit,
+    onWaitingChallengeClick: (String) -> Unit,
+    onViewEndedChallengeDetailClick: (String) -> Unit,
     viewModel: HamBattleViewModel = hiltViewModel()
 ) {
     val mockChallenges by viewModel.mockChallenges.collectAsStateWithLifecycle()
@@ -286,8 +286,8 @@ private fun HamBattleChallengeListContent(
     waitingChallenges: List<HamBattleChallenge>,
     onStartNewChallengeClick: () -> Unit,
     onViewEndedChallengesClick: () -> Unit,
-    onChallengeClick: (String) -> Unit = {},
-    onWaitingChallengeClick: (String) -> Unit = {}
+    onChallengeClick: (String) -> Unit,
+    onWaitingChallengeClick: (String) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -374,7 +374,7 @@ private fun battleStatusMessage(challenge: HamBattleChallenge): String {
 private const val CollapsedRankCount = 3
 
 @Composable
-private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit = {}) {
+private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     var showAllRanks by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
@@ -458,7 +458,7 @@ private fun RankingToggleButton(expanded: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit = {}) {
+private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     Column(
@@ -615,7 +615,9 @@ fun HamBattleScreenPreview() {
             onItemSelected = {},
             onAddClick = {},
             activeChallenges = HamBattleMockFixtures.activeChallenges(),
-            waitingChallenges = HamBattleMockFixtures.waitingChallenges()
+            waitingChallenges = HamBattleMockFixtures.waitingChallenges(),
+            onStartNewChallengeClick = {}, onNotificationClick = {}, onViewEndedChallengesClick = {},
+            onChallengeClick = {}, onWaitingChallengeClick = {}, onViewEndedChallengeDetailClick = {}
         )
     }
 }
@@ -633,7 +635,7 @@ fun HamBattleEmptyContentPreview() {
 fun ActiveChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            ActiveChallengeCard(challenge = HamBattleMockFixtures.activeChallenges()[0])
+            ActiveChallengeCard(challenge = HamBattleMockFixtures.activeChallenges()[0], onClick = {})
         }
     }
 }
@@ -643,7 +645,7 @@ fun ActiveChallengeCardPreview() {
 fun WaitingChallengeCardPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            WaitingChallengeCard(challenge = HamBattleMockFixtures.waitingChallenges()[0])
+            WaitingChallengeCard(challenge = HamBattleMockFixtures.waitingChallenges()[0], onClick = {})
         }
     }
 }

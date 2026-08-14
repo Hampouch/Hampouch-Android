@@ -7,9 +7,12 @@ import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.HamTipsRepository
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,6 +23,12 @@ class HamTipsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val posts: StateFlow<List<TipPost>> = hamTipsRepository.posts
+
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private var retryAction: (() -> Unit)? = null
+
+    fun retry() = retryAction?.invoke()
 
     private val _messages = Channel<String>(Channel.BUFFERED)
     val messages = _messages.receiveAsFlow()
@@ -48,8 +57,16 @@ class HamTipsViewModel @Inject constructor(
         load("저장한 글을 불러오지 못했습니다.") { hamTipsRepository.loadSavedPosts(sortOrder) }
 
     private fun load(fallback: String, block: suspend () -> Result<Unit>) {
+        retryAction = { load(fallback, block) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            block().onFailure { _messages.send(it.toUserMessage(fallback)) }
+            block()
+                .onSuccess { _loadState.value = LoadState.Content(posts.value.isEmpty()) }
+                .onFailure {
+                    val message = it.toUserMessage(fallback)
+                    _loadState.value = LoadState.Failure(message)
+                    _messages.send(message)
+                }
         }
     }
 }

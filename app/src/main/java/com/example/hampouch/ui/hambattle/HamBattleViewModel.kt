@@ -9,9 +9,12 @@ import com.example.hampouch.domain.model.HamBattleStatus
 import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.BattleRepository
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -33,6 +36,13 @@ class HamBattleViewModel @Inject constructor(
 
     val state: StateFlow<BattleState> = battleRepository.state
 
+    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private var retryAction: (() -> Unit)? = null
+
+    fun retry() = retryAction?.invoke()
+
+    /** 목데이터 모드 전용 상태. 서버 모드에서는 항상 빈 목록이다. */
     val mockChallenges: StateFlow<List<HamBattleChallenge>> = mockStore.challenges
 
     fun mockChallengesWith(status: HamBattleStatus, referenceToday: LocalDate = LocalDate.now()) =
@@ -68,14 +78,36 @@ class HamBattleViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     fun loadMyBattles() {
+        retryAction = ::loadMyBattles
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            battleRepository.loadMyBattles().onFailure { notify(it, "햄배틀 목록 조회에 실패했습니다.") }
+            battleRepository.loadMyBattles()
+                .onSuccess {
+                    val current = state.value
+                    _loadState.value = LoadState.Content(
+                        current.readyBattles.isEmpty() && current.ongoingBattles.isEmpty() &&
+                            current.terminatedBattles.isEmpty()
+                    )
+                }
+                .onFailure {
+                    val message = it.toUserMessage("햄배틀 목록 조회에 실패했습니다.")
+                    _loadState.value = LoadState.Failure(message)
+                    _events.send(HamBattleEvent.ShowMessage(message))
+                }
         }
     }
 
     fun loadBattleDetail(battleId: Long) {
+        retryAction = { loadBattleDetail(battleId) }
+        _loadState.value = LoadState.Loading
         viewModelScope.launch {
-            battleRepository.loadBattleDetail(battleId).onFailure { notify(it, "햄배틀 상세 조회에 실패했습니다.") }
+            battleRepository.loadBattleDetail(battleId)
+                .onSuccess { _loadState.value = LoadState.Content(false) }
+                .onFailure {
+                    val message = it.toUserMessage("햄배틀 상세 조회에 실패했습니다.")
+                    _loadState.value = LoadState.Failure(message)
+                    _events.send(HamBattleEvent.ShowMessage(message))
+                }
         }
     }
 

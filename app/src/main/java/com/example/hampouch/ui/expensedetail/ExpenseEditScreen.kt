@@ -36,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseCategorySelection
+import com.example.hampouch.domain.model.ExpenseReasonSelection
 import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.dialog.ExpenseEditConfirmDialog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
@@ -97,10 +99,16 @@ fun ExpenseEditRoute(
         date = date,
         amount = amount,
         expenseName = expenseName.ifBlank { null },
-        categoryId = if (isCustomCategory) null else categoryId,
-        customCategoryName = if (isCustomCategory) customCategoryText.ifBlank { null } else null,
-        reasonId = if (isCustomReason) null else reasonId,
-        customReason = if (isCustomReason) customReasonText.ifBlank { null } else null,
+        category = if (isCustomCategory) {
+            customCategoryText.ifBlank { null }?.let(ExpenseCategorySelection::Custom)
+        } else {
+            categoryId?.let(ExpenseCategorySelection::Preset)
+        },
+        reason = if (isCustomReason) {
+            customReasonText.ifBlank { null }?.let(ExpenseReasonSelection::Custom)
+        } else {
+            reasonId?.let(ExpenseReasonSelection::Preset)
+        },
         memo = memo.ifBlank { null },
         photoUris = photoUris
     )
@@ -145,9 +153,10 @@ fun ExpenseEditRoute(
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
-                                    iconRes = option.category.chipIconResId,
-                                    iconSize = 20.dp,
-                                    iconSpacing = 6.dp,
+                                    icon = ChoiceChipIcon.Vector(
+                                        option.category.icon,
+                                        option.category.accentColor
+                                    ),
                                     selected = !isCustomCategory && categoryId == option.category.id,
                                     onClick = {
                                         categoryId = option.category.id

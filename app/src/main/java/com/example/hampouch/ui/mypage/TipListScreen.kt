@@ -33,8 +33,8 @@ fun TipListScreen(
     tips: List<TipPost>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onTipClick: (TipPost) -> Unit = {},
-    onNotificationClick: () -> Unit = {}
+    onTipClick: (TipPost) -> Unit,
+    onNotificationClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -77,7 +77,7 @@ private fun MyTipsScreenFilledPreview() {
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
             tips = MyPageMockData.myTips(HamTipsMockData.allPosts(), AccountMockDataSource.normalUser.id),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -90,7 +90,7 @@ private fun MyTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -103,7 +103,7 @@ private fun SavedTipsScreenFilledPreview() {
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
             tips = MyPageMockData.savedTips(HamTipsMockData.allPosts()),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -116,7 +116,7 @@ private fun SavedTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }

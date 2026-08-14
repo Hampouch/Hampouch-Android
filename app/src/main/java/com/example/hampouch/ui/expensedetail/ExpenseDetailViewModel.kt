@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 data class ExpenseDetailUiState(
     val record: ExpenseRecord? = null,
-    val isProcessing: Boolean = false
+    val isProcessing: Boolean = false,
+    val loadState: LoadState = LoadState.Loading
 )
 
 sealed interface ExpenseDetailEvent {
@@ -41,10 +43,23 @@ class ExpenseDetailViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        load()
+    }
+
+    fun retry() = load()
+
+    private fun load() {
+        _uiState.value = _uiState.value.copy(loadState = LoadState.Loading)
         viewModelScope.launch {
-            expenseRepository.loadExpenseDetail(expenseId).onSuccess { record ->
-                _uiState.value = _uiState.value.copy(record = record)
-            }
+            expenseRepository.loadExpenseDetail(expenseId)
+                .onSuccess { record ->
+                    _uiState.value = _uiState.value.copy(record = record, loadState = LoadState.Content(false))
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        loadState = LoadState.Failure(it.toUserMessage("지출 상세를 불러오지 못했습니다."))
+                    )
+                }
         }
     }
 

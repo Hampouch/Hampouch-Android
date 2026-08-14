@@ -3,6 +3,7 @@ package com.example.hampouch.ui.takeabreak
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.BreakDuration
+import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.RestRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,12 +15,21 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface RestPeriodSelection {
+    data class Preset(val duration: BreakDuration) : RestPeriodSelection
+    data class Custom(val input: String) : RestPeriodSelection
+}
+
 data class TakeABreakUiState(
-    val selectedDuration: BreakDuration? = BreakDuration.ONE_WEEK,
-    val customDaysInput: String = "",
+    val selection: RestPeriodSelection = RestPeriodSelection.Preset(BreakDuration.ONE_WEEK),
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null
-)
+) {
+    val selectedDuration: BreakDuration?
+        get() = (selection as? RestPeriodSelection.Preset)?.duration
+    val customDaysInput: String
+        get() = (selection as? RestPeriodSelection.Custom)?.input.orEmpty()
+}
 
 sealed interface TakeABreakEvent {
     data object BreakStarted : TakeABreakEvent
@@ -37,26 +47,34 @@ class TakeABreakViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     fun selectDuration(duration: BreakDuration) {
-        _uiState.value = _uiState.value.copy(selectedDuration = duration, customDaysInput = "")
+        _uiState.value = _uiState.value.copy(selection = RestPeriodSelection.Preset(duration))
     }
 
     fun changeCustomDays(value: String) {
         _uiState.value = _uiState.value.copy(
-            customDaysInput = value.filter { it.isDigit() }.take(3),
-            selectedDuration = null
+            selection = RestPeriodSelection.Custom(value.filter { it.isDigit() }.take(3))
         )
     }
 
     fun submit(isExtending: Boolean) {
         if (_uiState.value.isSubmitting) return
         val state = _uiState.value
-        val customDays = state.customDaysInput.toIntOrNull()
+        val period = when (val selection = state.selection) {
+            is RestPeriodSelection.Preset -> RestPeriod.Preset(selection.duration)
+            is RestPeriodSelection.Custom -> selection.input.toIntOrNull()
+                ?.takeIf { it > 0 }
+                ?.let(RestPeriod::Custom)
+                ?: run {
+                    _uiState.value = state.copy(errorMessage = "휴식 기간을 입력해주세요.")
+                    return
+                }
+        }
         _uiState.value = state.copy(isSubmitting = true, errorMessage = null)
         viewModelScope.launch {
             val result = if (isExtending) {
-                restRepository.extendBreak(state.selectedDuration, customDays)
+                restRepository.extendBreak(period)
             } else {
-                restRepository.startBreak(state.selectedDuration, customDays)
+                restRepository.startBreak(period)
             }
             result
                 .onSuccess {

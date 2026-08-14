@@ -59,8 +59,8 @@ fun NotificationScreen(
     notifications: List<NotificationItem>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onMarkAllReadClick: () -> Unit = {},
-    onNotificationClick: (NotificationItem) -> Unit = {}
+    onMarkAllReadClick: () -> Unit,
+    onNotificationClick: (NotificationItem) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -232,7 +232,7 @@ private fun LockScreenNotificationMockup(modifier: Modifier = Modifier) {
 @Composable
 private fun NotificationScreenEmptyPreview() {
     HampouchTheme {
-        NotificationScreen(notifications = NotificationMockData.empty(), onBackClick = {})
+        NotificationScreen(notifications = NotificationMockData.empty(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})
     }
 }
 
@@ -240,7 +240,7 @@ private fun NotificationScreenEmptyPreview() {
 @Composable
 private fun NotificationScreenFilledPreview() {
     HampouchTheme {
-        NotificationScreen(notifications = NotificationMockData.populated(), onBackClick = {})
+        NotificationScreen(notifications = NotificationMockData.populated(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})
     }
 }
 

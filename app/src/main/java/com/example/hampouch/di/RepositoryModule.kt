@@ -10,6 +10,8 @@ import com.example.hampouch.data.repository.NotificationRepositoryImpl
 import com.example.hampouch.data.repository.NotificationSettingsRepositoryImpl
 import com.example.hampouch.data.repository.RecordAlarmRepositoryImpl
 import com.example.hampouch.data.repository.RestRepositoryImpl
+import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.core.network.AuthTokenProvider
 import com.example.hampouch.domain.repository.BattleRepository
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
@@ -29,6 +31,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthTokenProvider(impl: AuthRepository): AuthTokenProvider
 
     @Binds
     @Singleton

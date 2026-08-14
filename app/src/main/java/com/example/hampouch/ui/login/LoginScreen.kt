@@ -78,9 +78,9 @@ private fun socialSignInErrorMessage(error: Throwable, fallback: String): String
 fun LoginScreen(
     completeDialogMessage: String? = null,
     pendingNicknameSession: AuthSession? = null,
-    onLoginSuccess: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    onNavigateToResetPassword: () -> Unit = {},
+    onLoginSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToResetPassword: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -295,6 +295,6 @@ private fun SocialLoginButton(
 @Composable
 fun LoginScreenPreview() {
     HampouchTheme {
-        LoginScreen()
+        LoginScreen(onLoginSuccess = {}, onNavigateToSignUp = {}, onNavigateToResetPassword = {})
     }
 }
