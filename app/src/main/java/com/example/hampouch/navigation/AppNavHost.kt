@@ -517,9 +517,28 @@ fun AppNavHost(
             ExpenseInputRoute(
                 todayBalance = uiState.todayBalance,
                 dailyLimit = uiState.dailyLimit,
-                initialDate = uiState.initialDate,
-                onBackClick = { navController.popBackStack() },
-                onNoSpendingToday = { viewModel.markNoSpend(uiState.initialDate) },
+                form = uiState.form,
+                showMaxAmountError = uiState.showMaxAmountError,
+                onBackClick = {
+                    viewModel.discardDraft()
+                    navController.popBackStack()
+                },
+                onNoSpendingToday = { viewModel.markNoSpend(uiState.form.date) },
+                onDateSelected = viewModel::changeDate,
+                onAmountDigit = viewModel::appendAmountDigit,
+                onAmountDelete = viewModel::deleteAmountDigit,
+                onStepChanged = viewModel::changeStep,
+                onExpenseNameChange = viewModel::changeExpenseName,
+                onCategorySelected = viewModel::selectCategory,
+                onCustomCategoryConfirm = viewModel::confirmCustomCategory,
+                onCustomCategoryTextChange = viewModel::changeCustomCategory,
+                onReasonSelected = viewModel::selectReason,
+                onCustomReasonConfirm = viewModel::confirmCustomReason,
+                onCustomReasonTextChange = viewModel::changeCustomReason,
+                onMemoChange = viewModel::changeMemo,
+                onPhotosAdded = viewModel::addPhotos,
+                onPhotosRemoved = viewModel::removePhotos,
+                onPhotoReplaced = viewModel::replacePhoto,
                 onComplete = viewModel::save
             )
         }
