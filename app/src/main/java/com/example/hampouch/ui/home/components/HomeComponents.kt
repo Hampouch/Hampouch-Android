@@ -413,21 +413,21 @@ fun TodayExpenseSection(
                 title = stringResource(R.string.home_expense_empty_title),
                 subtitle = stringResource(R.string.home_expense_empty_subtitle)
             )
+            Spacer(modifier = Modifier.height(14.dp))
+            Button(
+                onClick = onAddExpenseClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HPMain, contentColor = HPWhite)
+            ) {
+                Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
+            }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 expenses.forEach { entry -> ExpenseItemCard(entry, onClick = { onExpenseClick(entry.id) }) }
             }
-        }
-        Spacer(modifier = Modifier.height(14.dp))
-        Button(
-            onClick = onAddExpenseClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HPMain, contentColor = HPWhite)
-        ) {
-            Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
         }
     }
 }

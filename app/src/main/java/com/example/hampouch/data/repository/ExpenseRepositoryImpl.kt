@@ -2,7 +2,6 @@ package com.example.hampouch.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.local.ExpenseMockDataSource
 import com.example.hampouch.data.remote.ExpenseApi
@@ -60,15 +59,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "ExpenseRepository"
-
-internal fun expenseDayResponseError(): ApiException =
-    ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요.")
-
-internal fun requireExpenseDayString(value: String?, fieldName: String): String =
-    value ?: run {
-        Log.e(TAG, "Swagger 계약 위반: 지출 목록 응답의 $fieldName 값이 null입니다.")
-        throw expenseDayResponseError()
-    }
 
 @Singleton
 class ExpenseRepositoryImpl @Inject constructor(
@@ -272,8 +262,6 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     private fun ExpenseDaySummaryItemData.toExpenseRecord(date: LocalDate): ExpenseRecord {
-        val category = requireExpenseDayString(category, "category")
-        val emotion = requireExpenseDayString(emotion, "emotion")
         val (categoryId, customCategoryName) = categoryFieldsFromServer(category, categoryLabel)
         val (reasonId, customReason) = reasonFieldsFromServer(emotion, emotionLabel)
         return ExpenseRecord(
