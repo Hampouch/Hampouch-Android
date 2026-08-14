@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.toUserMessage
+import kotlinx.coroutines.launch
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
@@ -69,11 +72,11 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun ProfileEditScreen(
     currentName: String,
     currentAvatarUri: String?,
-    isNicknameTaken: (String) -> Boolean,
+    onValidateNickname: suspend (String) -> Result<Boolean>,
     onBackClick: () -> Unit,
     onSubmit: (newName: String, newAvatarUri: String?) -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {}
+    onNotificationClick: () -> Unit
 ) {
     var isEditingName by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
@@ -83,10 +86,14 @@ fun ProfileEditScreen(
     var showCompleteDialog by remember { mutableStateOf(false) }
     val nicknameFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    var isCheckingNickname by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val emptyNicknameMessage = stringResource(R.string.profile_edit_nickname_empty)
     val duplicateErrorMessage = stringResource(R.string.profile_edit_nickname_duplicate)
-    val isCompleteEnabled = errorMessage == null && !(isEditingName && nicknameInput.trim().isEmpty())
+    val nicknameCheckFailedMessage = stringResource(R.string.profile_edit_nickname_check_failed)
+    val isCompleteEnabled = errorMessage == null && !isCheckingNickname &&
+        !(isEditingName && nicknameInput.trim().isEmpty())
 
     LaunchedEffect(isEditingName) {
         if (isEditingName) {
@@ -216,8 +223,23 @@ fun ProfileEditScreen(
                     val finalName = if (isEditingName) nicknameInput.trim() else currentName
                     when {
                         isEditingName && finalName.isEmpty() -> errorMessage = emptyNicknameMessage
-                        isEditingName && isNicknameTaken(finalName) -> errorMessage = duplicateErrorMessage
-                        else -> showCompleteDialog = true
+                        !isEditingName -> showCompleteDialog = true
+                        else -> coroutineScope.launch {
+                            isCheckingNickname = true
+                            onValidateNickname(finalName)
+                                .onSuccess { taken ->
+                                    if (taken) {
+                                        errorMessage = duplicateErrorMessage
+                                    } else {
+                                        errorMessage = null
+                                        showCompleteDialog = true
+                                    }
+                                }
+                                .onFailure { error ->
+                                    errorMessage = error.toUserMessage(nicknameCheckFailedMessage)
+                                }
+                            isCheckingNickname = false
+                        }
                     }
                 },
                 enabled = isCompleteEnabled,
@@ -309,9 +331,9 @@ private fun ProfileEditScreenPreview() {
         ProfileEditScreen(
             currentName = "절약왕 민준",
             currentAvatarUri = null,
-            isNicknameTaken = { it == "햄포치" },
+            onValidateNickname = { Result.success(it == "햄포치") },
             onBackClick = {},
-            onSubmit = { _, _ -> }
+            onSubmit = { _, _ -> }, onNotificationClick = {}
         )
     }
 }

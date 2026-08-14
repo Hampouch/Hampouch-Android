@@ -56,7 +56,7 @@ private val PreviewJoinChallengeRequest = HamBattleChallengeRequest(
     challengeName = "5월 식비 절약왕 가리기",
     participantCount = "5인",
     durationDays = "7일",
-    startDateMillis = null,
+    startDateMillis = 0L,
     penalty = "커피 쿠폰 쏘기"
 )
 

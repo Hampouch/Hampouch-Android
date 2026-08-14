@@ -59,9 +59,9 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ResetPasswordScreen(
-    onResetSuccess: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {},
+    onResetSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     viewModel: ResetPasswordViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -217,6 +217,6 @@ fun ResetPasswordScreen(
 @Composable
 fun ResetPasswordScreenPreview() {
     HampouchTheme {
-        ResetPasswordScreen()
+        ResetPasswordScreen(onResetSuccess = {}, onNavigateToSignUp = {}, onNavigateToLogin = {})
     }
 }

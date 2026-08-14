@@ -26,6 +26,9 @@ data class ExpenseInputUiState(
 
 sealed interface ExpenseInputEvent {
     data object Saved : ExpenseInputEvent
+
+    /** "오늘은 안 썼어요" 기록 완료. 화면은 홈으로 돌아간다. */
+    data object NoSpendSaved : ExpenseInputEvent
     data class ShowMessage(val message: String) : ExpenseInputEvent
 }
 
@@ -54,6 +57,21 @@ class ExpenseInputViewModel @Inject constructor(
             dailyLimit = dailyLimit,
             todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0)
         )
+    }
+
+    fun markNoSpend(date: LocalDate) {
+        if (_uiState.value.isSubmitting) return
+        _uiState.value = _uiState.value.copy(isSubmitting = true)
+        viewModelScope.launch {
+            expenseRepository.markNoSpend(date)
+                .onSuccess { _events.send(ExpenseInputEvent.NoSpendSaved) }
+                .onFailure {
+                    _events.send(
+                        ExpenseInputEvent.ShowMessage(it.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
+                    )
+                }
+            _uiState.value = _uiState.value.copy(isSubmitting = false)
+        }
     }
 
     fun save(record: ExpenseRecord) {

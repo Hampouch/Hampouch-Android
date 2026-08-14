@@ -3,7 +3,7 @@ package com.example.hampouch.data.remote.dto
 data class MiniChallengeItemDto(
     val miniChallengeId: Long,
     val title: String,
-    val durationDays: Int?,
+    val durationDays: Int,
     val progressDays: Int,
     val itemStreak: Int,
     val checked: Boolean
@@ -24,7 +24,7 @@ data class MiniChallengeDayData(
 data class RecommendedMiniChallengeDto(
     val recommendedId: Long,
     val title: String,
-    val durationDays: Int?
+    val durationDays: Int
 )
 
 data class RecommendedMiniChallengeListData(
@@ -37,7 +37,7 @@ data class AddRecommendedMiniChallengeRequest(
 
 data class CustomMiniChallengeBody(
     val title: String,
-    val durationDays: Int?
+    val durationDays: Int
 )
 
 data class AddCustomMiniChallengeRequest(
@@ -47,9 +47,9 @@ data class AddCustomMiniChallengeRequest(
 data class MiniChallengeCreatedData(
     val miniChallengeId: Long,
     val title: String,
-    val durationDays: Int?,
+    val durationDays: Int,
     val startDate: String,
-    val endDate: String?
+    val endDate: String
 )
 
 data class MiniChallengeCheckRequest(

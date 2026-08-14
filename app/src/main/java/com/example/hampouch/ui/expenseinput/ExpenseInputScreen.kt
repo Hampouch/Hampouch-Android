@@ -1,9 +1,5 @@
 package com.example.hampouch.ui.expenseinput
 
-import android.R.attr.top
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.ChoiceChip
+import com.example.hampouch.ui.expensedetail.ChoiceChipIcon
 import com.example.hampouch.ui.expensedetail.ExpensePhotoEditSection
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.ExpenseTextField
@@ -69,7 +66,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-const val ExpenseInputTotalSteps = 4
 private const val MaxExpenseAmount = 999_999_999L
 private const val ExpenseInputPhotoMaxCount = 5
 
@@ -130,18 +126,10 @@ fun ExpenseInputRoute(
     var showMaxAmountError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showSkipPromptDialog by remember { mutableStateOf(false) }
-    var showCategorySkipPromptDialog by remember { mutableStateOf(false) }
-    var showReasonSkipPromptDialog by remember { mutableStateOf(false) }
-    var showMemoSkipPromptDialog by remember { mutableStateOf(false) }
     var showCategoryCustomDialog by remember { mutableStateOf(false) }
     var showReasonCustomDialog by remember { mutableStateOf(false) }
     var showSaveConfirmDialog by remember { mutableStateOf(false) }
 
-    val balanceAfterExpense = todayBalance - amount
-    val isCategoryStepValid = expenseName.isNotBlank() &&
-        (categoryId != null || (isCustomCategory && customCategoryText.isNotBlank()))
-    val hasReasonSelected = reasonId != null || isCustomReason
-    val reasonNoneLabel = stringResource(R.string.expenseinput_reason_none_tag)
 
     fun handleAmountDigit(digit: String) {
         val currentText = if (amount == 0) "" else amount.toString()
@@ -221,54 +209,38 @@ fun ExpenseInputRoute(
                     .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
                     .padding(horizontal = 20.dp)
             ) {
-                when (step) {
-                    2 -> ExpenseInputCategoryStep(
-                        amount = amount,
-                        balanceAfterExpense = balanceAfterExpense,
-                        expenseName = expenseName,
-                        onExpenseNameChange = { expenseName = it },
-                        categoryId = categoryId,
-                        isCustomCategory = isCustomCategory,
-                        customCategoryText = customCategoryText,
-                        onCategorySelected = {
-                            categoryId = it
-                            isCustomCategory = false
-                        },
-                        onCustomCategoryClick = { showCategoryCustomDialog = true }
-                    )
-
-                    3 -> ExpenseInputReasonStep(
-                        amount = amount,
-                        balanceAfterExpense = balanceAfterExpense,
-                        expenseName = expenseName,
-                        categoryId = categoryId,
-                        isCustomCategory = isCustomCategory,
-                        customCategoryText = customCategoryText,
-                        reasonId = reasonId,
-                        isCustomReason = isCustomReason,
-                        customReasonText = customReasonText,
-                        onReasonSelected = {
-                            reasonId = it
-                            isCustomReason = false
-                        },
-                        onCustomReasonClick = { showReasonCustomDialog = true }
-                    )
-
-                    else -> ExpenseInputMemoStep(
-                        memo = memo,
-                        onMemoChange = { memo = it },
-                        photoUris = photoUris,
-                        onPhotosAdded = { added ->
-                            photoUris = (photoUris + added).take(ExpenseInputPhotoMaxCount)
-                        },
-                        onPhotosRemoved = { removed ->
-                            photoUris = photoUris.filterIndexed { index, _ -> index !in removed }
-                        },
-                        onPhotoReplaced = { index, newUri ->
-                            photoUris = photoUris.toMutableList().also { it[index] = newUri }
-                        }
-                    )
-                }
+                ExpenseInputDetailStep(
+                    expenseName = expenseName,
+                    onExpenseNameChange = { expenseName = it },
+                    categoryId = categoryId,
+                    isCustomCategory = isCustomCategory,
+                    customCategoryText = customCategoryText,
+                    onCategorySelected = {
+                        categoryId = it
+                        isCustomCategory = false
+                    },
+                    onCustomCategoryClick = { showCategoryCustomDialog = true },
+                    reasonId = reasonId,
+                    isCustomReason = isCustomReason,
+                    customReasonText = customReasonText,
+                    onReasonSelected = {
+                        reasonId = it
+                        isCustomReason = false
+                    },
+                    onCustomReasonClick = { showReasonCustomDialog = true },
+                    memo = memo,
+                    onMemoChange = { memo = it },
+                    photoUris = photoUris,
+                    onPhotosAdded = { added ->
+                        photoUris = (photoUris + added).take(ExpenseInputPhotoMaxCount)
+                    },
+                    onPhotosRemoved = { removed ->
+                        photoUris = photoUris.filterIndexed { index, _ -> index !in removed }
+                    },
+                    onPhotoReplaced = { index, newUri ->
+                        photoUris = photoUris.toMutableList().also { it[index] = newUri }
+                    }
+                )
                 Spacer(modifier = Modifier.height(120.dp))
             }
             Column(
@@ -279,30 +251,11 @@ fun ExpenseInputRoute(
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp)
             ) {
-                ExpenseInputSkipRestLink(
-                    onClick = {
-                        when (step) {
-                            2 -> showCategorySkipPromptDialog = true
-                            3 -> showReasonSkipPromptDialog = true
-                            4 -> showMemoSkipPromptDialog = true
-                            else -> showSaveConfirmDialog = true
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
                 ExpenseInputPrimaryButton(
                     label = stringResource(R.string.expenseinput_next_button),
-                    enabled = when (step) {
-                        2 -> isCategoryStepValid
-                        3 -> hasReasonSelected
-                        else -> true
-                    },
-                    onClick = {
-                        when {
-                            step < ExpenseInputTotalSteps -> step++
-                            else -> showSaveConfirmDialog = true
-                        }
-                    }
+                    // 모든 입력이 선택 사항이라 항상 저장할 수 있다.
+                    enabled = true,
+                    onClick = { showSaveConfirmDialog = true }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -341,52 +294,14 @@ fun ExpenseInputRoute(
             onCancel = { showSkipPromptDialog = false },
             onSkip = {
                 showSkipPromptDialog = false
-                amount = 0
-                step = 2
+                // 0원 지출을 만드는 게 아니라 no_spend_day 기록이라 상세 입력 단계로 가지 않는다.
+                onNoSpendingToday()
             }
         )
     }
 
-    if (showCategorySkipPromptDialog) {
-        ExpenseInputSkipPromptDialog(
-            question = stringResource(R.string.expenseinput_category_skip_prompt_title),
-            confirmLabel = stringResource(R.string.expenseinput_category_skip_prompt_confirm),
-            onCancel = { showCategorySkipPromptDialog = false },
-            onSkip = {
-                showCategorySkipPromptDialog = false
-                expenseName = ""
-                categoryId = "etc"
-                isCustomCategory = false
-                step = 3
-            }
-        )
-    }
 
-    if (showReasonSkipPromptDialog) {
-        ExpenseInputSaveConfirmDialog(
-            record = buildRecord().copy(customReason = reasonNoneLabel),
-            onCancel = { showReasonSkipPromptDialog = false },
-            onSave = {
-                showReasonSkipPromptDialog = false
-                isCustomReason = true
-                customReasonText = reasonNoneLabel
-                step = 4
-            }
-        )
-    }
 
-    if (showMemoSkipPromptDialog) {
-        ExpenseInputSaveConfirmDialog(
-            record = buildRecord().copy(memo = null, photoUris = emptyList()),
-            onCancel = { showMemoSkipPromptDialog = false },
-            onSave = {
-                showMemoSkipPromptDialog = false
-                memo = ""
-                photoUris = emptyList()
-                onComplete(buildRecord().copy(memo = null, photoUris = emptyList()))
-            }
-        )
-    }
 
     if (showCategoryCustomDialog) {
         ExpenseInputTextEntryDialog(
@@ -579,9 +494,7 @@ private fun ExpenseInputAmountStep(
 }
 
 @Composable
-private fun ExpenseInputCategoryStep(
-    amount: Int,
-    balanceAfterExpense: Int,
+private fun ExpenseInputDetailStep(
     expenseName: String,
     onExpenseNameChange: (String) -> Unit,
     categoryId: String?,
@@ -589,6 +502,17 @@ private fun ExpenseInputCategoryStep(
     customCategoryText: String,
     onCategorySelected: (String) -> Unit,
     onCustomCategoryClick: () -> Unit,
+    reasonId: String?,
+    isCustomReason: Boolean,
+    customReasonText: String,
+    onReasonSelected: (String) -> Unit,
+    onCustomReasonClick: () -> Unit,
+    memo: String,
+    onMemoChange: (String) -> Unit,
+    photoUris: List<String>,
+    onPhotosAdded: (List<String>) -> Unit,
+    onPhotosRemoved: (Set<Int>) -> Unit,
+    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -602,12 +526,16 @@ private fun ExpenseInputCategoryStep(
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            stringResource(R.string.expenseinput_category_description),
+            stringResource(R.string.expenseinput_detail_description_line1),
             style = MaterialTheme.typography.bodySmall,
             color = HPText
         )
-        Spacer(modifier = Modifier.height(30.dp))
-        ExpenseInputAmountSummaryCard(amount = amount, balanceAfterExpense = balanceAfterExpense)
+        Text(
+            stringResource(R.string.expenseinput_detail_description_line2),
+            style = MaterialTheme.typography.bodySmall,
+            color = HPText
+        )
+
         Spacer(modifier = Modifier.height(30.dp))
         Text(
             stringResource(R.string.expenseinput_expense_name_label),
@@ -620,6 +548,7 @@ private fun ExpenseInputCategoryStep(
             onValueChange = onExpenseNameChange,
             placeholder = stringResource(R.string.expensedetail_expense_name_placeholder)
         )
+
         Spacer(modifier = Modifier.height(30.dp))
         Text(
             stringResource(R.string.expensedetail_field_category),
@@ -632,7 +561,7 @@ private fun ExpenseInputCategoryStep(
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
-                    iconRes = categoryChipIconRes[option.category.id],
+                    icon = categoryChipIconRes[option.category.id]?.let(ChoiceChipIcon::Resource),
                     iconSize = 30.dp,
                     iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,
@@ -652,90 +581,14 @@ private fun ExpenseInputCategoryStep(
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun ExpenseInputReasonStep(
-    amount: Int,
-    balanceAfterExpense: Int,
-    expenseName: String,
-    categoryId: String?,
-    isCustomCategory: Boolean,
-    customCategoryText: String,
-    reasonId: String?,
-    isCustomReason: Boolean,
-    customReasonText: String,
-    onReasonSelected: (String) -> Unit,
-    onCustomReasonClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val category = HomeCategoryCatalog.byId(categoryId)
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        ExpenseInputOptionalBadge()
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         Text(
-            stringResource(R.string.expenseinput_reason_question),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            stringResource(R.string.expenseinput_reason_label),
+            style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.expenseinput_reason_description_line1),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Text(
-            stringResource(R.string.expenseinput_reason_description_line2),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(30.dp))
-        val categoryLabel = when {
-            isCustomCategory -> customCategoryText.ifBlank { null }
-            category != null -> stringResource(category.labelResId)
-            else -> null
-        }
-        ExpenseInputAmountSummaryCard(
-            amount = amount,
-            balanceAfterExpense = balanceAfterExpense,
-            header = if (expenseName.isNotBlank() || categoryLabel != null) {
-                {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (expenseName.isNotBlank()) {
-                            Text(
-                                expenseName,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = HPText
-                            )
-                        }
-                        Spacer(modifier = Modifier.weight(1f))
-                        if (categoryLabel != null) {
-                            ExpenseInputCategoryBadge(
-                                iconRes = categoryChipIconRes[categoryId] ?: R.drawable.icon_etc,
-                                label = categoryLabel
-                            )
-                        }
-                    }
-                }
-            } else {
-                null
-            }
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            stringResource(R.string.expenseinput_reason_pick_one),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             presetReasons.chunked(2).forEach { pair ->
                 Row(
@@ -770,47 +623,14 @@ private fun ExpenseInputReasonStep(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
-}
 
-@Composable
-private fun ExpenseInputMemoStep(
-    memo: String,
-    onMemoChange: (String) -> Unit,
-    photoUris: List<String>,
-    onPhotosAdded: (List<String>) -> Unit,
-    onPhotosRemoved: (Set<Int>) -> Unit,
-    onPhotoReplaced: (index: Int, newUri: String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = ExpenseInputPhotoMaxCount)
-    ) { uris -> if (uris.isNotEmpty()) onPhotosAdded(uris.map { it.toString() }) }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        ExpenseInputOptionalBadge()
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         Text(
-            stringResource(R.string.expenseinput_memo_question),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
+            stringResource(R.string.expenseinput_memo_label),
+            style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.expenseinput_memo_description_line1),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Text(
-            stringResource(R.string.expenseinput_memo_description_line2),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         ExpenseTextField(
             value = memo,
             onValueChange = onMemoChange,
@@ -818,22 +638,15 @@ private fun ExpenseInputMemoStep(
             singleLine = false,
             minLines = 5
         )
+
         Spacer(modifier = Modifier.height(30.dp))
-        if (photoUris.isEmpty()) {
-            ExpenseInputPhotoAttachCard(
-                onClick = {
-                    pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
-            )
-        } else {
-            ExpensePhotoEditSection(
-                photoUris = photoUris,
-                onPhotosAdded = onPhotosAdded,
-                onPhotosRemoved = onPhotosRemoved,
-                onPhotoReplaced = onPhotoReplaced,
-                maxCount = ExpenseInputPhotoMaxCount
-            )
-        }
+        ExpensePhotoEditSection(
+            photoUris = photoUris,
+            onPhotosAdded = onPhotosAdded,
+            onPhotosRemoved = onPhotosRemoved,
+            onPhotoReplaced = onPhotoReplaced,
+            maxCount = ExpenseInputPhotoMaxCount
+        )
     }
 }
 
@@ -852,9 +665,9 @@ private fun ExpenseInputAmountStepPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "2. 지출 입력 - 카테고리")
+@Preview(showBackground = true, name = "2. 지출 입력 - 상세(선택 사항)", heightDp = 1400)
 @Composable
-private fun ExpenseInputCategoryStepPreview() {
+private fun ExpenseInputDetailStepPreview() {
     HampouchTheme {
         ExpenseInputRoute(
             todayBalance = 7_300,
@@ -863,36 +676,6 @@ private fun ExpenseInputCategoryStepPreview() {
             onNoSpendingToday = {},
             onComplete = {},
             initialStep = 2
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "3. 지출 입력 - 이유")
-@Composable
-private fun ExpenseInputReasonStepPreview() {
-    HampouchTheme {
-        ExpenseInputRoute(
-            todayBalance = 7_300,
-            dailyLimit = 20_000,
-            onBackClick = {},
-            onNoSpendingToday = {},
-            onComplete = {},
-            initialStep = 3
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "4. 지출 입력 - 메모/사진")
-@Composable
-private fun ExpenseInputMemoStepPreview() {
-    HampouchTheme {
-        ExpenseInputRoute(
-            todayBalance = 7_300,
-            dailyLimit = 20_000,
-            onBackClick = {},
-            onNoSpendingToday = {},
-            onComplete = {},
-            initialStep = 4
         )
     }
 }

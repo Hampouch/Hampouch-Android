@@ -35,9 +35,9 @@ fun MiniChallengeRecommendedListScreen(
     recommendedChallenges: List<RecommendedMiniChallenge>,
     modifier: Modifier = Modifier,
     existingNames: List<String> = emptyList(),
-    onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onAddChallenge: (RecommendedMiniChallenge) -> Unit = {}
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onAddChallenge: (RecommendedMiniChallenge) -> Unit
 ) {
     val durationOptions = listOf(
         stringResource(R.string.minichallenge_duration_today),
@@ -53,7 +53,7 @@ fun MiniChallengeRecommendedListScreen(
 
     val filteredChallenges = remember(selectedDurationIndex, recommendedChallenges) {
         val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
-        recommendedChallenges.filter { it.totalDays == selectedTotalDays }
+        recommendedChallenges.filter { it.duration.serverDays == (selectedTotalDays ?: 1) }
     }
 
     Scaffold(
@@ -125,7 +125,8 @@ fun MiniChallengeRecommendedListScreen(
 private fun MiniChallengeRecommendedListScreenPreview() {
     HampouchTheme {
         MiniChallengeRecommendedListScreen(
-            recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
+            recommendedChallenges = MiniChallengeMockData.recommendedChallenges(),
+            onBackClick = {}, onNotificationClick = {}, onAddChallenge = {}
         )
     }
 }

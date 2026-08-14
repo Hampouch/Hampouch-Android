@@ -87,8 +87,8 @@ private val StartDateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HamBattleAddScreen(
-    onBackClick: () -> Unit = {},
-    onStartClick: (HamBattleChallengeRequest) -> Unit = {}
+    onBackClick: () -> Unit,
+    onStartClick: (HamBattleChallengeRequest) -> Unit
 ) {
     var challengeName by rememberSaveable { mutableStateOf("") }
     var selectedParticipantCount by rememberSaveable { mutableStateOf(HamBattleParticipantOptions[1]) }
@@ -100,13 +100,15 @@ fun HamBattleAddScreen(
     var selectedPenalty by rememberSaveable { mutableStateOf(HamBattleDefaultPenaltyOptions.first()) }
     val customPenaltyInputState = rememberTextFieldState()
 
-    val currentRequest = HamBattleChallengeRequest(
-        challengeName = challengeName,
-        participantCount = selectedParticipantCount,
-        durationDays = selectedDuration,
-        startDateMillis = startDateMillis,
-        penalty = selectedPenalty
-    )
+    val currentRequest = startDateMillis?.let { selectedStartDate ->
+        HamBattleChallengeRequest(
+            challengeName = challengeName,
+            participantCount = selectedParticipantCount,
+            durationDays = selectedDuration,
+            startDateMillis = selectedStartDate,
+            penalty = selectedPenalty
+        )
+    }
     val isStartEnabled = challengeName.isNotBlank() &&
         selectedParticipantCount.isNotBlank() &&
         selectedDuration.isNotBlank() &&
@@ -185,7 +187,7 @@ fun HamBattleAddScreen(
         )
     }
 
-    if (showStartConfirmDialog) {
+    if (showStartConfirmDialog && currentRequest != null) {
         HamBattleStartConfirmDialog(
             request = currentRequest,
             onCancel = { showStartConfirmDialog = false },
@@ -536,6 +538,6 @@ private fun SelectablePillPreview() {
 @Composable
 private fun HamBattleAddScreenPreview() {
     HampouchTheme {
-        HamBattleAddScreen()
+        HamBattleAddScreen(onBackClick = {}, onStartClick = {})
     }
 }

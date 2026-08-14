@@ -98,12 +98,12 @@ fun HamTipsScreen(
     onItemSelected: (BottomNavItem) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToHamBattleLink: (String) -> Unit = {},
-    onNavigateToHamBattleTab: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
+    onNavigateToHamBattleLink: (String) -> Unit,
+    onNavigateToHamBattleTab: () -> Unit,
+    onNotificationClick: () -> Unit,
     openWriteBattleOnStart: Boolean = false,
     initialWriteBattleLink: String = "",
-    onExitWriteBattle: () -> Unit = {},
+    onExitWriteBattle: () -> Unit,
     initialPopularPostId: String? = null,
     viewModel: HamTipsViewModel = hiltViewModel()
 ) {
@@ -368,7 +368,7 @@ private fun HamTipsFeedSection(
     onSortOrderChange: (HamTipsSortOrder) -> Unit,
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
-    onPostClick: (TipPost) -> Unit = {},
+    onPostClick: (TipPost) -> Unit,
     scrollToPostId: String? = null,
     scrollState: ScrollState? = null,
     containerRootY: Float? = null
@@ -430,7 +430,7 @@ private fun HamTipsMainContent(
     onPopularViewAllClick: () -> Unit,
     onPochipickViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onPostClick: (TipPost) -> Unit = {}
+    onPostClick: (TipPost) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -491,7 +491,7 @@ private fun HamTipsFeedRouteContent(
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
-    onPostClick: (TipPost) -> Unit = {},
+    onPostClick: (TipPost) -> Unit,
     scrollToPostId: String? = null
 ) {
     val scrollState = rememberScrollState()
@@ -544,7 +544,11 @@ private fun HamTipsScreenPreviewScaffold(content: @Composable (androidx.compose.
 @Composable
 private fun HamTipsMainScreenPreview() {
     HampouchTheme {
-        HamTipsScreen(selectedBottomTab = BottomNavItem.COMMUNITY, onItemSelected = {}, onAddClick = {})
+        HamTipsScreen(
+            selectedBottomTab = BottomNavItem.COMMUNITY, onItemSelected = {}, onAddClick = {},
+            onNavigateToHamBattleLink = {}, onNavigateToHamBattleTab = {}, onNotificationClick = {},
+            onExitWriteBattle = {}
+        )
     }
 }
 
@@ -564,6 +568,7 @@ private fun HamTipsCategoryScreenPreview() {
                 onSortOrderChange = {},
                 onBackClick = {},
                 onNotificationClick = {},
+                onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -586,6 +591,7 @@ private fun HamTipsWhatToEatCategoryScreenPreview() {
                 onSortOrderChange = {},
                 onBackClick = {},
                 onNotificationClick = {},
+                onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -608,6 +614,7 @@ private fun HamTipsPopularAllScreenPreview() {
                 onSortOrderChange = {},
                 onBackClick = {},
                 onNotificationClick = {},
+                onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -630,6 +637,7 @@ private fun HamTipsPochipickAllScreenPreview() {
                 onSortOrderChange = {},
                 onBackClick = {},
                 onNotificationClick = {},
+                onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
         }
@@ -655,6 +663,7 @@ private fun HamTipsFabMenuEffectPreview() {
                     onNotificationClick = {},
                     onPopularViewAllClick = {},
                     onPochipickViewAllClick = {},
+                    onPostClick = {},
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -689,6 +698,7 @@ private fun HamTipsSortDropdownPreview() {
                 onSortOrderChange = {},
                 onBackClick = {},
                 onNotificationClick = {},
+                onPostClick = {},
                 modifier = Modifier.padding(innerPadding),
                 initialSortExpanded = true
             )

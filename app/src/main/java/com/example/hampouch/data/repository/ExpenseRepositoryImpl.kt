@@ -4,8 +4,9 @@ import android.content.Context
 import android.net.Uri
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.data.local.ExpenseMockDataSource
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.ExpenseApi
 import com.example.hampouch.data.remote.dto.ExpenseCreateRequest
+import com.example.hampouch.data.remote.dto.ExpenseNoSpendRequest
 import com.example.hampouch.data.remote.dto.ExpenseDaySummaryItemData
 import com.example.hampouch.data.remote.dto.ExpenseDetailData
 import com.example.hampouch.data.remote.dto.ExpensePeriodSummaryData
@@ -62,7 +63,7 @@ private const val TAG = "ExpenseRepository"
 @Singleton
 class ExpenseRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val apiService: ApiService,
+    private val apiService: ExpenseApi,
     private val okHttpClient: OkHttpClient,
     private val authRepository: AuthRepository,
     private val challengeRepository: ChallengeRepository,
@@ -73,6 +74,17 @@ class ExpenseRepositoryImpl @Inject constructor(
         if (ExpenseConfig.USE_SERVER_EXPENSE) emptyMap() else mockDataSource.initialRecords()
     )
     override val records: StateFlow<Map<String, ExpenseRecord>> = _records.asStateFlow()
+
+    private val _daysWithRecord = MutableStateFlow(emptySet<LocalDate>())
+    override val daysWithRecord: StateFlow<Set<LocalDate>> = _daysWithRecord.asStateFlow()
+
+    private fun setDayRecorded(date: LocalDate, recorded: Boolean) {
+        _daysWithRecord.value = if (recorded) {
+            _daysWithRecord.value + date
+        } else {
+            _daysWithRecord.value - date
+        }
+    }
 
     override fun byId(id: String): ExpenseRecord? = _records.value[id]
 
@@ -88,15 +100,29 @@ class ExpenseRepositoryImpl @Inject constructor(
         _records.value = _records.value - id
     }
 
-    override fun markNoSpending(date: LocalDate) {
-        upsert(ExpenseRecord(id = UUID.randomUUID().toString(), date = date, amount = 0))
+    override suspend fun markNoSpend(date: LocalDate): Result<Unit> {
+        if (!ExpenseConfig.USE_SERVER_EXPENSE) return Result.success(Unit)
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+        return runCatchingNetwork(TAG) {
+            val response = apiService.markNoSpend(ExpenseNoSpendRequest(date = date.toString()))
+            if (response.isSuccessful) {
+                setDayRecorded(date, true)
+                Result.success(Unit)
+            } else {
+                Result.failure(response.toApiException("오늘은 안 썼어요 기록에 실패했습니다."))
+            }
+        }
     }
 
     override fun resetForAccount() {
         _records.value = if (ExpenseConfig.USE_SERVER_EXPENSE) emptyMap() else mockDataSource.initialRecords()
+        _daysWithRecord.value = emptySet()
     }
 
     // ----- 서버 enum ↔ 앱 내부 id 매핑 -----
+
+    /** "기타" 칩을 서버에 실어 보낼 때 쓰는 customCategory 값. 읽을 때 다시 칩으로 되돌린다. */
+    private val EtcCategoryLabel = "기타"
 
     private val localCategoryToServer: Map<String, String> = mapOf(
         "delivery" to "DELIVERY",
@@ -119,29 +145,35 @@ class ExpenseRepositoryImpl @Inject constructor(
     private val localReasonFromServer: Map<String, String> =
         localReasonToServer.entries.associate { (local, server) -> server to local }
 
-    private fun categoryRequestPair(record: ExpenseRecord): Pair<String, String?> {
-        val id = record.categoryId
-        return when {
-            id != null && id != ExpenseAnalysisEtcId -> (localCategoryToServer[id] ?: "ETC") to null
-            record.customCategoryName != null -> "ETC" to record.customCategoryName
-            else -> "ETC" to null
-        }
+    /**
+     * 서버는 `category == ETC`와 `customCategory != null`을 함께 요구한다(categoryConsistent).
+     * 그래서 "기타" 칩은 ETC + [EtcCategoryLabel]로 보내 제약을 만족시키면서
+     * 건너뛰기(둘 다 null)와 구분되게 한다.
+     */
+    private fun categoryRequestPair(record: ExpenseRecord): Pair<String?, String?> {
+        val custom = record.customCategoryName?.takeIf { it.isNotBlank() }
+        if (custom != null) return "ETC" to custom
+        val id = record.categoryId ?: return null to null
+        if (id == ExpenseAnalysisEtcId) return "ETC" to EtcCategoryLabel
+        return localCategoryToServer[id] to null
     }
 
-    private fun emotionRequestPair(record: ExpenseRecord): Pair<String, String?> {
-        val id = record.reasonId
-        return when {
-            id != null -> (localReasonToServer[id] ?: "ETC") to null
-            record.customReason != null -> "ETC" to record.customReason
-            else -> "ETC" to null
-        }
+    /** [categoryRequestPair]와 같은 규칙. */
+    private fun emotionRequestPair(record: ExpenseRecord): Pair<String?, String?> {
+        val custom = record.customReason?.takeIf { it.isNotBlank() }
+        if (custom != null) return "ETC" to custom
+        return record.reasonId?.let { localReasonToServer[it] } to null
     }
 
-    private fun categoryFieldsFromServer(category: String, customCategory: String?): Pair<String?, String?> =
-        if (category == "ETC") null to customCategory else serverCategoryToLocal[category] to null
+    /** [categoryRequestPair]의 역변환. ETC + "기타"는 칩 선택으로 되돌린다. */
+    private fun categoryFieldsFromServer(category: String?, customCategory: String?): Pair<String?, String?> = when {
+        category != null && category != "ETC" -> serverCategoryToLocal[category] to null
+        customCategory == EtcCategoryLabel -> ExpenseAnalysisEtcId to null
+        else -> null to customCategory
+    }
 
-    private fun reasonFieldsFromServer(emotion: String, customEmotion: String?): Pair<String?, String?> =
-        if (emotion == "ETC") null to customEmotion else localReasonFromServer[emotion] to null
+    private fun reasonFieldsFromServer(emotion: String?, customEmotion: String?): Pair<String?, String?> =
+        if (emotion == null || emotion == "ETC") null to customEmotion else localReasonFromServer[emotion] to null
 
     private fun isRemoteUrl(uri: String): Boolean = uri.startsWith("http://") || uri.startsWith("https://")
 
@@ -159,11 +191,10 @@ class ExpenseRepositoryImpl @Inject constructor(
         LocalImagePayload(bytes = bytes, contentType = resolver.getType(uri) ?: "image/jpeg")
     }
 
-    private suspend fun uploadNewImage(header: String, expenseId: Long?, localUri: String): Result<String> =
+    private suspend fun uploadNewImage(expenseId: Long?, localUri: String): Result<String> =
         runCatchingNetwork(TAG) {
             val payload = readLocalImage(localUri)
             val response = apiService.presignExpensePhoto(
-                header,
                 expenseId,
                 ExpensePhotoPresignRequest(contentType = payload.contentType, size = payload.bytes.size.toLong())
             )
@@ -184,7 +215,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
 
     private suspend fun syncPhoto(
-        header: String,
         expenseId: Long,
         previousUri: String?,
         newUri: String?
@@ -192,7 +222,7 @@ class ExpenseRepositoryImpl @Inject constructor(
         if (newUri == previousUri) return Result.success(Unit)
         if (newUri == null) {
             return runCatchingNetwork(TAG) {
-                val response = apiService.deleteExpensePhoto(header, expenseId)
+                val response = apiService.deleteExpensePhoto(expenseId)
                 if (response.isSuccessful) {
                     Result.success(Unit)
                 } else {
@@ -201,9 +231,9 @@ class ExpenseRepositoryImpl @Inject constructor(
             }
         }
         if (isRemoteUrl(newUri)) return Result.success(Unit)
-        val imageKey = uploadNewImage(header, expenseId, newUri).getOrElse { return Result.failure(it) }
+        val imageKey = uploadNewImage(expenseId, newUri).getOrElse { return Result.failure(it) }
         return runCatchingNetwork(TAG) {
-            val response = apiService.confirmExpensePhoto(header, expenseId, ExpensePhotoConfirmRequest(imageKey))
+            val response = apiService.confirmExpensePhoto(expenseId, ExpensePhotoConfirmRequest(imageKey))
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -223,7 +253,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             amount = price,
             categoryId = categoryId,
             customCategoryName = customCategoryName,
-            expenseName = name.ifBlank { null },
+            expenseName = name?.takeIf { it.isNotBlank() },
             reasonId = reasonId,
             customReason = customReason,
             memo = memo,
@@ -240,7 +270,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             amount = price,
             categoryId = categoryId,
             customCategoryName = customCategoryName,
-            expenseName = name.ifBlank { null },
+            expenseName = name?.takeIf { it.isNotBlank() },
             reasonId = reasonId,
             customReason = customReason
         )
@@ -254,18 +284,15 @@ class ExpenseRepositoryImpl @Inject constructor(
             amount = price,
             categoryId = categoryId,
             customCategoryName = customCategoryName,
-            expenseName = name.ifBlank { null },
+            expenseName = name?.takeIf { it.isNotBlank() },
             reasonId = null,
             customReason = emotionLabel
         )
     }
 
-    private fun ExpensePeriodSummaryData.toPeriodSummary(
-        fallbackStart: LocalDate,
-        fallbackEnd: LocalDate
-    ): ExpensePeriodSummary = ExpensePeriodSummary(
-        periodStart = periodStart?.let { LocalDate.parse(it) } ?: fallbackStart,
-        periodEnd = periodEnd?.let { LocalDate.parse(it) } ?: fallbackEnd,
+    private fun ExpensePeriodSummaryData.toPeriodSummary(): ExpensePeriodSummary = ExpensePeriodSummary(
+        periodStart = LocalDate.parse(periodStart),
+        periodEnd = LocalDate.parse(periodEnd),
         totalAmount = totalAmount,
         dailyAverage = dailyAverage,
         dailyBreakdown = dailyBreakdown.map { DailyAmount(LocalDate.parse(it.date), it.amount) }
@@ -278,11 +305,11 @@ class ExpenseRepositoryImpl @Inject constructor(
             upsert(record)
             return Result.success(record)
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val localUri = record.photoUris.firstOrNull()
             val imageKey = if (localUri != null && !isRemoteUrl(localUri)) {
-                uploadNewImage(header, expenseId = null, localUri = localUri).getOrElse {
+                uploadNewImage(expenseId = null, localUri = localUri).getOrElse {
                     return@runCatchingNetwork Result.failure(it)
                 }
             } else {
@@ -291,9 +318,8 @@ class ExpenseRepositoryImpl @Inject constructor(
             val (category, customCategory) = categoryRequestPair(record)
             val (emotion, customEmotion) = emotionRequestPair(record)
             val response = apiService.createExpense(
-                header,
                 ExpenseCreateRequest(
-                    name = record.expenseName.orEmpty(),
+                    name = record.expenseName?.takeIf { it.isNotBlank() },
                     price = record.amount,
                     category = category,
                     customCategory = customCategory,
@@ -322,15 +348,15 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val id = record.id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         val previousPhotoUri = _records.value[record.id]?.photoUris?.firstOrNull()
         return runCatchingNetwork(TAG) {
             val (category, customCategory) = categoryRequestPair(record)
             val (emotion, customEmotion) = emotionRequestPair(record)
             val response = apiService.updateExpense(
-                header, id,
+                id,
                 ExpenseUpdateRequest(
-                    name = record.expenseName.orEmpty(),
+                    name = record.expenseName?.takeIf { it.isNotBlank() },
                     price = record.amount,
                     category = category,
                     customCategory = customCategory,
@@ -343,7 +369,7 @@ class ExpenseRepositoryImpl @Inject constructor(
             if (!response.isSuccessful || response.body()?.data == null) {
                 return@runCatchingNetwork Result.failure(response.toApiException("지출 내역 수정에 실패했습니다."))
             }
-            syncPhoto(header, id, previousUri = previousPhotoUri, newUri = record.photoUris.firstOrNull())
+            syncPhoto(id, previousUri = previousPhotoUri, newUri = record.photoUris.firstOrNull())
                 .onFailure { return@runCatchingNetwork Result.failure(it) }
             upsert(record)
             Result.success(record)
@@ -357,9 +383,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val expenseId = id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.deleteExpense(header, expenseId)
+            val response = apiService.deleteExpense(expenseId)
             if (response.isSuccessful) {
                 removeLocal(id)
                 Result.success(Unit)
@@ -377,9 +403,9 @@ class ExpenseRepositoryImpl @Inject constructor(
         }
         val expenseId = id.toLongOrNull()
             ?: return Result.failure(ApiException("EXPENSE_NOT_FOUND", "지출 내역을 찾을 수 없습니다."))
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseDetail(header, expenseId)
+            val response = apiService.getExpenseDetail(expenseId)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val record = data.toExpenseRecord()
@@ -393,14 +419,15 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun loadDay(date: LocalDate): Result<Unit> {
         if (!ExpenseConfig.USE_SERVER_EXPENSE) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseDay(header, date.toString())
+            val response = apiService.getExpenseDay(date.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val fetched = data.expenses.associate { it.expenseId.toString() to it.toExpenseRecord(date) }
                 val withoutStaleDate = _records.value.filterValues { it.date != date }
                 _records.value = withoutStaleDate + fetched
+                setDayRecorded(date, data.hasRecord ?: fetched.isNotEmpty())
                 Result.success(Unit)
             } else {
                 Result.failure(response.toApiException("지출 목록을 불러오지 못했습니다."))
@@ -428,13 +455,12 @@ class ExpenseRepositoryImpl @Inject constructor(
             val weekStart = sundayOfWeek(standardDate)
             return Result.success(localPeriodSummary(weekStart, weekStart.plusDays(6)))
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseWeekSummary(header, standardDate.toString())
+            val response = apiService.getExpenseWeekSummary(standardDate.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                val weekStart = sundayOfWeek(standardDate)
-                Result.success(data.toPeriodSummary(fallbackStart = weekStart, fallbackEnd = weekStart.plusDays(6)))
+                Result.success(data.toPeriodSummary())
             } else {
                 Result.failure(response.toApiException("주간 기록을 불러오지 못했습니다."))
             }
@@ -447,17 +473,12 @@ class ExpenseRepositoryImpl @Inject constructor(
                 localPeriodSummary(standardMonth.atDay(1), standardMonth.atEndOfMonth())
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseMonthSummary(header, standardMonth.toString())
+            val response = apiService.getExpenseMonthSummary(standardMonth.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                Result.success(
-                    data.toPeriodSummary(
-                        fallbackStart = standardMonth.atDay(1),
-                        fallbackEnd = standardMonth.atEndOfMonth()
-                    )
-                )
+                Result.success(data.toPeriodSummary())
             } else {
                 Result.failure(response.toApiException("월간 기록을 불러오지 못했습니다."))
             }
@@ -480,9 +501,9 @@ class ExpenseRepositoryImpl @Inject constructor(
                 )
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseAnalysis(header, periodStart.toString(), periodEnd.toString())
+            val response = apiService.getExpenseAnalysis(periodStart.toString(), periodEnd.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val categoryByLocalId = data.categoryBreakdown
@@ -530,10 +551,10 @@ class ExpenseRepositoryImpl @Inject constructor(
             )
         }
         val serverCategory = if (categoryId == ExpenseAnalysisEtcId) "ETC" else (localCategoryToServer[categoryId] ?: "ETC")
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseCategoryAnalysis(
-                header, serverCategory, periodStart.toString(), periodEnd.toString()
+                serverCategory, periodStart.toString(), periodEnd.toString()
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -563,10 +584,10 @@ class ExpenseRepositoryImpl @Inject constructor(
             )
         }
         val serverEmotion = if (reasonId == ExpenseAnalysisEtcId) "ETC" else (localReasonToServer[reasonId] ?: "ETC")
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseEmotionAnalysis(
-                header, serverEmotion, periodStart.toString(), periodEnd.toString()
+                serverEmotion, periodStart.toString(), periodEnd.toString()
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -626,9 +647,9 @@ class ExpenseRepositoryImpl @Inject constructor(
                 )
             )
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getExpenseTrend(header, month.toString())
+            val response = apiService.getExpenseTrend(month.toString())
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 Result.success(

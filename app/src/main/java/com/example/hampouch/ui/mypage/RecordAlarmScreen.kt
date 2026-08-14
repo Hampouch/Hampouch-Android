@@ -58,7 +58,7 @@ private fun formatTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour
 fun RecordAlarmScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {},
+    onNotificationClick: () -> Unit,
     viewModel: RecordAlarmViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -222,6 +222,6 @@ fun RecordAlarmScreen(
 @Composable
 private fun RecordAlarmScreenPreview() {
     HampouchTheme {
-        RecordAlarmScreen(onBackClick = {})
+        RecordAlarmScreen(onBackClick = {}, onNotificationClick = {})
     }
 }

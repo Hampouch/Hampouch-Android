@@ -10,19 +10,45 @@ data class BattleParticipantDto(
     val isValid: Boolean? = null
 )
 
-data class MyBattleSummaryDto(
-    val battleId: Long,
-    val battleCode: String,
-    val title: String,
-    val penalty: String,
-    val startDate: String,
-    val endDate: String,
-    val status: String,
-    val capacity: Int? = null,
-    val joinedCount: Int? = null,
-    val participants: List<BattleParticipantDto>? = null,
-    val winnerNickname: String? = null
-)
+sealed interface MyBattleSummaryDto {
+    val battleId: Long
+    val battleCode: String
+    val title: String
+    val penalty: String
+    val startDate: String
+    val endDate: String
+
+    data class Ready(
+        override val battleId: Long,
+        override val battleCode: String,
+        override val title: String,
+        override val penalty: String,
+        override val startDate: String,
+        override val endDate: String,
+        val capacity: Int,
+        val joinedCount: Int
+    ) : MyBattleSummaryDto
+
+    data class Ongoing(
+        override val battleId: Long,
+        override val battleCode: String,
+        override val title: String,
+        override val penalty: String,
+        override val startDate: String,
+        override val endDate: String,
+        val participants: List<BattleParticipantDto>
+    ) : MyBattleSummaryDto
+
+    data class Terminated(
+        override val battleId: Long,
+        override val battleCode: String,
+        override val title: String,
+        override val penalty: String,
+        override val startDate: String,
+        override val endDate: String,
+        val winnerNickname: String
+    ) : MyBattleSummaryDto
+}
 
 data class MyBattlesData(
     val battles: List<MyBattleSummaryDto>
@@ -38,9 +64,7 @@ data class BattleDetailData(
     val startDate: String,
     val endDate: String,
     val participants: List<BattleParticipantDto>,
-    val penaltyUserId: Long? = null,
-    val penaltyUserNickname: String? = null,
-    val finalizedAt: String? = null
+    val penaltyTargetNickname: String? = null
 )
 
 /** GET /api/battles/invitations/{battleCode} 응답. 참가 전 미리보기라 battleId는 포함하지 않는다. */

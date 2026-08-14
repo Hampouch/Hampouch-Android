@@ -85,32 +85,32 @@ fun HomeScreen(
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
     openHamTipsWriteBattleOnStart: Boolean = false,
     initialHamTipsWriteBattleLink: String = "",
-    onExitHamTipsWriteBattle: () -> Unit = {},
+    onExitHamTipsWriteBattle: () -> Unit,
     initialMyTipDetailPostId: String? = null,
     initialMyTipDetailScrollToComments: Boolean = false,
     initialPopularPostId: String? = null,
-    onStartChallengeClick: () -> Unit = {},
-    onCalendarClick: () -> Unit = {},
-    onChallengeSummaryClick: (String) -> Unit = {},
-    onNavigateToMiniChallenge: (LocalDate) -> Unit = {},
-    onHamBattleStartNewChallengeClick: () -> Unit = {},
-    onHamBattleChallengeClick: (String) -> Unit = {},
-    onHamBattleViewEndedChallengesClick: () -> Unit = {},
-    onHamBattleViewEndedChallengeDetailClick: (String) -> Unit = {},
-    onHamBattleWaitingChallengeClick: (String) -> Unit = {},
-    onHamBattleJoinedFromCommunityClick: (String) -> Unit = {},
-    onHamBattleJoinedFullFromCommunityClick: () -> Unit = {},
-    onNavigateToExpenseDetail: (String) -> Unit = {},
-    onNavigateToExpenseCalendar: () -> Unit = {},
-    onNavigateToChallengeEndExpenseCalendar: () -> Unit = {},
-    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit = { _, _, _ -> },
-    onNavigateToTakeABreak: () -> Unit = {},
-    onExtendBreak: () -> Unit = {},
-    onAddExpenseClick: () -> Unit = {},
-    onNavigateToAmountAdjustment: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onLoggedOut: () -> Unit = {},
-    onChallengeEndedFinishClick: () -> Unit = {},
+    onStartChallengeClick: () -> Unit,
+    onCalendarClick: () -> Unit,
+    onChallengeSummaryClick: (String) -> Unit,
+    onNavigateToMiniChallenge: (LocalDate) -> Unit,
+    onHamBattleStartNewChallengeClick: () -> Unit,
+    onHamBattleChallengeClick: (String) -> Unit,
+    onHamBattleViewEndedChallengesClick: () -> Unit,
+    onHamBattleViewEndedChallengeDetailClick: (String) -> Unit,
+    onHamBattleWaitingChallengeClick: (String) -> Unit,
+    onHamBattleJoinedFromCommunityClick: (String) -> Unit,
+    onHamBattleJoinedFullFromCommunityClick: () -> Unit,
+    onNavigateToExpenseDetail: (String) -> Unit,
+    onNavigateToExpenseCalendar: () -> Unit,
+    onNavigateToChallengeEndExpenseCalendar: () -> Unit,
+    onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit,
+    onNavigateToTakeABreak: () -> Unit,
+    onExtendBreak: () -> Unit,
+    onAddExpenseClick: () -> Unit,
+    onNavigateToAmountAdjustment: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onLoggedOut: () -> Unit,
+    onChallengeEndedFinishClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -154,6 +154,7 @@ fun HomeScreen(
         if (selectedBottomTab == BottomNavItem.HAM_BATTLE) battleViewModel.loadMyBattles()
     }
     val records by viewModel.records.collectAsStateWithLifecycle()
+    val daysWithRecord by viewModel.daysWithRecord.collectAsStateWithLifecycle()
     val challengeState by viewModel.challengeState.collectAsStateWithLifecycle()
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val recordsForDate: (LocalDate) -> List<ExpenseRecord> = { date ->
@@ -231,7 +232,9 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding)
                 )
 
-                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty()
+                // "오늘은 안 썼어요"는 지출 목록에 안 잡히므로 서버의 hasRecord도 함께 본다.
+                val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty() ||
+                    referenceToday in daysWithRecord
                 when {
                     restState.isBreakOver(referenceToday) -> TakeABreakEndedDialog(
                         onStartNowClick = viewModel::resumeNow,
@@ -347,15 +350,15 @@ private fun HomeContent(
     referenceToday: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
-    onViewAllMiniChallengesClick: () -> Unit = {},
+    onViewAllMiniChallengesClick: () -> Unit,
     onSuggestionClick: (String) -> Unit,
     onStartChallengeClick: () -> Unit,
-    onCalendarClick: () -> Unit = {},
-    onChallengeSummaryClick: () -> Unit = {},
-    onExpenseClick: (String) -> Unit = {},
-    onViewAllExpensesClick: () -> Unit = {},
-    onAddExpenseClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit,
+    onChallengeSummaryClick: () -> Unit,
+    onExpenseClick: (String) -> Unit,
+    onViewAllExpensesClick: () -> Unit,
+    onAddExpenseClick: () -> Unit,
+    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -434,6 +437,13 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
             onToggleMiniChallenge = {},
             onSuggestionClick = {},
             onStartChallengeClick = {},
+            onViewAllMiniChallengesClick = {},
+            onCalendarClick = {},
+            onChallengeSummaryClick = {},
+            onExpenseClick = {},
+            onViewAllExpensesClick = {},
+            onAddExpenseClick = {},
+            onNotificationClick = {},
             modifier = Modifier.padding(innerPadding)
         )
     }

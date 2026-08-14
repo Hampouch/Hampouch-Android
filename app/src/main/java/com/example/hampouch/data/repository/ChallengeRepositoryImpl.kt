@@ -1,7 +1,7 @@
 package com.example.hampouch.data.repository
 
 import com.example.hampouch.core.config.ChallengeConfig
-import com.example.hampouch.data.remote.ApiService
+import com.example.hampouch.data.remote.ChallengeApi
 import com.example.hampouch.data.remote.dto.ChallengeCreateRequest
 import com.example.hampouch.data.remote.dto.ChallengeCurrentData
 import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesRequest
@@ -38,7 +38,7 @@ private const val DEFAULT_ONE_OFF_DAYS = 30
 
 @Singleton
 class ChallengeRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val apiService: ChallengeApi,
     private val authRepository: AuthRepository
 ) : ChallengeRepository {
 
@@ -149,9 +149,9 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     override suspend fun loadCurrentChallenge(): Result<Unit> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getCurrentChallenge(header)
+            val response = apiService.getCurrentChallenge()
             if (response.isSuccessful) {
                 applyCurrent(response.body()?.data)
                 Result.success(Unit)
@@ -191,9 +191,9 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     override suspend fun loadHistory(): Result<Unit> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getChallengeHistory(header)
+            val response = apiService.getChallengeHistory()
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 data.items.forEach { item -> upsertChallenge(item.toActiveChallenge()) }
@@ -220,9 +220,9 @@ class ChallengeRepositoryImpl @Inject constructor(
     override suspend fun loadResult(challengeId: String): Result<Unit> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) return Result.success(Unit)
         val id = challengeId.toLongOrNull() ?: return Result.success(Unit)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.getChallengeResult(header, id)
+            val response = apiService.getChallengeResult(id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 current.challengeById(challengeId)?.let { existing ->
@@ -241,10 +241,10 @@ class ChallengeRepositoryImpl @Inject constructor(
             ?: return Result.failure(
                 ApiException(code = "CHALLENGE_NOT_IN_PROGRESS", message = "진행 중인 챌린지가 없습니다.")
             )
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.updateChallengeFocusCategories(
-                header, id, ChallengeFocusCategoriesRequest(categories)
+                id, ChallengeFocusCategoriesRequest(categories)
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
@@ -297,10 +297,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         val (periodStart, periodEnd, repeatMonthly) = resolvePeriod(request, referenceToday)
         val totalDays = ChronoUnit.DAYS.between(periodStart, periodEnd).toInt() + 1
         val budgetTotal = (request.totalTargetAmount ?: 0).coerceAtLeast(0)
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.createChallenge(
-                header,
                 ChallengeCreateRequest(
                     durationDays = totalDays,
                     budgetTotal = budgetTotal,
@@ -364,9 +363,9 @@ class ChallengeRepositoryImpl @Inject constructor(
             applyAbandon(challenge, referenceToday)
             return Result.success(Unit)
         }
-        val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
-            val response = apiService.giveUpChallenge(header, id)
+            val response = apiService.giveUpChallenge(id)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 applyAbandon(challenge, referenceToday, remoteStatus = data.status)
@@ -410,9 +409,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         if (ChallengeConfig.USE_SERVER_CHALLENGE) {
             val id = ended.id.toLongOrNull()
             if (id != null) {
-                val header = authRepository.currentAuthHeader() ?: return Result.failure(unauthorized())
+                if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
                 val result = runCatchingNetwork(TAG) {
-                    val response = apiService.closeChallenge(header, id)
+                    val response = apiService.closeChallenge(id)
                     val data = response.body()?.data
                     if (response.isSuccessful && data != null) {
                         upsertChallenge(ended.copy(remoteStatus = data.status, closedAt = data.closedAt))
