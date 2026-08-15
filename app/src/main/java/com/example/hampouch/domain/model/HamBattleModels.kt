@@ -13,7 +13,6 @@ data class HamBattleChallengeRequest(
 )
 
 val HamBattleParticipantOptions = listOf("1 vs 1", "3인", "4인", "5인", "6인", "7인", "8인", "9인", "10인")
-// 서버(POST /api/battles)가 durationDays로 3/7/14/31만 허용하므로 이 목록도 그대로 맞춘다.
 val HamBattleDurationOptions = listOf("3일", "7일", "14일", "31일")
 val HamBattleDefaultPenaltyOptions = listOf("커피 사기", "밥 사기", "영화 사기")
 
@@ -29,7 +28,6 @@ data class HamBattleParticipantSpending(
     val status: HamBattleParticipantStatus = HamBattleParticipantStatus.NORMAL,
     val avatarUrl: String? = null,
     val userId: Long? = null,
-    /** 서버 상세 응답(todayAmount)에서만 채워짐. "오늘/전체" 토글에 쓴다 — null이면 [amount]로 대체. */
     val todayAmount: Int? = null
 )
 
@@ -56,12 +54,7 @@ data class HamBattleChallenge(
     val durationDays: Int,
     val startDate: LocalDate? = null,
     val cancelled: Boolean = false,
-    /** 서버 연동 시에만 채워짐. 참가자 전용 리소스다. */
     val battleId: Long? = null,
-    /**
-     * 초대 코드. 생성 시 1회 발급되며 재발급되지 않는다(서버 명세).
-     * "링크 다시 복사하기"가 클립보드에 넣는 값이자, 커뮤니티 배틀 글이 배틀을 지목하는 키다.
-     */
     val battleCode: String? = null,
     /** 서버 응답은 상태별 필수값을 각 subtype으로 보존한다. null은 목데이터의 날짜 기반 상태다. */
     val serverState: HamBattleServerState? = null,

@@ -15,19 +15,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface HamTipsDetailEvent {
-    /** 글이 삭제돼 목록으로 돌아가야 함. */
     data object PostDeleted : HamTipsDetailEvent
 
     data class ShowMessage(val message: String) : HamTipsDetailEvent
 }
 
-/** 커뮤니티 글 상세(일반·햄배틀 공용). */
 @HiltViewModel
 class HamTipsDetailViewModel @Inject constructor(
     private val hamTipsRepository: HamTipsRepository
 ) : ViewModel() {
 
-    /** 좋아요·댓글 등으로 갱신된 글을 화면이 다시 읽을 수 있도록 캐시 전체를 노출한다. */
     val posts: StateFlow<List<TipPost>> = hamTipsRepository.posts
 
     private val _events = Channel<HamTipsDetailEvent>(Channel.BUFFERED)

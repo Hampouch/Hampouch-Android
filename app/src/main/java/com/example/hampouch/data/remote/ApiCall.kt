@@ -9,7 +9,6 @@ import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 import java.io.IOException
 
-// 서버 호출을 감싸는 공통 헬퍼. 도메인별 Repository 구현이 공유한다.
 
 private val errorBodyGson = Gson()
 
@@ -60,7 +59,6 @@ inline fun <T> runCatchingNetwork(tag: String, action: () -> Result<T>): Result<
     Result.failure(ApiException(code = "UNKNOWN", message = "일시적인 오류가 발생했어요."))
 }
 
-/** 인증이 필요한 호출에서 access token이 없을 때 쓰는 실패값. */
 fun unauthorized(): ApiException =
     ApiException(code = "AUTH_UNAUTHORIZED", message = "인증이 필요합니다.")
 

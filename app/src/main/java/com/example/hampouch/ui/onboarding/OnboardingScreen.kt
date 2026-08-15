@@ -13,7 +13,6 @@ import com.example.hampouch.domain.model.OnboardingRequest
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
-import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
 import com.example.hampouch.ui.onboarding.steps.PeriodStep
@@ -38,7 +37,6 @@ fun OnboardingRoute(
         onDateFixedChange = viewModel::changeDateFixed,
         onStartDateChange = viewModel::changeStartDate,
         onTotalTargetChange = viewModel::changeTotalTarget,
-        onToggleCategory = viewModel::toggleCategory,
         onNext = viewModel::next,
         onBack = viewModel::back,
         onShowSkip = viewModel::showSkipConfirmation,
@@ -59,7 +57,6 @@ fun OnboardingScreen(
     onDateFixedChange: (Boolean) -> Unit,
     onStartDateChange: (java.time.LocalDate) -> Unit,
     onTotalTargetChange: (Int) -> Unit,
-    onToggleCategory: (String) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
     onShowSkip: () -> Unit,
@@ -70,10 +67,9 @@ fun OnboardingScreen(
     val step = flowState.step
     val uiState = flowState.draft
 
-    BackHandler(enabled = step != OnboardingStep.SPLASH && step != OnboardingStep.EXPENSE_DIAGNOSIS) {
+    BackHandler(enabled = step != OnboardingStep.SPLASH) {
         when (step) {
-            OnboardingStep.PERIOD_SETTING, OnboardingStep.GOAL_SETTING,
-            OnboardingStep.CATEGORY_SELECT -> onBack()
+            OnboardingStep.PERIOD_SETTING, OnboardingStep.GOAL_SETTING -> onBack()
             else -> Unit
         }
     }
@@ -123,16 +119,9 @@ fun OnboardingScreen(
             OnboardingStep.GOAL_SETTING -> ChallengeGoalStep(
                 state = uiState,
                 onTotalTargetChange = onTotalTargetChange,
-                onNext = onNext,
+                onNext = onSubmit,
                 onBack = onBack,
                 onNavigateToLogin = onShowSkip
-            )
-
-            OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(
-                selectedCategoryIds = uiState.selectedCategoryIds,
-                onToggleCategory = onToggleCategory,
-                onStart = onSubmit,
-                onBack = onBack
             )
         }
     }
@@ -147,7 +136,7 @@ private fun OnboardingRoutePreview() {
             onNavigateToLogin = {}, onFinishSplash = {},
             onExpenseChange = {}, onPeriodEnabledChange = {}, onPeriodChange = {},
             onDateFixedChange = {}, onStartDateChange = {}, onTotalTargetChange = {},
-            onToggleCategory = {}, onNext = {}, onBack = {}, onShowSkip = {}, onDismissSkip = {},
+            onNext = {}, onBack = {}, onShowSkip = {}, onDismissSkip = {},
             onSubmit = {}
         )
     }

@@ -35,21 +35,22 @@ object HomeCategoryCatalog {
         val id: String,
         val labelResId: Int,
         val icon: ImageVector,
-        val accentColor: Color
+        val accentColor: Color,
+        val chipIconResId: Int
     )
 
     val defaultIcon: ImageVector = Icons.Filled.Restaurant
     val defaultColor: Color = HPText
 
     val categories = listOf(
-        Category("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5)),
-        Category("dining_out", R.string.category_dining_out, Icons.Filled.RamenDining, HPSub2),
-        Category("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD)),
-        Category("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain),
-        Category("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30)),
-        Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A)),
-        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E)),
-        Category("etc", R.string.category_etc, Icons.Filled.Restaurant, HPText)
+        Category("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5), R.drawable.icon_delivery),
+        Category("dining_out", R.string.category_dining_out, Icons.Filled.RamenDining, HPSub2, R.drawable.icon_eatout),
+        Category("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD), R.drawable.icon_conv),
+        Category("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain, R.drawable.icon_cafe),
+        Category("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30), R.drawable.icon_snack),
+        Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A), R.drawable.icon_shopping),
+        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E), R.drawable.icon_beer),
+        Category("etc", R.string.category_etc, Icons.Filled.Restaurant, HPText, R.drawable.icon_etc)
     )
 
     fun byId(id: String?): Category? = categories.firstOrNull { it.id == id }

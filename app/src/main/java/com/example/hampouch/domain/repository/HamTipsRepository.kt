@@ -8,7 +8,6 @@ import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipReply
 import kotlinx.coroutines.flow.StateFlow
 
-// 커뮤니티(햄팁) 도메인
 interface HamTipsRepository {
 
     val posts: StateFlow<List<TipPost>>
@@ -101,6 +100,5 @@ interface HamTipsRepository {
 
     fun canDeleteReply(post: TipPost, reply: TipReply): Boolean
 
-    /** 목데이터 전용 — 서버 연동 시 햄배틀 참가 API로 교체된다. */
     fun joinBattle(postId: String)
 }

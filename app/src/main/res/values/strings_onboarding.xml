@@ -1,5 +1,4 @@
 <resources>
-    <!-- 온보딩 -->
     <string name="cd_hampouch_logo">햄파우치 로고</string>
     <string name="cd_hamster_mascot">햄파우치 캐릭터</string>
     <string name="cd_loading_text">로딩 중</string>
@@ -44,12 +43,5 @@
     <string name="onboarding_total_target_label">챌린지 전체 식비 목표</string>
     <string name="onboarding_total_target_bullet">추천 금액은 지난 달 식비가 반영된 금액이에요.</string>
 
-    <string name="onboarding_step4_badge">약한 카테고리 설정</string>
-    <string name="onboarding_step4_title">어느 지출이 가장 많나요?</string>
-    <string name="onboarding_step4_caption">선택한 카테고리 소비 시 개입이 강해져요.</string>
-    <string name="onboarding_category_section_label">카테고리</string>
-    <string name="onboarding_category_duplicate_hint">중복 선택 가능</string>
     <string name="onboarding_start_bytecut">햄포치 시작하기</string>
-
-    <string name="category_other">기타</string>
 </resources>

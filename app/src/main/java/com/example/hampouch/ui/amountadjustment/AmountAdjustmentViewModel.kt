@@ -18,7 +18,6 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface AmountAdjustmentEvent {
-    /** 중도 포기 성공 — 다음 챌린지 화면으로 보낸다. */
     data class ChallengeAbandoned(val challengeId: String, val suggestedTargetAmount: Int) : AmountAdjustmentEvent
 
     data object GoalAmountUpdated : AmountAdjustmentEvent
@@ -50,7 +49,6 @@ class AmountAdjustmentViewModel @Inject constructor(
         viewModelScope.launch {
             challengeRepository.abandonChallenge()
                 .onSuccess {
-                    // 포기 처리 뒤의 상태로 실제 지출을 집계해 다음 챌린지의 목표 금액을 제안한다.
                     val state = challengeRepository.state.value
                     val suggested = state.activeChallenge?.let { active ->
                         val actualAmount = ChallengeResultMockData

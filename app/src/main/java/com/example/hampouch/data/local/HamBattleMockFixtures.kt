@@ -6,7 +6,6 @@ import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.domain.model.HamBattleStatus
 import java.time.LocalDate
 
-// TODO: 서버팀 햄배틀 API 연동 시 목데이터 대신 실제 응답으로 대체.
 object HamBattleMockFixtures {
 
     fun seedChallenges(): List<HamBattleChallenge> =
@@ -40,7 +39,7 @@ object HamBattleMockFixtures {
                         status = HamBattleParticipantStatus.DISQUALIFIED
                     ),
                     HamBattleParticipantSpending(
-                        "최태양최태양최태양",
+                        "최태양",
                         1_152_600,
                         status = HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
                     )

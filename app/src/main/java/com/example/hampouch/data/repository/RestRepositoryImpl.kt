@@ -22,7 +22,6 @@ import javax.inject.Singleton
 
 private const val TAG = "RestRepository"
 
-// 서버(restDays·extendDays) 방어 상한. "계속 쉬기"는 서버에 무기한 개념이 없어 이 상한으로 대체 전송한다.
 private const val MAX_REST_DAYS = 3650
 
 @Singleton
@@ -45,7 +44,6 @@ class RestRepositoryImpl @Inject constructor(
         is RestPeriod.Custom -> period.days.coerceAtMost(MAX_REST_DAYS)
     }
 
-    /** 휴식 도메인엔 상태 조회 API가 없어 challenge 도메인의 GET /api/challenges/current(rest 블록)로 보정한다. */
     override suspend fun syncStatus(): Result<Unit> {
         if (!RestConfig.USE_SERVER_REST) return Result.success(Unit)
         if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())

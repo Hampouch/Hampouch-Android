@@ -9,10 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 import java.time.YearMonth
 
-// 지출 도메인
 interface ExpenseRepository {
 
-    /** id → 지출 내역 캐시. */
     val records: StateFlow<Map<String, ExpenseRecord>>
 
     fun recordsForDate(date: LocalDate): List<ExpenseRecord>
@@ -27,7 +25,6 @@ interface ExpenseRepository {
 
     suspend fun loadExpenseDetail(id: String): Result<ExpenseRecord>
 
-    /** [date] 하루치 목록을 서버에서 받아 캐시의 해당 날짜를 통째로 교체한다. */
     suspend fun loadDay(date: LocalDate): Result<Unit>
 
     suspend fun loadWeekSummary(standardDate: LocalDate): Result<ExpensePeriodSummary>

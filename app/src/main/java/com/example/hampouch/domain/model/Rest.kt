@@ -2,7 +2,6 @@ package com.example.hampouch.domain.model
 
 import java.time.LocalDate
 
-// 휴식 기간 프리셋
 enum class BreakDuration {
     THREE_DAYS,
     ONE_WEEK,

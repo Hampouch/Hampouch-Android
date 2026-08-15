@@ -35,8 +35,6 @@ sealed class Screen(val route: String) {
     }
     data object NextChallengeTakeABreak : Screen("next_challenge_take_a_break")
     data object TakeABreak : Screen("take_a_break?extend={extend}") {
-        // extend=true면 이미 휴식 중(복귀 예정일 도달)인 상태에서 "더 쉬기"로 들어온 것 — resume(EXTEND) 호출.
-        // extend=false(기본)면 휴식 중이 아닌 상태에서 새로 휴식을 시작하는 것 — 휴식 시작 호출.
         fun createRoute(extend: Boolean = false) = "take_a_break?extend=$extend"
     }
     data object AmountAdjustment : Screen("amount_adjustment")

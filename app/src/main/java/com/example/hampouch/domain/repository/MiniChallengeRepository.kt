@@ -6,15 +6,12 @@ import com.example.hampouch.domain.model.MiniChallengeDuration
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 
-// 미니 챌린지 도메인
 interface MiniChallengeRepository {
 
     val state: StateFlow<MiniChallengeState>
 
-    /** [date]의 목록·요약을 조회해 반영한다. */
     suspend fun loadChallenges(date: LocalDate): Result<Unit>
 
-    /** 추천 카탈로그를 조회해 반영한다. [durationDays]가 null이면 전체 기간. */
     suspend fun loadRecommended(durationDays: Int? = null): Result<Unit>
 
     /**
@@ -31,6 +28,5 @@ interface MiniChallengeRepository {
 
     suspend fun remove(date: LocalDate, id: String): Result<Unit>
 
-    /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다. */
     suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit>
 }

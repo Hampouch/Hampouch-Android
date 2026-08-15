@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 마이페이지의 지난 챌린지 목록·결과 조회. */
 @HiltViewModel
 class MyPageChallengeViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository

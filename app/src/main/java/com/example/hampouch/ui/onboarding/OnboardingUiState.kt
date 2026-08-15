@@ -8,6 +8,5 @@ data class OnboardingUiState(
     val challengePeriodDays: Int? = null,
     val dateFixed: Boolean = false,
     val startDate: LocalDate? = null,
-    val totalTargetAmount: Int? = null,
-    val selectedCategoryIds: Set<String> = emptySet()
+    val totalTargetAmount: Int? = null
 )

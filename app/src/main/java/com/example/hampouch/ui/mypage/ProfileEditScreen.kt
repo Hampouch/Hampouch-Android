@@ -49,8 +49,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.toUserMessage
 import kotlinx.coroutines.launch
@@ -82,7 +80,6 @@ fun ProfileEditScreen(
     var nicknameInput by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var avatarUri by remember { mutableStateOf(currentAvatarUri) }
-    var showPhotoSheet by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
     val nicknameFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -108,7 +105,6 @@ fun ProfileEditScreen(
         if (uri != null) {
             avatarUri = uri.toString()
         }
-        showPhotoSheet = false
     }
 
     Column(
@@ -144,7 +140,9 @@ fun ProfileEditScreen(
                             .clip(CircleShape)
                             .background(HPWhite)
                             .border(1.dp, HPGray4, CircleShape)
-                            .clickable { showPhotoSheet = true },
+                            .clickable {
+                                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -254,15 +252,6 @@ fun ProfileEditScreen(
         }
     }
 
-    if (showPhotoSheet) {
-        ProfileEditPhotoSheet(
-            onAlbumSelectClick = {
-                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            },
-            onDismiss = { showPhotoSheet = false }
-        )
-    }
-
     if (showCompleteDialog) {
         CompleteDialog(
             message = stringResource(R.string.profile_edit_success_message),
@@ -275,54 +264,6 @@ fun ProfileEditScreen(
     }
 }
 
-@Composable
-private fun ProfileEditPhotoSheet(
-    onAlbumSelectClick: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(onClick = onDismiss)
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                    .background(HPWhite)
-            ) {
-                ProfileEditSheetRow(
-                    label = stringResource(R.string.profile_edit_album_select),
-                    onClick = onAlbumSelectClick
-                )
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HPGray4))
-                ProfileEditSheetRow(
-                    label = stringResource(R.string.profile_edit_close),
-                    onClick = onDismiss
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileEditSheetRow(label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 18.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
-    }
-}
 
 @Preview(showBackground = true, name = "9. 프로필 수정")
 @Composable

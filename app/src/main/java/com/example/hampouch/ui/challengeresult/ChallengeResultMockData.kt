@@ -30,7 +30,6 @@ object ChallengeResultMockData {
         }
     }
 
-    /** @param recordsForDate 해당 날짜의 지출 내역. */
     fun forChallenge(
         challenge: ActiveChallenge,
         challengeState: ChallengeState,

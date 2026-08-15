@@ -75,7 +75,6 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
-/** [BreakDuration]의 사용자 노출 문구. */
 internal val BreakDuration.label: String
     get() = when (this) {
         BreakDuration.THREE_DAYS -> "3일 쉬기"
@@ -84,11 +83,6 @@ internal val BreakDuration.label: String
         BreakDuration.CONTINUOUS -> "계속 쉬기"
     }
 
-/**
- * 휴식 화면 진입점. ViewModel을 붙이고 상태·이벤트를 화면에 흘려준다.
- *
- * @param isExtending 이미 휴식 중이라 시작이 아니라 연장을 해야 하는 경우(홈 팝업의 "더 쉬기").
- */
 @Composable
 fun TakeABreakRoute(
     isExtending: Boolean,

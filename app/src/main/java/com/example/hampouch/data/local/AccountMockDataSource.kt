@@ -3,11 +3,6 @@ package com.example.hampouch.data.local
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 
-/**
- * 목데이터 모드의 인메모리 계정 목록.
- *
- * TODO: 서버팀 회원가입/로그인 API 연동이 끝나면 통째로 삭제.
- */
 object AccountMockDataSource {
 
     val normalUser = User(

@@ -107,6 +107,14 @@ fun MyPageScreen(
     }
     val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
     val profileViewModel: MyPageProfileViewModel = hiltViewModel()
+    LaunchedEffect(profileViewModel) {
+        profileViewModel.events.collect { event ->
+            when (event) {
+                is MyPageProfileEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     val storedProfile by profileViewModel.profile.collectAsStateWithLifecycle()
     val profile = profileViewModel.profileFor(currentUser, storedProfile)
     var showLogoutConfirm by remember { mutableStateOf(false) }
@@ -249,12 +257,14 @@ fun MyPageScreen(
             BackHandler { route = MyPageRoute.ACCOUNT_SETTINGS }
             ChangePasswordScreen(
                 email = profile.email,
-                onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
-                onSubmitSuccess = {
-                    showPasswordChangedDialog = true
-                    route = MyPageRoute.ACCOUNT_SETTINGS
-                },
-                onNotificationClick = onNotificationClick,
+                actions = ChangePasswordActions(
+                    onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
+                    onSubmitSuccess = {
+                        showPasswordChangedDialog = true
+                        route = MyPageRoute.ACCOUNT_SETTINGS
+                    },
+                    onNotificationClick = onNotificationClick
+                ),
                 modifier = modifier.fillMaxSize()
             )
         }

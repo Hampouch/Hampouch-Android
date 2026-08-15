@@ -19,7 +19,6 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface MiniChallengeEvent {
-    /** 추가가 반영된 날짜. 서버는 항상 오늘부터 만들기 때문에 선택 탭을 이 날짜로 옮겨야 한다. */
     data class Added(val date: LocalDate) : MiniChallengeEvent
 
     data class ShowMessage(val message: String) : MiniChallengeEvent

@@ -26,7 +26,6 @@ class ExpenseCalendarViewModel @Inject constructor(
 
     val challengeState: StateFlow<ChallengeState> = challengeRepository.state
 
-    /** id → 지출 내역 캐시. 목데이터 모드에서 달력이 직접 집계하는 원본이다. */
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 
     private val _monthSummary = MutableStateFlow<ExpensePeriodSummary?>(null)

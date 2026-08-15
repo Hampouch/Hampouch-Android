@@ -79,7 +79,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub4
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -144,9 +144,6 @@ fun HamBattleScreen(
         }
     }
 
-    // 아래의 만료/탈락/취소 감지는 로컬 지출 기록(ExpenseDetailStore)을 기준으로 목데이터를 스스로 갱신하는
-    // 시뮬레이션이다. 서버 모드에서는 이 상태들을 서버가 이미 계산해서 내려주고(READY/ONGOING/TERMINATED,
-    // isValid 등), 되돌려 보낼 수 있는 대응 API도 아직 없어서 목데이터 모드에서만 동작시킨다.
     if (!BattleConfig.USE_SERVER_BATTLE) {
         val expiredWaitingChallenge = remember(waitingChallenges) {
             waitingChallenges.firstOrNull { it.isExpired() }
@@ -383,7 +380,7 @@ private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Un
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
@@ -429,7 +426,7 @@ private fun ActiveChallengeCard(challenge: HamBattleChallenge, onClick: () -> Un
         }
 
         Spacer(modifier = Modifier.height(14.dp))
-        HorizontalDivider(color = HPText, thickness = 1.dp)
+        HorizontalDivider(color = HPGray3, thickness = 1.dp)
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -545,7 +542,7 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        HorizontalDivider(color = HPText, thickness = 1.dp)
+        HorizontalDivider(color = HPGray3, thickness = 1.dp)
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

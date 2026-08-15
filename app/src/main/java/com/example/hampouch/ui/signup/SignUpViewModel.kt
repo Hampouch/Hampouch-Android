@@ -26,7 +26,6 @@ data class SignUpUiState(
     val isSendingEmailCode: Boolean = false,
     val hasSentEmailCode: Boolean = false,
     val isVerifyingEmailCode: Boolean = false,
-    /** 인증번호 만료 시각(epoch millis). null이면 카운트다운 없음. */
     val emailCodeExpiresAtMillis: Long? = null,
     val nicknameCheckMessage: String? = null,
     val isNicknameAvailable: Boolean = false,
@@ -67,7 +66,6 @@ class SignUpViewModel @Inject constructor(
         _uiState.value = _uiState.value.block()
     }
 
-    /** 이메일을 고치면 이전 인증 결과는 모두 무효가 된다. */
     fun changeEmail(value: String) = update {
         copy(
             email = value,
@@ -93,7 +91,6 @@ class SignUpViewModel @Inject constructor(
 
     fun setMarketingChecked(value: Boolean) = update { copy(isMarketingChecked = value) }
 
-    /** "이메일을 잘못 입력하셨나요?" — 인증 흐름을 처음으로 되돌린다. */
     fun resetEmailVerification() = update {
         copy(
             hasSentEmailCode = false,

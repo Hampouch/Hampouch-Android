@@ -33,23 +33,13 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
     }
     fun changeStartDate(date: LocalDate?) = updateDraft { copy(startDate = date) }
     fun changeTotalTarget(value: Int?) = updateDraft { copy(totalTargetAmount = value) }
-    fun toggleCategory(categoryId: String) = updateDraft {
-        copy(
-            selectedCategoryIds = if (categoryId in selectedCategoryIds) {
-                selectedCategoryIds - categoryId
-            } else {
-                selectedCategoryIds + categoryId
-            }
-        )
-    }
 
     fun next() = updateStep(
         when (_uiState.value.step) {
             OnboardingStep.SPLASH -> OnboardingStep.EXPENSE_DIAGNOSIS
             OnboardingStep.EXPENSE_DIAGNOSIS -> OnboardingStep.PERIOD_SETTING
             OnboardingStep.PERIOD_SETTING -> OnboardingStep.GOAL_SETTING
-            OnboardingStep.GOAL_SETTING -> OnboardingStep.CATEGORY_SELECT
-            OnboardingStep.CATEGORY_SELECT -> OnboardingStep.CATEGORY_SELECT
+            OnboardingStep.GOAL_SETTING -> OnboardingStep.GOAL_SETTING
         }
     )
 
@@ -57,7 +47,6 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
         when (_uiState.value.step) {
             OnboardingStep.PERIOD_SETTING -> OnboardingStep.EXPENSE_DIAGNOSIS
             OnboardingStep.GOAL_SETTING -> OnboardingStep.PERIOD_SETTING
-            OnboardingStep.CATEGORY_SELECT -> OnboardingStep.GOAL_SETTING
             else -> _uiState.value.step
         }
     )
@@ -84,8 +73,7 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
             lastMonthFoodExpense = draft.lastMonthFoodExpense,
             period = period,
             dailyTargetAmount = (total.toDouble() / days).roundToInt(),
-            totalTargetAmount = total,
-            topSpendingCategoryIds = draft.selectedCategoryIds.toList()
+            totalTargetAmount = total
         )
     }
 

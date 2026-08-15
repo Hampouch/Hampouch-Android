@@ -82,8 +82,6 @@ fun HamBattleChallengesPodiumResultScreen(
 ) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge, selectedTab) {
-        // 서버는 todayAmount/totalAmount를 한 응답에 함께 내려주므로, 오늘/전체 토글은 재호출 없이
-        // 로컬에서 값만 바꿔치기한다. 목데이터 모드에서는 todayAmount가 없어 실시간 계산으로 대체한다.
         val participants = if (selectedTab == ResultTab.TODAY) {
             if (BattleConfig.USE_SERVER_BATTLE) {
                 challenge.participants.map { it.copy(amount = it.todayAmount ?: it.amount) }
@@ -265,7 +263,7 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 color = HPMain
             )

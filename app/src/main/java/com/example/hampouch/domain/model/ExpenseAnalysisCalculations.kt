@@ -4,7 +4,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-// 지출 내역을 분석 결과로 집계하는 순수 계산들. 목데이터 모드에서 서버 응답 대신 쓰인다.
 
 private fun categoryBucketOf(record: ExpenseRecord): String =
     record.categoryId?.takeIf { it in ExpenseCategoryIds } ?: ExpenseAnalysisEtcId

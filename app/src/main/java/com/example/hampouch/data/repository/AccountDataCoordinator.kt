@@ -1,7 +1,6 @@
 package com.example.hampouch.data.repository
 
 import android.util.Log
-import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
@@ -30,20 +29,16 @@ class AccountDataCoordinator @Inject constructor(
         restRepository.resetForAccount()
         accountScopedStates.forEach { it.resetForAccount() }
 
-        val account = email?.let { e -> AccountMockDataSource.accounts.find { it.email == e } }
-        if (account == null || account.isExistingMember) {
+        /** 예약된 온보딩 요청은 이번 프로세스의 회원가입 성공 직후에만 존재하므로, 그 존재 여부가 곧 "신규 회원" 신호다. */
+        val request = email?.let { onboardingLocalStore.takeReservedRequest(it) }
+        if (request == null) {
             challengeRepository.resetForAccount()
             return
         }
 
-        // 온보딩만 마치고 가입한 새 계정이면, 예약해 둔 온보딩 결과로 첫 챌린지를 시작한다.
-        val request = onboardingLocalStore.takeReservedRequest(account.email)
         challengeRepository.resetEmpty()
-        if (request != null) {
-            challengeRepository.startNewChallenge(request).onFailure { error ->
-                Log.e(TAG, "예약된 온보딩 요청으로 챌린지를 시작하지 못했습니다.", error)
-            }
+        challengeRepository.startNewChallenge(request).onFailure { error ->
+            Log.e(TAG, "예약된 온보딩 요청으로 챌린지를 시작하지 못했습니다.", error)
         }
-        AccountMockDataSource.markAsExistingMember(account.email)
     }
 }

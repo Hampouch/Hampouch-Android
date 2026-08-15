@@ -31,3 +31,7 @@ object ChallengeConfig {
 object BattleConfig {
     const val USE_SERVER_BATTLE: Boolean = AppConfig.USE_SERVER
 }
+
+object UsersConfig {
+    const val USE_SERVER_USERS: Boolean = AppConfig.USE_SERVER
+}

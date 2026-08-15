@@ -21,7 +21,6 @@ private const val KEY_DAILY_TARGET = "daily_target"
 private const val KEY_TOTAL_TARGET = "total_target"
 private const val KEY_CATEGORY_IDS = "category_ids"
 
-// TODO: 서버팀 회원가입/로그인 API 연동 시, 계정별 첫 온보딩 데이터 저장을 서버 응답 기반으로 교체.
 @Singleton
 class OnboardingLocalStore @Inject constructor(
     @ApplicationContext private val context: Context
@@ -93,6 +92,11 @@ class OnboardingLocalStore @Inject constructor(
             .putBoolean(KEY_HAS_COMPLETED, true)
             .putBoolean(KEY_HAS_PENDING, false)
             .apply()
+    }
+
+    fun resetOnboarding() {
+        pendingRequest = null
+        prefs().edit().clear().apply()
     }
 
     fun reserveForNewAccount(email: String) {

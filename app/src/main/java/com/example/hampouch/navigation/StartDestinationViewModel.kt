@@ -15,12 +15,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 앱 진입 시 저장된 세션을 확인해 첫 화면을 정한다.
- *
- * @property startDestination null이면 아직 판단 중 — 화면은 빈 배경만 그린다.
- * @property pendingNicknameSession 소셜 로그인은 됐지만 닉네임이 없어 가입을 마저 받아야 하는 세션.
- */
 @HiltViewModel
 class StartDestinationViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -41,7 +35,10 @@ class StartDestinationViewModel @Inject constructor(
         onboardingLocalStore.restorePendingIfNeeded()
         val session = authRepository.userSession.first()
         _startDestination.value = when {
-            session == null && onboardingLocalStore.hasCompletedOnboarding() -> Screen.Login.route
+            session == null && onboardingLocalStore.hasCompletedOnboarding() -> {
+                onboardingLocalStore.resetOnboarding()
+                Screen.Onboarding.route
+            }
             session == null -> Screen.Onboarding.route
             else -> resolveForSession(session)
         }
@@ -54,7 +51,6 @@ class StartDestinationViewModel @Inject constructor(
                     _pendingNicknameSession.value = session
                     Screen.Login.route
                 } else {
-                    // checkSessionStatus가 nickname을 갱신했을 수 있으니 최신 세션을 다시 읽어서 동기화한다.
                     authRepository.saveSession(authRepository.userSession.first() ?: session)
                     Screen.Home.route
                 }

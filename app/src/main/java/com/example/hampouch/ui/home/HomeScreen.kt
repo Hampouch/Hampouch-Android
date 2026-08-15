@@ -149,7 +149,6 @@ fun HomeScreen(
         }
     }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
-    // 햄배틀 탭에 들어올 때만 목록을 받아온다.
     LaunchedEffect(selectedBottomTab) {
         if (selectedBottomTab == BottomNavItem.HAM_BATTLE) battleViewModel.loadMyBattles()
     }

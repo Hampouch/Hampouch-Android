@@ -23,13 +23,11 @@ data class ExpenseDetailUiState(
 )
 
 sealed interface ExpenseDetailEvent {
-    /** 삭제/수정이 끝나 이전 화면으로 돌아가야 함. */
     data object Finished : ExpenseDetailEvent
 
     data class ShowMessage(val message: String) : ExpenseDetailEvent
 }
 
-/** 지출 상세·수정 화면 공용. 대상 id는 내비게이션 인자에서 읽는다. */
 @HiltViewModel
 class ExpenseDetailViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,

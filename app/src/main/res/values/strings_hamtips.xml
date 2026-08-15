@@ -1,5 +1,4 @@
 <resources>
-    <!-- 햄꿀팁 (커뮤니티) -->
 
     <string name="hamtips_title">햄꿀팁</string>
     <string name="hamtips_search_placeholder">식비 줄이는 꿀팁 검색</string>
@@ -42,7 +41,6 @@
     <string name="tip_category_record">기록</string>
     <string name="tip_category_etc">기타</string>
 
-    <!-- 글쓰기 공용 -->
     <string name="hamtips_write_overline">SHARE YOUR TIPS</string>
     <string name="hamtips_write_submit">게시하기</string>
     <string name="hamtips_write_section_photo">사진</string>
@@ -51,7 +49,6 @@
     <string name="hamtips_cd_photo_fullscreen">사진 원본 보기</string>
     <string name="hamtips_post_confirm_question">해당 게시글을 등록할까요?</string>
 
-    <!-- 꿀팁 공유 -->
     <string name="hamtips_write_tip_heading">무슨 꿀팁을 공유할까요?</string>
     <string name="hamtips_write_tip_subheading">식비를 줄인 나만의 방법을 공유해주세요 !</string>
     <string name="hamtips_write_section_board">게시판</string>
@@ -64,7 +61,6 @@
     <string name="hamtips_write_hint_bullet2">어디서 어떻게 줄였는지</string>
     <string name="hamtips_write_hint_bullet3">따라 할 수 있는 구체적인 방법</string>
 
-    <!-- 메뉴 추천 -->
     <string name="hamtips_write_menu_heading">무슨 메뉴를 공유할까요?</string>
     <string name="hamtips_write_menu_subheading">추천하고 싶은 가게의 메뉴를 공유해주세요 !</string>
     <string name="hamtips_write_menu_title_preview_label">제목 미리보기</string>
@@ -83,7 +79,6 @@
     <string name="hamtips_rating_mood">분위기</string>
     <string name="hamtips_cd_star_rating_format">%1$s %2$d점</string>
 
-    <!-- 햄배틀 모집 -->
     <string name="hamtips_write_battle_heading">함께 식비를 줄여요!</string>
     <string name="hamtips_write_battle_subheading">같이하고 싶은 햄배틀 챌린지를 공유해주세요.</string>
     <string name="hamtips_write_battle_title_placeholder">제목을 입력해주세요</string>
@@ -98,7 +93,6 @@
     <string name="hamtips_battle_days_format">%1$d일</string>
     <string name="hamtips_battle_capacity_format">%1$d인</string>
 
-    <!-- 게시글 상세 -->
     <string name="hamtips_cd_more">더보기</string>
     <string name="hamtips_more_menu_delete">삭제하기</string>
     <string name="hamtips_more_menu_edit">수정하기</string>
@@ -107,7 +101,6 @@
     <string name="hamtips_cd_scrap">저장</string>
     <string name="hamtips_cd_scrap_done">완료</string>
 
-    <!-- 댓글 -->
     <string name="hamtips_comment_input_placeholder">댓글을 입력해주세요.</string>
     <string name="hamtips_reply_input_placeholder">답글을 입력해주세요.</string>
     <string name="hamtips_comment_submit">등록</string>

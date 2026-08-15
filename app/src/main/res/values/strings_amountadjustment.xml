@@ -1,5 +1,4 @@
 <resources>
-    <!-- 금액 조정 -->
     <string name="amountadjustment_top_bar_title">챌린지 상세</string>
     <string name="amountadjustment_headline">목표 금액을 조정할까요?</string>
     <string name="amountadjustment_subtitle">목표를 현실적으로 조정하는 것을 추천해요.\n지금까지의 기록은 그대로 유지돼요.</string>

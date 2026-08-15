@@ -34,7 +34,6 @@
             </intent-filter>
         </activity>
 
-        <!-- 카카오 로그인 시 카카오톡/브라우저에서 앱으로 돌아오기 위한 리다이렉트 -->
         <activity
             android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
             android:exported="true">

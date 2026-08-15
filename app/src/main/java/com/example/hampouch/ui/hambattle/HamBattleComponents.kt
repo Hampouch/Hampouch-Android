@@ -76,7 +76,6 @@ fun TypeBadge(text: String, muted: Boolean = false) {
     }
 }
 
-/** avatarUrl이 null이거나 로드에 실패하면 기본 아바타([R.drawable.icon_normal_avatar])를 보여준다. */
 @Composable
 fun ParticipantAvatar(size: Dp, avatarUrl: String? = null) {
     Box(

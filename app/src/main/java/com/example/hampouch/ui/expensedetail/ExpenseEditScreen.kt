@@ -19,6 +19,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -77,7 +78,8 @@ fun ExpenseEditRoute(
     record: ExpenseRecord,
     onBackClick: () -> Unit,
     onSaved: (ExpenseRecord) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDateSelectable: (LocalDate) -> Boolean = { true }
 ) {
     var date by remember(record.id) { mutableStateOf(record.date) }
     var amount by remember(record.id) { mutableStateOf(record.amount) }
@@ -147,7 +149,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_category)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ChipGrid(items = categoryOptions) { option ->
+                        ChipGrid(items = categoryOptions, minColumnWidth = 96.dp) { option ->
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
@@ -253,7 +255,15 @@ fun ExpenseEditRoute(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = date.toEpochMillisUtc())
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.toEpochMillisUtc(),
+            selectableDates = remember(isDateSelectable) {
+                object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                        isDateSelectable(utcTimeMillis.toLocalDateUtc())
+                }
+            }
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {

@@ -12,7 +12,6 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
-/** 로그인 세션(토큰·계정 정보)을 담는 DataStore. */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class AuthDataStore

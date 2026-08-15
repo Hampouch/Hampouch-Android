@@ -73,14 +73,6 @@ class AuthRepository @Inject constructor(
     }
 
     private val _currentUser = MutableStateFlow(AccountMockDataSource.normalUser)
-    /**
-     * 화면에서 동기적으로 읽기 쉬운 형태의 현재 로그인 사용자.
-     *
-     * 세션의 유일한 소스는 DataStore 기반 [userSession]이고, 여기서는 그 값을 반영만 한다.
-     * 앱을 재시작해도 [saveSession]이 다시 호출되며 동기화된다(예전엔 SharedPreferences에 유저 id를
-     * 저장해 뒀다가 목데이터 계정 목록에서 재조회했는데, 실제 서버 로그인 유저는 그 목록에 없어서
-     * 앱을 재실행하면 항상 기본 목데이터 계정으로 되돌아가는 버그가 있었다).
-     */
     val currentUser: StateFlow<User> = _currentUser.asStateFlow()
 
     private val _isLoggedIn = MutableStateFlow(false)
@@ -130,9 +122,6 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                // 닉네임 입력 도중 이탈하면 계정만 만들어진 채로 남는다. 그 뒤 다시 로그인하면
-                // 서버는 isNewUser=false로 응답하지만 needsNickname은 true로 내려주므로,
-                // 이 값을 봐야 닉네임 단계를 건너뛰고 홈으로 넘어가는 것을 막을 수 있다.
                 val requiresNickname = body.needsNickname || body.isNewUser
                 val me = if (!requiresNickname) fetchAuthMe(body.tokenType, body.accessToken) else null
                 val session = AuthSession(
@@ -143,13 +132,10 @@ class AuthRepository @Inject constructor(
                     accessToken = body.accessToken,
                     refreshToken = body.refreshToken,
                     tokenType = body.tokenType,
-                    // 닉네임은 소셜 계정이 아니라 서버(/me)가 가진 값을 쓴다.
                     nickname = if (requiresNickname) null else me?.nickname,
                     email = credential.email,
                     profileImageUrl = null
                 )
-                // 닉네임을 마치기 전에는 세션을 저장하지 않는다. 저장해두면 앱을 다시 켰을 때
-                // 닉네임 없이 로그인된 상태가 되어버린다.
                 if (!requiresNickname) {
                     saveSession(session)
                 }
@@ -404,11 +390,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    /**
-     * access token이 만료됐을 때 refresh token으로 새 토큰 쌍을 발급받아 세션에 반영한다.
-     * refresh token 자체가 무효/만료/폐기됐거나 탈퇴한 회원이면(401/403) 로컬 세션을 지워
-     * 다시 로그인하도록 한다.
-     */
     suspend fun refreshAccessToken(): Result<AuthSession> {
         val session = userSession.first()
             ?: return Result.failure(ApiException(code = "NO_SESSION", message = "로그인 정보가 없습니다."))
@@ -422,9 +403,6 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                // refresh 요청이 서버를 왕복하는 사이 로그아웃/회원탈퇴로 세션이 지워지거나
-                // 다른 요청이 먼저 재발급을 마쳤을 수 있다. 그 사이 바뀌었다면 방금 받은 새
-                // 토큰으로 되살리지 않고 실패로 처리한다(로그아웃 상태가 되살아나는 것을 방지).
                 val latestSession = userSession.first()
                 if (latestSession == null || latestSession.refreshToken != session.refreshToken) {
                     return Result.failure(
@@ -452,10 +430,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    /**
-     * 서버에 refresh token 폐기를 요청한 뒤 로컬 세션을 지운다. 서버 호출이 실패하더라도
-     * (access token 만료, 네트워크 오류 등) 사용자 의도대로 기기에서는 로그아웃 상태로 만든다.
-     */
     suspend fun logout(): Result<Unit> {
         val session = userSession.first()
         if (!AuthConfig.USE_SERVER_AUTH || session == null) {
@@ -481,10 +455,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    /**
-     * 회원 탈퇴. 서버에서 계정 삭제가 성공했을 때만 로컬 세션을 지운다.
-     * (탈퇴 실패 시 계정이 남아있으므로 로그인 상태를 유지해야 한다.)
-     */
     suspend fun withdraw(): Result<Unit> {
         val session = userSession.first()
             ?: return Result.failure(ApiException(code = "NO_SESSION", message = "로그인 정보가 없습니다."))

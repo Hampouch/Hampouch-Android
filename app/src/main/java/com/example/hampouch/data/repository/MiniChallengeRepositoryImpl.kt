@@ -36,7 +36,6 @@ import retrofit2.Response
 
 private const val TAG = "MiniChallengeRepository"
 
-// 미니 챌린지 연동
 @Singleton
 class MiniChallengeRepositoryImpl @Inject constructor(
     private val apiService: MiniChallengeApi,
@@ -109,7 +108,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         _state.value = seedState()
     }
 
-    /** [date]의 미니 챌린지 목록/요약을 조회해 [MiniChallengeStore]에 반영한다. */
     override suspend fun loadChallenges(date: LocalDate): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
@@ -128,7 +126,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 조회") }
     }
 
-    /** 추천 카탈로그를 조회해 [MiniChallengeStore]에 반영한다. [durationDays]가 null이면 전체 기간. */
     override suspend fun loadRecommended(durationDays: Int?): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) return Result.success(Unit)
         return runCatching {
@@ -199,7 +196,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(커스텀)") }
     }
 
-    /** [id]의 미니 챌린지를 삭제한다. */
     override suspend fun remove(date: LocalDate, id: String): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             removeLocal(date, id)
@@ -215,7 +211,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 삭제") }
     }
 
-    /** [date] 기준으로 [id]의 체크 상태를 [checked]로 바꾼다(PUT은 멱등이라 재시도해도 안전). */
     override suspend fun setChecked(date: LocalDate, id: String, checked: Boolean): Result<Unit> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             toggleLocal(date, id)
@@ -244,7 +239,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         return response.toApiResult(fallbackMessage).getOrThrow()
     }
 
-    /** [kotlin.runCatching]은 [CancellationException]도 그대로 삼켜버리므로, onFailure에서 다시 던져 취소를 정상 전파한다. */
     private fun rethrowIfCancelled(error: Throwable, action: String) {
         if (error is CancellationException) throw error
         Log.e(TAG, "$action 네트워크 오류", error)

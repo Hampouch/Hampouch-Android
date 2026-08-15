@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,7 +88,25 @@ fun PeriodStep(
     } ?: stringResource(R.string.onboarding_start_date_label)
 
     Scaffold(
-        modifier = modifier.fillMaxSize().imePadding()
+        modifier = modifier.fillMaxSize().imePadding(),
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
+
+                OnboardingPrimaryButton(
+                    text = stringResource(R.string.onboarding_button_next),
+                    enabled = (state.periodEnabled && state.challengePeriodDays != null && !periodDaysOutOfRange) ||
+                        (state.dateFixed && state.startDate != null),
+                    onClick = onNext
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -99,7 +118,7 @@ fun PeriodStep(
         ) {
             OnboardingTopBar(onBack = onBack)
 
-                OnboardingProgressBar(currentStep = 2, totalSteps = 4)
+                OnboardingProgressBar(currentStep = 2, totalSteps = 3)
 
                 OnboardingHeaderCard(
                     stepNumber = 2,
@@ -213,15 +232,6 @@ fun PeriodStep(
                         )
                     }
                 }
-
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
-
-            OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_button_next),
-                enabled = (state.periodEnabled && state.challengePeriodDays != null && !periodDaysOutOfRange) ||
-                    (state.dateFixed && state.startDate != null),
-                onClick = onNext
-            )
         }
     }
 

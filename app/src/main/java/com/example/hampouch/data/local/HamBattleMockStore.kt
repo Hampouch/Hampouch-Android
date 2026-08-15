@@ -26,10 +26,6 @@ private const val DEFAULT_DURATION_DAYS = 7
 private const val ME_NAME = "나"
 private val battleCodeChars = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
-/**
- * 목데이터 모드 전용 햄배틀 상태. 서버 모드에서는 빈 목록으로 시작하며, 목록·상세는
- * [com.example.hampouch.data.repository.BattleRepositoryImpl]가 서버 응답으로 채운다.
- */
 @Singleton
 class HamBattleMockStore @Inject constructor(
     private val expenseRepository: ExpenseRepository
@@ -42,7 +38,6 @@ class HamBattleMockStore @Inject constructor(
 
     private val challengesState = MutableStateFlow(seedChallenges())
 
-    /** "내 지출"은 실제 지출 기록에서 계산해 덮어쓴다. */
     val challenges: StateFlow<List<HamBattleChallenge>> =
         combine(challengesState, expenseRepository.records) { list, _ ->
             val today = LocalDate.now()
@@ -183,7 +178,6 @@ class HamBattleMockStore @Inject constructor(
     private fun participantTypeLabel(option: String): String =
         if (option == "1 vs 1") "1 vs 1" else "그룹"
 
-    /** 서버가 발급하는 battleCode와 같은 형식(영숫자 7자). */
     private fun generateRandomBattleCode(): String =
         (1..7).map { battleCodeChars.random() }.joinToString("")
 

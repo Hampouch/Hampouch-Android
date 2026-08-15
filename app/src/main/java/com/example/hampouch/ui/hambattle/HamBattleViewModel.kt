@@ -21,10 +21,8 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface HamBattleEvent {
-    /** 새 햄배틀 생성 완료. */
     data object Created : HamBattleEvent
 
-    /** 초대 코드로 참가 완료. */
     data class Joined(val battleId: Long) : HamBattleEvent
 
     data class ShowMessage(val message: String) : HamBattleEvent

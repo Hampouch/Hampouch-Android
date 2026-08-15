@@ -1,6 +1,5 @@
 package com.example.hampouch.data.remote.dto
 
-/** 목록(/api/battles)과 상세(/api/battles/{battleId})에서 공통으로 쓰는 참가자 정보. */
 data class BattleParticipantDto(
     val userId: Long,
     val nickname: String,
@@ -54,7 +53,6 @@ data class MyBattlesData(
     val battles: List<MyBattleSummaryDto>
 )
 
-/** GET /api/battles/{battleId} 상세 응답. capacity 필드는 내려주지 않는다. */
 data class BattleDetailData(
     val battleId: Long,
     val battleCode: String,
@@ -67,7 +65,6 @@ data class BattleDetailData(
     val penaltyTargetNickname: String? = null
 )
 
-/** GET /api/battles/invitations/{battleCode} 응답. 참가 전 미리보기라 battleId는 포함하지 않는다. */
 data class BattleInvitationPreviewData(
     val title: String,
     val penalty: String,
@@ -77,7 +74,6 @@ data class BattleInvitationPreviewData(
     val durationDays: Int
 )
 
-/** POST /api/battles/invitations/{battleCode} 응답. */
 data class JoinBattleData(
     val battleId: Long
 )

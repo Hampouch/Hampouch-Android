@@ -1,5 +1,4 @@
 <resources>
-    <!-- 지출 입력 -->
     <string name="expenseinput_title">지출 입력</string>
     <string name="expenseinput_optional_badge">선택 사항</string>
 

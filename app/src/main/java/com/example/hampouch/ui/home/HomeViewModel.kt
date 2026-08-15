@@ -22,12 +22,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-/** 홈에서 한 번만 처리해야 하는 신호. */
 sealed interface HomeEvent {
-    /** 휴식에서 "지금 바로 복귀"에 성공 — 새 챌린지 시작 화면으로 보낸다. */
     data object ResumedFromBreak : HomeEvent
 
-    /** 챌린지 종료 처리가 끝남 — 결과 화면으로 이동한다. */
     data object ChallengeEndAcknowledged : HomeEvent
 
     data class ShowMessage(val message: String) : HomeEvent
@@ -47,7 +44,6 @@ class HomeViewModel @Inject constructor(
 
     val currentUser: StateFlow<User> = authRepository.currentUser
 
-    /** id → 지출 내역 캐시. 홈은 선택한 날짜/오늘 기준으로 걸러 쓴다. */
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 
     /** 지출이 있거나 "오늘은 안 썼어요"를 누른 날짜들. */
@@ -63,7 +59,6 @@ class HomeViewModel @Inject constructor(
     fun retry() = retryAction?.invoke()
 
     init {
-        // 휴식 도메인엔 상태 조회 API가 없어, 앱 재시작 후에는 챌린지 조회의 rest 블록으로 보정해야 한다.
         viewModelScope.launch { restRepository.syncStatus() }
         loadCurrentChallenge()
     }
@@ -82,7 +77,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** 챌린지 종료 팝업의 '챌린지 종료'. 성공하면 결과 화면으로 보낸다. */
     fun acknowledgeChallengeEnd() {
         viewModelScope.launch {
             challengeRepository.acknowledgeChallengeEnd().onFailure { error ->
@@ -102,7 +96,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** [date]의 지출 목록을 서버와 맞춘다. */
     fun loadDay(date: LocalDate) {
         retryAction = { loadDay(date) }
         _loadState.value = LoadState.Loading

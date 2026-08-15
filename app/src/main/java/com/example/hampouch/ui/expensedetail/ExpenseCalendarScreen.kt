@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +63,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -106,7 +108,6 @@ fun ExpenseCalendarRoute(
     onExpenseClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    /** null이면 진행 중 챌린지 기간을 쓴다. */
     challengePeriod: ExpenseChallengePeriod? = null,
     onExpenseAnalysisClick: () -> Unit,
     onAddExpenseClick: (LocalDate) -> Unit,
@@ -114,7 +115,6 @@ fun ExpenseCalendarRoute(
     viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
     val calendarChallengeState by viewModel.challengeState.collectAsStateWithLifecycle()
-    // 호출자가 기간을 지정하지 않으면 진행 중 챌린지 기간을 쓴다.
     val effectiveChallengePeriod = challengePeriod
         ?: ExpenseDetailMockData.activeChallengePeriod(calendarChallengeState)
     val initialSelectedDate = if (restrictToChallengePeriod) {
@@ -122,10 +122,10 @@ fun ExpenseCalendarRoute(
     } else {
         referenceToday
     }
-    var viewMode by remember { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
-    var selectedDate by remember { mutableStateOf(initialSelectedDate) }
-    var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
-    var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
+    var viewMode by rememberSaveable { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
+    var selectedDate by rememberSaveable { mutableStateOf(initialSelectedDate) }
+    var displayedMonth by rememberSaveable { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
+    var displayedWeekStart by rememberSaveable { mutableStateOf(weekGridStart(referenceToday)) }
 
     val records by viewModel.records.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
@@ -435,7 +435,7 @@ private fun CalendarStatCard(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -654,7 +654,7 @@ private fun SelectedDayHeader(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(total)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
     }
 }

@@ -438,6 +438,8 @@ fun AppNavHost(
         ) {
             val viewModel: ExpenseDetailViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val editExpenseLookup: ExpenseLookupViewModel = hiltViewModel()
+            val editChallengeState by editExpenseLookup.challengeState.collectAsStateWithLifecycle()
             LaunchedEffect(viewModel) {
                 viewModel.events.collect { event ->
                     when (event) {
@@ -450,10 +452,20 @@ fun AppNavHost(
                 }
             }
             uiState.record?.let { current ->
+                val activeChallenge = editChallengeState.activeChallenge
+                val isEditDateSelectable: (LocalDate) -> Boolean = { date ->
+                    if (editChallengeState.hasOngoingChallenge && activeChallenge != null) {
+                        !date.isBefore(activeChallenge.periodStart) && !date.isAfter(activeChallenge.effectivePeriodEnd)
+                    } else {
+                        val lastEndedChallenge = editChallengeState.challenges.lastOrNull()
+                        lastEndedChallenge == null || date.isAfter(lastEndedChallenge.effectivePeriodEnd)
+                    }
+                }
                 ExpenseEditRoute(
                     record = current,
                     onBackClick = { navController.popBackStack() },
-                    onSaved = viewModel::save
+                    onSaved = viewModel::save,
+                    isDateSelectable = isEditDateSelectable
                 )
             }
         }

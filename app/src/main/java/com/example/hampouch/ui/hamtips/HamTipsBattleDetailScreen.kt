@@ -309,9 +309,6 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    // TODO: 서버 모드에서는 POST /api/battles/invitations/{battleCode}(BattleRepository.join)
-                    // 로 교체해야 한다. battleInfo.link에서 battleCode를 안정적으로 파싱할 수 있는 형식이
-                    // community 도메인 쪽에서 확정되면 함께 정리한다.
                     val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
                         authorName = post.authorName,
                         title = post.title,

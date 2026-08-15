@@ -90,16 +90,6 @@ private sealed interface InputCategoryOption {
 private val inputCategoryOptions: List<InputCategoryOption> =
     HomeCategoryCatalog.categories.map { InputCategoryOption.Preset(it) } + InputCategoryOption.CustomInput
 
-private val categoryChipIconRes: Map<String, Int> = mapOf(
-    "delivery" to R.drawable.icon_delivery,
-    "dining_out" to R.drawable.icon_eatout,
-    "convenience" to R.drawable.icon_conv,
-    "cafe" to R.drawable.icon_cafe,
-    "snack" to R.drawable.icon_snack,
-    "mart" to R.drawable.icon_shopping,
-    "drink" to R.drawable.icon_beer,
-    "etc" to R.drawable.icon_etc
-)
 
 private val presetReasons: List<ExpenseReasonCatalog.Reason> = ExpenseReasonCatalog.reasons
 
@@ -546,13 +536,12 @@ private fun ExpenseInputDetailStep(
             color = HPBlack
         )
         Spacer(modifier = Modifier.height(10.dp))
-        // 30dp 아이콘이 가로로 붙는 칩이라 수정 화면 칩보다 한 칸이 더 넓어야 한다.
         ChipGrid(items = inputCategoryOptions, minColumnWidth = 96.dp) { option ->
             when (option) {
                 is InputCategoryOption.Preset -> ChoiceChip(
                     label = stringResource(option.category.labelResId),
-                    icon = categoryChipIconRes[option.category.id]?.let(ChoiceChipIcon::Resource),
-                    iconSize = 30.dp,
+                    icon = ChoiceChipIcon.Resource(option.category.chipIconResId),
+                    iconSize = 20.dp,
                     iconSpacing = 6.dp,
                     selected = !isCustomCategory && categoryId == option.category.id,
                     onClick = { onCategorySelected(option.category.id) }
@@ -564,7 +553,6 @@ private fun ExpenseInputDetailStep(
                     } else {
                         stringResource(R.string.expensedetail_option_custom_input)
                     },
-                    // 사용자가 직접 입력한 카테고리명이라 길이 제한이 없다. 칩이 세로로 길어지지 않도록 2줄에서 말줄임.
                     maxLines = 2,
                     selected = isCustomCategory,
                     onClick = onCustomCategoryClick
@@ -608,7 +596,6 @@ private fun ExpenseInputDetailStep(
                 },
                 selected = isCustomReason,
                 onClick = onCustomReasonClick,
-                // 사용자가 직접 입력한 이유라 길이 제한이 없다. 버튼이 세로로 길어지지 않도록 2줄에서 말줄임.
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )

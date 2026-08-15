@@ -76,7 +76,6 @@ fun DayOfWeekLabel.Companion.of(dayOfWeek: java.time.DayOfWeek): DayOfWeekLabel 
     java.time.DayOfWeek.SUNDAY -> DayOfWeekLabel.SUN
 }
 
-/** 오늘 기록 누락 리마인더를 띄워야 하는지. [dismissedDate]가 오늘이면 이미 닫은 것으로 본다. */
 fun RecordAlarmSettingsState.isMissingReminderDue(
     dismissedDate: java.time.LocalDate?,
     referenceToday: java.time.LocalDate,

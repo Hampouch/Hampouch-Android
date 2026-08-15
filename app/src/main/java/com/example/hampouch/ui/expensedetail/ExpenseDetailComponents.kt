@@ -272,7 +272,6 @@ fun ChoiceChip(
     icon: ChoiceChipIcon? = null,
     iconSize: Dp = 16.dp,
     iconSpacing: Dp = 4.dp,
-    /** 기본값은 제한 없음. 사용자가 입력한 문자열을 라벨로 쓰는 칩에서만 줄 수를 제한한다. */
     maxLines: Int = Int.MAX_VALUE
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
