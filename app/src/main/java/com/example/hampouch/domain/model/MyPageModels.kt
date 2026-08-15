@@ -47,13 +47,13 @@ enum class DayOfWeekLabel(val labelResId: Int) {
 data class NotificationSettingsState(
     val challengeAlarmEnabled: Boolean = true,
     val hamBattleAlarmEnabled: Boolean = true,
-    val communityAlarmEnabled: Boolean = false
+    val communityAlarmEnabled: Boolean = true
 )
 
 data class RecordAlarmSettingsState(
-    val receiveEnabled: Boolean = false,
-    val missingReminderEnabled: Boolean = false,
-    val limitOverEnabled: Boolean = false,
+    val receiveEnabled: Boolean = true,
+    val missingReminderEnabled: Boolean = true,
+    val limitOverEnabled: Boolean = true,
     val dayMode: ReminderDayMode = ReminderDayMode.WEEKDAY,
     val selectedDays: Set<DayOfWeekLabel> = setOf(
         DayOfWeekLabel.MON,
@@ -62,7 +62,7 @@ data class RecordAlarmSettingsState(
         DayOfWeekLabel.THU,
         DayOfWeekLabel.FRI
     ),
-    val hour: Int = 20,
+    val hour: Int = 21,
     val minute: Int = 0
 )
 

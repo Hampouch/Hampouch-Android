@@ -102,6 +102,17 @@ object NotificationMockData {
                 target = NotificationTarget.ChallengeSummary("challenge_previous")
             ),
             NotificationItem(
+                id = "16",
+                category = NotificationCategory.CHALLENGE,
+                section = NotificationSection.TODAY,
+                title = "3일 연속 한도를 넘겼어요",
+                message = "목표를 조정해볼 수 있어요",
+                timeLabel = "방금",
+                isRead = false,
+                createdDate = today,
+                target = NotificationTarget.AmountAdjustment
+            ),
+            NotificationItem(
                 id = "9",
                 category = NotificationCategory.HAM_BATTLE,
                 section = NotificationSection.YESTERDAY,

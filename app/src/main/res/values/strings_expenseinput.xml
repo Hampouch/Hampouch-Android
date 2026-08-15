@@ -27,7 +27,6 @@
     <string name="expenseinput_won_format">%1$s원</string>
 
     <string name="expenseinput_next_button">다음</string>
-    <string name="expenseinput_delete_digit">DEL</string>
 
     <string name="expenseinput_category_label">카테고리</string>
     <string name="expenseinput_category_placeholder">카테고리를 입력해주세요.</string>

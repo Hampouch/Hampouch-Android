@@ -157,6 +157,9 @@ fun AppNavHost(
             is NotificationTarget.ExpenseInput -> {
                 navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
             }
+            is NotificationTarget.AmountAdjustment -> {
+                navController.navigate(Screen.AmountAdjustment.route)
+            }
             is NotificationTarget.ChallengeSummary -> {
                 navController.navigate(Screen.ChallengeSummary.createRoute(target.challengeId))
             }

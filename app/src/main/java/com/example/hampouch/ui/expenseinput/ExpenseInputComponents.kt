@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -238,13 +239,22 @@ private fun NumPadKey(label: String, onClick: () -> Unit, modifier: Modifier = M
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = if (isDelete) stringResource(R.string.expenseinput_delete_digit) else label,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
-            color = if (isDelete) HPText else HPBlack
-        )
+        if (isDelete) {
+            Icon(
+                painter = painterResource(R.drawable.ic_backspace),
+                contentDescription = stringResource(R.string.cd_expenseinput_delete_digit),
+                tint = HPText,
+                modifier = Modifier.size(28.dp)
+            )
+        } else {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                color = HPBlack
+            )
+        }
     }
 }
 

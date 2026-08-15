@@ -18,6 +18,7 @@ enum class NotificationSection(val labelResId: Int) {
 sealed class NotificationTarget {
     data object Home : NotificationTarget()
     data object ExpenseInput : NotificationTarget()
+    data object AmountAdjustment : NotificationTarget()
     data class ChallengeSummary(val challengeId: String) : NotificationTarget()
     data class HamBattleDetail(val challengeId: String) : NotificationTarget()
     data class HamBattleEndedDetail(val challengeId: String) : NotificationTarget()
