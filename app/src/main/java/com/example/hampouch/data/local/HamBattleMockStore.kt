@@ -54,12 +54,12 @@ class HamBattleMockStore @Inject constructor(
 
     private fun recordsForDate(date: LocalDate) = expenseRepository.recordsForDate(date)
 
-    private fun spentOnDate(date: LocalDate): Int = recordsForDate(date).sumOf { it.amount }
+    private fun spentOnDate(date: LocalDate): Long = recordsForDate(date).sumOf { it.amount.toLong() }
 
-    private fun mySpentInRange(start: LocalDate, endInclusive: LocalDate): Int {
-        if (endInclusive.isBefore(start)) return 0
+    private fun mySpentInRange(start: LocalDate, endInclusive: LocalDate): Long {
+        if (endInclusive.isBefore(start)) return 0L
         var date = start
-        var total = 0
+        var total = 0L
         while (!date.isAfter(endInclusive)) {
             total += spentOnDate(date)
             date = date.plusDays(1)
@@ -163,7 +163,7 @@ class HamBattleMockStore @Inject constructor(
         val end = start?.plusDays((challenge.durationDays - 1).toLong())
         val inPeriod = start != null && end != null &&
             !referenceToday.isBefore(start) && !referenceToday.isAfter(end)
-        val todayAmount = if (inPeriod) spentOnDate(referenceToday) else 0
+        val todayAmount = if (inPeriod) spentOnDate(referenceToday) else 0L
         return challenge.participants.map { participant ->
             if (participant.name == ME_NAME) participant.copy(amount = todayAmount) else participant
         }

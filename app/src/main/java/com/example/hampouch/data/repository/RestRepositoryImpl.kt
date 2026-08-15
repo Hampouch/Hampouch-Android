@@ -7,9 +7,10 @@ import com.example.hampouch.data.remote.dto.RestResumeRequest
 import com.example.hampouch.data.remote.dto.RestResumeWhen
 import com.example.hampouch.data.remote.dto.RestStartRequest
 import com.example.hampouch.data.remote.runCatchingNetwork
-import com.example.hampouch.data.remote.toApiException
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.data.remote.unauthorized
 import com.example.hampouch.domain.model.BreakDuration
+import com.example.hampouch.domain.model.MAX_REST_DAYS
 import com.example.hampouch.domain.model.RestState
 import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.repository.RestRepository
@@ -21,8 +22,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "RestRepository"
-
-private const val MAX_REST_DAYS = 3650
 
 @Singleton
 class RestRepositoryImpl @Inject constructor(
@@ -41,7 +40,7 @@ class RestRepositoryImpl @Inject constructor(
             BreakDuration.TWO_WEEKS -> 14
             BreakDuration.CONTINUOUS -> MAX_REST_DAYS
         }
-        is RestPeriod.Custom -> period.days.coerceAtMost(MAX_REST_DAYS)
+        is RestPeriod.Custom -> period.days
     }
 
     override suspend fun syncStatus(): Result<Unit> {
@@ -50,16 +49,14 @@ class RestRepositoryImpl @Inject constructor(
         return runCatchingNetwork(TAG) {
             val response = challengeApi.getCurrentChallenge()
             when {
-                response.isSuccessful -> {
-                    val resumeDate = response.body()?.data?.rest?.plannedResumeDate?.let(LocalDate::parse)
-                    _restState.value = resumeDate?.let { RestState.Resting(it) } ?: RestState.NotResting
-                    Result.success(Unit)
-                }
                 response.code() == 404 -> {
                     _restState.value = RestState.NotResting
                     Result.success(Unit)
                 }
-                else -> Result.failure(response.toApiException("휴식 상태를 확인하지 못했습니다."))
+                else -> response.toApiResult("휴식 상태를 확인하지 못했습니다.").map { data ->
+                    val resumeDate = data.rest?.plannedResumeDate?.let(LocalDate::parse)
+                    _restState.value = resumeDate?.let { RestState.Resting(it) } ?: RestState.NotResting
+                }
             }
         }
     }
@@ -75,15 +72,11 @@ class RestRepositoryImpl @Inject constructor(
             val response = restApi.startRest(
                 RestStartRequest(restDays = resolveRestDays(period))
             )
-            val data = response.body()?.data
-            if (response.isSuccessful && data != null) {
+            response.toApiResult("휴식 시작에 실패했습니다.").map { data ->
                 _restState.value = RestState.Resting(
                     restId = data.restId,
                     plannedResumeDate = LocalDate.parse(data.plannedResumeDate)
                 )
-                Result.success(Unit)
-            } else {
-                Result.failure(response.toApiException("휴식 시작에 실패했습니다."))
             }
         }
     }
@@ -123,24 +116,17 @@ class RestRepositoryImpl @Inject constructor(
             val response = restApi.resumeRest(
                 RestResumeRequest(`when` = whenValue, extendDays = extendDays)
             )
-            val data = response.body()?.data
-            if (response.isSuccessful && data != null) {
+            response.toApiResult("복귀 처리에 실패했습니다.").mapCatching { data ->
                 if (whenValue == RestResumeWhen.NOW) {
                     _restState.value = RestState.NotResting
-                    Result.success(Unit)
                 } else {
                     val resumeDate = (data.plannedResumeDate ?: data.resumeDate)?.let(LocalDate::parse)
-                        ?: return@runCatchingNetwork Result.failure(
-                            IllegalStateException("서버 응답에 복귀 예정일이 없습니다.")
-                        )
+                        ?: error("서버 응답에 복귀 예정일이 없습니다.")
                     _restState.value = RestState.Resting(
                         restId = data.restId,
                         plannedResumeDate = resumeDate
                     )
-                    Result.success(Unit)
                 }
-            } else {
-                Result.failure(response.toApiException("복귀 처리에 실패했습니다."))
             }
         }
     }

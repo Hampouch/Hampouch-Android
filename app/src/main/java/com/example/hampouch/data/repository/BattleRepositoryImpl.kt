@@ -160,12 +160,14 @@ class BattleRepositoryImpl @Inject constructor(
                 totalCount = body.capacity,
                 durationDays = body.durationDays,
                 startDate = parseServerDate(body.startDate, "createBattle.startDate"),
+                cancelled = body.status == "CANCELLED",
                 battleId = body.battleId,
                 battleCode = body.battleCode,
                 serverState = when (body.status) {
                     "READY" -> HamBattleServerState.Ready(joinedCount = 1)
                     "ONGOING" -> HamBattleServerState.Ongoing
                     "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+                    "CANCELLED" -> HamBattleServerState.Cancelled
                     else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: ${body.status}")
                 }
             )
@@ -219,7 +221,8 @@ private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantS
         status = if (disqualified) HamBattleParticipantStatus.DISQUALIFIED else HamBattleParticipantStatus.NORMAL,
         avatarUrl = avatarUrl,
         userId = userId,
-        todayAmount = todayAmount
+        todayAmount = todayAmount,
+        rank = rank
     )
 }
 
@@ -266,7 +269,7 @@ private fun MyBattleSummaryDto.Terminated.toDomain(): HamBattleChallenge = HamBa
     serverState = HamBattleServerState.Terminated(winnerNickname)
 )
 
-private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
+internal fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
     val domainParticipants = participants.map { it.toDomain(myUserId) }
     return HamBattleChallenge(
         id = battleId.toString(),
@@ -277,12 +280,14 @@ private fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
         totalCount = domainParticipants.size,
         durationDays = durationDaysBetween(startDate, endDate),
         startDate = parseServerDate(startDate, "battle.detail.startDate"),
+        cancelled = status == "CANCELLED",
         battleId = battleId,
         battleCode = battleCode,
         serverState = when (status) {
             "READY" -> HamBattleServerState.Ready(domainParticipants.size)
             "ONGOING" -> HamBattleServerState.Ongoing
             "TERMINATED" -> HamBattleServerState.Terminated(winnerName = null)
+            "CANCELLED" -> HamBattleServerState.Cancelled
             else -> throw ApiException("CONTRACT_VIOLATION", "지원하지 않는 battle status입니다: $status")
         },
         penaltyUserName = penaltyTargetNickname

@@ -3,6 +3,7 @@ package com.example.hampouch.ui.takeabreak
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.BreakDuration
+import com.example.hampouch.domain.model.MAX_REST_DAYS
 import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.RestRepository
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val CUSTOM_DAY_INPUT_MAX_LENGTH = 4
 
 sealed interface RestPeriodSelection {
     data class Preset(val duration: BreakDuration) : RestPeriodSelection
@@ -52,7 +55,9 @@ class TakeABreakViewModel @Inject constructor(
 
     fun changeCustomDays(value: String) {
         _uiState.value = _uiState.value.copy(
-            selection = RestPeriodSelection.Custom(value.filter { it.isDigit() }.take(3))
+            selection = RestPeriodSelection.Custom(
+                value.filter { it.isDigit() }.take(CUSTOM_DAY_INPUT_MAX_LENGTH)
+            )
         )
     }
 
@@ -62,10 +67,12 @@ class TakeABreakViewModel @Inject constructor(
         val period = when (val selection = state.selection) {
             is RestPeriodSelection.Preset -> RestPeriod.Preset(selection.duration)
             is RestPeriodSelection.Custom -> selection.input.toIntOrNull()
-                ?.takeIf { it > 0 }
+                ?.takeIf { it in 1..MAX_REST_DAYS }
                 ?.let(RestPeriod::Custom)
                 ?: run {
-                    _uiState.value = state.copy(errorMessage = "휴식 기간을 입력해주세요.")
+                    _uiState.value = state.copy(
+                        errorMessage = "휴식 기간은 1일 이상 ${MAX_REST_DAYS}일 이하로 입력해주세요."
+                    )
                     return
                 }
         }

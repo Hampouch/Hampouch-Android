@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.TipComment
@@ -164,6 +165,14 @@ fun HamTipsBattleDetailScreen(
         viewModel.events.collect { event ->
             when (event) {
                 HamTipsDetailEvent.PostDeleted -> onDeleted()
+                is HamTipsDetailEvent.BattleJoined -> onNavigateToBattleLink(event.battleId.toString())
+                HamTipsDetailEvent.BattleFull -> showRoomFull = true
+                is HamTipsDetailEvent.BattleAlreadyStarted ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                is HamTipsDetailEvent.BattleAlreadyJoined ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                is HamTipsDetailEvent.BattleCancelled ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                 is HamTipsDetailEvent.ShowMessage ->
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }
@@ -309,21 +318,25 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
-                        authorName = post.authorName,
-                        title = post.title,
-                        penalty = battleInfo.penalty,
-                        battleCode = battleInfo.link,
-                        totalCount = battleInfo.capacity
-                    )
-                    if (joinedChallenge == null) {
-                        showRoomFull = true
+                    if (BattleConfig.USE_SERVER_BATTLE) {
+                        viewModel.joinServerBattle(post.id, battleInfo.link)
                     } else {
-                        viewModel.joinBattle(post.id)
-                        if (joinedChallenge.isFull) {
-                            onNavigateToHamBattleTab()
+                        val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
+                            authorName = post.authorName,
+                            title = post.title,
+                            penalty = battleInfo.penalty,
+                            battleCode = battleInfo.link,
+                            totalCount = battleInfo.capacity
+                        )
+                        if (joinedChallenge == null) {
+                            showRoomFull = true
                         } else {
-                            onNavigateToBattleLink(joinedChallenge.id)
+                            viewModel.joinBattle(post.id)
+                            if (joinedChallenge.isFull) {
+                                onNavigateToHamBattleTab()
+                            } else {
+                                onNavigateToBattleLink(joinedChallenge.id)
+                            }
                         }
                     }
                 }

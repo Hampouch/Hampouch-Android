@@ -4,8 +4,9 @@ data class BattleParticipantDto(
     val userId: Long,
     val nickname: String,
     val avatarUrl: String?,
-    val todayAmount: Int?,
-    val totalAmount: Int,
+    val rank: Int? = null,
+    val todayAmount: Long?,
+    val totalAmount: Long,
     val isValid: Boolean? = null
 )
 
