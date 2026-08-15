@@ -10,7 +10,17 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,7 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,6 +91,9 @@ import java.time.YearMonth
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.takeabreak.TakeABreakRoute
 import com.example.hampouch.ui.theme.HPGray2
+import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.ui.theme.HPWhite
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -126,6 +141,8 @@ fun AppNavHost(
     val coroutineScope = rememberCoroutineScope()
     val notificationViewModel: NotificationViewModel = hiltViewModel()
     val startDestination by startDestinationViewModel.startDestination.collectAsStateWithLifecycle()
+    val startupErrorMessage by startDestinationViewModel.startupErrorMessage.collectAsStateWithLifecycle()
+    val isResolving by startDestinationViewModel.isResolving.collectAsStateWithLifecycle()
     val pendingNicknameSession by startDestinationViewModel.pendingNicknameSession.collectAsStateWithLifecycle()
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
@@ -135,7 +152,16 @@ fun AppNavHost(
 
     val resolvedStartDestination = startDestination
     if (resolvedStartDestination == null) {
-        Box(modifier = modifier.fillMaxSize().background(HPGray2))
+        if (startupErrorMessage == null) {
+            Box(modifier = modifier.fillMaxSize().background(HPGray2))
+        } else {
+            StartupConnectionErrorScreen(
+                message = startupErrorMessage.orEmpty(),
+                isRetrying = isResolving,
+                onRetry = startDestinationViewModel::retry,
+                modifier = modifier
+            )
+        }
         return
     }
 
@@ -928,6 +954,50 @@ fun AppNavHost(
                     handleNotificationTarget(item.target)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun StartupConnectionErrorScreen(
+    message: String,
+    isRetrying: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(HPGray2)
+            .padding(horizontal = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "서버에 연결할 수 없습니다",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPText
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onRetry,
+                enabled = !isRetrying,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HPMain,
+                    contentColor = HPWhite
+                )
+            ) {
+                Text(if (isRetrying) "다시 연결하는 중..." else "다시 시도")
+            }
         }
     }
 }

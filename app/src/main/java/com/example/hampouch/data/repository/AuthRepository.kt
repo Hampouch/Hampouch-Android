@@ -15,6 +15,7 @@ import com.example.hampouch.domain.model.SocialLoginOutcome
 import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.data.remote.AuthApi
 import com.example.hampouch.data.remote.toApiException
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.core.network.PendingAuth
 import com.example.hampouch.di.AuthDataStore
 import javax.inject.Inject
@@ -23,12 +24,16 @@ import javax.inject.Singleton
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
+import com.example.hampouch.domain.model.EmailSendResult
 import com.example.hampouch.domain.model.EmailVerificationPurpose
+import com.example.hampouch.domain.model.EmailVerifyResult
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
 import com.example.hampouch.data.remote.dto.LogoutRequest
+import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
@@ -42,13 +47,50 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import retrofit2.Response
 
 private const val TAG = "AuthRepository"
+private const val NICKNAME_ALREADY_EXISTS_CODE = "USER_NICKNAME_ALREADY_EXISTS"
+private const val HTTP_UNAUTHORIZED = 401
+private const val HTTP_FORBIDDEN = 403
+private const val HTTP_CONFLICT = 409
+private const val MOCK_EMAIL_CODE_EXPIRES_IN_SECONDS = 180L
+
+internal fun Response<ApiResponse<NicknameCheckData>>
+    .toNicknameAvailabilityResult(): Result<Boolean> {
+    if (isSuccessful) {
+        return toApiResult("닉네임 확인에 실패했습니다.").map { it.available }
+    }
+
+    val error = toApiException("닉네임 확인에 실패했습니다.")
+    return if (code() == HTTP_CONFLICT && error.code == NICKNAME_ALREADY_EXISTS_CODE) {
+        Result.success(false)
+    } else {
+        Result.failure(error)
+    }
+}
 
 sealed class SessionStatus {
-    data class Valid(val needsNickname: Boolean) : SessionStatus()
+    data class Valid(
+        val needsNickname: Boolean,
+        val nickname: String? = null
+    ) : SessionStatus()
     object Invalid : SessionStatus()
-    object Unknown : SessionStatus()
+    data class Unavailable(val message: String) : SessionStatus()
+}
+
+internal fun Response<ApiResponse<AuthMeData>>.toSessionStatus(): SessionStatus {
+    val data = body()?.data
+    return when {
+        isSuccessful && data != null -> SessionStatus.Valid(
+            needsNickname = data.needsNickname,
+            nickname = data.nickname
+        )
+        code() == HTTP_UNAUTHORIZED || code() == HTTP_FORBIDDEN -> SessionStatus.Invalid
+        else -> SessionStatus.Unavailable(
+            message = toApiException("서버에 연결할 수 없습니다.").message
+        )
+    }
 }
 
 @Singleton
@@ -126,7 +168,13 @@ class AuthRepository @Inject constructor(
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
                 val requiresNickname = body.needsNickname || body.isNewUser
-                val me = if (!requiresNickname) fetchAuthMe(body.tokenType, body.accessToken) else null
+                val me = if (!requiresNickname) {
+                    fetchAuthMe(body.tokenType, body.accessToken).getOrElse {
+                        return Result.failure(it)
+                    }
+                } else {
+                    null
+                }
                 val session = AuthSession(
                     provider = credential.provider,
                     userId = body.user.userId,
@@ -200,7 +248,9 @@ class AuthRepository @Inject constructor(
 
             val body = response.body()?.data
             if (response.isSuccessful && body != null) {
-                val me = fetchAuthMe(body.tokenType, body.accessToken)
+                val me = fetchAuthMe(body.tokenType, body.accessToken).getOrElse {
+                    return Result.failure(it)
+                }
                 val session = AuthSession(
                     provider = AuthProvider.LOCAL,
                     userId = body.user.userId,
@@ -229,7 +279,7 @@ class AuthRepository @Inject constructor(
     suspend fun sendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<Int> {
+    ): Result<EmailSendResult> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockSendEmailVerificationCode(email, purpose)
         }
@@ -238,9 +288,15 @@ class AuthRepository @Inject constructor(
                 EmailSendRequest(email = email, purpose = purpose.name)
             )
 
-            val body = response.body()?.data
+            val envelope = response.body()
+            val body = envelope?.data
             if (response.isSuccessful && body != null) {
-                Result.success(body.expiresInSeconds)
+                Result.success(
+                    EmailSendResult(
+                        expiresInSeconds = body.expiresInSeconds,
+                        message = envelope.message.ifBlank { "인증번호가 발송되었습니다." }
+                    )
+                )
             } else {
                 Result.failure(response.toApiException("인증번호 발송에 실패했습니다."))
             }
@@ -256,7 +312,7 @@ class AuthRepository @Inject constructor(
         email: String,
         code: String,
         purpose: EmailVerificationPurpose
-    ): Result<Unit> {
+    ): Result<EmailVerifyResult> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockVerifyEmailCode(email, code, purpose)
         }
@@ -265,9 +321,16 @@ class AuthRepository @Inject constructor(
                 EmailVerifyRequest(email = email, code = code, purpose = purpose.name)
             )
 
-            val body = response.body()?.data
+            val envelope = response.body()
+            val body = envelope?.data
             if (response.isSuccessful && body != null) {
-                if (body.verified) Result.success(Unit) else {
+                if (body.verified) {
+                    Result.success(
+                        EmailVerifyResult(
+                            message = envelope.message.ifBlank { "이메일 인증이 완료되었습니다." }
+                        )
+                    )
+                } else {
                     Result.failure(ApiException("INVALID_CODE", "인증번호를 다시 확인해주세요."))
                 }
             } else {
@@ -287,13 +350,7 @@ class AuthRepository @Inject constructor(
         }
         return try {
             val response = apiService.checkNickname(nickname)
-
-            val body = response.body()?.data
-            if (response.isSuccessful && body != null) {
-                Result.success(body.available)
-            } else {
-                Result.failure(response.toApiException("닉네임 확인에 실패했습니다."))
-            }
+            response.toNicknameAvailabilityResult()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -354,15 +411,15 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private suspend fun fetchAuthMe(tokenType: String, accessToken: String): AuthMeData? {
+    private suspend fun fetchAuthMe(tokenType: String, accessToken: String): Result<AuthMeData> {
         return try {
             val response = apiService.getMe(PendingAuth("$tokenType $accessToken"))
-            if (response.isSuccessful) response.body()?.data else null
+            response.toApiResult("사용자 정보를 불러오지 못했습니다.")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "인증/계정 상태 조회 네트워크 오류", e)
-            null
+            Result.failure(ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요."))
         }
     }
 
@@ -374,22 +431,20 @@ class AuthRepository @Inject constructor(
             val response = apiService.getMe(
                 pendingAuth = PendingAuth("${session.tokenType} ${session.accessToken}")
             )
-            val data = response.body()?.data
-            when {
-                response.isSuccessful && data != null -> {
-                    if (data.nickname != session.nickname) {
-                        saveSession(session.copy(nickname = data.nickname))
+            when (val status = response.toSessionStatus()) {
+                is SessionStatus.Valid -> {
+                    if (status.nickname != session.nickname) {
+                        saveSession(session.copy(nickname = status.nickname))
                     }
-                    SessionStatus.Valid(needsNickname = data.needsNickname)
+                    status
                 }
-                response.code() == 401 || response.code() == 403 -> SessionStatus.Invalid
-                else -> SessionStatus.Unknown
+                else -> status
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "세션 상태 확인 네트워크 오류", e)
-            SessionStatus.Unknown
+            SessionStatus.Unavailable(message = "인터넷 연결을 확인해주세요.")
         }
     }
 
@@ -554,19 +609,24 @@ class AuthRepository @Inject constructor(
     private fun mockSendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<Int> {
+    ): Result<EmailSendResult> {
         checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
-        return Result.success(180)
+        return Result.success(
+            EmailSendResult(
+                expiresInSeconds = MOCK_EMAIL_CODE_EXPIRES_IN_SECONDS,
+                message = "인증번호가 발송되었습니다."
+            )
+        )
     }
 
     private fun mockVerifyEmailCode(
         email: String,
         code: String,
         purpose: EmailVerificationPurpose
-    ): Result<Unit> {
+    ): Result<EmailVerifyResult> {
         checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
         return if (code == "123456") {
-            Result.success(Unit)
+            Result.success(EmailVerifyResult(message = "이메일 인증이 완료되었습니다."))
         } else {
             Result.failure(ApiException(code = "INVALID_CODE", message = "인증번호를 다시 확인해주세요. (목데이터 모드: 123456)"))
         }
