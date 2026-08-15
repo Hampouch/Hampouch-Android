@@ -18,10 +18,10 @@ import com.example.hampouch.domain.model.HomeChallenge
 import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.HomeWarning
+import com.example.hampouch.domain.model.HomeWarningType
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.MiniChallengeDuration
 import com.example.hampouch.domain.model.miniChallengeDuration
-import com.example.hampouch.domain.model.WarningVariant
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
@@ -110,18 +110,14 @@ object HomeMockData {
         ),
         miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
         warnings = listOf(
-            HomeWarning(
-                id = "w1",
-                variant = WarningVariant.SUGGESTION,
-                title = "목표 금액이 너무 힘든가요?",
-                message = "3일 연속 한도 초과 - 금액을 조정해보세요"
-            ),
+            HomeWarning(id = "w1", type = HomeWarningType.LOW_DAILY_BUDGET),
             HomeWarning(
                 id = "w2",
-                variant = WarningVariant.ALERT,
-                title = "배달 주의 구간이에요 !",
-                message = "현재 배달비만 18,000원 소비했어요"
-            )
+                type = HomeWarningType.CATEGORY_OVERSPEND,
+                categoryId = "delivery",
+                categorySpentAmount = 18_000
+            ),
+            HomeWarning(id = "w3", type = HomeWarningType.MISSED_YESTERDAY_RECORD)
         )
     )
 

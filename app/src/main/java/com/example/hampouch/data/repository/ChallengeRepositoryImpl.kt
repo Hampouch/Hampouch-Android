@@ -193,7 +193,8 @@ class ChallengeRepositoryImpl @Inject constructor(
                 savedAmount = data.progress?.savedAmountSoFar ?: 0,
                 streakDays = data.progress?.currentStreak ?: 0,
                 editCount = 0,
-                remoteStatus = summary.status
+                remoteStatus = summary.status,
+                warningCodes = data.warningCards.orEmpty().mapNotNull { it.type }
             )
         )
     }

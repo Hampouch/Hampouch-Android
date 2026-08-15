@@ -34,6 +34,20 @@
     <string name="cd_warning_icon">주의</string>
     <string name="category_etc">기타</string>
 
+    <string name="home_warning_low_daily_budget_title">오늘 예산이 얼마 남지 않았어요</string>
+    <string name="home_warning_low_daily_budget_message">동네 가성비 식당을 찾아볼까요?</string>
+    <string name="home_warning_challenge_budget_exceeded_title">이번 챌린지 식비 예산을 초과했어요</string>
+    <string name="home_warning_challenge_budget_exceeded_message">남은 기간동안은 냉장고 파먹기에 도전해봐요.</string>
+    <string name="home_warning_category_overspend_title_format">%1$s 주의 구간이에요 !</string>
+    <string name="home_warning_category_overspend_message_format">현재 %1$s에 %2$s원 소비했어요</string>
+    <string name="home_warning_reason_overspend_title_format">%1$s 지출이 많은 주간이에요</string>
+    <string name="home_warning_reason_overspend_message">커뮤니티에서 팁을 얻어보세요.</string>
+    <string name="home_warning_large_single_expense_title">한 번에 큰 지출이 발생했어요</string>
+    <string name="home_warning_large_single_expense_message">오늘 하루 식비가 목표 금액의 n배를 넘었어요.</string>
+    <string name="home_warning_missed_yesterday_title">혹시 깜빡한 식비 지출이 있나요?</string>
+    <string name="home_warning_missed_yesterday_message">어제 기록이 비어있어요 - 간단히 입력해봐요</string>
+    <string name="cd_warning_alert_icon">경고</string>
+
     <string name="home_missing_expense_title">오늘 식비, 입력하셨나요?</string>
     <string name="home_missing_expense_subtitle_line1">아직 오늘 기록이 없어요.</string>
     <string name="home_missing_expense_subtitle_line2">잊기 전에 남겨볼까요?</string>

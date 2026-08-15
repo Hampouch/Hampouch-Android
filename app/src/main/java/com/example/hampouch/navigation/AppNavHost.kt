@@ -183,6 +183,9 @@ fun AppNavHost(
             is NotificationTarget.ExpenseInput -> {
                 navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
             }
+            is NotificationTarget.AmountAdjustment -> {
+                navController.navigate(Screen.AmountAdjustment.route)
+            }
             is NotificationTarget.ChallengeSummary -> {
                 navController.navigate(Screen.ChallengeSummary.createRoute(target.challengeId))
             }
@@ -416,6 +419,9 @@ fun AppNavHost(
                 },
                 onNavigateToAmountAdjustment = {
                     navController.navigate(Screen.AmountAdjustment.route)
+                },
+                onNavigateToYesterdayExpenseInput = {
+                    navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now().minusDays(1)))
                 },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {

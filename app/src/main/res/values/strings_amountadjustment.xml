@@ -13,9 +13,9 @@
     <string name="amountadjustment_over_amount_suffix">" 초과"</string>
 
     <string name="amountadjustment_goal_amount_note">이미 지난 기록은 그대로 유지되고, 남은 기간에만 적용돼요.</string>
-    <string name="amountadjustment_option_keep">현재 유지</string>
     <string name="amountadjustment_option_relax_10">10% 여유</string>
     <string name="amountadjustment_option_relax_20">20% 여유</string>
+    <string name="amountadjustment_option_relax_30">30% 여유</string>
     <string name="amountadjustment_custom_input_placeholder">직접 입력</string>
     <string name="amountadjustment_won_suffix">원</string>
 

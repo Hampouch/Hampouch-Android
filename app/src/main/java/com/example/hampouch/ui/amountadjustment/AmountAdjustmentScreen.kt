@@ -80,9 +80,9 @@ import kotlinx.coroutines.launch
 private val AmountAdjustmentPeriodFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
 private enum class AmountAdjustmentOption(val labelResId: Int, val multiplier: Double) {
-    KEEP(R.string.amountadjustment_option_keep, 1.0),
     RELAX_10(R.string.amountadjustment_option_relax_10, 1.1),
-    RELAX_20(R.string.amountadjustment_option_relax_20, 1.2)
+    RELAX_20(R.string.amountadjustment_option_relax_20, 1.2),
+    RELAX_30(R.string.amountadjustment_option_relax_30, 1.3)
 }
 
 private fun AmountAdjustmentOption.amountFor(targetAmount: Int): Int =
@@ -99,7 +99,7 @@ fun AmountAdjustmentRoute(
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
-        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.KEEP)
+        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.RELAX_20)
     }
     var customAmount by remember(challenge) { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -118,7 +118,7 @@ fun AmountAdjustmentRoute(
         }
     }
 
-    val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
+    val canEdit = editCount < challenge.maxEditCount
     val selectedAmount = customAmount
         ?: selectedOption?.amountFor(challenge.targetAmount)
         ?: challenge.targetAmount
