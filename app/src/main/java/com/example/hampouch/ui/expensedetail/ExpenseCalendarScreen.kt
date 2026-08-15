@@ -79,10 +79,12 @@ private fun expenseInputEnabled(
     period: ExpenseChallengePeriod?,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    restrictToChallengePeriod: Boolean
+    restrictToChallengePeriod: Boolean,
+    isResting: Boolean
 ): Boolean {
     if (period == null) return false
     if (restrictToChallengePeriod) return period.isActiveOn(selectedDate)
+    if (isResting) return !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
     return !referenceToday.isBefore(period.startDate) && !referenceToday.isAfter(period.endDate) &&
         !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
 }
@@ -115,6 +117,7 @@ fun ExpenseCalendarRoute(
     viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
     val calendarChallengeState by viewModel.challengeState.collectAsStateWithLifecycle()
+    val restState by viewModel.restState.collectAsStateWithLifecycle()
     val effectiveChallengePeriod = challengePeriod
         ?: ExpenseDetailMockData.activeChallengePeriod(calendarChallengeState)
     val initialSelectedDate = if (restrictToChallengePeriod) {
@@ -137,8 +140,15 @@ fun ExpenseCalendarRoute(
     val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
     val summaryByDate = activeSummary?.dailyBreakdown?.associate { it.date to it.amount }.orEmpty()
     val dayRecords = records.values.filter { it.date == selectedDate }.sortedBy { it.id }
-    val inputEnabled = expenseInputEnabled(effectiveChallengePeriod, referenceToday, selectedDate, restrictToChallengePeriod)
-    val challengeEnded = effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
+    val inputEnabled = expenseInputEnabled(
+        effectiveChallengePeriod,
+        referenceToday,
+        selectedDate,
+        restrictToChallengePeriod,
+        restState.isResting
+    )
+    val challengeEnded = !restState.isResting &&
+        effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
     val editableRange = effectiveChallengePeriod.takeIf { restrictToChallengePeriod }
 
     val monthlyTotal = monthSummary?.totalAmount ?: 0
@@ -661,7 +671,7 @@ private fun SelectedDayHeader(
 
 @Composable
 private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
+    val categoryLabel = resolveCategoryLabelOrNull(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
         modifier = modifier
@@ -688,21 +698,25 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                record.expenseName ?: categoryLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPBlack,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                categoryLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = HPText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (record.expenseName != null) {
+                Text(
+                    record.expenseName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HPBlack,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (categoryLabel != null) {
+                Text(
+                    categoryLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         ReasonTagAndAmountColumn(
             reasonTag = reasonLabel,

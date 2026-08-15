@@ -12,6 +12,8 @@ val HPSub3 = Color(0xFFF7EFD8)
 
 val HPSub4 = Color(0xFFF2E7C9)
 
+val HPMiniChallengeChecked = Color(0xFFE4D8CE)
+
 val HPSub = Color(0xFFA65633)
 
 val HPWhite = Color(0xFFFFFFFF)
