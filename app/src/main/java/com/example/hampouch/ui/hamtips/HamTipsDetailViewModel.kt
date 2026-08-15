@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipReply
+import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.domain.repository.BattleRepository
 import com.example.hampouch.domain.repository.HamTipsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -17,12 +19,23 @@ import javax.inject.Inject
 sealed interface HamTipsDetailEvent {
     data object PostDeleted : HamTipsDetailEvent
 
+    data class BattleJoined(val battleId: Long) : HamTipsDetailEvent
+
+    data object BattleFull : HamTipsDetailEvent
+
+    data class BattleAlreadyStarted(val message: String) : HamTipsDetailEvent
+
+    data class BattleAlreadyJoined(val message: String) : HamTipsDetailEvent
+
+    data class BattleCancelled(val message: String) : HamTipsDetailEvent
+
     data class ShowMessage(val message: String) : HamTipsDetailEvent
 }
 
 @HiltViewModel
 class HamTipsDetailViewModel @Inject constructor(
-    private val hamTipsRepository: HamTipsRepository
+    private val hamTipsRepository: HamTipsRepository,
+    private val battleRepository: BattleRepository
 ) : ViewModel() {
 
     val posts: StateFlow<List<TipPost>> = hamTipsRepository.posts
@@ -76,6 +89,27 @@ class HamTipsDetailViewModel @Inject constructor(
 
     fun joinBattle(postId: String) = hamTipsRepository.joinBattle(postId)
 
+    fun joinServerBattle(postId: String, battleUrl: String) {
+        viewModelScope.launch {
+            val battleCode = extractBattleCode(battleUrl)
+            if (battleCode == null) {
+                notify(
+                    ApiException("COMMUNITY_INVALID_BATTLE_URL", "올바르지 않은 햄배틀 URL입니다."),
+                    "올바르지 않은 햄배틀 URL입니다."
+                )
+                return@launch
+            }
+            battleRepository.join(battleCode)
+                .onSuccess { battleId ->
+                    hamTipsRepository.joinBattle(postId)
+                    _events.send(HamTipsDetailEvent.BattleJoined(battleId))
+                }
+                .onFailure { error ->
+                    _events.send(error.toBattleJoinEvent())
+                }
+        }
+    }
+
     private fun run(fallback: String, block: suspend () -> Result<Unit>) {
         viewModelScope.launch {
             block().onFailure { notify(it, fallback) }
@@ -84,5 +118,23 @@ class HamTipsDetailViewModel @Inject constructor(
 
     private suspend fun notify(error: Throwable, fallback: String) {
         _events.send(HamTipsDetailEvent.ShowMessage(error.toUserMessage(fallback)))
+    }
+}
+
+internal fun extractBattleCode(battleUrl: String): String? {
+    val normalized = battleUrl.trim().substringBefore('#').substringBefore('?').trimEnd('/')
+    if (normalized.isBlank()) return null
+    val battleCode = normalized.substringAfterLast('/')
+    return battleCode.takeIf { it.isNotBlank() && it != "invite" }
+}
+
+internal fun Throwable.toBattleJoinEvent(): HamTipsDetailEvent {
+    val message = toUserMessage("햄배틀 참가에 실패했습니다.")
+    return when ((this as? ApiException)?.code) {
+        "BATTLE_FULL" -> HamTipsDetailEvent.BattleFull
+        "BATTLE_ALREADY_STARTED" -> HamTipsDetailEvent.BattleAlreadyStarted(message)
+        "ALREADY_JOINED" -> HamTipsDetailEvent.BattleAlreadyJoined(message)
+        "BATTLE_CANCELLED" -> HamTipsDetailEvent.BattleCancelled(message)
+        else -> HamTipsDetailEvent.ShowMessage(message)
     }
 }

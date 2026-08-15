@@ -72,7 +72,7 @@ fun HamBattleChallengesResultScreen(
     val disqualified = remember(sorted) {
         sorted.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
     }
-    val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
+    val lastPlaceName = challenge.penaltyUserName ?: ranked.lastOrNull()?.name.orEmpty()
 
     Scaffold(
         topBar = { OneVsOneTopBar(title = challenge.title, onBackClick = onBackClick) },
@@ -168,7 +168,7 @@ private fun RankingCard(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ranked.forEachIndexed { index, participant ->
                 RankRow(
-                    rank = index + 1,
+                    rank = participant.rank ?: index + 1,
                     participant = participant,
                     highlighted = participant.name == "나"
                 )

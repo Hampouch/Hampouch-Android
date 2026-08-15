@@ -20,6 +20,8 @@ import com.example.hampouch.data.remote.dto.AddRecommendedMiniChallengeRequest
 import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.CustomMiniChallengeBody
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
+import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
+import com.example.hampouch.data.remote.dto.MiniChallengeDayData
 import com.example.hampouch.data.remote.dto.MiniChallengeItemDto
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeDto
 import java.time.LocalDate
@@ -32,6 +34,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import retrofit2.Response
 
 private const val TAG = "MiniChallengeRepository"
@@ -48,6 +52,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
     private val _state = MutableStateFlow(seedState())
     override val state: StateFlow<MiniChallengeState> = _state.asStateFlow()
+    private val serverCreationMutex = Mutex()
 
     private fun challengesFor(date: LocalDate) = _state.value.challengesFor(date)
 
@@ -57,6 +62,18 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
     private fun setSummaryForDate(date: LocalDate, summary: MiniChallengeDaySummary) {
         _state.update { it.copy(summaryByDate = it.summaryByDate + (date to summary)) }
+    }
+
+    private fun setDayResponse(date: LocalDate, body: MiniChallengeDayData) {
+        setChallengesForDate(date, body.items.map { it.toDomain() })
+        setSummaryForDate(
+            date,
+            MiniChallengeDaySummary(
+                checkedCount = body.summary.checkedCount,
+                totalCount = body.summary.totalCount,
+                streakDays = body.summary.streakDays
+            )
+        )
     }
 
     private fun replaceRecommendedChallenges(items: List<RecommendedMiniChallenge>) {
@@ -82,7 +99,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
     /** 중복 이름이면 추가하지 않고 false. */
     private fun addLocal(date: LocalDate, name: String, duration: MiniChallengeDuration): Boolean {
-        val trimmedName = name.trim().ifBlank { "이름 없는 챌린지" }
+        val trimmedName = validMiniChallengeNameOrNull(name) ?: return false
         if (_state.value.isNameTaken(date, trimmedName)) return false
         setChallengesForDate(
             date,
@@ -114,15 +131,7 @@ class MiniChallengeRepositoryImpl @Inject constructor(
             requireAuthentication()
             val response = apiService.getMiniChallenges(date.toString())
             val body = requireBody(response, "미니 챌린지 조회에 실패했습니다.")
-            setChallengesForDate(date, body.items.map { it.toDomain() })
-            setSummaryForDate(
-                date,
-                MiniChallengeDaySummary(
-                    checkedCount = body.summary.checkedCount,
-                    totalCount = body.summary.totalCount,
-                    streakDays = body.summary.streakDays
-                )
-            )
+            setDayResponse(date, body)
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 조회") }
     }
 
@@ -139,11 +148,10 @@ class MiniChallengeRepositoryImpl @Inject constructor(
     /**
      * 추천 카탈로그의 [recommended]를 내 미니 챌린지로 추가한다.
      *
-     * 서버(/api/mini-challenges) 요청에는 날짜 필드가 없어 항상 서버의 오늘 날짜부터 시작하는 챌린지가
-     * 생긴다 — [date](화면에서 보고 있던 탭)는 실제 생성 결과와 무관하다. 그래서 목데이터 모드에서만 [date]
-     * 그대로, 서버 모드에서는 항상 오늘 날짜를 반환한다. 성공 시 반환되는 날짜가 실제로 새 항목이 추가된
-     * 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
-     * 중복 이름 등으로 추가되지 않았으면 null.
+     * 서버(/api/mini-challenges) 요청에는 날짜 필드가 없으므로 [date](화면에서 보고 있던 탭)는 실제 생성
+     * 결과와 무관하다. 서버 모드에서는 생성 응답의 startDate를 반환한다. 성공 시 반환되는 날짜가 실제로
+     * 새 항목이 추가된 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
+     * 중복 이름 등으로 추가되지 않으면 실패 [Result]를 반환한다.
      */
     override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
@@ -152,48 +160,72 @@ class MiniChallengeRepositoryImpl @Inject constructor(
                 ApiException(code = "MINI_DUPLICATE", message = "이미 추가된 미니 챌린지입니다.")
             )
         }
-        return runCatching {
-            requireAuthentication()
-            val recommendedId = recommended.id.toLongOrNull()
-                ?: throw ApiException(code = "MINI_RECOMMENDED_NOT_FOUND", message = "추천 미니 챌린지를 찾을 수 없습니다.")
-            val response = apiService.addRecommendedMiniChallenge(
-                AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
-            )
-            requireBody(response, "미니 챌린지 추가에 실패했습니다.")
-            removeRecommended(recommended.id)
-            val today = LocalDate.now()
-            loadChallenges(today).getOrThrow()
-            today
+        return serverCreationMutex.withLock {
+            runCatching {
+                requireAuthentication()
+                ensureServerCreationNameAvailable(recommended.name)
+                val recommendedId = recommended.id.toLongOrNull()
+                    ?: throw ApiException(
+                        code = "MINI_RECOMMENDED_NOT_FOUND",
+                        message = "추천 미니 챌린지를 찾을 수 없습니다."
+                    )
+                val response = apiService.addRecommendedMiniChallenge(
+                    AddRecommendedMiniChallengeRequest(recommendedId = recommendedId)
+                )
+                val created = requireBody(response, "미니 챌린지 추가에 실패했습니다.")
+                val createdDate = created.createdStartDate()
+                loadChallenges(createdDate).getOrThrow()
+                createdDate
+            }
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(추천)") }
     }
 
     /**
-     * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게, 서버 모드에서는 항상 오늘 날짜부터
-     * 생성되므로 [date]가 아니라 실제 반영된 날짜를 반환한다. 중복 이름 등으로 추가되지 않았으면 null.
+     * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게 서버 생성 응답의 startDate를 반환한다.
      */
     override suspend fun addCustom(
         date: LocalDate,
         name: String,
         duration: MiniChallengeDuration
     ): Result<LocalDate> {
+        val trimmedName = validMiniChallengeNameOrNull(name)
+            ?: return Result.failure(
+                ApiException(code = "MINI_NAME_REQUIRED", message = "미니 챌린지 이름을 입력해주세요.")
+            )
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
-            val added = addLocal(date, name, duration)
+            val added = addLocal(date, trimmedName, duration)
             return if (added) Result.success(date) else Result.failure(
                 ApiException(code = "MINI_DUPLICATE", message = "이미 추가된 미니 챌린지입니다.")
             )
         }
-        return runCatching {
-            requireAuthentication()
-            val response = apiService.addCustomMiniChallenge(
-                AddCustomMiniChallengeRequest(
-                    custom = CustomMiniChallengeBody(title = name.trim(), durationDays = duration.serverDays)
+        return serverCreationMutex.withLock {
+            runCatching {
+                requireAuthentication()
+                ensureServerCreationNameAvailable(trimmedName)
+                val response = apiService.addCustomMiniChallenge(
+                    AddCustomMiniChallengeRequest(
+                        custom = CustomMiniChallengeBody(
+                            title = trimmedName,
+                            durationDays = duration.serverDays
+                        )
+                    )
                 )
-            )
-            requireBody(response, "미니 챌린지 추가에 실패했습니다.")
-            val today = LocalDate.now()
-            loadChallenges(today).getOrThrow()
-            today
+                val created = requireBody(response, "미니 챌린지 추가에 실패했습니다.")
+                val createdDate = created.createdStartDate()
+                loadChallenges(createdDate).getOrThrow()
+                createdDate
+            }
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(커스텀)") }
+    }
+
+    private suspend fun ensureServerCreationNameAvailable(name: String) {
+        val response = apiService.getMiniChallenges()
+        val body = requireBody(response, "오늘의 미니 챌린지 조회에 실패했습니다.")
+        val serverCreationDate = LocalDate.parse(body.date)
+        setDayResponse(serverCreationDate, body)
+        if (_state.value.isNameTaken(serverCreationDate, name)) {
+            throw ApiException(code = "MINI_DUPLICATE", message = "이미 추가된 미니 챌린지입니다.")
+        }
     }
 
     override suspend fun remove(date: LocalDate, id: String): Result<Unit> {
@@ -246,6 +278,9 @@ class MiniChallengeRepositoryImpl @Inject constructor(
 
 }
 
+internal fun validMiniChallengeNameOrNull(name: String): String? =
+    name.trim().takeIf { it.isNotEmpty() }
+
 private fun MiniChallengeItemDto.toDomain(): MiniChallengeEntry = MiniChallengeEntry(
     id = miniChallengeId.toString(),
     name = title,
@@ -259,3 +294,5 @@ private fun RecommendedMiniChallengeDto.toDomain(): RecommendedMiniChallenge = R
     duration = miniChallengeDuration(durationDays),
     name = title
 )
+
+internal fun MiniChallengeCreatedData.createdStartDate(): LocalDate = LocalDate.parse(startDate)

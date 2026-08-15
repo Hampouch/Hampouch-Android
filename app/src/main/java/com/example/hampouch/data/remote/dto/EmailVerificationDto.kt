@@ -6,7 +6,7 @@ data class EmailSendRequest(
 )
 
 data class EmailSendData(
-    val expiresInSeconds: Int
+    val expiresInSeconds: Long
 )
 
 data class EmailVerifyRequest(

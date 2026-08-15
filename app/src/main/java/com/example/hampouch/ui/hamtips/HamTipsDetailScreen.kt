@@ -446,6 +446,11 @@ fun HamTipsDetailScreen(
         viewModel.events.collect { event ->
             when (event) {
                 HamTipsDetailEvent.PostDeleted -> onDeleted()
+                is HamTipsDetailEvent.BattleJoined,
+                HamTipsDetailEvent.BattleFull,
+                is HamTipsDetailEvent.BattleAlreadyStarted,
+                is HamTipsDetailEvent.BattleAlreadyJoined,
+                is HamTipsDetailEvent.BattleCancelled -> Unit
                 is HamTipsDetailEvent.ShowMessage ->
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }

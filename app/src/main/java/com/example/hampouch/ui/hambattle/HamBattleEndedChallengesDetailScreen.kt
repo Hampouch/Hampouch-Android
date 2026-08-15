@@ -103,7 +103,7 @@ fun HamBattleEndedChallengesDetailScreen(
         sorted.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
     }
     val winner = ranked.firstOrNull()
-    val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
+    val lastPlaceName = challenge.penaltyUserName ?: ranked.lastOrNull()?.name.orEmpty()
 
     var showShareOptionsDialog by remember { mutableStateOf(false) }
 
@@ -164,7 +164,7 @@ fun HamBattleEndedChallengesDetailScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             ranked.forEachIndexed { index, participant ->
                                 EndedRankRow(
-                                    rank = index + 1,
+                                    rank = participant.rank ?: index + 1,
                                     participant = participant,
                                     isWinner = index == 0,
                                     isMe = participant.name == "나",

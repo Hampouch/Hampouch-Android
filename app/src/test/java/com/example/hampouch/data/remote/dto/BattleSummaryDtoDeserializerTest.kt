@@ -21,9 +21,18 @@ class BattleSummaryDtoDeserializerTest {
 
     @Test
     fun `ONGOING fixture를 상태 전용 DTO로 변환한다`() {
-        val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"ONGOING","participants":[]}""")
+        val dto = parse(
+            """
+            {"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12",
+            "endDate":"2026-08-18","status":"ONGOING","participants":[{"userId":1,"nickname":"n",
+            "avatarUrl":null,"todayAmount":3000000000,"totalAmount":4000000000}]}
+            """.trimIndent()
+        )
 
         assertTrue(dto is MyBattleSummaryDto.Ongoing)
+        val participant = (dto as MyBattleSummaryDto.Ongoing).participants.single()
+        assertEquals(3_000_000_000L, participant.todayAmount)
+        assertEquals(4_000_000_000L, participant.totalAmount)
     }
 
     @Test

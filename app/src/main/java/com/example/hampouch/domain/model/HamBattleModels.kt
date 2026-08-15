@@ -24,11 +24,12 @@ enum class HamBattleParticipantStatus {
 
 data class HamBattleParticipantSpending(
     val name: String,
-    val amount: Int,
+    val amount: Long,
     val status: HamBattleParticipantStatus = HamBattleParticipantStatus.NORMAL,
     val avatarUrl: String? = null,
     val userId: Long? = null,
-    val todayAmount: Int? = null
+    val todayAmount: Long? = null,
+    val rank: Int? = null
 )
 
 enum class HamBattleStatus {
@@ -39,6 +40,7 @@ sealed interface HamBattleServerState {
     data class Ready(val joinedCount: Int) : HamBattleServerState
     data object Ongoing : HamBattleServerState
     data class Terminated(val winnerName: String?) : HamBattleServerState
+    data object Cancelled : HamBattleServerState
 }
 
 private val HamBattlePeriodDateFormatter = DateTimeFormatter.ofPattern("yy.MM.dd")
@@ -80,6 +82,7 @@ data class HamBattleChallenge(
             is HamBattleServerState.Ready -> return HamBattleStatus.WAITING
             HamBattleServerState.Ongoing -> return HamBattleStatus.ACTIVE
             is HamBattleServerState.Terminated -> return HamBattleStatus.ENDED
+            HamBattleServerState.Cancelled -> return HamBattleStatus.ENDED
             null -> Unit
         }
         if (!isFull) return HamBattleStatus.WAITING

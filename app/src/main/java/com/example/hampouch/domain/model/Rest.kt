@@ -2,6 +2,8 @@ package com.example.hampouch.domain.model
 
 import java.time.LocalDate
 
+const val MAX_REST_DAYS = 3650
+
 enum class BreakDuration {
     THREE_DAYS,
     ONE_WEEK,
@@ -14,7 +16,9 @@ sealed interface RestPeriod {
 
     data class Custom(val days: Int) : RestPeriod {
         init {
-            require(days > 0) { "직접 입력한 휴식 기간은 1일 이상이어야 합니다." }
+            require(days in 1..MAX_REST_DAYS) {
+                "직접 입력한 휴식 기간은 1일 이상 ${MAX_REST_DAYS}일 이하여야 합니다."
+            }
         }
     }
 }

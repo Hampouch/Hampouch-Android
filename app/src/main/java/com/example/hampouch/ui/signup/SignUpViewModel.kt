@@ -110,14 +110,14 @@ class SignUpViewModel @Inject constructor(
         update { copy(isSendingEmailCode = true) }
         viewModelScope.launch {
             authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.SIGNUP)
-                .onSuccess { expiresInSeconds ->
+                .onSuccess { result ->
                     update {
                         copy(
-                            emailSendMessage = "인증번호가 발송되었습니다.",
+                            emailSendMessage = result.message,
                             hasSentEmailCode = true,
                             emailCode = "",
                             emailCodeExpiresAtMillis =
-                                System.currentTimeMillis() + expiresInSeconds * 1000L
+                                System.currentTimeMillis() + result.expiresInSeconds * 1000L
                         )
                     }
                 }
@@ -133,22 +133,17 @@ class SignUpViewModel @Inject constructor(
         update { copy(isVerifyingEmailCode = true) }
         viewModelScope.launch {
             authRepository.verifyEmailCode(state.email, state.emailCode, EmailVerificationPurpose.SIGNUP)
-                .onSuccess {
+                .onSuccess { result ->
                     update {
                         copy(
                             isEmailVerified = true,
                             emailCodeExpiresAtMillis = null,
-                            emailVerifyMessage = "이메일 인증이 완료되었습니다."
+                            emailVerifyMessage = result.message
                         )
                     }
                 }
                 .onFailure { error ->
-                    update {
-                        copy(
-                            isEmailVerified = false,
-                            emailVerifyMessage = error.toUserMessage("인증번호를 다시 확인해주세요.")
-                        )
-                    }
+                    update { emailVerificationFailed(error) }
                 }
             update { copy(isVerifyingEmailCode = false) }
         }

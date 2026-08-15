@@ -206,14 +206,18 @@ fun CheckButton(onClick: () -> Unit, enabled: Boolean = true) {
         enabled = enabled,
         modifier = Modifier.height(48.dp),
         shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = HPWhite),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = HPWhite,
+            contentColor = HPBlack,
+            disabledContainerColor = HPWhite,
+            disabledContentColor = HPGray5
+        ),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         Text(
             "확인",
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPBlack
+            fontWeight = FontWeight.Bold
         )
     }
 }

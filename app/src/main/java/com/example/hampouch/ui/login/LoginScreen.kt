@@ -273,7 +273,10 @@ private fun SocialLoginButton(
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = HPWhite)
+        colors = ButtonDefaults.buttonColors(
+            containerColor = HPWhite,
+            contentColor = HPBlack
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -286,7 +289,7 @@ private fun SocialLoginButton(
                 modifier = Modifier.size(35.dp)
             )
             Spacer(modifier = Modifier.size(13.dp))
-            Text(label, color = HPBlack, style = MaterialTheme.typography.bodyMedium)
+            Text(label, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
