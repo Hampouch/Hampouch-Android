@@ -75,8 +75,7 @@ private fun resolveTimeLabel(createdAt: LocalDateTime, now: LocalDateTime): Stri
 private fun NotificationTargetDto?.toDomain(): NotificationTarget {
     val challengeId = this?.challengeId?.toString() ?: return NotificationTarget.Home
     return when (this.screen) {
-        SCREEN_CHALLENGE_DETAIL -> NotificationTarget.ChallengeSummary(challengeId)
-        SCREEN_CHALLENGE_RESULT -> NotificationTarget.HamBattleDetail(challengeId)
+        SCREEN_CHALLENGE_DETAIL, SCREEN_CHALLENGE_RESULT -> NotificationTarget.ChallengeSummary(challengeId)
         else -> NotificationTarget.Home
     }
 }
@@ -204,6 +203,14 @@ class NotificationRepositoryImpl @Inject constructor(
         return runCatchingNetwork(TAG) {
             val token = FirebaseMessaging.getInstance().token.await()
             registerDeviceToken(token)
+        }
+    }
+
+    override suspend fun unregisterCurrentDeviceToken(): Result<Unit> {
+        if (!NotificationConfig.USE_SERVER_NOTIFICATION) return Result.success(Unit)
+        return runCatchingNetwork(TAG) {
+            val token = FirebaseMessaging.getInstance().token.await()
+            unregisterDeviceToken(token)
         }
     }
 

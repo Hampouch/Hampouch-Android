@@ -440,6 +440,7 @@ class AuthRepository @Inject constructor(
             return Result.success(Unit)
         }
         return try {
+            notificationRepository.get().unregisterCurrentDeviceToken()
             val response = apiService.logout(
                 request = LogoutRequest(refreshToken = session.refreshToken)
             )

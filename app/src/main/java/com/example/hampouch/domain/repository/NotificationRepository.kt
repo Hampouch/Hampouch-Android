@@ -20,4 +20,6 @@ interface NotificationRepository {
     suspend fun unregisterDeviceToken(token: String): Result<Unit>
 
     suspend fun syncDeviceToken(): Result<Unit>
+
+    suspend fun unregisterCurrentDeviceToken(): Result<Unit>
 }

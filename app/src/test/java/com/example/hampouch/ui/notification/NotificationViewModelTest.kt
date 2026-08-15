@@ -58,6 +58,8 @@ class NotificationViewModelTest {
 
         override suspend fun syncDeviceToken(): Result<Unit> = Result.success(Unit)
 
+        override suspend fun unregisterCurrentDeviceToken(): Result<Unit> = Result.success(Unit)
+
         private fun notification(id: String) = NotificationItem(
             id = id,
             category = NotificationCategory.CHALLENGE,
