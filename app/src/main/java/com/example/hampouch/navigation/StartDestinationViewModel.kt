@@ -27,24 +27,40 @@ class StartDestinationViewModel @Inject constructor(
     private val _pendingNicknameSession = MutableStateFlow<AuthSession?>(null)
     val pendingNicknameSession: StateFlow<AuthSession?> = _pendingNicknameSession.asStateFlow()
 
+    private val _startupErrorMessage = MutableStateFlow<String?>(null)
+    val startupErrorMessage: StateFlow<String?> = _startupErrorMessage.asStateFlow()
+
+    private val _isResolving = MutableStateFlow(false)
+    val isResolving: StateFlow<Boolean> = _isResolving.asStateFlow()
+
     init {
         viewModelScope.launch { resolve() }
     }
 
     private suspend fun resolve() {
-        onboardingLocalStore.restorePendingIfNeeded()
-        val session = authRepository.userSession.first()
-        _startDestination.value = when {
-            session == null && onboardingLocalStore.hasCompletedOnboarding() -> {
-                onboardingLocalStore.resetOnboarding()
-                Screen.Onboarding.route
+        if (_isResolving.value) return
+        _isResolving.value = true
+        try {
+            onboardingLocalStore.restorePendingIfNeeded()
+            val session = authRepository.userSession.first()
+            val destination = when {
+                session == null && onboardingLocalStore.hasCompletedOnboarding() -> {
+                    onboardingLocalStore.resetOnboarding()
+                    Screen.Onboarding.route
+                }
+                session == null -> Screen.Onboarding.route
+                else -> resolveForSession(session)
             }
-            session == null -> Screen.Onboarding.route
-            else -> resolveForSession(session)
+            if (destination != null) {
+                _startupErrorMessage.value = null
+                _startDestination.value = destination
+            }
+        } finally {
+            _isResolving.value = false
         }
     }
 
-    private suspend fun resolveForSession(session: AuthSession): String =
+    private suspend fun resolveForSession(session: AuthSession): String? =
         when (val status = authRepository.checkSessionStatus(session)) {
             is SessionStatus.Valid -> {
                 if (status.needsNickname) {
@@ -63,11 +79,15 @@ class StartDestinationViewModel @Inject constructor(
                     Screen.Onboarding.route
                 }
             }
-            SessionStatus.Unknown -> {
-                authRepository.saveSession(session)
-                Screen.Home.route
+            is SessionStatus.Unavailable -> {
+                _startupErrorMessage.value = status.message
+                null
             }
         }
+
+    fun retry() {
+        viewModelScope.launch { resolve() }
+    }
 
     fun captureOnboardingComplete(request: OnboardingRequest) {
         onboardingLocalStore.captureOnboardingComplete(request)
