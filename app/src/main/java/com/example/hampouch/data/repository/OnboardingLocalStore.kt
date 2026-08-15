@@ -94,6 +94,11 @@ class OnboardingLocalStore @Inject constructor(
             .apply()
     }
 
+    fun resetOnboarding() {
+        pendingRequest = null
+        prefs().edit().clear().apply()
+    }
+
     fun reserveForNewAccount(email: String) {
         val pending = pendingRequest ?: return
         pendingRequest = null

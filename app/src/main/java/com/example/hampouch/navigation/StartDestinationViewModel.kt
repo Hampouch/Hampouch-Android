@@ -35,7 +35,10 @@ class StartDestinationViewModel @Inject constructor(
         onboardingLocalStore.restorePendingIfNeeded()
         val session = authRepository.userSession.first()
         _startDestination.value = when {
-            session == null && onboardingLocalStore.hasCompletedOnboarding() -> Screen.Login.route
+            session == null && onboardingLocalStore.hasCompletedOnboarding() -> {
+                onboardingLocalStore.resetOnboarding()
+                Screen.Onboarding.route
+            }
             session == null -> Screen.Onboarding.route
             else -> resolveForSession(session)
         }
