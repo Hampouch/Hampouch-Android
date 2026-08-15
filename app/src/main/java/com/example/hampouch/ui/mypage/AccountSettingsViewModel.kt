@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.domain.repository.UsersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -47,4 +48,13 @@ class AccountSettingsViewModel @Inject constructor(
             _events.send(AccountSettingsEvent.LoggedOut)
         }
     }
+}
+
+@HiltViewModel
+class ChangePasswordViewModel @Inject constructor(
+    private val usersRepository: UsersRepository
+) : ViewModel() {
+
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> =
+        usersRepository.changePassword(currentPassword, newPassword)
 }

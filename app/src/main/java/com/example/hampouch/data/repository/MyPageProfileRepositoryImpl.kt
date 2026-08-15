@@ -28,6 +28,10 @@ class MyPageProfileRepositoryImpl @Inject constructor() :
             .copy(name = name, avatarUri = avatarUri)
     }
 
+    override fun setProfile(profile: MyPageProfile) {
+        _profile.value = profile
+    }
+
     override fun resetForAccount() {
         _profile.value = null
     }

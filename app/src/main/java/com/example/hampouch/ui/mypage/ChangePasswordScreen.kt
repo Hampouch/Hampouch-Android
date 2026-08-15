@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,11 +29,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -41,7 +44,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
@@ -53,6 +59,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 private enum class PasswordField { CURRENT, NEW, CONFIRM }
 
@@ -62,8 +69,13 @@ fun ChangePasswordScreen(
     onBackClick: () -> Unit,
     onSubmitSuccess: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit
+    onNotificationClick: () -> Unit,
+    viewModel: ChangePasswordViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
+    var currentPasswordErrorMessage by remember { mutableStateOf<String?>(null) }
     var emailInput by rememberSaveable { mutableStateOf(email) }
     var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
     val emailInteractionSource = remember { MutableInteractionSource() }
@@ -162,7 +174,7 @@ fun ChangePasswordScreen(
                 }
             )
             if (errorField == PasswordField.CURRENT) {
-                FieldMessage(errorMessage)
+                FieldMessage(currentPasswordErrorMessage ?: errorMessage)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -214,16 +226,41 @@ fun ChangePasswordScreen(
             }
 
             Spacer(modifier = Modifier.height(30.dp))
+            val genericFailureMessage = stringResource(R.string.change_password_failed)
             Button(
                 onClick = {
+                    currentPasswordErrorMessage = null
                     errorField = when {
                         currentPassword.isBlank() -> PasswordField.CURRENT
                         !isNewPasswordValid -> PasswordField.NEW
                         newPassword != confirmPassword -> PasswordField.CONFIRM
                         else -> null
                     }
-                    if (errorField == null) onSubmitSuccess()
+                    if (errorField == null) {
+                        isSubmitting = true
+                        coroutineScope.launch {
+                            viewModel.changePassword(currentPassword, newPassword)
+                                .onSuccess {
+                                    isSubmitting = false
+                                    onSubmitSuccess()
+                                }
+                                .onFailure { error ->
+                                    isSubmitting = false
+                                    if ((error as? ApiException)?.code == "USER_CURRENT_PASSWORD_MISMATCH") {
+                                        errorField = PasswordField.CURRENT
+                                        currentPasswordErrorMessage = error.toUserMessage(errorMessage)
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            error.toUserMessage(genericFailureMessage),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                        }
+                    }
                 },
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

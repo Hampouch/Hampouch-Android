@@ -84,6 +84,7 @@
     <string name="change_password_new_placeholder">8자 이상, 영문 + 숫자 조합</string>
     <string name="change_password_new_confirm_label">새 비밀번호 확인</string>
     <string name="change_password_error">비밀번호를 다시 확인해주세요.</string>
+    <string name="change_password_failed">비밀번호 변경에 실패했습니다.</string>
     <string name="change_password_submit">변경하기</string>
     <string name="change_password_success_message">비밀번호가 변경되었습니다.</string>
 

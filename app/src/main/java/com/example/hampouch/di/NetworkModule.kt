@@ -11,6 +11,7 @@ import com.example.hampouch.data.remote.CommunityApi
 import com.example.hampouch.data.remote.ExpenseApi
 import com.example.hampouch.data.remote.MiniChallengeApi
 import com.example.hampouch.data.remote.RestApi
+import com.example.hampouch.data.remote.UsersApi
 import com.example.hampouch.data.remote.dto.BattleSummaryDtoDeserializer
 import com.example.hampouch.data.remote.dto.MyBattleSummaryDto
 import com.example.hampouch.data.remote.dto.ExpensePeriodSummaryData
@@ -149,4 +150,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRestApi(retrofit: Retrofit): RestApi = retrofit.create(RestApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUsersApi(retrofit: Retrofit): UsersApi = retrofit.create(UsersApi::class.java)
 }

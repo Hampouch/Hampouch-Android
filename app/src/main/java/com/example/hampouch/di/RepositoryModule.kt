@@ -10,6 +10,7 @@ import com.example.hampouch.data.repository.NotificationRepositoryImpl
 import com.example.hampouch.data.repository.NotificationSettingsRepositoryImpl
 import com.example.hampouch.data.repository.RecordAlarmRepositoryImpl
 import com.example.hampouch.data.repository.RestRepositoryImpl
+import com.example.hampouch.data.repository.UsersRepositoryImpl
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.core.network.AuthTokenProvider
 import com.example.hampouch.domain.repository.BattleRepository
@@ -22,6 +23,7 @@ import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.RestRepository
+import com.example.hampouch.domain.repository.UsersRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -79,4 +81,8 @@ abstract class RepositoryModule {
     abstract fun bindMyPageProfileRepository(
         impl: MyPageProfileRepositoryImpl
     ): MyPageProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUsersRepository(impl: UsersRepositoryImpl): UsersRepository
 }

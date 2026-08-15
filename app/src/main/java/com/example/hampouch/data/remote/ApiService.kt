@@ -73,6 +73,16 @@ import com.example.hampouch.data.remote.dto.SignUpData
 import com.example.hampouch.data.remote.dto.SignUpRequest
 import com.example.hampouch.data.remote.dto.SocialLoginData
 import com.example.hampouch.data.remote.dto.SocialLoginRequest
+import com.example.hampouch.data.remote.dto.UsersMeData
+import com.example.hampouch.data.remote.dto.UsersNicknameUpdateData
+import com.example.hampouch.data.remote.dto.UsersNicknameUpdateRequest
+import com.example.hampouch.data.remote.dto.UsersNotificationScheduleData
+import com.example.hampouch.data.remote.dto.UsersNotificationScheduleRequest
+import com.example.hampouch.data.remote.dto.UsersPasswordChangeRequest
+import com.example.hampouch.data.remote.dto.UsersProfilePhotoApplyData
+import com.example.hampouch.data.remote.dto.UsersProfilePhotoApplyRequest
+import com.example.hampouch.data.remote.dto.UsersProfilePhotoPresignData
+import com.example.hampouch.data.remote.dto.UsersProfilePhotoPresignRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -441,4 +451,40 @@ interface RestApi {
     suspend fun resumeRest(
         @Body request: RestResumeRequest
     ): Response<ApiResponse<RestResumeData>>
+}
+
+interface UsersApi {
+    @GET("api/users/me")
+    suspend fun getMe(): Response<ApiResponse<UsersMeData>>
+
+    @PATCH("api/users/me/nickname")
+    suspend fun updateNickname(
+        @Body request: UsersNicknameUpdateRequest
+    ): Response<ApiResponse<UsersNicknameUpdateData>>
+
+    @PATCH("api/users/me/password")
+    suspend fun changePassword(
+        @Body request: UsersPasswordChangeRequest
+    ): Response<ApiResponse<Unit>>
+
+    @GET("api/users/me/notification/schedule")
+    suspend fun getNotificationSchedule(): Response<ApiResponse<UsersNotificationScheduleData>>
+
+    @PUT("api/users/me/notification/schedule")
+    suspend fun updateNotificationSchedule(
+        @Body request: UsersNotificationScheduleRequest
+    ): Response<ApiResponse<UsersNotificationScheduleData>>
+
+    @POST("api/users/me/profile/presigned")
+    suspend fun presignProfilePhoto(
+        @Body request: UsersProfilePhotoPresignRequest
+    ): Response<ApiResponse<UsersProfilePhotoPresignData>>
+
+    @PATCH("api/users/me/profile")
+    suspend fun applyProfilePhoto(
+        @Body request: UsersProfilePhotoApplyRequest
+    ): Response<ApiResponse<UsersProfilePhotoApplyData>>
+
+    @DELETE("api/users/me/profile")
+    suspend fun resetProfilePhoto(): Response<ApiResponse<Unit>>
 }

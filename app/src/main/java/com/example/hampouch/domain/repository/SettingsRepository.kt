@@ -29,4 +29,6 @@ interface MyPageProfileRepository {
     fun defaultProfileFor(user: User): MyPageProfile
 
     fun update(user: User, name: String, avatarUri: String?)
+
+    fun setProfile(profile: MyPageProfile)
 }
