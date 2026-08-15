@@ -9,7 +9,15 @@ interface NotificationRepository {
 
     fun findById(id: String): NotificationItem?
 
-    fun markRead(id: String)
+    suspend fun refresh(): Result<Unit>
 
-    fun markAllRead()
+    suspend fun markRead(id: String): Result<Unit>
+
+    suspend fun markAllRead(): Result<Unit>
+
+    suspend fun registerDeviceToken(token: String): Result<Unit>
+
+    suspend fun unregisterDeviceToken(token: String): Result<Unit>
+
+    suspend fun syncDeviceToken(): Result<Unit>
 }

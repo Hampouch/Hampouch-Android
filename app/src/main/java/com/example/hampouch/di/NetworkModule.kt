@@ -10,6 +10,7 @@ import com.example.hampouch.data.remote.ChallengeApi
 import com.example.hampouch.data.remote.CommunityApi
 import com.example.hampouch.data.remote.ExpenseApi
 import com.example.hampouch.data.remote.MiniChallengeApi
+import com.example.hampouch.data.remote.NotificationApi
 import com.example.hampouch.data.remote.RestApi
 import com.example.hampouch.data.remote.UsersApi
 import com.example.hampouch.data.remote.dto.BattleSummaryDtoDeserializer
@@ -154,4 +155,9 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideUsersApi(retrofit: Retrofit): UsersApi = retrofit.create(UsersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideNotificationApi(retrofit: Retrofit): NotificationApi =
+        retrofit.create(NotificationApi::class.java)
 }

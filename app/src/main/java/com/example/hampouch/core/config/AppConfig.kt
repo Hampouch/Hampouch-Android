@@ -35,3 +35,7 @@ object BattleConfig {
 object UsersConfig {
     const val USE_SERVER_USERS: Boolean = AppConfig.USE_SERVER
 }
+
+object NotificationConfig {
+    const val USE_SERVER_NOTIFICATION: Boolean = AppConfig.USE_SERVER
+}

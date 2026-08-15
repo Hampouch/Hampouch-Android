@@ -188,6 +188,7 @@ fun AppNavHost(
 
     LaunchedEffect(pendingNotificationId) {
         val id = pendingNotificationId ?: return@LaunchedEffect
+        notificationViewModel.refresh()
         val item = notificationViewModel.findById(id)
         if (item != null) {
             notificationViewModel.markRead(item.id)
@@ -917,6 +918,7 @@ fun AppNavHost(
 
         composable(Screen.Notification.route) {
             val notifications by notificationViewModel.items.collectAsStateWithLifecycle()
+            LaunchedEffect(Unit) { notificationViewModel.refresh() }
             NotificationScreen(
                 notifications = notifications,
                 onBackClick = { navController.popBackStack() },

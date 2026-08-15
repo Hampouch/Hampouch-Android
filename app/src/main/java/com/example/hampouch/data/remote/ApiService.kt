@@ -67,7 +67,9 @@ import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
 import com.example.hampouch.data.remote.dto.MiniChallengeDayData
+import com.example.hampouch.data.remote.dto.DeviceTokenRequest
 import com.example.hampouch.data.remote.dto.NicknameCheckData
+import com.example.hampouch.data.remote.dto.NotificationListData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
 import com.example.hampouch.data.remote.dto.RefreshTokenData
@@ -492,6 +494,25 @@ interface RestApi {
     suspend fun resumeRest(
         @Body request: RestResumeRequest
     ): Response<ApiResponse<RestResumeData>>
+}
+
+interface NotificationApi {
+    @GET("api/notifications")
+    suspend fun getNotifications(): Response<ApiResponse<NotificationListData>>
+
+    @PATCH("api/notifications/{notificationId}/read")
+    suspend fun markNotificationRead(
+        @Path("notificationId") notificationId: Long
+    ): Response<ApiResponse<Unit>>
+
+    @PATCH("api/notifications/read-all")
+    suspend fun markAllNotificationsRead(): Response<ApiResponse<Unit>>
+
+    @POST("api/notifications/token")
+    suspend fun registerDeviceToken(@Body request: DeviceTokenRequest): Response<ApiResponse<Unit>>
+
+    @DELETE("api/notifications/token")
+    suspend fun unregisterDeviceToken(@Body request: DeviceTokenRequest): Response<ApiResponse<Unit>>
 }
 
 interface UsersApi {

@@ -621,6 +621,7 @@
     <ID>TooManyFunctions:MyPageComponents.kt$com.example.hampouch.ui.mypage.components.MyPageComponents.kt</ID>
     <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
     <ID>TooManyFunctions:NextChallengeScreen.kt$com.example.hampouch.ui.nextchallenge.NextChallengeScreen.kt</ID>
+    <ID>TooManyFunctions:NotificationRepositoryImpl.kt$NotificationRepositoryImpl : NotificationRepositoryAccountScopedState</ID>
     <ID>TooManyFunctions:OnboardingComponents.kt$com.example.hampouch.ui.onboarding.components.OnboardingComponents.kt</ID>
     <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
     <ID>TooManyFunctions:RepositoryModule.kt$RepositoryModule</ID>
