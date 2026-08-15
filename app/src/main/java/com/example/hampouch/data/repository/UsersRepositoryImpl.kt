@@ -220,7 +220,9 @@ class UsersRepositoryImpl @Inject constructor(
                     }
                 }
             }
-            val applyResponse = usersApi.applyProfilePhoto(UsersProfilePhotoApplyRequest(imageKey = presignData.imageKey))
+            val applyResponse = usersApi.applyProfilePhoto(
+                UsersProfilePhotoApplyRequest(imageKey = presignData.imageKey)
+            )
             val applyData = applyResponse.body()?.data
             if (applyResponse.isSuccessful && applyData != null) {
                 myPageProfileRepository.profile.value?.let {

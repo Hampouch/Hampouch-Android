@@ -257,12 +257,14 @@ fun MyPageScreen(
             BackHandler { route = MyPageRoute.ACCOUNT_SETTINGS }
             ChangePasswordScreen(
                 email = profile.email,
-                onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
-                onSubmitSuccess = {
-                    showPasswordChangedDialog = true
-                    route = MyPageRoute.ACCOUNT_SETTINGS
-                },
-                onNotificationClick = onNotificationClick,
+                actions = ChangePasswordActions(
+                    onBackClick = { route = MyPageRoute.ACCOUNT_SETTINGS },
+                    onSubmitSuccess = {
+                        showPasswordChangedDialog = true
+                        route = MyPageRoute.ACCOUNT_SETTINGS
+                    },
+                    onNotificationClick = onNotificationClick
+                ),
                 modifier = modifier.fillMaxSize()
             )
         }

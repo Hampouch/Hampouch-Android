@@ -80,6 +80,7 @@ kotlin {
 detekt {
     buildUponDefaultConfig = true
     parallel = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     baseline = file("$rootDir/config/detekt/baseline.xml")
 }
 

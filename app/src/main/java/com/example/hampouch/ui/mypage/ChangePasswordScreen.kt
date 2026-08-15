@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,19 +64,244 @@ import kotlinx.coroutines.launch
 
 private enum class PasswordField { CURRENT, NEW, CONFIRM }
 
+data class ChangePasswordActions(
+    val onBackClick: () -> Unit,
+    val onSubmitSuccess: () -> Unit,
+    val onNotificationClick: () -> Unit
+)
+
+private class PasswordFieldState(initialValue: String = "", initialVisible: Boolean = false) {
+    var value by mutableStateOf(initialValue)
+    var isVisible by mutableStateOf(initialVisible)
+
+    fun toggleVisibility() {
+        isVisible = !isVisible
+    }
+}
+
+private val PasswordFieldStateSaver = Saver<PasswordFieldState, List<Any>>(
+    save = { listOf(it.value, it.isVisible) },
+    restore = { PasswordFieldState(it[0] as String, it[1] as Boolean) }
+)
+
+@Composable
+private fun rememberPasswordFieldState(): PasswordFieldState =
+    rememberSaveable(saver = PasswordFieldStateSaver) { PasswordFieldState() }
+
+private fun isValidNewPassword(password: String): Boolean =
+    password.length >= 8 && password.any { it.isLetter() } && password.any { it.isDigit() }
+
+private fun validatePasswordFields(
+    currentPassword: String,
+    isNewPasswordValid: Boolean,
+    newPassword: String,
+    confirmPassword: String
+): PasswordField? = when {
+    currentPassword.isBlank() -> PasswordField.CURRENT
+    !isNewPasswordValid -> PasswordField.NEW
+    newPassword != confirmPassword -> PasswordField.CONFIRM
+    else -> null
+}
+
 @Composable
 fun ChangePasswordScreen(
     email: String,
-    onBackClick: () -> Unit,
-    onSubmitSuccess: () -> Unit,
+    actions: ChangePasswordActions,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit,
     viewModel: ChangePasswordViewModel = hiltViewModel()
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(HPGray2)
+    ) {
+        MyPageMainTopBar(
+            title = stringResource(R.string.change_password_title),
+            onBackClick = actions.onBackClick,
+            onNotificationClick = actions.onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+        )
+        ChangePasswordForm(email = email, viewModel = viewModel, onSubmitSuccess = actions.onSubmitSuccess)
+    }
+}
+
+@Composable
+private fun ChangePasswordForm(
+    email: String,
+    viewModel: ChangePasswordViewModel,
+    onSubmitSuccess: () -> Unit
+) {
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
+    var currentPasswordErrorMessage by remember { mutableStateOf<String?>(null) }
+    var errorField by rememberSaveable { mutableStateOf<PasswordField?>(null) }
+    val currentPasswordField = rememberPasswordFieldState()
+    val newPasswordField = rememberPasswordFieldState()
+    val confirmPasswordField = rememberPasswordFieldState()
+    val isNewPasswordValid = isValidNewPassword(newPasswordField.value)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        OrDivider(text = stringResource(R.string.change_password_user_info_section))
+        Spacer(modifier = Modifier.height(16.dp))
+        ChangePasswordEmailField(email)
+
+        Spacer(modifier = Modifier.height(24.dp))
+        OrDivider(text = stringResource(R.string.change_password_form_section))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ChangePasswordFieldsSection(
+            currentPassword = currentPasswordField,
+            newPassword = newPasswordField,
+            confirmPassword = confirmPasswordField,
+            errorField = errorField,
+            currentPasswordErrorMessage = currentPasswordErrorMessage
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+        ChangePasswordSubmitButton(
+            values = ChangePasswordFormValues(
+                currentPasswordField.value,
+                newPasswordField.value,
+                confirmPasswordField.value,
+                isNewPasswordValid
+            ),
+            isSubmitting = isSubmitting,
+            mutators = ChangePasswordFormMutators(
+                onSubmittingChange = { isSubmitting = it },
+                onErrorFieldChange = { errorField = it },
+                onCurrentPasswordErrorChange = { currentPasswordErrorMessage = it }
+            ),
+            viewModel = viewModel,
+            onSubmitSuccess = onSubmitSuccess
+        )
+    }
+}
+
+@Composable
+private fun ChangePasswordFieldsSection(
+    currentPassword: PasswordFieldState,
+    newPassword: PasswordFieldState,
+    confirmPassword: PasswordFieldState,
+    errorField: PasswordField?,
+    currentPasswordErrorMessage: String?
+) {
+    val errorMessage = stringResource(R.string.change_password_error)
+
+    PasswordInputField(
+        spec = PasswordFieldSpec(
+            label = stringResource(R.string.change_password_current_label),
+            placeholder = stringResource(R.string.change_password_current_placeholder),
+            imeAction = ImeAction.Next,
+            errorMessage = if (errorField == PasswordField.CURRENT) {
+                currentPasswordErrorMessage ?: errorMessage
+            } else {
+                null
+            }
+        ),
+        state = currentPassword
+    )
+
+    Spacer(modifier = Modifier.height(20.dp))
+    PasswordInputField(
+        spec = PasswordFieldSpec(
+            label = stringResource(R.string.change_password_new_label),
+            placeholder = stringResource(R.string.change_password_new_placeholder),
+            imeAction = ImeAction.Next,
+            errorMessage = if (errorField == PasswordField.NEW) errorMessage else null
+        ),
+        state = newPassword
+    )
+
+    Spacer(modifier = Modifier.height(20.dp))
+    PasswordInputField(
+        spec = PasswordFieldSpec(
+            label = stringResource(R.string.change_password_new_confirm_label),
+            placeholder = stringResource(R.string.change_password_new_placeholder),
+            imeAction = ImeAction.Done,
+            errorMessage = if (errorField == PasswordField.CONFIRM) errorMessage else null
+        ),
+        state = confirmPassword
+    )
+}
+
+private data class ChangePasswordFormValues(
+    val currentPassword: String,
+    val newPassword: String,
+    val confirmPassword: String,
+    val isNewPasswordValid: Boolean
+)
+
+private class ChangePasswordFormMutators(
+    val onSubmittingChange: (Boolean) -> Unit,
+    val onErrorFieldChange: (PasswordField?) -> Unit,
+    val onCurrentPasswordErrorChange: (String?) -> Unit
+)
+
+@Composable
+private fun ChangePasswordSubmitButton(
+    values: ChangePasswordFormValues,
+    isSubmitting: Boolean,
+    mutators: ChangePasswordFormMutators,
+    viewModel: ChangePasswordViewModel,
+    onSubmitSuccess: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var isSubmitting by rememberSaveable { mutableStateOf(false) }
-    var currentPasswordErrorMessage by remember { mutableStateOf<String?>(null) }
+    val errorMessage = stringResource(R.string.change_password_error)
+    val genericFailureMessage = stringResource(R.string.change_password_failed)
+
+    Button(
+        onClick = {
+            mutators.onCurrentPasswordErrorChange(null)
+            val errorField = validatePasswordFields(
+                values.currentPassword,
+                values.isNewPasswordValid,
+                values.newPassword,
+                values.confirmPassword
+            )
+            mutators.onErrorFieldChange(errorField)
+            if (errorField == null) {
+                mutators.onSubmittingChange(true)
+                coroutineScope.launch {
+                    viewModel.changePassword(values.currentPassword, values.newPassword)
+                        .onSuccess {
+                            mutators.onSubmittingChange(false)
+                            onSubmitSuccess()
+                        }
+                        .onFailure { error ->
+                            mutators.onSubmittingChange(false)
+                            if ((error as? ApiException)?.code == "USER_CURRENT_PASSWORD_MISMATCH") {
+                                mutators.onErrorFieldChange(PasswordField.CURRENT)
+                                mutators.onCurrentPasswordErrorChange(error.toUserMessage(errorMessage))
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    error.toUserMessage(genericFailureMessage),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                }
+            }
+        },
+        enabled = !isSubmitting,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+    ) {
+        Text(stringResource(R.string.change_password_submit), style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun ChangePasswordEmailField(email: String) {
     var emailInput by rememberSaveable { mutableStateOf(email) }
     var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
     val emailInteractionSource = remember { MutableInteractionSource() }
@@ -88,195 +314,73 @@ fun ChangePasswordScreen(
         }
     }
 
-    var currentPassword by rememberSaveable { mutableStateOf("") }
-    var newPassword by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
-    var isCurrentPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var isNewPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var isConfirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var errorField by rememberSaveable { mutableStateOf<PasswordField?>(null) }
-
-    val isNewPasswordValid = newPassword.length >= 8 &&
-        newPassword.any { it.isLetter() } &&
-        newPassword.any { it.isDigit() }
-
-    val errorMessage = stringResource(R.string.change_password_error)
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(HPGray2)
+    Text(
+        text = stringResource(R.string.change_password_email_label),
+        style = MaterialTheme.typography.bodyMedium,
+        color = HPText
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(HPWhite)
+            .border(1.dp, HPGray5, RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
-        MyPageMainTopBar(
-            title = stringResource(R.string.change_password_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+        BasicTextField(
+            value = emailInput,
+            onValueChange = { emailInput = it },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = if (isEmailFieldTouched) HPBlack else HPText
+            ),
+            singleLine = true,
+            interactionSource = emailInteractionSource,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
         )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp)
-        ) {
-            OrDivider(text = stringResource(R.string.change_password_user_info_section))
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.change_password_email_label),
-                style = MaterialTheme.typography.bodyMedium,
-                color = HPText
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(HPWhite)
-                    .border(1.dp, HPGray5, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                    value = emailInput,
-                    onValueChange = { emailInput = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = if (isEmailFieldTouched) HPBlack else HPText
+    }
+}
+
+private data class PasswordFieldSpec(
+    val label: String,
+    val placeholder: String,
+    val imeAction: ImeAction,
+    val errorMessage: String?
+)
+
+@Composable
+private fun PasswordInputField(spec: PasswordFieldSpec, state: PasswordFieldState) {
+    LoginTextField(
+        label = spec.label,
+        value = state.value,
+        onValueChange = { state.value = it },
+        placeholder = spec.placeholder,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = spec.imeAction),
+        visualTransformation = if (state.isVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = { state.toggleVisibility() }) {
+                Image(
+                    modifier = Modifier.height(20.dp),
+                    painter = painterResource(
+                        id = if (state.isVisible) R.drawable.login_eye else R.drawable.login_no_eye
                     ),
-                    singleLine = true,
-                    interactionSource = emailInteractionSource,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+                    contentDescription = null
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            OrDivider(text = stringResource(R.string.change_password_form_section))
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LoginTextField(
-                label = stringResource(R.string.change_password_current_label),
-                value = currentPassword,
-                onValueChange = { currentPassword = it },
-                placeholder = stringResource(R.string.change_password_current_placeholder),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-                visualTransformation = if (isCurrentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { isCurrentPasswordVisible = !isCurrentPasswordVisible }) {
-                        Image(
-                            modifier = Modifier.height(20.dp),
-                            painter = painterResource(
-                                id = if (isCurrentPasswordVisible) R.drawable.login_eye else R.drawable.login_no_eye
-                            ),
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-            if (errorField == PasswordField.CURRENT) {
-                FieldMessage(currentPasswordErrorMessage ?: errorMessage)
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-            LoginTextField(
-                label = stringResource(R.string.change_password_new_label),
-                value = newPassword,
-                onValueChange = { newPassword = it },
-                placeholder = stringResource(R.string.change_password_new_placeholder),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-                visualTransformation = if (isNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { isNewPasswordVisible = !isNewPasswordVisible }) {
-                        Image(
-                            modifier = Modifier.height(20.dp),
-                            painter = painterResource(
-                                id = if (isNewPasswordVisible) R.drawable.login_eye else R.drawable.login_no_eye
-                            ),
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-            if (errorField == PasswordField.NEW) {
-                FieldMessage(errorMessage)
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-            LoginTextField(
-                label = stringResource(R.string.change_password_new_confirm_label),
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                placeholder = stringResource(R.string.change_password_new_placeholder),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
-                        Image(
-                            modifier = Modifier.height(20.dp),
-                            painter = painterResource(
-                                id = if (isConfirmPasswordVisible) R.drawable.login_eye else R.drawable.login_no_eye
-                            ),
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-            if (errorField == PasswordField.CONFIRM) {
-                FieldMessage(errorMessage)
-            }
-
-            Spacer(modifier = Modifier.height(30.dp))
-            val genericFailureMessage = stringResource(R.string.change_password_failed)
-            Button(
-                onClick = {
-                    currentPasswordErrorMessage = null
-                    errorField = when {
-                        currentPassword.isBlank() -> PasswordField.CURRENT
-                        !isNewPasswordValid -> PasswordField.NEW
-                        newPassword != confirmPassword -> PasswordField.CONFIRM
-                        else -> null
-                    }
-                    if (errorField == null) {
-                        isSubmitting = true
-                        coroutineScope.launch {
-                            viewModel.changePassword(currentPassword, newPassword)
-                                .onSuccess {
-                                    isSubmitting = false
-                                    onSubmitSuccess()
-                                }
-                                .onFailure { error ->
-                                    isSubmitting = false
-                                    if ((error as? ApiException)?.code == "USER_CURRENT_PASSWORD_MISMATCH") {
-                                        errorField = PasswordField.CURRENT
-                                        currentPasswordErrorMessage = error.toUserMessage(errorMessage)
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            error.toUserMessage(genericFailureMessage),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                        }
-                    }
-                },
-                enabled = !isSubmitting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HPMain)
-            ) {
-                Text(stringResource(R.string.change_password_submit), style = MaterialTheme.typography.bodyLarge)
-            }
         }
-    }
+    )
+    spec.errorMessage?.let { FieldMessage(it) }
 }
 
 @Preview(showBackground = true, name = "13. 비밀번호 변경")
 @Composable
 private fun ChangePasswordScreenPreview() {
     HampouchTheme {
-        ChangePasswordScreen(email = "hampouch@example.com", onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {})
+        ChangePasswordScreen(
+            email = "hampouch@example.com",
+            actions = ChangePasswordActions(onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {})
+        )
     }
 }
