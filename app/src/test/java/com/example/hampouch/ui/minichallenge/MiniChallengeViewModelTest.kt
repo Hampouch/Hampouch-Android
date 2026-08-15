@@ -4,6 +4,7 @@ import com.example.hampouch.MainDispatcherRule
 import com.example.hampouch.domain.model.MiniChallengeDuration
 import com.example.hampouch.domain.model.MiniChallengeState
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.domain.repository.MiniChallengeRepository
 import com.example.hampouch.ui.common.LoadState
 import java.time.LocalDate
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -64,6 +66,12 @@ class MiniChallengeViewModelTest {
         viewModel.retry()
         advanceUntilIdle()
         assertEquals(2, repository.loadCallCount)
+    }
+
+    @Test
+    fun `생성 기간 선택지는 Swagger 허용 기간을 모두 포함한다`() {
+        assertEquals(listOf(1, 3, 7, 14, 31), MiniChallengeDurationDayValues)
+        assertTrue(miniChallengeDuration(MiniChallengeDurationDayValues.first()) is MiniChallengeDuration.Today)
     }
 
     private class FakeMiniChallengeRepository(
