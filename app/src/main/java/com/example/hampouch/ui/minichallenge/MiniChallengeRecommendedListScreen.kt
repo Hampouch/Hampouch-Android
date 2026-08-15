@@ -53,7 +53,7 @@ fun MiniChallengeRecommendedListScreen(
 
     val filteredChallenges = remember(selectedDurationIndex, recommendedChallenges) {
         val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
-        recommendedChallenges.filter { it.duration.serverDays == (selectedTotalDays ?: 1) }
+        recommendedChallenges.filter { it.duration.serverDays == selectedTotalDays }
     }
 
     Scaffold(

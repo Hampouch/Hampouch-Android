@@ -17,9 +17,8 @@ interface MiniChallengeRepository {
     /**
      * 추천 카탈로그의 [recommended]를 내 미니 챌린지로 추가한다.
      *
-     * 서버 요청에는 날짜 필드가 없어 항상 서버의 오늘 날짜부터 시작하는 챌린지가 생긴다 —
-     * 그래서 실제로 추가된 날짜를 돌려준다. 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한
-     * 항목이 보인다. 중복 이름 등으로 추가되지 않았으면 null.
+     * 서버 요청에는 날짜 필드가 없으므로 생성 응답의 startDate를 실제 추가 날짜로 돌려준다.
+     * 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목이 보인다.
      */
     suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate>
 
