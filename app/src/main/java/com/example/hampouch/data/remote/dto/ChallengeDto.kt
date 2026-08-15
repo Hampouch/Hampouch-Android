@@ -103,6 +103,7 @@ data class ChallengeResultSummaryDto(
 
 data class ChallengeEmotionBreakdownDto(
     val emotion: String,
+    val amount: Int,
     val ratio: Int
 )
 

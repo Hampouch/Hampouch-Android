@@ -139,6 +139,26 @@ fun DateSelectorRow(
 }
 
 @Composable
+fun ReturnToTodayButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50))
+            .background(HPMain)
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.home_return_to_today_button),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = HPWhite
+        )
+    }
+}
+
+@Composable
 private fun DateChip(
     label: String,
     selected: Boolean,
@@ -644,9 +664,15 @@ private fun WarningBannerCard(
 }
 
 @Composable
-fun NoActiveChallengeSection(onStartChallengeClick: () -> Unit, modifier: Modifier = Modifier) {
+fun NoActiveChallengeSection(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    ctaText: String? = null,
+    onCtaClick: (() -> Unit)? = null
+) {
     val baseTitleFontSize = MaterialTheme.typography.titleSmall.fontSize
-    var titleFontSize by remember(baseTitleFontSize) { mutableStateOf(baseTitleFontSize) }
+    var titleFontSize by remember(baseTitleFontSize, title) { mutableStateOf(baseTitleFontSize) }
 
     Box(
         modifier = modifier
@@ -660,7 +686,7 @@ fun NoActiveChallengeSection(onStartChallengeClick: () -> Unit, modifier: Modifi
                 .padding(horizontal = 20.dp, vertical = 40.dp)
         ) {
             Text(
-                text = stringResource(R.string.home_no_challenge_title),
+                text = title,
                 style = MaterialTheme.typography.titleSmall.copy(fontSize = titleFontSize),
                 color = HPBlack,
                 maxLines = 1,
@@ -674,18 +700,20 @@ fun NoActiveChallengeSection(onStartChallengeClick: () -> Unit, modifier: Modifi
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = stringResource(R.string.home_no_challenge_subtitle),
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = HPText
             )
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = stringResource(R.string.home_no_challenge_cta),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPMain,
-                modifier = Modifier.clickable(onClick = onStartChallengeClick)
-            )
+            if (ctaText != null && onCtaClick != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = ctaText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HPMain,
+                    modifier = Modifier.clickable(onClick = onCtaClick)
+                )
+            }
         }
         Image(
             painter = painterResource(R.drawable.img_hamster_normal),

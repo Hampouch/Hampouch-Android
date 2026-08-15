@@ -32,7 +32,6 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
-import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
@@ -47,7 +46,6 @@ fun ChallengeGoalStep(
     onTotalTargetChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
-    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
@@ -66,11 +64,8 @@ fun ChallengeGoalStep(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
-
                 OnboardingPrimaryButton(
                     text = stringResource(R.string.onboarding_start_bytecut),
                     enabled = true,
@@ -151,8 +146,7 @@ private fun ChallengeGoalStepPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }
@@ -168,8 +162,7 @@ private fun ChallengeGoalStepDateFixedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }
@@ -187,8 +180,7 @@ private fun ChallengeGoalStepEditedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }

@@ -74,7 +74,6 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 private val AmountAdjustmentPeriodFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
@@ -85,8 +84,9 @@ private enum class AmountAdjustmentOption(val labelResId: Int, val multiplier: D
     RELAX_30(R.string.amountadjustment_option_relax_30, 1.3)
 }
 
+/** 배율 적용 후 소수점 이하는 버린다(스펙 명시 규칙). */
 private fun AmountAdjustmentOption.amountFor(targetAmount: Int): Int =
-    (targetAmount * multiplier).roundToInt()
+    (targetAmount * multiplier).toInt()
 
 @Composable
 fun AmountAdjustmentRoute(

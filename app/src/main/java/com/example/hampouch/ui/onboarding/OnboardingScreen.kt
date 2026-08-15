@@ -135,8 +135,7 @@ fun OnboardingScreen(
                 state = uiState,
                 onTotalTargetChange = onTotalTargetChange,
                 onNext = onSubmit,
-                onBack = onBack,
-                onNavigateToLogin = onShowSkip
+                onBack = onBack
             )
         }
     }
