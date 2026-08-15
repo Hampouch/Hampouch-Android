@@ -2,6 +2,7 @@ package com.example.hampouch.ui.challengeresult
 
 import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.domain.model.ChallengeResultSummary
 import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.DailyRecordStatus.SUCCESS
@@ -30,12 +31,36 @@ object ChallengeResultMockData {
         }
     }
 
+    private fun serverResultOrNull(
+        challenge: ActiveChallenge,
+        isOngoing: Boolean
+    ): ChallengeResultUiState? {
+        if (isOngoing) return null
+        val summary = challenge.resultSummary ?: return null
+        return fromServerResult(challenge, summary)
+    }
+
     fun forChallenge(
         challenge: ActiveChallenge,
         challengeState: ChallengeState,
         recordsForDate: (LocalDate) -> List<ExpenseRecord>,
         referenceToday: LocalDate = LocalDate.now()
     ): ChallengeResultUiState {
+        val isOngoing = challenge.id == challengeState.activeChallenge?.id &&
+            !referenceToday.isAfter(challenge.effectivePeriodEnd)
+        val serverResult = serverResultOrNull(challenge, isOngoing)
+        if (serverResult != null) return serverResult
+        return computeLocalResult(challenge, challengeState, recordsForDate, referenceToday)
+    }
+
+    private fun computeLocalResult(
+        challenge: ActiveChallenge,
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate
+    ): ChallengeResultUiState {
+        val isActiveChallenge = challenge.id == challengeState.activeChallenge?.id
+        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
         val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
@@ -47,9 +72,6 @@ object ChallengeResultMockData {
             recordsForDate(date).sumOf { it.amount }
         }
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
-
-        val isActiveChallenge = challenge.id == challengeState.activeChallenge?.id
-        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
 
         val status = when {
             challenge.remoteStatus == "SUCCESS" -> ChallengeResultStatus.COMPLETE
@@ -82,6 +104,37 @@ object ChallengeResultMockData {
             emotionStats = computeEmotionStats(recordsInPeriod),
             dailyRecords = progress.dailyRecords,
             isEditable = isActiveChallenge && challengeState.hasOngoingChallenge
+        )
+    }
+
+    private fun fromServerResult(
+        challenge: ActiveChallenge,
+        summary: ChallengeResultSummary
+    ): ChallengeResultUiState {
+        val status = if (challenge.remoteStatus == "FAIL" || challenge.abandonedDate != null) {
+            ChallengeResultStatus.FAIL
+        } else {
+            ChallengeResultStatus.COMPLETE
+        }
+        val amountLabel = if (status == ChallengeResultStatus.FAIL) "초과 금액" else "총 절약"
+        val amountValue = if (status == ChallengeResultStatus.FAIL) summary.overAmount else summary.savedAmount
+
+        return ChallengeResultUiState(
+            status = status,
+            title = "${challenge.totalDays}일 챌린지",
+            periodStart = challenge.periodStart,
+            periodEnd = challenge.periodEnd,
+            totalDays = challenge.totalDays,
+            successDays = summary.successDays,
+            streakDays = summary.maxStreak,
+            amountLabel = amountLabel,
+            amountValue = amountValue,
+            goalAmount = summary.budgetTotal,
+            actualAmount = summary.actualSpent,
+            dailyLimit = challenge.dailyLimit,
+            emotionStats = challenge.emotionBreakdown,
+            dailyRecords = challenge.calendarDays,
+            isEditable = false
         )
     }
 

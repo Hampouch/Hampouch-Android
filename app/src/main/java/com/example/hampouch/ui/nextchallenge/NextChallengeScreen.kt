@@ -49,6 +49,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -216,10 +217,13 @@ fun NextChallengeRoute(
             }
         }
     }
+    LaunchedEffect(viewModel) { viewModel.loadRecommendation() }
     val coroutineScope = rememberCoroutineScope()
 
-    val recommendationMessage = remember(previousResult, suggestedTargetAmount) {
-        buildRecommendationMessage(previousResult, suggestedTargetAmount)
+    val serverRecommendationMessage by viewModel.recommendationMessage.collectAsStateWithLifecycle()
+    val recommendationMessage = remember(previousResult, suggestedTargetAmount, serverRecommendationMessage) {
+        serverRecommendationMessage?.let { AnnotatedString(it) }
+            ?: buildRecommendationMessage(previousResult, suggestedTargetAmount)
     }
     val effectivePeriodDays = customPeriodDays?.takeIf { it > 0 }
         ?: periodDays?.takeIf { it > 0 }

@@ -113,7 +113,11 @@ class ExpenseInputViewModelTest {
         override suspend fun startNewChallenge(request: OnboardingRequest, referenceToday: LocalDate): Result<ActiveChallenge> = error("unused")
         override suspend fun abandonChallenge(referenceToday: LocalDate): Result<Unit> = Result.success(Unit)
         override suspend fun acknowledgeChallengeEnd(): Result<Unit> = Result.success(Unit)
-        override fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate) = Unit
+        override suspend fun updateTargetAmount(
+            newTargetAmount: Int,
+            effectiveFrom: LocalDate
+        ): Result<Unit> = Result.success(Unit)
+        override suspend fun loadRecommendation(): Result<String> = error("unused")
         override fun markNoRecord(date: LocalDate) = Unit
         override fun clearNoRecord(date: LocalDate) = Unit
         override fun markVisitedExpenseEditAfterEnd() = Unit

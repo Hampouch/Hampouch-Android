@@ -6,13 +6,22 @@ import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.BattleDetailData
 import com.example.hampouch.data.remote.dto.BattleInvitationPreviewData
+import com.example.hampouch.data.remote.dto.ChallengeAdjustData
+import com.example.hampouch.data.remote.dto.ChallengeAdjustRequest
+import com.example.hampouch.data.remote.dto.ChallengeCalendarData
 import com.example.hampouch.data.remote.dto.ChallengeCloseData
 import com.example.hampouch.data.remote.dto.ChallengeCreateData
 import com.example.hampouch.data.remote.dto.ChallengeCreateRequest
 import com.example.hampouch.data.remote.dto.ChallengeCurrentData
+import com.example.hampouch.data.remote.dto.ChallengeDayData
+import com.example.hampouch.data.remote.dto.ChallengeDayRequest
+import com.example.hampouch.data.remote.dto.ChallengeFixedDateDraftData
+import com.example.hampouch.data.remote.dto.ChallengeFixedDateStartData
+import com.example.hampouch.data.remote.dto.ChallengeFixedDateStartRequest
 import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesData
 import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesRequest
 import com.example.hampouch.data.remote.dto.ChallengeHistoryListData
+import com.example.hampouch.data.remote.dto.ChallengeRecommendationData
 import com.example.hampouch.data.remote.dto.ChallengeResultData
 import com.example.hampouch.data.remote.dto.ChallengeStatusData
 import com.example.hampouch.data.remote.dto.CommunityBookmarkToggleData
@@ -439,6 +448,38 @@ interface ChallengeApi {
     suspend fun closeChallenge(
         @Path("challengeId") challengeId: Long
     ): Response<ApiResponse<ChallengeCloseData>>
+
+    @POST("api/challenges/fixed-date/start")
+    suspend fun startFixedDateChallenge(
+        @Body request: ChallengeFixedDateStartRequest
+    ): Response<ApiResponse<ChallengeFixedDateStartData>>
+
+    @GET("api/challenges/fixed-date/draft")
+    suspend fun getFixedDateChallengeDraft(
+    ): Response<ApiResponse<ChallengeFixedDateDraftData>>
+
+    @GET("api/challenges/{challengeId}/calendar")
+    suspend fun getChallengeCalendar(
+        @Path("challengeId") challengeId: Long,
+        @Query("year") year: Int,
+        @Query("month") month: Int
+    ): Response<ApiResponse<ChallengeCalendarData>>
+
+    @POST("api/challenges/{challengeId}/days")
+    suspend fun recordChallengeDay(
+        @Path("challengeId") challengeId: Long,
+        @Body request: ChallengeDayRequest
+    ): Response<ApiResponse<ChallengeDayData>>
+
+    @POST("api/challenges/{challengeId}/adjust")
+    suspend fun adjustChallengeBudget(
+        @Path("challengeId") challengeId: Long,
+        @Body request: ChallengeAdjustRequest
+    ): Response<ApiResponse<ChallengeAdjustData>>
+
+    @GET("api/challenges/recommendation")
+    suspend fun getChallengeRecommendation(
+    ): Response<ApiResponse<ChallengeRecommendationData>>
 }
 
 interface RestApi {

@@ -27,7 +27,9 @@ interface ChallengeRepository {
 
     suspend fun acknowledgeChallengeEnd(): Result<Unit>
 
-    fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate = LocalDate.now())
+    suspend fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate = LocalDate.now()): Result<Unit>
+
+    suspend fun loadRecommendation(): Result<String>
 
     fun markNoRecord(date: LocalDate)
 

@@ -27,8 +27,18 @@ class NextChallengeViewModel @Inject constructor(
     private val _isStarting = MutableStateFlow(false)
     val isStarting: StateFlow<Boolean> = _isStarting.asStateFlow()
 
+    private val _recommendationMessage = MutableStateFlow<String?>(null)
+    val recommendationMessage: StateFlow<String?> = _recommendationMessage.asStateFlow()
+
     private val _events = Channel<NextChallengeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    fun loadRecommendation() {
+        viewModelScope.launch {
+            challengeRepository.loadRecommendation()
+                .onSuccess { _recommendationMessage.value = it }
+        }
+    }
 
     fun startNewChallenge(request: OnboardingRequest) {
         if (_isStarting.value) return
