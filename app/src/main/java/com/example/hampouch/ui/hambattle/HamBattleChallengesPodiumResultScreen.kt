@@ -84,7 +84,9 @@ fun HamBattleChallengesPodiumResultScreen(
     val ranked = remember(challenge, selectedTab) {
         val participants = if (selectedTab == ResultTab.TODAY) {
             if (BattleConfig.USE_SERVER_BATTLE) {
-                challenge.participants.map { it.copy(amount = it.todayAmount ?: it.amount) }
+                challenge.participants.map {
+                    it.copy(amount = it.todayAmount ?: it.amount, rank = null)
+                }
             } else {
                 viewModel.participantsForToday(challenge)
             }
@@ -95,7 +97,11 @@ fun HamBattleChallengesPodiumResultScreen(
             .filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
             .sortedBy { it.amount }
     }
-    val lastPlaceName = ranked.lastOrNull()?.name.orEmpty()
+    val lastPlaceName = if (selectedTab == ResultTab.TOTAL) {
+        challenge.penaltyUserName ?: ranked.lastOrNull()?.name.orEmpty()
+    } else {
+        ranked.lastOrNull()?.name.orEmpty()
+    }
     val extraRanked = if (ranked.size > 3) ranked.drop(3).take(3) else emptyList()
 
     Scaffold(
@@ -226,7 +232,7 @@ private fun PodiumChart(ranked: List<HamBattleParticipantSpending>, modifier: Mo
         verticalAlignment = Alignment.Bottom
     ) {
         ordered.forEach { participant ->
-            val rank = ranked.indexOf(participant) + 1
+            val rank = participant.rank ?: ranked.indexOf(participant) + 1
             PodiumColumn(rank = rank, participant = participant)
         }
     }
@@ -357,7 +363,7 @@ private fun ResultBottomSheet(
                         modifier = Modifier.padding(vertical = 12.dp)
                     )
                 }
-                ExtraRankRow(rank = index + 4, participant = participant)
+                ExtraRankRow(rank = participant.rank ?: index + 4, participant = participant)
             }
         }
     }

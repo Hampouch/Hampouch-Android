@@ -50,7 +50,7 @@ val StatusWhoWonText = Color(0xFF5572AB)
 
 private val ParticipantNameWidth = 56.dp
 
-fun formatWon(amount: Int): String {
+fun formatWon(amount: Long): String {
     return String.format(Locale.KOREA, "%,d원", amount)
 }
 
@@ -208,7 +208,7 @@ fun RankedParticipantList(
     val normal = participants.filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
     val disqualified = participants.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
     val ranked = normal.sortedBy { it.amount }
-    val effectiveMaxAmount = maxAmount ?: participants.maxOf { it.amount }.toFloat()
+    val effectiveMaxAmount = (maxAmount ?: participants.maxOf { it.amount }.toFloat()).coerceAtLeast(1f)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ranked.forEachIndexed { index, participant ->
             Row(
@@ -217,7 +217,7 @@ fun RankedParticipantList(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "%02d".format(index + 1),
+                    "%02d".format(participant.rank ?: index + 1),
                     modifier = Modifier.width(24.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = HPBlack

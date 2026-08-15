@@ -92,7 +92,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             restRepository.resumeNow()
                 .onSuccess { _events.send(HomeEvent.ResumedFromBreak) }
-                .onFailure { _events.send(HomeEvent.ShowMessage("휴식 복귀에 실패했습니다.")) }
+                .onFailure { error ->
+                    _events.send(HomeEvent.ShowMessage(error.toUserMessage("휴식 복귀에 실패했습니다.")))
+                }
         }
     }
 
@@ -123,7 +125,9 @@ class HomeViewModel @Inject constructor(
     fun postponeOneDay() {
         viewModelScope.launch {
             restRepository.postponeOneDay()
-                .onFailure { _events.send(HomeEvent.ShowMessage("복귀 연기에 실패했습니다.")) }
+                .onFailure { error ->
+                    _events.send(HomeEvent.ShowMessage(error.toUserMessage("복귀 연기에 실패했습니다.")))
+                }
         }
     }
 }
