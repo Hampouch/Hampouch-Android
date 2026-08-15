@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.ExpensePeriodSummary
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.RestState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.repository.RestRepository
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.common.LoadState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,10 +23,12 @@ import javax.inject.Inject
 @HiltViewModel
 class ExpenseCalendarViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
-    challengeRepository: ChallengeRepository
+    challengeRepository: ChallengeRepository,
+    restRepository: RestRepository
 ) : ViewModel() {
 
     val challengeState: StateFlow<ChallengeState> = challengeRepository.state
+    val restState: StateFlow<RestState> = restRepository.restState
 
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 

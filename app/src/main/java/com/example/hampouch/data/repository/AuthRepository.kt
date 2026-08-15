@@ -664,13 +664,20 @@ class AuthRepository @Inject constructor(
         notificationRepository.get().syncDeviceToken()
     }
 
-    private fun sessionToUser(session: AuthSession): User = User(
-        id = session.userId.toString(),
-        name = session.nickname ?: session.email ?: "회원",
-        email = session.email ?: "",
-        password = "",
-        role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
-    )
+    private fun sessionToUser(session: AuthSession): User {
+        val mockAccount = if (!AuthConfig.USE_SERVER_AUTH) {
+            AccountMockDataSource.accounts.find { it.email.equals(session.email, ignoreCase = true) }
+        } else {
+            null
+        }
+        return User(
+            id = mockAccount?.id ?: session.userId.toString(),
+            name = session.nickname ?: mockAccount?.name ?: session.email ?: "회원",
+            email = session.email ?: mockAccount?.email ?: "",
+            password = "",
+            role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
+        )
+    }
 
     override suspend fun currentAuthHeader(): String? {
         val session = userSession.first() ?: return null

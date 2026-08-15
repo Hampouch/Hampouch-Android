@@ -72,9 +72,9 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPMiniChallengeChecked
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub1
-import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -349,7 +349,7 @@ fun MiniChallengeItemRow(
                     }
                 )
                 .clip(RoundedCornerShape(20.dp))
-                .background(if (item.isChecked) HPSub2 else HPWhite)
+                .background(if (item.isChecked) HPMiniChallengeChecked else HPWhite)
                 .clickable(onClick = onToggle)
                 .padding(horizontal = 20.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically

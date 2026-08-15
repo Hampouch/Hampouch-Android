@@ -12,6 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.domain.model.OnboardingRequest
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.ui.dialog.OnboardingExistingLoginConfirmDialog
 import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
@@ -41,6 +42,8 @@ fun OnboardingRoute(
         onBack = viewModel::back,
         onShowSkip = viewModel::showSkipConfirmation,
         onDismissSkip = viewModel::dismissSkipConfirmation,
+        onShowExistingLogin = viewModel::showExistingLoginConfirmation,
+        onDismissExistingLogin = viewModel::dismissExistingLoginConfirmation,
         onSubmit = { viewModel.buildRequest()?.let(onOnboardingComplete) },
         modifier = modifier
     )
@@ -61,6 +64,8 @@ fun OnboardingScreen(
     onBack: () -> Unit,
     onShowSkip: () -> Unit,
     onDismissSkip: () -> Unit,
+    onShowExistingLogin: () -> Unit = onNavigateToLogin,
+    onDismissExistingLogin: () -> Unit = {},
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -84,6 +89,16 @@ fun OnboardingScreen(
         )
     }
 
+    if (flowState.showExistingLoginConfirmDialog) {
+        OnboardingExistingLoginConfirmDialog(
+            onCancel = onDismissExistingLogin,
+            onConfirm = {
+                onDismissExistingLogin()
+                onNavigateToLogin()
+            }
+        )
+    }
+
     AnimatedContent(
         targetState = step,
         modifier = modifier,
@@ -102,7 +117,7 @@ fun OnboardingScreen(
                 onBack = onNavigateToLogin,
                 onSkipClick = onShowSkip,
                 onNavigateToLogin = onShowSkip,
-                onExistingMemberLogin = onNavigateToLogin
+                onExistingMemberLogin = onShowExistingLogin
             )
 
             OnboardingStep.PERIOD_SETTING -> PeriodStep(
@@ -137,6 +152,7 @@ private fun OnboardingRoutePreview() {
             onExpenseChange = {}, onPeriodEnabledChange = {}, onPeriodChange = {},
             onDateFixedChange = {}, onStartDateChange = {}, onTotalTargetChange = {},
             onNext = {}, onBack = {}, onShowSkip = {}, onDismissSkip = {},
+            onShowExistingLogin = {}, onDismissExistingLogin = {},
             onSubmit = {}
         )
     }

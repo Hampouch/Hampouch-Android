@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 data class OnboardingFlowUiState(
     val step: OnboardingStep = OnboardingStep.SPLASH,
     val draft: OnboardingUiState = OnboardingUiState(),
-    val showSkipConfirmDialog: Boolean = false
+    val showSkipConfirmDialog: Boolean = false,
+    val showExistingLoginConfirmDialog: Boolean = false
 )
 
 @HiltViewModel
@@ -57,6 +58,14 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
 
     fun dismissSkipConfirmation() {
         _uiState.value = _uiState.value.copy(showSkipConfirmDialog = false)
+    }
+
+    fun showExistingLoginConfirmation() {
+        _uiState.value = _uiState.value.copy(showExistingLoginConfirmDialog = true)
+    }
+
+    fun dismissExistingLoginConfirmation() {
+        _uiState.value = _uiState.value.copy(showExistingLoginConfirmDialog = false)
     }
 
     fun buildRequest(): OnboardingRequest? {
