@@ -15,6 +15,7 @@ import com.example.hampouch.domain.model.SocialLoginOutcome
 import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.data.remote.AuthApi
 import com.example.hampouch.data.remote.toApiException
+import com.example.hampouch.data.remote.toApiResult
 import com.example.hampouch.core.network.PendingAuth
 import com.example.hampouch.di.AuthDataStore
 import javax.inject.Inject
@@ -23,12 +24,14 @@ import javax.inject.Singleton
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.UserRole
 import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.data.remote.dto.ApiResponse
 import com.example.hampouch.data.remote.dto.AuthMeData
 import com.example.hampouch.data.remote.dto.EmailSendRequest
 import com.example.hampouch.domain.model.EmailVerificationPurpose
 import com.example.hampouch.data.remote.dto.EmailVerifyRequest
 import com.example.hampouch.data.remote.dto.LoginRequest
 import com.example.hampouch.data.remote.dto.LogoutRequest
+import com.example.hampouch.data.remote.dto.NicknameCheckData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RefreshTokenRequest
 import com.example.hampouch.data.remote.dto.SetNicknameRequest
@@ -42,8 +45,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import retrofit2.Response
 
 private const val TAG = "AuthRepository"
+private const val NICKNAME_ALREADY_EXISTS_CODE = "USER_NICKNAME_ALREADY_EXISTS"
+private const val HTTP_CONFLICT = 409
+private const val MOCK_EMAIL_CODE_EXPIRES_IN_SECONDS = 180L
+
+internal fun Response<ApiResponse<NicknameCheckData>>
+    .toNicknameAvailabilityResult(): Result<Boolean> {
+    if (isSuccessful) {
+        return toApiResult("닉네임 확인에 실패했습니다.").map { it.available }
+    }
+
+    val error = toApiException("닉네임 확인에 실패했습니다.")
+    return if (code() == HTTP_CONFLICT && error.code == NICKNAME_ALREADY_EXISTS_CODE) {
+        Result.success(false)
+    } else {
+        Result.failure(error)
+    }
+}
 
 sealed class SessionStatus {
     data class Valid(val needsNickname: Boolean) : SessionStatus()
@@ -229,7 +250,7 @@ class AuthRepository @Inject constructor(
     suspend fun sendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<Int> {
+    ): Result<Long> {
         if (!AuthConfig.USE_SERVER_AUTH) {
             return mockSendEmailVerificationCode(email, purpose)
         }
@@ -287,13 +308,7 @@ class AuthRepository @Inject constructor(
         }
         return try {
             val response = apiService.checkNickname(nickname)
-
-            val body = response.body()?.data
-            if (response.isSuccessful && body != null) {
-                Result.success(body.available)
-            } else {
-                Result.failure(response.toApiException("닉네임 확인에 실패했습니다."))
-            }
+            response.toNicknameAvailabilityResult()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -554,9 +569,9 @@ class AuthRepository @Inject constructor(
     private fun mockSendEmailVerificationCode(
         email: String,
         purpose: EmailVerificationPurpose
-    ): Result<Int> {
+    ): Result<Long> {
         checkEmailEligibility(email, purpose)?.let { return Result.failure(it) }
-        return Result.success(180)
+        return Result.success(MOCK_EMAIL_CODE_EXPIRES_IN_SECONDS)
     }
 
     private fun mockVerifyEmailCode(

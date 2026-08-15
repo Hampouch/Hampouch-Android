@@ -178,7 +178,7 @@ fun ResetPasswordScreen(
                     }
                 )
                 if (uiState.showPasswordError) {
-                    FieldMessage("비밀번호를 다시 입력해주세요.")
+                    FieldMessage("비밀번호는 8자 이상이며 영문, 숫자를 포함해야 합니다.")
                 }
             }
 
