@@ -41,8 +41,15 @@ class AmountAdjustmentViewModel @Inject constructor(
     fun spentOnDate(date: LocalDate): Int = recordsForDate(date).sumOf { it.amount }
 
     fun updateTargetAmount(newTargetAmount: Int) {
-        challengeRepository.updateTargetAmount(newTargetAmount)
-        viewModelScope.launch { _events.send(AmountAdjustmentEvent.GoalAmountUpdated) }
+        viewModelScope.launch {
+            challengeRepository.updateTargetAmount(newTargetAmount)
+                .onSuccess { _events.send(AmountAdjustmentEvent.GoalAmountUpdated) }
+                .onFailure { error ->
+                    _events.send(
+                        AmountAdjustmentEvent.ShowMessage(error.toUserMessage("목표 금액 조정에 실패했습니다."))
+                    )
+                }
+        }
     }
 
     fun abandonChallenge(challengeId: String) {

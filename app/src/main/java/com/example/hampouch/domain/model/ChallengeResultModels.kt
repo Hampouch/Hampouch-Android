@@ -25,3 +25,13 @@ data class EmotionStat(
     val emotion: SpendingEmotion,
     val percent: Int
 )
+
+data class ChallengeResultSummary(
+    val successDays: Int,
+    val overDays: Int,
+    val savedAmount: Int,
+    val overAmount: Int,
+    val maxStreak: Int,
+    val budgetTotal: Int,
+    val actualSpent: Int
+)

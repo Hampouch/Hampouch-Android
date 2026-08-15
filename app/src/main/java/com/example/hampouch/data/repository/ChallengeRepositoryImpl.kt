@@ -2,24 +2,34 @@ package com.example.hampouch.data.repository
 
 import com.example.hampouch.core.config.ChallengeConfig
 import com.example.hampouch.data.remote.ChallengeApi
+import com.example.hampouch.data.remote.dto.ChallengeAdjustRequest
+import com.example.hampouch.data.remote.dto.ChallengeCalendarData
 import com.example.hampouch.data.remote.dto.ChallengeCreateRequest
 import com.example.hampouch.data.remote.dto.ChallengeCurrentData
+import com.example.hampouch.data.remote.dto.ChallengeEmotionBreakdownDto
+import com.example.hampouch.data.remote.dto.ChallengeFixedDateStartRequest
 import com.example.hampouch.data.remote.dto.ChallengeFocusCategoriesRequest
 import com.example.hampouch.data.remote.dto.ChallengeHistoryItemDto
+import com.example.hampouch.data.remote.dto.ChallengeResultSummaryDto
 import com.example.hampouch.data.remote.runCatchingNetwork
 import com.example.hampouch.data.remote.toApiException
 import com.example.hampouch.data.remote.unauthorized
 import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ApiException
+import com.example.hampouch.domain.model.ChallengeResultSummary
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.DailyLimitOverride
+import com.example.hampouch.domain.model.DailyRecordStatus
+import com.example.hampouch.domain.model.EmotionStat
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.SpendingEmotion
 import com.example.hampouch.domain.repository.ChallengeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -225,7 +235,20 @@ class ChallengeRepositoryImpl @Inject constructor(
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 current.challengeById(challengeId)?.let { existing ->
-                    upsertChallenge(existing.copy(remoteStatus = data.status, closedAt = data.closedAt))
+                    val calendarDays = fetchCalendarDays(
+                        id,
+                        LocalDate.parse(data.period.startDate),
+                        LocalDate.parse(data.period.endDate)
+                    )
+                    upsertChallenge(
+                        existing.copy(
+                            remoteStatus = data.status,
+                            expenseLockedAt = data.expenseLockedAt,
+                            resultSummary = data.summary.toDomain(),
+                            emotionBreakdown = data.emotionBreakdown.map { it.toDomain() },
+                            calendarDays = calendarDays
+                        )
+                    )
                 }
                 Result.success(Unit)
             } else {
@@ -233,6 +256,48 @@ class ChallengeRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    private suspend fun fetchCalendarDays(
+        challengeId: Long,
+        periodStart: LocalDate,
+        periodEnd: LocalDate
+    ): Map<LocalDate, DailyRecordStatus> {
+        val months = generateSequence(YearMonth.from(periodStart)) { it.plusMonths(1) }
+            .takeWhile { !it.isAfter(YearMonth.from(periodEnd)) }
+            .toList()
+        val days = mutableMapOf<LocalDate, DailyRecordStatus>()
+        for (month in months) {
+            val response = apiService.getChallengeCalendar(challengeId, month.year, month.monthValue)
+            days.putAll(response.body()?.data.toDailyRecords())
+        }
+        return days
+    }
+
+    private fun ChallengeCalendarData?.toDailyRecords(): Map<LocalDate, DailyRecordStatus> {
+        if (this == null) return emptyMap()
+        return days.associate { day ->
+            LocalDate.parse(day.date) to if (day.status == "SUCCESS") {
+                DailyRecordStatus.SUCCESS
+            } else {
+                DailyRecordStatus.FAIL
+            }
+        }
+    }
+
+    private fun ChallengeResultSummaryDto.toDomain(): ChallengeResultSummary = ChallengeResultSummary(
+        successDays = successDays,
+        overDays = overDays,
+        savedAmount = savedAmount,
+        overAmount = overAmount,
+        maxStreak = maxStreak,
+        budgetTotal = budgetTotal,
+        actualSpent = actualSpent
+    )
+
+    private fun ChallengeEmotionBreakdownDto.toDomain(): EmotionStat = EmotionStat(
+        emotion = runCatching { SpendingEmotion.valueOf(emotion) }.getOrDefault(SpendingEmotion.ETC),
+        percent = ratio
+    )
 
     override suspend fun updateFocusCategories(categories: List<String>): Result<List<String>> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) return Result.success(categories)
@@ -300,7 +365,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         return runCatchingNetwork(TAG) {
             val response = apiService.createChallenge(
                 ChallengeCreateRequest(
-                    durationDays = totalDays,
+                    durationDays = if (repeatMonthly) null else totalDays,
                     budgetTotal = budgetTotal,
                     startDate = periodStart.toString(),
                     resetByPayday = repeatMonthly,
@@ -314,7 +379,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                 val createdEnd = LocalDate.parse(data.endDate)
                 val newChallenge = ActiveChallenge(
                     id = data.challengeId.toString(),
-                    totalDays = ChronoUnit.DAYS.between(createdStart, createdEnd).toInt() + 1,
+                    totalDays = data.durationDays,
                     periodStart = createdStart,
                     periodEnd = createdEnd,
                     dailyLimit = data.dailyLimit,
@@ -375,8 +440,8 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun applyAcknowledge(ended: ActiveChallenge) {
-        if (ended.repeatMonthly && !ChallengeConfig.USE_SERVER_CHALLENGE) {
+    private fun applyLocalAcknowledge(ended: ActiveChallenge) {
+        if (ended.repeatMonthly) {
             val nextStart = ended.periodEnd.plusDays(1)
             val nextEnd = nextStart.plusMonths(1).minusDays(1)
             val nextChallenge = ActiveChallenge(
@@ -402,31 +467,119 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun markEndAcknowledged(resetExpenseEditFlag: Boolean) {
+        _state.update {
+            it.copy(
+                endAcknowledged = true,
+                hasVisitedExpenseEditAfterEnd = if (resetExpenseEditFlag) false else it.hasVisitedExpenseEditAfterEnd
+            )
+        }
+    }
+
+    private suspend fun renewFixedDateChallenge(): Result<Boolean> = runCatchingNetwork(TAG) {
+        val draftResponse = apiService.getFixedDateChallengeDraft()
+        val draft = draftResponse.body()?.data
+        if (!draftResponse.isSuccessful || draft == null || draft.state != "DUE") {
+            return@runCatchingNetwork Result.success(false)
+        }
+        val startResponse = apiService.startFixedDateChallenge(
+            ChallengeFixedDateStartRequest(
+                sourceChallengeId = draft.sourceChallengeId,
+                startDate = draft.nextStartDate,
+                budgetTotal = draft.budgetTotal,
+                fixedDay = draft.fixedDay
+            )
+        )
+        val data = startResponse.body()?.data
+        if (startResponse.isSuccessful && data != null) {
+            upsertChallenge(
+                ActiveChallenge(
+                    id = data.challengeId.toString(),
+                    totalDays = data.durationDays,
+                    periodStart = LocalDate.parse(data.startDate),
+                    periodEnd = LocalDate.parse(data.endDate),
+                    dailyLimit = data.dailyLimit,
+                    targetAmount = draft.budgetTotal,
+                    savedAmount = 0,
+                    streakDays = 0,
+                    editCount = 0,
+                    repeatMonthly = true,
+                    remoteStatus = data.status
+                )
+            )
+            Result.success(true)
+        } else {
+            Result.failure(startResponse.toApiException("다음 챌린지 시작에 실패했습니다."))
+        }
+    }
+
     override suspend fun acknowledgeChallengeEnd(): Result<Unit> {
         val ended = current.activeChallenge ?: return Result.success(Unit)
-        if (ChallengeConfig.USE_SERVER_CHALLENGE) {
-            val id = ended.id.toLongOrNull()
-            if (id != null) {
-                if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
-                val result = runCatchingNetwork(TAG) {
-                    val response = apiService.closeChallenge(id)
-                    val data = response.body()?.data
-                    if (response.isSuccessful && data != null) {
-                        upsertChallenge(ended.copy(remoteStatus = data.status, closedAt = data.closedAt))
-                        Result.success(Unit)
-                    } else {
-                        Result.failure(response.toApiException("챌린지 종료 처리에 실패했습니다."))
-                    }
-                }
-                if (result.isFailure) return result
-            }
+        if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
+            applyLocalAcknowledge(ended)
+            return Result.success(Unit)
         }
-        applyAcknowledge(ended)
+        val id = ended.id.toLongOrNull()
+        if (id != null) {
+            if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+            val result = runCatchingNetwork(TAG) {
+                val response = apiService.closeChallenge(id)
+                val data = response.body()?.data
+                if (response.isSuccessful && data != null) {
+                    upsertChallenge(ended.copy(remoteStatus = data.status, expenseLockedAt = data.expenseLockedAt))
+                    Result.success(Unit)
+                } else {
+                    Result.failure(response.toApiException("챌린지 종료 처리에 실패했습니다."))
+                }
+            }
+            if (result.isFailure) return result
+        }
+        if (ended.repeatMonthly) {
+            val renewResult = renewFixedDateChallenge()
+            val renewError = renewResult.exceptionOrNull()
+            if (renewError != null) return Result.failure(renewError)
+            markEndAcknowledged(resetExpenseEditFlag = renewResult.getOrDefault(false))
+        } else {
+            markEndAcknowledged(resetExpenseEditFlag = false)
+        }
         return Result.success(Unit)
     }
 
-    override fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate) {
-        val challenge = current.activeChallenge ?: return
+    override suspend fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate): Result<Unit> {
+        val challenge = current.activeChallenge ?: return Result.success(Unit)
+        if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
+            applyLocalTargetAmountUpdate(challenge, newTargetAmount, effectiveFrom)
+            return Result.success(Unit)
+        }
+        val id = challenge.id.toLongOrNull() ?: run {
+            applyLocalTargetAmountUpdate(challenge, newTargetAmount, effectiveFrom)
+            return Result.success(Unit)
+        }
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+        return runCatchingNetwork(TAG) {
+            val response = apiService.adjustChallengeBudget(id, ChallengeAdjustRequest(budgetTotal = newTargetAmount))
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                val updated = challenge.copy(
+                    targetAmount = data.budgetTotal,
+                    dailyLimit = data.dailyLimit,
+                    editCount = data.usedCount,
+                    dailyLimitOverrides = challenge.dailyLimitOverrides +
+                        DailyLimitOverride(effectiveFrom, data.dailyLimit)
+                )
+                _state.update { it.copy(challenges = it.challenges.dropLast(1) + updated) }
+                Result.success(Unit)
+            } else {
+                Result.failure(response.toApiException("목표 금액 조정에 실패했습니다."))
+            }
+        }
+    }
+
+    private fun applyLocalTargetAmountUpdate(
+        challenge: ActiveChallenge,
+        newTargetAmount: Int,
+        effectiveFrom: LocalDate
+    ) {
         val newDailyLimit = (newTargetAmount / challenge.totalDays).coerceAtLeast(0)
         val updated = challenge.copy(
             targetAmount = newTargetAmount,
@@ -435,6 +588,24 @@ class ChallengeRepositoryImpl @Inject constructor(
             dailyLimitOverrides = challenge.dailyLimitOverrides + DailyLimitOverride(effectiveFrom, newDailyLimit)
         )
         _state.update { it.copy(challenges = it.challenges.dropLast(1) + updated) }
+    }
+
+    override suspend fun loadRecommendation(): Result<String> {
+        if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
+            return Result.failure(
+                ApiException(code = "SERVER_DISABLED", message = "추천 정보를 사용할 수 없습니다.")
+            )
+        }
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+        return runCatchingNetwork(TAG) {
+            val response = apiService.getChallengeRecommendation()
+            val data = response.body()?.data
+            if (response.isSuccessful && data != null) {
+                Result.success(data.message)
+            } else {
+                Result.failure(response.toApiException("추천 정보를 불러오지 못했습니다."))
+            }
+        }
     }
 
     override fun resetForAccount(referenceToday: LocalDate) {

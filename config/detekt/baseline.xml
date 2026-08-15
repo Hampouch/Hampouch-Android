@@ -562,6 +562,7 @@
     <ID>ReturnCount:AuthHeaderInterceptor.kt$AuthHeaderInterceptor$override fun intercept(chain: Interceptor.Chain): Response</ID>
     <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun abandonChallenge(referenceToday: LocalDate): Result&lt;Unit&gt;</ID>
     <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun acknowledgeChallengeEnd(): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate): Result&lt;Unit&gt;</ID>
     <ID>ReturnCount:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$private fun categoryRequestPair(record: ExpenseRecord): Pair&lt;String?, String?&gt;</ID>
     <ID>ReturnCount:HamBattleModels.kt$HamBattleChallenge$fun status(referenceToday: LocalDate = LocalDate.now()): HamBattleStatus</ID>
     <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun createMenuPost( title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; ): Result&lt;TipPost&gt;</ID>
@@ -582,6 +583,7 @@
     <ID>TooGenericExceptionCaught:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$e: Exception</ID>
     <ID>TooGenericExceptionCaught:SocialAuthManager.kt$SocialAuthManager$e: Exception</ID>
     <ID>TooManyFunctions:ApiService.kt$AuthApi</ID>
+    <ID>TooManyFunctions:ApiService.kt$ChallengeApi</ID>
     <ID>TooManyFunctions:ApiService.kt$CommunityApi</ID>
     <ID>TooManyFunctions:ApiService.kt$ExpenseApi</ID>
     <ID>TooManyFunctions:AuthRepository.kt$AuthRepository : AuthTokenProvider</ID>

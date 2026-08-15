@@ -1,7 +1,7 @@
 package com.example.hampouch.data.remote.dto
 
 data class ChallengeCreateRequest(
-    val durationDays: Int,
+    val durationDays: Int?,
     val budgetTotal: Int,
     val startDate: String,
     val resetByPayday: Boolean,
@@ -11,6 +11,7 @@ data class ChallengeCreateRequest(
 
 data class ChallengeCreateData(
     val challengeId: Long,
+    val durationDays: Int,
     val dailyLimit: Int,
     val startDate: String,
     val endDate: String,
@@ -59,11 +60,6 @@ data class ChallengeRestDto(
     val plannedResumeDate: String
 )
 
-data class ChallengeKeptRecordsDto(
-    val savedAmount: Int,
-    val maxStreak: Int
-)
-
 data class ChallengeCurrentData(
     val challenge: ChallengeSummaryDto?,
     val progress: ChallengeProgressDto? = null,
@@ -71,8 +67,7 @@ data class ChallengeCurrentData(
     val warningCards: List<ChallengeWarningCardDto>? = null,
     val expenseInputState: String? = null,
     val adjustment: ChallengeAdjustmentDto? = null,
-    val rest: ChallengeRestDto? = null,
-    val keptRecords: ChallengeKeptRecordsDto? = null
+    val rest: ChallengeRestDto? = null
 )
 
 data class ChallengeHistoryItemDto(
@@ -106,23 +101,17 @@ data class ChallengeResultSummaryDto(
     val actualSpent: Int
 )
 
-data class ChallengeCategoryBreakdownDto(
-    val category: String,
-    val amount: Int
-)
-
 data class ChallengeEmotionBreakdownDto(
     val emotion: String,
-    val ratio: Double
+    val ratio: Int
 )
 
 data class ChallengeResultData(
     val challengeId: Long,
     val status: String,
-    val closedAt: String?,
+    val expenseLockedAt: String?,
     val period: ChallengeResultPeriodDto,
     val summary: ChallengeResultSummaryDto,
-    val categoryBreakdown: List<ChallengeCategoryBreakdownDto> = emptyList(),
     val emotionBreakdown: List<ChallengeEmotionBreakdownDto> = emptyList()
 )
 
@@ -134,7 +123,7 @@ data class ChallengeStatusData(
 data class ChallengeCloseData(
     val challengeId: Long,
     val status: String,
-    val closedAt: String
+    val expenseLockedAt: String
 )
 
 data class ChallengeFocusCategoriesRequest(
@@ -144,4 +133,75 @@ data class ChallengeFocusCategoriesRequest(
 data class ChallengeFocusCategoriesData(
     val challengeId: Long,
     val categories: List<String>
+)
+
+data class ChallengeFixedDateStartRequest(
+    val sourceChallengeId: Long,
+    val startDate: String,
+    val budgetTotal: Int,
+    val fixedDay: Int
+)
+
+data class ChallengeFixedDateStartData(
+    val challengeId: Long,
+    val durationDays: Int,
+    val dailyLimit: Int,
+    val startDate: String,
+    val endDate: String,
+    val status: String
+)
+
+data class ChallengeFixedDateDraftData(
+    val state: String,
+    val sourceChallengeId: Long,
+    val previousStartDate: String,
+    val previousEndDate: String,
+    val fixedDay: Int,
+    val nextStartDate: String,
+    val nextEndDate: String,
+    val durationDays: Int,
+    val budgetTotal: Int,
+    val dailyLimit: Int
+)
+
+data class ChallengeCalendarDayDto(
+    val date: String,
+    val status: String,
+    val spentAmount: Int
+)
+
+data class ChallengeCalendarData(
+    val challengeId: Long,
+    val year: Int,
+    val month: Int,
+    val days: List<ChallengeCalendarDayDto>
+)
+
+data class ChallengeDayRequest(
+    val date: String,
+    val spentAmount: Int
+)
+
+data class ChallengeDayData(
+    val date: String,
+    val spentAmount: Int,
+    val dailyLimit: Int,
+    val status: String
+)
+
+data class ChallengeAdjustRequest(
+    val option: String? = null,
+    val budgetTotal: Int? = null
+)
+
+data class ChallengeAdjustData(
+    val challengeId: Long,
+    val budgetTotal: Int,
+    val dailyLimit: Int,
+    val usedCount: Int,
+    val maxCount: Int
+)
+
+data class ChallengeRecommendationData(
+    val message: String
 )

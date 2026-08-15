@@ -808,6 +808,7 @@ fun AppNavHost(
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
             val challenge = challengeState.challengeById(challengeId)
+            LaunchedEffect(challengeId) { expenseLookup.loadResult(challengeId) }
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
                 val state = ChallengeResultMockData.forChallenge(
