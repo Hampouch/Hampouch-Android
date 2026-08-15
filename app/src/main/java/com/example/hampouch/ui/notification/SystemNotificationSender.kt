@@ -33,6 +33,10 @@ object SystemNotificationSender {
     }
 
     fun sendNotification(context: Context, item: NotificationItem) {
+        notify(context, id = item.id, title = item.title, message = item.message)
+    }
+
+    fun notify(context: Context, id: String, title: String, message: String) {
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -46,26 +50,26 @@ object SystemNotificationSender {
         val contentIntent = Intent(context, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_NOTIFICATION_ID, item.id)
+            putExtra(EXTRA_NOTIFICATION_ID, id)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            item.id.hashCode(),
+            id.hashCode(),
             contentIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, TEST_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(item.title)
-            .setContentText(item.message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(item.message))
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
 
-        NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification)
+        NotificationManagerCompat.from(context).notify(id.hashCode(), notification)
     }
 }
