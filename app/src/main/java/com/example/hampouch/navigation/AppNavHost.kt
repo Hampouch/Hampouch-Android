@@ -394,6 +394,9 @@ fun AppNavHost(
                 onNavigateToAmountAdjustment = {
                     navController.navigate(Screen.AmountAdjustment.route)
                 },
+                onNavigateToYesterdayExpenseInput = {
+                    navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now().minusDays(1)))
+                },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = {
                     startDestinationViewModel.logout()

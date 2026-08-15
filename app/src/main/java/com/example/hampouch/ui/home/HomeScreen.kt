@@ -38,6 +38,9 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.core.config.ChallengeConfig
+import com.example.hampouch.domain.model.HomeWarning
+import com.example.hampouch.domain.model.HomeWarningType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.common.previewChallengeState
@@ -108,6 +111,7 @@ fun HomeScreen(
     onExtendBreak: () -> Unit,
     onAddExpenseClick: () -> Unit,
     onNavigateToAmountAdjustment: () -> Unit,
+    onNavigateToYesterdayExpenseInput: () -> Unit,
     onNotificationClick: () -> Unit,
     onLoggedOut: () -> Unit,
     onChallengeEndedFinishClick: () -> Unit,
@@ -189,9 +193,31 @@ fun HomeScreen(
             streakDays = progress?.streakDays ?: challenge.streakDays
         )
     }
+    val yesterday = referenceToday.minusDays(1)
+    val yesterdayHasRecord = recordsForDate(yesterday).isNotEmpty() || yesterday in daysWithRecord
+    val warnings = remember(
+        liveChallenge, resolvedChallenge, challengeState, uiState.expenses, records, yesterdayHasRecord
+    ) {
+        if (ChallengeConfig.USE_SERVER_CHALLENGE) {
+            resolvedChallenge?.warningCodes.orEmpty()
+                .mapNotNull { code -> HomeWarningType.fromServerCode(code) }
+                .map { type -> HomeWarning(id = type.serverCode, type = type) }
+        } else {
+            HomeWarningMockData.compute(
+                challenge = liveChallenge,
+                resolvedChallenge = resolvedChallenge,
+                challengeState = challengeState,
+                referenceToday = referenceToday,
+                todaysExpenses = uiState.expenses,
+                recordsForDate = recordsForDate,
+                yesterdayHasRecord = yesterdayHasRecord
+            )
+        }
+    }
     val displayedUiState = uiState.copy(
         challenge = liveChallenge,
-        miniChallenges = miniChallengeState.challengesFor(selectedDate)
+        miniChallenges = miniChallengeState.challengesFor(selectedDate),
+        warnings = warnings
     )
 
     Scaffold(
@@ -220,7 +246,7 @@ fun HomeScreen(
                         }
                     },
                     onViewAllMiniChallengesClick = { onNavigateToMiniChallenge(selectedDate) },
-                    onSuggestionClick = { onNavigateToAmountAdjustment() },
+                    onReminderClick = onNavigateToYesterdayExpenseInput,
                     onStartChallengeClick = onStartChallengeClick,
                     onCalendarClick = onCalendarClick,
                     onChallengeSummaryClick = { resolvedChallenge?.let { onChallengeSummaryClick(it.id) } },
@@ -350,7 +376,7 @@ private fun HomeContent(
     onDateSelected: (LocalDate) -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
     onViewAllMiniChallengesClick: () -> Unit,
-    onSuggestionClick: (String) -> Unit,
+    onReminderClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
     onCalendarClick: () -> Unit,
     onChallengeSummaryClick: () -> Unit,
@@ -400,7 +426,7 @@ private fun HomeContent(
 
             if (uiState.warnings.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                WarningBannerList(warnings = uiState.warnings, onSuggestionClick = onSuggestionClick)
+                WarningBannerList(warnings = uiState.warnings, onReminderClick = onReminderClick)
             }
         }
 
@@ -434,7 +460,7 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
             referenceToday = referenceToday,
             onDateSelected = {},
             onToggleMiniChallenge = {},
-            onSuggestionClick = {},
+            onReminderClick = {},
             onStartChallengeClick = {},
             onViewAllMiniChallengesClick = {},
             onCalendarClick = {},
