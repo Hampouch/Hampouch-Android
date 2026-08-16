@@ -11,7 +11,7 @@
     <ID>CyclomaticComplexMethod:HamBattleScreen.kt$@Composable fun HamBattleScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, activeChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), waitingChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), onStartNewChallengeClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onViewEndedChallengesClick: () -&gt; Unit, onChallengeClick: (String) -&gt; Unit, onWaitingChallengeClick: (String) -&gt; Unit, onViewEndedChallengeDetailClick: (String) -&gt; Unit, viewModel: HamBattleViewModel = hiltViewModel() )</ID>
     <ID>CyclomaticComplexMethod:HamTipsBattleDetailScreen.kt$@Composable fun HamTipsBattleDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onDeleted: () -&gt; Unit, onNavigateToBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
     <ID>CyclomaticComplexMethod:HamTipsScreen.kt$@Composable fun HamTipsScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
-    <ID>CyclomaticComplexMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuScreen( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmitted: () -&gt; Unit, viewModel: HamTipsWriteViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (String, String, String, Int, MenuRatingInfo, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
     <ID>CyclomaticComplexMethod:HomeScreen.kt$@Composable fun HomeScreen( modifier: Modifier = Modifier, initialBottomTab: BottomNavItem = BottomNavItem.HOME, openHamTipsWriteBattleOnStart: Boolean = false, initialHamTipsWriteBattleLink: String = "", onExitHamTipsWriteBattle: () -&gt; Unit, initialMyTipDetailPostId: String? = null, initialMyTipDetailScrollToComments: Boolean = false, initialPopularPostId: String? = null, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: (String) -&gt; Unit, onNavigateToMiniChallenge: (LocalDate) -&gt; Unit, onHamBattleStartNewChallengeClick: () -&gt; Unit, onHamBattleChallengeClick: (String) -&gt; Unit, onHamBattleViewEndedChallengesClick: () -&gt; Unit, onHamBattleViewEndedChallengeDetailClick: (String) -&gt; Unit, onHamBattleWaitingChallengeClick: (String) -&gt; Unit, onHamBattleJoinedFromCommunityClick: (String) -&gt; Unit, onHamBattleJoinedFullFromCommunityClick: () -&gt; Unit, onNavigateToExpenseDetail: (String) -&gt; Unit, onNavigateToExpenseCalendar: () -&gt; Unit, onNavigateToChallengeEndExpenseCalendar: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onExtendBreak: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToYesterdayExpenseInput: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onChallengeEndedFinishClick: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel() )</ID>
     <ID>CyclomaticComplexMethod:HomeWarningMockData.kt$HomeWarningMockData$fun compute( challenge: HomeChallenge?, resolvedChallenge: ActiveChallenge?, challengeState: ChallengeState, referenceToday: LocalDate, todaysExpenses: List&lt;ExpenseEntry&gt;, recordsForDate: (LocalDate) -&gt; List&lt;ExpenseRecord&gt;, yesterdayHasRecord: Boolean ): List&lt;HomeWarning&gt;</ID>
     <ID>CyclomaticComplexMethod:MyPageScreen.kt$@Composable fun MyPageScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, initialTipDetailPostId: String? = null, initialTipDetailScrollToComments: Boolean = false )</ID>
@@ -67,9 +67,9 @@
     <ID>LongMethod:HamTipsDetailScreen.kt$@Composable fun HamTipsDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, onDeleted: () -&gt; Unit, scrollToComments: Boolean = false, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:HamTipsMockData.kt$HamTipsMockData$fun allPosts(): List&lt;TipPost&gt;</ID>
     <ID>LongMethod:HamTipsScreen.kt$@Composable fun HamTipsScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
-    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteBattleScreen( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmitted: () -&gt; Unit, initialLink: String = "", viewModel: HamTipsWriteViewModel = hiltViewModel(), battleViewModel: HamBattleViewModel = hiltViewModel() )</ID>
-    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuScreen( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmitted: () -&gt; Unit, viewModel: HamTipsWriteViewModel = hiltViewModel() )</ID>
-    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteTipScreen( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmitted: () -&gt; Unit, viewModel: HamTipsWriteViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteBattleContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, initialLink: String = "", waitingChallengeLinks: List&lt;String&gt;? = null, onSubmit: (String, String, String) -&gt; Unit )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (String, String, String, Int, MenuRatingInfo, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteTipContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (TipCategory, String, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
     <ID>LongMethod:HomeComponents.kt$@Composable fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifier)</ID>
     <ID>LongMethod:HomeComponents.kt$@Composable fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier)</ID>
     <ID>LongMethod:HomeScreen.kt$@Composable fun HomeScreen( modifier: Modifier = Modifier, initialBottomTab: BottomNavItem = BottomNavItem.HOME, openHamTipsWriteBattleOnStart: Boolean = false, initialHamTipsWriteBattleLink: String = "", onExitHamTipsWriteBattle: () -&gt; Unit, initialMyTipDetailPostId: String? = null, initialMyTipDetailScrollToComments: Boolean = false, initialPopularPostId: String? = null, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: (String) -&gt; Unit, onNavigateToMiniChallenge: (LocalDate) -&gt; Unit, onHamBattleStartNewChallengeClick: () -&gt; Unit, onHamBattleChallengeClick: (String) -&gt; Unit, onHamBattleViewEndedChallengesClick: () -&gt; Unit, onHamBattleViewEndedChallengeDetailClick: (String) -&gt; Unit, onHamBattleWaitingChallengeClick: (String) -&gt; Unit, onHamBattleJoinedFromCommunityClick: (String) -&gt; Unit, onHamBattleJoinedFullFromCommunityClick: () -&gt; Unit, onNavigateToExpenseDetail: (String) -&gt; Unit, onNavigateToExpenseCalendar: () -&gt; Unit, onNavigateToChallengeEndExpenseCalendar: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onExtendBreak: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToYesterdayExpenseInput: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onChallengeEndedFinishClick: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel() )</ID>
@@ -175,7 +175,6 @@
     <ID>MagicNumber:AmountAdjustmentScreen.kt$AmountAdjustmentOption.RELAX_20$1.2</ID>
     <ID>MagicNumber:AmountAdjustmentScreen.kt$AmountAdjustmentOption.RELAX_30$1.3</ID>
     <ID>MagicNumber:AppNavHost.kt$300</ID>
-    <ID>MagicNumber:AuthRepository.kt$AuthRepository$180</ID>
     <ID>MagicNumber:AuthRepository.kt$AuthRepository$401</ID>
     <ID>MagicNumber:AuthRepository.kt$AuthRepository$403</ID>
     <ID>MagicNumber:BattleRepositoryImpl.kt$7</ID>
@@ -190,6 +189,10 @@
     <ID>MagicNumber:ChallengeResultComponents.kt$0xFF729739</ID>
     <ID>MagicNumber:ChallengeResultComponents.kt$0xFFB19347</ID>
     <ID>MagicNumber:ChallengeResultComponents.kt$0xFFE17866</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$14</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$2026</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$3</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$5</ID>
     <ID>MagicNumber:ChallengeResultComponents.kt$6</ID>
     <ID>MagicNumber:ChallengeResultComponents.kt$7</ID>
     <ID>MagicNumber:ChallengeResultMockData.kt$ChallengeResultMockData$100.0</ID>
@@ -270,11 +273,19 @@
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFFB19347</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFFE17866</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$10.0</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$10_000</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$10f</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$11171</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$15_000</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$2026</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$25_000</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$28</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$3</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$360f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$4</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$5</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$50</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$5_000</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$5f</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$8</ID>
     <ID>MagicNumber:ExpenseAnalysisComponents.kt$90f</ID>
@@ -290,8 +301,11 @@
     <ID>MagicNumber:ExpenseCalendarScreen.kt$6</ID>
     <ID>MagicNumber:ExpenseCalendarScreen.kt$7</ID>
     <ID>MagicNumber:ExpenseDetailComponents.kt$0.4f</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$16</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$2026</ID>
     <ID>MagicNumber:ExpenseDetailComponents.kt$50</ID>
     <ID>MagicNumber:ExpenseDetailComponents.kt$6f</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$8</ID>
     <ID>MagicNumber:ExpenseDetailComponents.kt$8f</ID>
     <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$1.5</ID>
     <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$10</ID>
@@ -379,7 +393,9 @@
     <ID>MagicNumber:HamTipsWriteComponents.kt$5</ID>
     <ID>MagicNumber:HamTipsWriteComponents.kt$50</ID>
     <ID>MagicNumber:HamTipsWriteComponents.kt$9</ID>
+    <ID>MagicNumber:HomeComponents.kt$45</ID>
     <ID>MagicNumber:HomeComponents.kt$50</ID>
+    <ID>MagicNumber:HomeComponents.kt$7</ID>
     <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFF178BFD</ID>
     <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFF2859C5</ID>
     <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFFAB3A3A</ID>
@@ -390,6 +406,7 @@
     <ID>MagicNumber:HomeModels.kt$CharacterState.Companion$0.7f</ID>
     <ID>MagicNumber:MiniChallengeComponents.kt$200</ID>
     <ID>MagicNumber:MiniChallengeComponents.kt$50</ID>
+    <ID>MagicNumber:MiniChallengeComponents.kt$7</ID>
     <ID>MagicNumber:MiniChallengeDurations.kt$14</ID>
     <ID>MagicNumber:MiniChallengeDurations.kt$3</ID>
     <ID>MagicNumber:MiniChallengeDurations.kt$31</ID>
@@ -410,6 +427,9 @@
     <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$1000</ID>
     <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$1000.0</ID>
     <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$30</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$14</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$30</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$7</ID>
     <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$14</ID>
     <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$30</ID>
     <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$7</ID>
@@ -423,7 +443,6 @@
     <ID>MagicNumber:ShareImageUtils.kt$100</ID>
     <ID>MagicNumber:SignUpViewModel.kt$SignUpUiState$8</ID>
     <ID>MagicNumber:TakeABreakScreen.kt$3</ID>
-    <ID>MagicNumber:TakeABreakViewModel.kt$TakeABreakViewModel$3</ID>
     <ID>MagicNumber:TimeAgo.kt$60</ID>
     <ID>MatchingDeclarationName:AmountAdjustmentModels.kt$AmountAdjustmentChallenge</ID>
     <ID>MatchingDeclarationName:AuthMeDto.kt$AuthMeData</ID>
@@ -437,7 +456,6 @@
     <ID>MaxLineLength:AmountAdjustmentScreen.kt$challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 1)</ID>
     <ID>MaxLineLength:AppNavHost.kt$Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)</ID>
     <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"READY","joinedCount":2}""")</ID>
-    <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"ONGOING","participants":[]}""")</ID>
     <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"READY","capacity":4,"joinedCount":2}""")</ID>
     <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"TERMINATED","winnerNickname":"winner"}""")</ID>
     <ID>MaxLineLength:ChallengeEndedDialog.kt$properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = false)</ID>
@@ -493,6 +511,7 @@
     <ID>MaxLineLength:HamTipsCommentComponents.kt$TipReply(id = "preview_reply_2", authorId = "user_altteuli", authorName = "알뜰이", content = "굿굿", timeLabel = "방금")</ID>
     <ID>MaxLineLength:HamTipsCommentComponents.kt$text = if (comment.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else comment.authorName</ID>
     <ID>MaxLineLength:HamTipsCommentComponents.kt$text = if (reply.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else reply.authorName</ID>
+    <ID>MaxLineLength:HamTipsComponents.kt$HamTipsCategoryTabRow(selectedTab = HamTipsCategoryTab.ALL, onTabSelected = {}, modifier = Modifier.padding(16.dp))</ID>
     <ID>MaxLineLength:HamTipsComponents.kt$Icon(imageVector = icon, contentDescription = contentDescription, tint = HPText, modifier = Modifier.size(14.dp))</ID>
     <ID>MaxLineLength:HamTipsComponents.kt$Text(text = formatTimeAgo(post.postedMinutesAgo), style = MaterialTheme.typography.labelSmall, color = HPText)</ID>
     <ID>MaxLineLength:HamTipsComponents.kt$Text(text = stringResource(selected.labelResId), style = MaterialTheme.typography.labelMedium, color = HPText)</ID>
@@ -515,6 +534,8 @@
     <ID>MaxLineLength:HamTipsScreen.kt$posts = filteredSortedPosts(popularPosts, selectedCategoryTab.category, searchQuery, sortOrder)</ID>
     <ID>MaxLineLength:HamTipsScreen.kt$private</ID>
     <ID>MaxLineLength:HamTipsScreen.kt$targetOffset = (coordinates.positionInRoot().y - containerRootY!! + scrollState!!.value).toInt()</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$HamTipsCategoryPickerRow(selected = TipShareCategory.SHOPPING, onSelected = {}, modifier = Modifier.padding(16.dp))</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$HamTipsStarRatingRow(type = MenuRatingType.TASTE, rating = 4, onRatingChange = {}, modifier = Modifier.padding(16.dp))</ID>
     <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPBlack, modifier = Modifier.width(56.dp))</ID>
     <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = previewText, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)</ID>
     <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = text, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold, modifier = modifier)</ID>
@@ -600,6 +621,7 @@
     <ID>TooManyFunctions:ExpenseAnalysisScreen.kt$com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisScreen.kt</ID>
     <ID>TooManyFunctions:ExpenseCalendarScreen.kt$com.example.hampouch.ui.expensedetail.ExpenseCalendarScreen.kt</ID>
     <ID>TooManyFunctions:ExpenseDetailComponents.kt$com.example.hampouch.ui.expensedetail.ExpenseDetailComponents.kt</ID>
+    <ID>TooManyFunctions:ExpenseInputComponents.kt$com.example.hampouch.ui.expenseinput.ExpenseInputComponents.kt</ID>
     <ID>TooManyFunctions:ExpenseInputViewModel.kt$ExpenseInputViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ExpenseRepository.kt$ExpenseRepository</ID>
     <ID>TooManyFunctions:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl : ExpenseRepository</ID>
@@ -610,12 +632,15 @@
     <ID>TooManyFunctions:HamBattleMockStore.kt$HamBattleMockStore : AccountScopedState</ID>
     <ID>TooManyFunctions:HamBattleScreen.kt$com.example.hampouch.ui.hambattle.HamBattleScreen.kt</ID>
     <ID>TooManyFunctions:HamBattleViewModel.kt$HamBattleViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HamTipsCommentComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsCommentComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsDetailScreen.kt$com.example.hampouch.ui.hamtips.HamTipsDetailScreen.kt</ID>
     <ID>TooManyFunctions:HamTipsDetailViewModel.kt$HamTipsDetailViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HamTipsPhotoComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsPhotoComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsRepository.kt$HamTipsRepository</ID>
     <ID>TooManyFunctions:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl : HamTipsRepositoryAccountScopedState</ID>
     <ID>TooManyFunctions:HamTipsScreen.kt$com.example.hampouch.ui.hamtips.HamTipsScreen.kt</ID>
+    <ID>TooManyFunctions:HamTipsWriteComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsWriteComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsWriteScreens.kt$com.example.hampouch.ui.hamtips.HamTipsWriteScreens.kt</ID>
     <ID>TooManyFunctions:HomeComponents.kt$com.example.hampouch.ui.home.components.HomeComponents.kt</ID>
     <ID>TooManyFunctions:LoginViewModel.kt$LoginViewModel : ViewModel</ID>
@@ -663,7 +688,6 @@
     <ID>UnusedPrivateProperty:HamBattleChallengesResultPagerScreen.kt$private const val PAGE_RANKING_LIST = 1</ID>
     <ID>UnusedPrivateProperty:HamTipsBattleDetailScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
     <ID>UnusedPrivateProperty:HamTipsDetailScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
-    <ID>UnusedPrivateProperty:HamTipsWriteScreens.kt$val coroutineScope = rememberCoroutineScope()</ID>
     <ID>UnusedPrivateProperty:HomeScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
     <ID>UnusedPrivateProperty:MyPageScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
     <ID>UnusedPrivateProperty:NextChallengeScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>

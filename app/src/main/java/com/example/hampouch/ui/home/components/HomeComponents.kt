@@ -59,6 +59,7 @@ import com.example.hampouch.domain.model.HomeWarning
 import com.example.hampouch.domain.model.HomeWarningType
 import com.example.hampouch.domain.model.HomeWarningVariant
 import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
@@ -110,6 +111,14 @@ fun HomeHeader(
     }
 }
 
+@Preview(showBackground = true, name = "홈 헤더")
+@Composable
+private fun HomeHeaderPreview() {
+    HampouchTheme {
+        HomeHeader(userName = "민준", onCalendarClick = {}, onNotificationClick = {})
+    }
+}
+
 private val dateLabelFormatter = DateTimeFormatter.ofPattern("MM.dd")
 
 @Composable
@@ -127,34 +136,53 @@ fun DateSelectorRow(
         dates.forEach { date ->
             val isFuture = date.isAfter(referenceToday)
             val isSelected = date == selectedDate
-            DateChip(
-                label = date.format(dateLabelFormatter),
-                selected = isSelected,
-                enabled = !isFuture,
-                onClick = { onDateSelected(date) },
-                modifier = Modifier.weight(1f)
-            )
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                DateChip(
+                    label = date.format(dateLabelFormatter),
+                    selected = isSelected,
+                    enabled = !isFuture,
+                    onClick = { onDateSelected(date) }
+                )
+            }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "날짜 선택 스트립")
+@Composable
+private fun DateSelectorRowPreview() {
+    val today = remember { LocalDate.now() }
+    HampouchTheme {
+        DateSelectorRow(referenceToday = today, selectedDate = today, onDateSelected = {})
     }
 }
 
 @Composable
 fun ReturnToTodayButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
-            .background(HPMain)
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = stringResource(R.string.home_return_to_today_button),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPWhite
-        )
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(45))
+                .background(HPMain)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 30.dp, vertical = 5.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.home_return_to_today_button),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = HPWhite
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "오늘 날짜로 돌아가기 버튼")
+@Composable
+private fun ReturnToTodayButtonPreview() {
+    HampouchTheme {
+        ReturnToTodayButton(onClick = {})
     }
 }
 
@@ -174,10 +202,10 @@ private fun DateChip(
     }
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(13.dp))
             .background(backgroundColor)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 13.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -249,6 +277,25 @@ fun ChallengeBanner(
                 )
             }
         }
+    }
+}
+
+private val PreviewHomeChallenge = HomeChallenge(
+    totalDays = 14,
+    dDay = 7,
+    periodStartLabel = "5월 1일",
+    periodEndLabel = "5월 14일",
+    dailyLimit = 20_000,
+    todayBalance = 300,
+    savedAmount = 21_400,
+    streakDays = 4
+)
+
+@Preview(showBackground = true, name = "챌린지 배너")
+@Composable
+private fun ChallengeBannerPreview() {
+    HampouchTheme {
+        ChallengeBanner(challenge = PreviewHomeChallenge)
     }
 }
 
@@ -329,6 +376,14 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
     }
 }
 
+@Preview(showBackground = true, name = "캐릭터 게이지")
+@Composable
+private fun CharacterGaugeSectionPreview() {
+    HampouchTheme {
+        CharacterGaugeSection(challenge = PreviewHomeChallenge)
+    }
+}
+
 private const val StreakBoxWidthDeltaRatio = 0.2f
 
 @Composable
@@ -404,6 +459,14 @@ fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Mod
     }
 }
 
+@Preview(showBackground = true, name = "누적 절약 · 연속 달성")
+@Composable
+private fun SavingsStreakRowPreview() {
+    HampouchTheme {
+        SavingsStreakRow(savedAmount = 21_400, streakDays = 4, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun SectionHeader(title: String, onViewAllClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -419,6 +482,14 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit, modifier: Modifier 
                 color = HPText
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "섹션 헤더")
+@Composable
+private fun SectionHeaderPreview() {
+    HampouchTheme {
+        SectionHeader(title = "오늘 지출", onViewAllClick = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -453,6 +524,37 @@ fun TodayExpenseSection(
         ) {
             Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
         }
+    }
+}
+
+@Preview(showBackground = true, name = "오늘 지출 섹션")
+@Composable
+private fun TodayExpenseSectionPreview() {
+    HampouchTheme {
+        TodayExpenseSection(
+            expenses = listOf(
+                ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
+                ExpenseEntry(id = "2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200)
+            ),
+            onViewAllClick = {},
+            onAddExpenseClick = {},
+            onExpenseClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "오늘 지출 섹션 - 비어있음")
+@Composable
+private fun TodayExpenseSectionEmptyPreview() {
+    HampouchTheme {
+        TodayExpenseSection(
+            expenses = emptyList(),
+            onViewAllClick = {},
+            onAddExpenseClick = {},
+            onExpenseClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -518,6 +620,48 @@ fun MiniChallengeSection(
     }
 }
 
+@Preview(showBackground = true, name = "오늘 나의 미니 챌린지")
+@Composable
+private fun MiniChallengeSectionPreview() {
+    HampouchTheme {
+        val previewDuration = miniChallengeDuration(7)
+        MiniChallengeSection(
+            items = listOf(
+                MiniChallengeEntry(
+                    id = "m1",
+                    name = "커피 사먹지 않기",
+                    duration = previewDuration,
+                    achievedDays = 4,
+                    isChecked = true
+                ),
+                MiniChallengeEntry(
+                    id = "m2",
+                    name = "배달 음식 참기",
+                    duration = previewDuration,
+                    achievedDays = 3,
+                    isChecked = false
+                )
+            ),
+            onViewAllClick = {},
+            onToggle = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "오늘 나의 미니 챌린지 - 비어있음")
+@Composable
+private fun MiniChallengeSectionEmptyPreview() {
+    HampouchTheme {
+        MiniChallengeSection(
+            items = emptyList(),
+            onViewAllClick = {},
+            onToggle = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 private fun MiniChallengeRow(item: MiniChallengeEntry, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -546,6 +690,18 @@ private fun MiniChallengeRow(item: MiniChallengeEntry, onToggle: () -> Unit, mod
             text = item.periodLabel(),
             style = MaterialTheme.typography.bodySmall,
             color = HPText
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "빈 상태 블록")
+@Composable
+private fun EmptyStateBlockPreview() {
+    HampouchTheme {
+        EmptyStateBlock(
+            title = "아직 지출이 없어요.",
+            subtitle = "지출이 있다면 입력해주세요.",
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -596,6 +752,27 @@ private fun HomeWarning.resolveMessage(): String = when (type) {
     HomeWarningType.REASON_OVERSPEND -> stringResource(R.string.home_warning_reason_overspend_message)
     HomeWarningType.LARGE_SINGLE_EXPENSE -> stringResource(R.string.home_warning_large_single_expense_message)
     HomeWarningType.MISSED_YESTERDAY_RECORD -> stringResource(R.string.home_warning_missed_yesterday_message)
+}
+
+@Preview(showBackground = true, name = "경고 배너 목록")
+@Composable
+private fun WarningBannerListPreview() {
+    HampouchTheme {
+        WarningBannerList(
+            warnings = listOf(
+                HomeWarning(id = "w1", type = HomeWarningType.LOW_DAILY_BUDGET),
+                HomeWarning(
+                    id = "w2",
+                    type = HomeWarningType.CATEGORY_OVERSPEND,
+                    categoryId = "delivery",
+                    categorySpentAmount = 18_000
+                ),
+                HomeWarning(id = "w3", type = HomeWarningType.MISSED_YESTERDAY_RECORD)
+            ),
+            onReminderClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }
 
 @Composable
@@ -724,6 +901,46 @@ fun NoActiveChallengeSection(
                 .offset(y = 28.dp)
                 .width(110.dp)
                 .height(128.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "챌린지 없음 - 오늘")
+@Composable
+private fun NoActiveChallengeSectionTodayPreview() {
+    HampouchTheme {
+        NoActiveChallengeSection(
+            title = "현재 진행중인 식비 절약 챌린지가 없어요",
+            subtitle = "포치와 함께 식비를 절약해봐요",
+            ctaText = "식비 절약 챌린지 시작하기",
+            onCtaClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "챌린지 없음 - 종료된 챌린지")
+@Composable
+private fun NoActiveChallengeSectionEndedPreview() {
+    HampouchTheme {
+        NoActiveChallengeSection(
+            title = "종료된 챌린지",
+            subtitle = "포치와 함께 식비를 절약했어요",
+            ctaText = "챌린지 결과 보기",
+            onCtaClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "챌린지 없음 - 진행했던 챌린지 없음")
+@Composable
+private fun NoActiveChallengeSectionNoPastPreview() {
+    HampouchTheme {
+        NoActiveChallengeSection(
+            title = "진행했던 챌린지가 없어요",
+            subtitle = "포치와 함께 식비를 절약해봐요",
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

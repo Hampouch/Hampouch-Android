@@ -87,6 +87,14 @@ fun ExpenseInputTopBar(
     )
 }
 
+@Preview(showBackground = true, name = "지출 입력 상단바")
+@Composable
+private fun ExpenseInputTopBarPreview() {
+    HampouchTheme {
+        ExpenseInputTopBar(title = "지출 입력", onBackClick = {})
+    }
+}
+
 @Composable
 fun ExpenseInputOptionalBadge(modifier: Modifier = Modifier) {
     Text(
@@ -97,6 +105,14 @@ fun ExpenseInputOptionalBadge(modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Bold,
         color = HPMain
     )
+}
+
+@Preview(showBackground = true, name = "선택 배지")
+@Composable
+private fun ExpenseInputOptionalBadgePreview() {
+    HampouchTheme {
+        ExpenseInputOptionalBadge()
+    }
 }
 
 @Composable
@@ -283,6 +299,14 @@ fun ExpenseInputPrimaryButton(
     }
 }
 
+@Preview(showBackground = true, name = "지출 입력 기본 버튼")
+@Composable
+private fun ExpenseInputPrimaryButtonPreview() {
+    HampouchTheme {
+        ExpenseInputPrimaryButton(label = "저장하기", enabled = true, onClick = {})
+    }
+}
+
 private val ReasonOptionButtonMinHeight = 64.dp
 
 @Composable
@@ -317,6 +341,14 @@ fun ExpenseInputReasonOptionButton(
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 입력 이유 선택 버튼")
+@Composable
+private fun ExpenseInputReasonOptionButtonPreview() {
+    HampouchTheme {
+        ExpenseInputReasonOptionButton(label = "스트레스", selected = true, onClick = {})
     }
 }
 
@@ -395,6 +427,21 @@ fun ExpenseInputTextEntryDialog(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "지출 입력 텍스트 입력 다이얼로그")
+@Composable
+private fun ExpenseInputTextEntryDialogPreview() {
+    HampouchTheme {
+        ExpenseInputTextEntryDialog(
+            label = "지출 이름",
+            placeholder = "지출 이름을 입력하세요",
+            value = "스타벅스",
+            onValueChange = {},
+            onCancel = {},
+            onConfirm = {}
+        )
     }
 }
 

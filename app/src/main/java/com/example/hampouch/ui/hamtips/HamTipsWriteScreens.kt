@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.MenuRatingInfo
 import com.example.hampouch.domain.model.MenuRatingType
 import com.example.hampouch.domain.model.TipPost
@@ -165,14 +166,6 @@ fun HamTipsWriteTipScreen(
     onSubmitted: () -> Unit,
     viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
-    var category by remember {
-        mutableStateOf(TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING)
-    }
-    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
-    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
-    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -183,7 +176,30 @@ fun HamTipsWriteTipScreen(
             }
         }
     }
-    val coroutineScope = rememberCoroutineScope()
+
+    HamTipsWriteTipContent(
+        editingPost = editingPost,
+        onBackClick = onBackClick,
+        onSubmit = { category, title, content, photoUris, photoKeys ->
+            viewModel.submitTip(editingPost, category, title, content, photoUris, photoKeys)
+        }
+    )
+}
+
+@Composable
+fun HamTipsWriteTipContent(
+    editingPost: TipPost? = null,
+    onBackClick: () -> Unit,
+    onSubmit: (TipCategory, String, String, List<String>, List<String>) -> Unit
+) {
+    var category by remember {
+        mutableStateOf(TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING)
+    }
+    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
+    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
+    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
+    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank()
 
@@ -248,7 +264,7 @@ fun HamTipsWriteTipScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                viewModel.submitTip(editingPost, category.category, title, content, photoUris, photoKeys)
+                onSubmit(category.category, title, content, photoUris, photoKeys)
             }
         )
     }
@@ -261,16 +277,6 @@ fun HamTipsWriteMenuScreen(
     onSubmitted: () -> Unit,
     viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
-    var menuName by remember { mutableStateOf(editingPost?.menuName.orEmpty()) }
-    var place by remember { mutableStateOf(editingPost?.place.orEmpty()) }
-    var price by remember { mutableStateOf(editingPost?.price ?: 0) }
-    var taste by remember { mutableStateOf(editingPost?.menuRating?.taste ?: 0) }
-    var costEffectiveness by remember { mutableStateOf(editingPost?.menuRating?.costEffectiveness ?: 0) }
-    var mood by remember { mutableStateOf(editingPost?.menuRating?.mood ?: 0) }
-    var comment by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
-    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -281,7 +287,34 @@ fun HamTipsWriteMenuScreen(
             }
         }
     }
-    val coroutineScope = rememberCoroutineScope()
+
+    HamTipsWriteMenuContent(
+        editingPost = editingPost,
+        onBackClick = onBackClick,
+        onSubmit = { title, menuName, place, price, rating, comment, photoUris, photoKeys ->
+            viewModel.submitMenu(
+                editingPost, title, menuName, place, price, rating, comment, photoUris, photoKeys
+            )
+        }
+    )
+}
+
+@Composable
+fun HamTipsWriteMenuContent(
+    editingPost: TipPost? = null,
+    onBackClick: () -> Unit,
+    onSubmit: (String, String, String, Int, MenuRatingInfo, String, List<String>, List<String>) -> Unit
+) {
+    var menuName by remember { mutableStateOf(editingPost?.menuName.orEmpty()) }
+    var place by remember { mutableStateOf(editingPost?.place.orEmpty()) }
+    var price by remember { mutableStateOf(editingPost?.price ?: 0) }
+    var taste by remember { mutableStateOf(editingPost?.menuRating?.taste ?: 0) }
+    var costEffectiveness by remember { mutableStateOf(editingPost?.menuRating?.costEffectiveness ?: 0) }
+    var mood by remember { mutableStateOf(editingPost?.menuRating?.mood ?: 0) }
+    var comment by remember { mutableStateOf(editingPost?.content.orEmpty()) }
+    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
+    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val previewTitle = formatMenuTitle(menuName, place, price)
     val isSubmitEnabled = menuName.isNotBlank() && place.isNotBlank() && price > 0
@@ -388,9 +421,7 @@ fun HamTipsWriteMenuScreen(
             onConfirm = {
                 showConfirmDialog = false
                 val rating = MenuRatingInfo(taste = taste, costEffectiveness = costEffectiveness, mood = mood)
-                viewModel.submitMenu(
-                    editingPost, previewTitle, menuName, place, price, rating, comment, photoUris, photoKeys
-                )
+                onSubmit(previewTitle, menuName, place, price, rating, comment, photoUris, photoKeys)
             }
         )
     }
@@ -411,11 +442,7 @@ fun HamTipsWriteBattleScreen(
         } else {
             battleViewModel.mockChallengesWith(HamBattleStatus.WAITING).mapNotNull { it.battleCode }
         }
-    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
-    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }
-    var showLinkNotFoundError by remember { mutableStateOf(false) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -426,7 +453,31 @@ fun HamTipsWriteBattleScreen(
             }
         }
     }
-    val coroutineScope = rememberCoroutineScope()
+
+    HamTipsWriteBattleContent(
+        editingPost = editingPost,
+        onBackClick = onBackClick,
+        initialLink = initialLink,
+        waitingChallengeLinks = waitingChallengeLinks,
+        onSubmit = { title, content, link ->
+            viewModel.submitBattle(editingPost, title, content, link)
+        }
+    )
+}
+
+@Composable
+fun HamTipsWriteBattleContent(
+    editingPost: TipPost? = null,
+    onBackClick: () -> Unit,
+    initialLink: String = "",
+    waitingChallengeLinks: List<String>? = null,
+    onSubmit: (String, String, String) -> Unit
+) {
+    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
+    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
+    var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }
+    var showLinkNotFoundError by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
 
@@ -499,7 +550,7 @@ fun HamTipsWriteBattleScreen(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                viewModel.submitBattle(editingPost, title, content, link.trim())
+                onSubmit(title, content, link.trim())
             }
         )
     }
@@ -509,7 +560,7 @@ fun HamTipsWriteBattleScreen(
 @Composable
 private fun HamTipsWriteTipScreenEmptyPreview() {
     HampouchTheme {
-        HamTipsWriteTipScreen(onBackClick = {}, onSubmitted = {})
+        HamTipsWriteTipContent(onBackClick = {}, onSubmit = { _, _, _, _, _ -> })
     }
 }
 
@@ -517,12 +568,12 @@ private fun HamTipsWriteTipScreenEmptyPreview() {
 @Composable
 private fun HamTipsWriteTipScreenWithPhotosPreview() {
     HampouchTheme {
-        HamTipsWriteTipScreen(
+        HamTipsWriteTipContent(
             editingPost = HamTipsMockData.allPosts().first { it.id == "hamtip_1" }.copy(
                 imageUris = listOf("content://preview/sample_1", "content://preview/sample_2")
             ),
             onBackClick = {},
-            onSubmitted = {}
+            onSubmit = { _, _, _, _, _ -> }
         )
     }
 }
@@ -531,7 +582,7 @@ private fun HamTipsWriteTipScreenWithPhotosPreview() {
 @Composable
 private fun HamTipsWriteMenuScreenEmptyPreview() {
     HampouchTheme {
-        HamTipsWriteMenuScreen(onBackClick = {}, onSubmitted = {})
+        HamTipsWriteMenuContent(onBackClick = {}, onSubmit = { _, _, _, _, _, _, _, _ -> })
     }
 }
 
@@ -539,7 +590,7 @@ private fun HamTipsWriteMenuScreenEmptyPreview() {
 @Composable
 private fun HamTipsWriteBattleScreenPreview() {
     HampouchTheme {
-        HamTipsWriteBattleScreen(onBackClick = {}, onSubmitted = {})
+        HamTipsWriteBattleContent(onBackClick = {}, onSubmit = { _, _, _ -> })
     }
 }
 

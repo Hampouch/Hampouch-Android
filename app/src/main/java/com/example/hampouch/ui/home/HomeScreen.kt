@@ -169,7 +169,7 @@ fun HomeScreen(
     val baseUiState = remember(selectedDate, challengeState, currentUser) {
         mockStateForDate(challengeState, currentUser.name, selectedDate, referenceToday)
     }
-    val storeExpenses = recordsForDate(selectedDate).map { record ->
+    val storeExpenses = recordsForDate(selectedDate).asReversed().map { record ->
         ExpenseEntry(
             id = record.id,
             categoryId = record.categoryId,
@@ -416,7 +416,7 @@ private fun HomeContent(
             Spacer(modifier = Modifier.height(15.dp))
             ReturnToTodayButton(onClick = onReturnToTodayClick)
         }
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         val challenge = uiState.challenge
         when {

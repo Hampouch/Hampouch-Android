@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +68,8 @@ import com.example.hampouch.ui.theme.HPWhite
 import kotlinx.coroutines.delay
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.ui.theme.HampouchTheme
 
 fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).format(this)
 
@@ -92,6 +95,14 @@ fun OnboardingTopBar(
     }
 }
 
+@Preview(showBackground = true, name = "온보딩 상단바")
+@Composable
+private fun OnboardingTopBarPreview() {
+    HampouchTheme {
+        OnboardingTopBar(onBack = {})
+    }
+}
+
 @Composable
 fun OnboardingProgressBar(
     currentStep: Int,
@@ -114,6 +125,14 @@ fun OnboardingProgressBar(
                     )
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "온보딩 진행 바")
+@Composable
+private fun OnboardingProgressBarPreview() {
+    HampouchTheme {
+        OnboardingProgressBar(currentStep = 2, totalSteps = 4, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -149,6 +168,19 @@ fun OnboardingHeaderCard(
     }
 }
 
+@Preview(showBackground = true, name = "온보딩 헤더 카드")
+@Composable
+private fun OnboardingHeaderCardPreview() {
+    HampouchTheme {
+        OnboardingHeaderCard(
+            stepNumber = 1,
+            stepLabel = "챌린지 기간 설정",
+            title = "얼마 동안 절약해볼까요?",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun OnboardingCaptionText(
     text: String,
@@ -160,6 +192,17 @@ fun OnboardingCaptionText(
         color = HPText,
         modifier = modifier.fillMaxWidth()
     )
+}
+
+@Preview(showBackground = true, name = "온보딩 설명 텍스트")
+@Composable
+private fun OnboardingCaptionTextPreview() {
+    HampouchTheme {
+        OnboardingCaptionText(
+            text = "챌린지 기간은 최소 7일부터 최대 30일까지 설정할 수 있어요.",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
 }
 
 @Composable
@@ -181,6 +224,17 @@ fun OnboardingBulletList(
     }
 }
 
+@Preview(showBackground = true, name = "온보딩 불릿 목록")
+@Composable
+private fun OnboardingBulletListPreview() {
+    HampouchTheme {
+        OnboardingBulletList(
+            lines = listOf("한 번 정한 기간은 중간에 바꿀 수 없어요.", "매일 소비 내역을 기록해야 해요."),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun SkipText(
     text: String,
@@ -199,6 +253,14 @@ fun SkipText(
     )
 }
 
+@Preview(showBackground = true, name = "건너뛰기 텍스트")
+@Composable
+private fun SkipTextPreview() {
+    HampouchTheme {
+        SkipText(text = "다음에 할게요", onClick = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
@@ -211,6 +273,16 @@ fun SectionCard(
             .padding(16.dp),
         content = content
     )
+}
+
+@Preview(showBackground = true, name = "섹션 카드")
+@Composable
+private fun SectionCardPreview() {
+    HampouchTheme {
+        SectionCard(modifier = Modifier.padding(16.dp)) {
+            Text(text = "챌린지 요약", style = MaterialTheme.typography.labelLarge, color = HPSub1)
+        }
+    }
 }
 
 @Composable
@@ -252,6 +324,20 @@ fun LabeledInputRow(
                 Text(text = suffix, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "라벨 입력 행")
+@Composable
+private fun LabeledInputRowPreview() {
+    HampouchTheme {
+        LabeledInputRow(
+            label = "챌린지 기간",
+            valueText = "5월 1일 - 5월 14일",
+            onClick = {},
+            suffix = "14일",
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -380,6 +466,21 @@ fun EditableAmountRow(
     }
 }
 
+@Preview(showBackground = true, name = "금액 입력 행")
+@Composable
+private fun EditableAmountRowPreview() {
+    HampouchTheme {
+        EditableAmountRow(
+            label = "하루 지출 목표",
+            value = 20_000,
+            onValueChange = {},
+            placeholder = "금액을 입력하세요",
+            suffix = "원",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun OnboardingPrimaryButton(
     text: String,
@@ -406,6 +507,14 @@ fun OnboardingPrimaryButton(
     }
 }
 
+@Preview(showBackground = true, name = "온보딩 주요 버튼")
+@Composable
+private fun OnboardingPrimaryButtonPreview() {
+    HampouchTheme {
+        OnboardingPrimaryButton(text = "다음", onClick = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun OnboardingSecondaryButton(
     text: String,
@@ -422,6 +531,14 @@ fun OnboardingSecondaryButton(
         colors = ButtonDefaults.outlinedButtonColors(containerColor = HPWhite, contentColor = HPMain)
     ) {
         Text(text = text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Preview(showBackground = true, name = "온보딩 보조 버튼")
+@Composable
+private fun OnboardingSecondaryButtonPreview() {
+    HampouchTheme {
+        OnboardingSecondaryButton(text = "이전", onClick = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -462,6 +579,19 @@ fun PeriodPresetRow(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "기간 프리셋 선택 행")
+@Composable
+private fun PeriodPresetRowPreview() {
+    HampouchTheme {
+        PeriodPresetRow(
+            options = listOf(7 to "7일", 14 to "14일", 30 to "30일"),
+            selectedDays = 14,
+            onSelect = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -522,5 +652,28 @@ fun CategoryChip(
             textAlign = TextAlign.Center,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true, name = "카테고리 칩")
+@Composable
+private fun CategoryChipPreview() {
+    HampouchTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+            CategoryChip(
+                label = "식비",
+                icon = Icons.Filled.ShoppingCart,
+                accentColor = HPMain,
+                selected = true,
+                onClick = {}
+            )
+            CategoryChip(
+                label = "카페",
+                icon = Icons.Filled.ShoppingCart,
+                accentColor = HPSub,
+                selected = false,
+                onClick = {}
+            )
+        }
     }
 }
