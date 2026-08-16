@@ -280,6 +280,7 @@ fun ChallengeBanner(
     }
 }
 
+// 홈 화면 위젯(ui/widget)에서도 동일한 캐릭터 매핑을 재사용한다.
 private val PreviewHomeChallenge = HomeChallenge(
     totalDays = 14,
     dDay = 7,
@@ -299,7 +300,7 @@ private fun ChallengeBannerPreview() {
     }
 }
 
-private fun characterDrawableRes(state: CharacterState): Int = when (state) {
+internal fun characterDrawableRes(state: CharacterState): Int = when (state) {
     CharacterState.CHUBBY -> R.drawable.img_hamster_chubby
     CharacterState.NORMAL -> R.drawable.img_hamster_normal
     CharacterState.THIN -> R.drawable.img_hamster_thin

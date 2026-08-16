@@ -47,6 +47,19 @@
             </intent-filter>
         </activity>
 
+        <!-- 홈 화면 챌린지 위젯 -->
+        <receiver
+            android:name=".ui.widget.HomeWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_home_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/home_widget_info" />
+        </receiver>
+
         <service
             android:name=".core.messaging.HampouchFirebaseMessagingService"
             android:exported="false">
