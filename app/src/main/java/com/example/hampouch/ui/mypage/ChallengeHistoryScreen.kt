@@ -5,10 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,23 +45,23 @@ fun ChallengeHistoryScreen(
             onNotificationClick = onNotificationClick,
             modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
-        if (records.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(R.string.challenge_history_empty_message),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                records.forEach { record ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (records.isEmpty()) {
+                item(contentType = "empty_state") {
+                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.challenge_history_empty_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = HPText
+                        )
+                    }
+                }
+            } else {
+                items(records, key = { it.id }, contentType = { "challenge_record" }) { record ->
                     ChallengeRecordCard(record = record, onClick = { onRecordClick(record) })
                 }
             }

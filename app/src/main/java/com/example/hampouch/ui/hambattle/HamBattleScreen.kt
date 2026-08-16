@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,9 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
@@ -289,56 +290,63 @@ private fun HamBattleChallengeListContent(
     onChallengeClick: (String) -> Unit,
     onWaitingChallengeClick: (String) -> Unit
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        StartNewChallengeButton(onClick = onStartNewChallengeClick)
+        item(contentType = "action") {
+            StartNewChallengeButton(onClick = onStartNewChallengeClick)
+        }
 
         if (activeChallenges.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(30.dp))
-            SectionLabel("진행중")
-            Spacer(modifier = Modifier.height(12.dp))
-            activeChallenges.forEachIndexed { index, challenge ->
-                if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+            item(contentType = "section_header") {
+                Spacer(modifier = Modifier.height(30.dp))
+                SectionLabel("진행중")
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            items(activeChallenges, key = { it.id }, contentType = { "active_challenge" }) { challenge ->
                 ActiveChallengeCard(
                     challenge = challenge,
                     onClick = { onChallengeClick(challenge.id) }
                 )
+                Spacer(modifier = Modifier.height(10.dp))
             }
         }
 
         if (waitingChallenges.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(30.dp))
-            SectionLabel("대기중")
-            Spacer(modifier = Modifier.height(12.dp))
-            waitingChallenges.forEachIndexed { index, challenge ->
-                if (index > 0) Spacer(modifier = Modifier.height(16.dp))
+            item(contentType = "section_header") {
+                Spacer(modifier = Modifier.height(20.dp))
+                SectionLabel("대기중")
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            items(waitingChallenges, key = { it.id }, contentType = { "waiting_challenge" }) { challenge ->
                 WaitingChallengeCard(
                     challenge = challenge,
                     onClick = { onWaitingChallengeClick(challenge.id) }
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onViewEndedChallengesClick)
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("종료된 챌린지 모두 보기", style = MaterialTheme.typography.bodyMedium, color = HPText)
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = HPText,
-                modifier = Modifier.size(18.dp)
-            )
+        item(contentType = "navigation") {
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onViewEndedChallengesClick)
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("종료된 챌린지 모두 보기", style = MaterialTheme.typography.bodyMedium, color = HPText)
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = HPText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
