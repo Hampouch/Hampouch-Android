@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -89,6 +90,7 @@ import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
+import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
@@ -154,6 +156,7 @@ fun AppNavHost(
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
+    var showAppSplash by rememberSaveable { mutableStateOf(true) }
 
     val resolvedStartDestination = startDestination
     if (resolvedStartDestination == null) {
@@ -167,6 +170,11 @@ fun AppNavHost(
                 modifier = modifier
             )
         }
+        return
+    }
+
+    if (showAppSplash && resolvedStartDestination != Screen.Onboarding.route) {
+        SplashStep(onTimeout = { showAppSplash = false }, modifier = modifier)
         return
     }
 
@@ -270,10 +278,7 @@ fun AppNavHost(
                     startDestinationViewModel.captureOnboardingComplete(request)
                     goToLogin()
                 },
-                onNavigateToLogin = {
-                    startDestinationViewModel.markOnboardingSkipped()
-                    goToLogin()
-                }
+                onNavigateToLogin = goToLogin
             )
         }
 

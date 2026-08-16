@@ -93,10 +93,6 @@ class StartDestinationViewModel @Inject constructor(
         onboardingLocalStore.captureOnboardingComplete(request)
     }
 
-    fun markOnboardingSkipped() {
-        onboardingLocalStore.markOnboardingSkipped()
-    }
-
     fun consumePendingNicknameSession() {
         _pendingNicknameSession.value = null
     }
