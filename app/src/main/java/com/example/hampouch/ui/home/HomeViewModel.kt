@@ -12,6 +12,7 @@ import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
 import com.example.hampouch.ui.common.LoadState
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,7 @@ class HomeViewModel @Inject constructor(
     private val restRepository: RestRepository,
     private val expenseRepository: ExpenseRepository,
     private val challengeRepository: ChallengeRepository,
+    private val homeWidgetStatePublisher: HomeWidgetStatePublisher,
     authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -72,6 +74,7 @@ class HomeViewModel @Inject constructor(
             challengeRepository.loadCurrentChallenge()
                 .onSuccess {
                     _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null)
+                    homeWidgetStatePublisher.publishNoActiveAfterSync()
                     challengeRepository.loadFixedDateDraft().onSuccess { draft ->
                         val hasUnacknowledgedEnd = challengeState.value.isChallengeJustEnded(LocalDate.now())
                         if (draft?.isDue == true && !hasUnacknowledgedEnd) {
