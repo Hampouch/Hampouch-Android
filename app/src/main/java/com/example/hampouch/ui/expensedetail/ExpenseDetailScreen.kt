@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.ui.common.StaleDataRefreshBanner
 import com.example.hampouch.ui.dialog.ExpenseDeleteConfirmDialog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
@@ -55,7 +56,9 @@ fun ExpenseDetailRoute(
     onBackClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleted: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    staleErrorMessage: String? = null,
+    onRetryStaleData: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -72,6 +75,8 @@ fun ExpenseDetailRoute(
         ExpenseDetailContent(
             record = record,
             onEditClick = onEditClick,
+            staleErrorMessage = staleErrorMessage,
+            onRetryStaleData = onRetryStaleData,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -92,7 +97,9 @@ fun ExpenseDetailRoute(
 private fun ExpenseDetailContent(
     record: ExpenseRecord,
     onEditClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    staleErrorMessage: String? = null,
+    onRetryStaleData: () -> Unit = {}
 ) {
     val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
@@ -105,6 +112,10 @@ private fun ExpenseDetailContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(12.dp))
+        if (staleErrorMessage != null) {
+            StaleDataRefreshBanner(message = staleErrorMessage, onRetry = onRetryStaleData)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         Text(
             formatDetailDate(record.date),
             style = MaterialTheme.typography.bodyMedium,

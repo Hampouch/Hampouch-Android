@@ -64,7 +64,7 @@ private fun LocalDate.toEpochMillisUtc(): Long = atStartOfDay(ZoneOffset.UTC).to
 private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 private const val MinPeriodDays = 1
-private const val MaxPeriodDays = 365
+private const val MaxPeriodDays = 100
 
 @Composable
 fun PeriodStep(

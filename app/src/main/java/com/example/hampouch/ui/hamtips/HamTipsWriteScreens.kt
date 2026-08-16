@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +55,6 @@ import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldCard
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldLabel
-import com.example.hampouch.ui.hamtips.components.HamTipsMaxPhotoCount
 import com.example.hampouch.ui.hamtips.components.HamTipsSimpleTopBar
 import com.example.hampouch.ui.hamtips.components.HamTipsStarRatingRow
 import com.example.hampouch.ui.hamtips.components.HamTipsSubmitButton
@@ -167,6 +167,8 @@ fun HamTipsWriteTipScreen(
     viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.initTipForm(editingPost) }
+    val formState by viewModel.tipForm.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -179,6 +181,12 @@ fun HamTipsWriteTipScreen(
 
     HamTipsWriteTipContent(
         editingPost = editingPost,
+        formState = formState,
+        onCategoryChange = viewModel::updateTipCategory,
+        onTitleChange = viewModel::updateTipTitle,
+        onContentChange = viewModel::updateTipContent,
+        onPhotosAdded = viewModel::addTipPhotos,
+        onPhotoRemoved = viewModel::removeTipPhoto,
         onBackClick = onBackClick,
         onSubmit = { category, title, content, photoUris, photoKeys ->
             viewModel.submitTip(editingPost, category, title, content, photoUris, photoKeys)
@@ -189,19 +197,24 @@ fun HamTipsWriteTipScreen(
 @Composable
 fun HamTipsWriteTipContent(
     editingPost: TipPost? = null,
+    formState: TipFormState = TipFormState(
+        category = TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING,
+        title = editingPost?.title.orEmpty(),
+        content = editingPost?.content.orEmpty(),
+        photoUris = editingPost?.imageUris ?: emptyList(),
+        photoKeys = editingPost?.imageKeys ?: emptyList()
+    ),
+    onCategoryChange: (TipShareCategory) -> Unit = {},
+    onTitleChange: (String) -> Unit = {},
+    onContentChange: (String) -> Unit = {},
+    onPhotosAdded: (List<String>) -> Unit = {},
+    onPhotoRemoved: (String) -> Unit = {},
     onBackClick: () -> Unit,
     onSubmit: (TipCategory, String, String, List<String>, List<String>) -> Unit
 ) {
-    var category by remember {
-        mutableStateOf(TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING)
-    }
-    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
-    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
-    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val isSubmitEnabled = title.isNotBlank() && content.isNotBlank()
+    val isSubmitEnabled = formState.title.isNotBlank() && formState.content.isNotBlank()
 
     HamTipsWriteScaffold(onBackClick = onBackClick) {
         HamTipsWriteHeader(
@@ -213,21 +226,21 @@ fun HamTipsWriteTipContent(
         HamTipsFieldCard {
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_board))
             Spacer(modifier = Modifier.height(10.dp))
-            HamTipsCategoryPickerRow(selected = category, onSelected = { category = it })
+            HamTipsCategoryPickerRow(selected = formState.category, onSelected = onCategoryChange)
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_title))
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsWriteTextField(
-                value = title,
-                onValueChange = { title = it },
+                value = formState.title,
+                onValueChange = onTitleChange,
                 placeholder = stringResource(R.string.hamtips_write_title_placeholder)
             )
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_content))
             Spacer(modifier = Modifier.height(10.dp))
             HamTipsWriteTextField(
-                value = content,
-                onValueChange = { content = it },
+                value = formState.content,
+                onValueChange = onContentChange,
                 placeholder = stringResource(R.string.hamtips_write_content_placeholder),
                 minHeight = 160.dp,
                 singleLine = false
@@ -236,16 +249,9 @@ fun HamTipsWriteTipContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_photo))
             Spacer(modifier = Modifier.height(10.dp))
             PhotoAttachGrid(
-                photoUris = photoUris,
-                onPhotosAdded = { added ->
-                    photoUris = (photoUris + added).take(HamTipsMaxPhotoCount)
-                    photoKeys = (photoKeys + added.map { "" }).take(HamTipsMaxPhotoCount)
-                },
-                onPhotoRemoved = { removed ->
-                    val index = photoUris.indexOf(removed)
-                    photoUris = photoUris - removed
-                    if (index != -1) photoKeys = photoKeys.filterIndexed { i, _ -> i != index }
-                }
+                photoUris = formState.photoUris,
+                onPhotosAdded = onPhotosAdded,
+                onPhotoRemoved = onPhotoRemoved
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -264,7 +270,7 @@ fun HamTipsWriteTipContent(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                onSubmit(category.category, title, content, photoUris, photoKeys)
+                onSubmit(formState.category.category, formState.title, formState.content, formState.photoUris, formState.photoKeys)
             }
         )
     }
@@ -278,6 +284,8 @@ fun HamTipsWriteMenuScreen(
     viewModel: HamTipsWriteViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.initMenuForm(editingPost) }
+    val formState by viewModel.menuForm.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -290,6 +298,14 @@ fun HamTipsWriteMenuScreen(
 
     HamTipsWriteMenuContent(
         editingPost = editingPost,
+        formState = formState,
+        onMenuNameChange = viewModel::updateMenuName,
+        onPlaceChange = viewModel::updateMenuPlace,
+        onPriceChange = viewModel::updateMenuPrice,
+        onRatingChange = viewModel::updateMenuRating,
+        onCommentChange = viewModel::updateMenuComment,
+        onPhotosAdded = viewModel::addMenuPhotos,
+        onPhotoRemoved = viewModel::removeMenuPhoto,
         onBackClick = onBackClick,
         onSubmit = { title, menuName, place, price, rating, comment, photoUris, photoKeys ->
             viewModel.submitMenu(
@@ -302,22 +318,31 @@ fun HamTipsWriteMenuScreen(
 @Composable
 fun HamTipsWriteMenuContent(
     editingPost: TipPost? = null,
+    formState: MenuFormState = MenuFormState(
+        menuName = editingPost?.menuName.orEmpty(),
+        place = editingPost?.place.orEmpty(),
+        price = editingPost?.price ?: 0,
+        taste = editingPost?.menuRating?.taste ?: 0,
+        costEffectiveness = editingPost?.menuRating?.costEffectiveness ?: 0,
+        mood = editingPost?.menuRating?.mood ?: 0,
+        comment = editingPost?.content.orEmpty(),
+        photoUris = editingPost?.imageUris ?: emptyList(),
+        photoKeys = editingPost?.imageKeys ?: emptyList()
+    ),
+    onMenuNameChange: (String) -> Unit = {},
+    onPlaceChange: (String) -> Unit = {},
+    onPriceChange: (Int) -> Unit = {},
+    onRatingChange: (MenuRatingType, Int) -> Unit = { _, _ -> },
+    onCommentChange: (String) -> Unit = {},
+    onPhotosAdded: (List<String>) -> Unit = {},
+    onPhotoRemoved: (String) -> Unit = {},
     onBackClick: () -> Unit,
     onSubmit: (String, String, String, Int, MenuRatingInfo, String, List<String>, List<String>) -> Unit
 ) {
-    var menuName by remember { mutableStateOf(editingPost?.menuName.orEmpty()) }
-    var place by remember { mutableStateOf(editingPost?.place.orEmpty()) }
-    var price by remember { mutableStateOf(editingPost?.price ?: 0) }
-    var taste by remember { mutableStateOf(editingPost?.menuRating?.taste ?: 0) }
-    var costEffectiveness by remember { mutableStateOf(editingPost?.menuRating?.costEffectiveness ?: 0) }
-    var mood by remember { mutableStateOf(editingPost?.menuRating?.mood ?: 0) }
-    var comment by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var photoUris by remember { mutableStateOf(editingPost?.imageUris ?: emptyList()) }
-    var photoKeys by remember { mutableStateOf(editingPost?.imageKeys ?: emptyList()) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val previewTitle = formatMenuTitle(menuName, place, price)
-    val isSubmitEnabled = menuName.isNotBlank() && place.isNotBlank() && price > 0
+    val previewTitle = formatMenuTitle(formState.menuName, formState.place, formState.price)
+    val isSubmitEnabled = formState.menuName.isNotBlank() && formState.place.isNotBlank() && formState.price > 0
 
     HamTipsWriteScaffold(onBackClick = onBackClick) {
         HamTipsWriteHeader(
@@ -334,22 +359,22 @@ fun HamTipsWriteMenuContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_name_label))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = menuName,
-                onValueChange = { menuName = it },
+                value = formState.menuName,
+                onValueChange = onMenuNameChange,
                 placeholder = stringResource(R.string.hamtips_write_menu_name_placeholder)
             )
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_place_label))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = place,
-                onValueChange = { place = it },
+                value = formState.place,
+                onValueChange = onPlaceChange,
                 placeholder = stringResource(R.string.hamtips_write_menu_place_placeholder)
             )
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_price_label))
             Spacer(modifier = Modifier.height(5.dp))
-            HamTipsPriceInputField(price = price, onPriceChange = { price = it })
+            HamTipsPriceInputField(price = formState.price, onPriceChange = onPriceChange)
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_rating_label))
             Spacer(modifier = Modifier.height(5.dp))
@@ -363,20 +388,14 @@ fun HamTipsWriteMenuContent(
             ) {
                 MenuRatingType.entries.forEach { type ->
                     val rating = when (type) {
-                        MenuRatingType.TASTE -> taste
-                        MenuRatingType.COST_EFFECTIVENESS -> costEffectiveness
-                        MenuRatingType.MOOD -> mood
+                        MenuRatingType.TASTE -> formState.taste
+                        MenuRatingType.COST_EFFECTIVENESS -> formState.costEffectiveness
+                        MenuRatingType.MOOD -> formState.mood
                     }
                     HamTipsStarRatingRow(
                         type = type,
                         rating = rating,
-                        onRatingChange = { newRating ->
-                            when (type) {
-                                MenuRatingType.TASTE -> taste = newRating
-                                MenuRatingType.COST_EFFECTIVENESS -> costEffectiveness = newRating
-                                MenuRatingType.MOOD -> mood = newRating
-                            }
-                        }
+                        onRatingChange = { newRating -> onRatingChange(type, newRating) }
                     )
                 }
             }
@@ -384,8 +403,8 @@ fun HamTipsWriteMenuContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_comment_label))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = comment,
-                onValueChange = { comment = it },
+                value = formState.comment,
+                onValueChange = onCommentChange,
                 placeholder = stringResource(R.string.hamtips_write_menu_comment_placeholder),
                 minHeight = 120.dp,
                 singleLine = false
@@ -394,16 +413,9 @@ fun HamTipsWriteMenuContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_photo))
             Spacer(modifier = Modifier.height(5.dp))
             PhotoAttachGrid(
-                photoUris = photoUris,
-                onPhotosAdded = { added ->
-                    photoUris = (photoUris + added).take(HamTipsMaxPhotoCount)
-                    photoKeys = (photoKeys + added.map { "" }).take(HamTipsMaxPhotoCount)
-                },
-                onPhotoRemoved = { removed ->
-                    val index = photoUris.indexOf(removed)
-                    photoUris = photoUris - removed
-                    if (index != -1) photoKeys = photoKeys.filterIndexed { i, _ -> i != index }
-                }
+                photoUris = formState.photoUris,
+                onPhotosAdded = onPhotosAdded,
+                onPhotoRemoved = onPhotoRemoved
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -420,8 +432,15 @@ fun HamTipsWriteMenuContent(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                val rating = MenuRatingInfo(taste = taste, costEffectiveness = costEffectiveness, mood = mood)
-                onSubmit(previewTitle, menuName, place, price, rating, comment, photoUris, photoKeys)
+                val rating = MenuRatingInfo(
+                    taste = formState.taste,
+                    costEffectiveness = formState.costEffectiveness,
+                    mood = formState.mood
+                )
+                onSubmit(
+                    previewTitle, formState.menuName, formState.place, formState.price,
+                    rating, formState.comment, formState.photoUris, formState.photoKeys
+                )
             }
         )
     }
@@ -444,6 +463,8 @@ fun HamTipsWriteBattleScreen(
         }
 
     val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.initBattleForm(editingPost, initialLink) }
+    val formState by viewModel.battleForm.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -456,6 +477,10 @@ fun HamTipsWriteBattleScreen(
 
     HamTipsWriteBattleContent(
         editingPost = editingPost,
+        formState = formState,
+        onTitleChange = viewModel::updateBattleTitle,
+        onContentChange = viewModel::updateBattleContent,
+        onLinkChange = viewModel::updateBattleLink,
         onBackClick = onBackClick,
         initialLink = initialLink,
         waitingChallengeLinks = waitingChallengeLinks,
@@ -468,18 +493,23 @@ fun HamTipsWriteBattleScreen(
 @Composable
 fun HamTipsWriteBattleContent(
     editingPost: TipPost? = null,
+    formState: BattleFormState = BattleFormState(
+        title = editingPost?.title.orEmpty(),
+        content = editingPost?.content.orEmpty(),
+        link = editingPost?.battleInfo?.link ?: ""
+    ),
+    onTitleChange: (String) -> Unit = {},
+    onContentChange: (String) -> Unit = {},
+    onLinkChange: (String) -> Unit = {},
     onBackClick: () -> Unit,
     initialLink: String = "",
     waitingChallengeLinks: List<String>? = null,
     onSubmit: (String, String, String) -> Unit
 ) {
-    var title by remember { mutableStateOf(editingPost?.title.orEmpty()) }
-    var content by remember { mutableStateOf(editingPost?.content.orEmpty()) }
-    var link by remember { mutableStateOf(editingPost?.battleInfo?.link ?: initialLink) }
     var showLinkNotFoundError by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val isSubmitEnabled = title.isNotBlank() && content.isNotBlank() && link.isNotBlank()
+    val isSubmitEnabled = formState.title.isNotBlank() && formState.content.isNotBlank() && formState.link.isNotBlank()
 
     HamTipsWriteScaffold(
         onBackClick = onBackClick,
@@ -488,7 +518,7 @@ fun HamTipsWriteBattleContent(
                 text = stringResource(R.string.hamtips_write_submit),
                 enabled = isSubmitEnabled,
                 onClick = {
-                    if (waitingChallengeLinks == null || link.trim() in waitingChallengeLinks) {
+                    if (waitingChallengeLinks == null || formState.link.trim() in waitingChallengeLinks) {
                         showLinkNotFoundError = false
                         showConfirmDialog = true
                     } else {
@@ -508,16 +538,16 @@ fun HamTipsWriteBattleContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_title))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = title,
-                onValueChange = { title = it },
+                value = formState.title,
+                onValueChange = onTitleChange,
                 placeholder = stringResource(R.string.hamtips_write_battle_title_placeholder)
             )
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_section_content))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = content,
-                onValueChange = { content = it },
+                value = formState.content,
+                onValueChange = onContentChange,
                 placeholder = stringResource(R.string.hamtips_write_battle_content_placeholder),
                 minHeight = 160.dp,
                 singleLine = false
@@ -526,9 +556,9 @@ fun HamTipsWriteBattleContent(
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_battle_link_label))
             Spacer(modifier = Modifier.height(5.dp))
             HamTipsWriteTextField(
-                value = link,
+                value = formState.link,
                 onValueChange = {
-                    link = it
+                    onLinkChange(it)
                     showLinkNotFoundError = false
                 },
                 placeholder = stringResource(R.string.hamtips_write_battle_link_placeholder)
@@ -550,7 +580,7 @@ fun HamTipsWriteBattleContent(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                onSubmit(title, content, link.trim())
+                onSubmit(formState.title, formState.content, formState.link.trim())
             }
         )
     }

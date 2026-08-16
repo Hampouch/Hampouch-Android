@@ -61,6 +61,9 @@ import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.common.ChallengeLookupViewModel
 import com.example.hampouch.ui.common.ExpenseLookupViewModel
+import com.example.hampouch.ui.common.FullScreenLoadError
+import com.example.hampouch.ui.common.FullScreenLoadingIndicator
+import com.example.hampouch.ui.common.LoadState
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
 import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisHeaderMode
@@ -455,13 +458,19 @@ fun AppNavHost(
                     }
                 }
             }
-            uiState.record?.let { current ->
-                ExpenseDetailRoute(
-                    record = current,
+            val detailLoadState = uiState.loadState
+            when {
+                uiState.record != null -> ExpenseDetailRoute(
+                    record = uiState.record!!,
                     onBackClick = { navController.popBackStack() },
                     onEditClick = { navController.navigate(Screen.ExpenseEdit.createRoute(expenseId)) },
-                    onDeleted = viewModel::delete
+                    onDeleted = viewModel::delete,
+                    staleErrorMessage = (detailLoadState as? LoadState.Failure)?.message,
+                    onRetryStaleData = viewModel::retry
                 )
+                detailLoadState is LoadState.Failure ->
+                    FullScreenLoadError(message = detailLoadState.message, onRetry = viewModel::retry)
+                else -> FullScreenLoadingIndicator()
             }
         }
 
@@ -484,22 +493,29 @@ fun AppNavHost(
                     }
                 }
             }
-            uiState.record?.let { current ->
-                val activeChallenge = editChallengeState.activeChallenge
-                val isEditDateSelectable: (LocalDate) -> Boolean = { date ->
-                    if (editChallengeState.hasOngoingChallenge && activeChallenge != null) {
-                        !date.isBefore(activeChallenge.periodStart) && !date.isAfter(activeChallenge.effectivePeriodEnd)
-                    } else {
-                        val lastEndedChallenge = editChallengeState.challenges.lastOrNull()
-                        lastEndedChallenge == null || date.isAfter(lastEndedChallenge.effectivePeriodEnd)
+            val editLoadState = uiState.loadState
+            when {
+                uiState.record != null -> {
+                    val current = uiState.record!!
+                    val activeChallenge = editChallengeState.activeChallenge
+                    val isEditDateSelectable: (LocalDate) -> Boolean = { date ->
+                        if (editChallengeState.hasOngoingChallenge && activeChallenge != null) {
+                            !date.isBefore(activeChallenge.periodStart) && !date.isAfter(activeChallenge.effectivePeriodEnd)
+                        } else {
+                            val lastEndedChallenge = editChallengeState.challenges.lastOrNull()
+                            lastEndedChallenge == null || date.isAfter(lastEndedChallenge.effectivePeriodEnd)
+                        }
                     }
+                    ExpenseEditRoute(
+                        record = current,
+                        onBackClick = { navController.popBackStack() },
+                        onSaved = viewModel::save,
+                        isDateSelectable = isEditDateSelectable
+                    )
                 }
-                ExpenseEditRoute(
-                    record = current,
-                    onBackClick = { navController.popBackStack() },
-                    onSaved = viewModel::save,
-                    isDateSelectable = isEditDateSelectable
-                )
+                editLoadState is LoadState.Failure ->
+                    FullScreenLoadError(message = editLoadState.message, onRetry = viewModel::retry)
+                else -> FullScreenLoadingIndicator()
             }
         }
 

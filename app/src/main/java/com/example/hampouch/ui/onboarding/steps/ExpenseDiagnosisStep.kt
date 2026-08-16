@@ -28,7 +28,10 @@ import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingSecondaryButton
 import com.example.hampouch.ui.onboarding.components.SectionCard
 import com.example.hampouch.ui.onboarding.components.SkipText
+import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HampouchTheme
+
+internal const val MaxLastMonthFoodExpense = 999_999_999
 
 @Composable
 fun ExpenseDiagnosisStep(
@@ -94,7 +97,12 @@ fun ExpenseDiagnosisStep(
                     value = state.lastMonthFoodExpense,
                     onValueChange = onExpenseChange,
                     placeholder = stringResource(R.string.onboarding_direct_input),
-                    suffix = wonSuffix
+                    suffix = wonSuffix,
+                    maxValue = MaxLastMonthFoodExpense,
+                    maxValueErrorText = stringResource(
+                        R.string.onboarding_last_month_expense_max_error_format,
+                        MaxLastMonthFoodExpense.toWonText()
+                    )
                 )
             }
 

@@ -38,45 +38,54 @@ class ExpenseCalendarViewModel @Inject constructor(
     private val _weekSummary = MutableStateFlow<ExpensePeriodSummary?>(null)
     val weekSummary: StateFlow<ExpensePeriodSummary?> = _weekSummary.asStateFlow()
 
-    private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
-    val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
-    private var retryAction: (() -> Unit)? = null
+    private val _monthLoadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val monthLoadState: StateFlow<LoadState> = _monthLoadState.asStateFlow()
+    private var monthRetryAction: (() -> Unit)? = null
+    fun retryMonth() = monthRetryAction?.invoke()
 
-    fun retry() = retryAction?.invoke()
+    private val _weekLoadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val weekLoadState: StateFlow<LoadState> = _weekLoadState.asStateFlow()
+    private var weekRetryAction: (() -> Unit)? = null
+    fun retryWeek() = weekRetryAction?.invoke()
+
+    private val _dayLoadState = MutableStateFlow<LoadState>(LoadState.Idle)
+    val dayLoadState: StateFlow<LoadState> = _dayLoadState.asStateFlow()
+    private var dayRetryAction: (() -> Unit)? = null
+    fun retryDay() = dayRetryAction?.invoke()
 
     fun loadMonthSummary(month: YearMonth) {
-        retryAction = { loadMonthSummary(month) }
-        _loadState.value = LoadState.Loading
+        monthRetryAction = { loadMonthSummary(month) }
+        _monthLoadState.value = LoadState.Loading
         viewModelScope.launch {
             expenseRepository.loadMonthSummary(month)
                 .onSuccess {
                     _monthSummary.value = it
-                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                    _monthLoadState.value = LoadState.Content(it.totalAmount == 0)
                 }
-                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("월간 기록을 불러오지 못했습니다.")) }
+                .onFailure { _monthLoadState.value = LoadState.Failure(it.toUserMessage("월간 기록을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadWeekSummary(weekStart: LocalDate) {
-        retryAction = { loadWeekSummary(weekStart) }
-        _loadState.value = LoadState.Loading
+        weekRetryAction = { loadWeekSummary(weekStart) }
+        _weekLoadState.value = LoadState.Loading
         viewModelScope.launch {
             expenseRepository.loadWeekSummary(weekStart)
                 .onSuccess {
                     _weekSummary.value = it
-                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                    _weekLoadState.value = LoadState.Content(it.totalAmount == 0)
                 }
-                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("주간 기록을 불러오지 못했습니다.")) }
+                .onFailure { _weekLoadState.value = LoadState.Failure(it.toUserMessage("주간 기록을 불러오지 못했습니다.")) }
         }
     }
 
     fun loadDay(date: LocalDate) {
-        retryAction = { loadDay(date) }
-        _loadState.value = LoadState.Loading
+        dayRetryAction = { loadDay(date) }
+        _dayLoadState.value = LoadState.Loading
         viewModelScope.launch {
             expenseRepository.loadDay(date)
-                .onSuccess { _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty()) }
-                .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("일간 기록을 불러오지 못했습니다.")) }
+                .onSuccess { _dayLoadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty()) }
+                .onFailure { _dayLoadState.value = LoadState.Failure(it.toUserMessage("일간 기록을 불러오지 못했습니다.")) }
         }
     }
 }

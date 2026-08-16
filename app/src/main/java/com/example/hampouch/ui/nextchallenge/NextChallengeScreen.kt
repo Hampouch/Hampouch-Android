@@ -126,7 +126,7 @@ private val NextChallengePeriodFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
 internal const val MinPeriodDays = 1
-internal const val MaxPeriodDays = 365
+internal const val MaxPeriodDays = 100
 
 internal val PeriodPresetDayOptions: List<Pair<Int, String>> =
     listOf(7 to "7일", 14 to "14일", 30 to "30일")
