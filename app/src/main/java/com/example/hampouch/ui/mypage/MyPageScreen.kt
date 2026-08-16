@@ -291,11 +291,12 @@ fun MyPageScreen(
             val challenge = selectedChallengeId?.let { id -> challengeState.challengeById(id) }
             if (challenge != null) {
                 val state = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY },
+                    showFollowUpActions = false,
                     onExpenseAnalysisClick = {
                         onNavigateToChallengeExpenseAnalysis(state.totalDays, state.periodStart, state.periodEnd)
                     },

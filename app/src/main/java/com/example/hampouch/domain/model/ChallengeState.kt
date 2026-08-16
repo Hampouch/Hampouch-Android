@@ -33,11 +33,12 @@ data class ChallengeState(
     fun computeProgress(
         referenceToday: LocalDate,
         challenge: ActiveChallenge,
+        hasRecordOnDate: (LocalDate) -> Boolean,
         spentOnDate: (LocalDate) -> Int
     ): ChallengeProgress {
         val days = elapsedDays(referenceToday, challenge)
         fun balanceOn(date: LocalDate) = challenge.dailyLimitOn(date) - spentOnDate(date)
-        fun isSuccess(date: LocalDate) = date !in noRecordDates && balanceOn(date) >= 0
+        fun isSuccess(date: LocalDate) = date !in noRecordDates && hasRecordOnDate(date) && balanceOn(date) >= 0
 
         val savedAmount = days.sumOf { balanceOn(it) }
         var streakDays = 0

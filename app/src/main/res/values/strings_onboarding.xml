@@ -21,6 +21,7 @@
     <string name="onboarding_step1_title">지난달 식비가 얼마였나요?</string>
     <string name="onboarding_step1_caption">솔직하게 입력할수록\n더 정확한 진단이 돼요.</string>
     <string name="onboarding_last_month_expense_label">지난 달 식비</string>
+    <string name="onboarding_last_month_expense_max_error_format">%1$s원까지 입력할 수 있어요</string>
     <string name="onboarding_step1_bullet1">배달, 카페, 외식 모두 포함해서 적어주세요.</string>
     <string name="onboarding_step1_bullet2">입력 값은 분석에만 쓰이고 저장되지 않아요.</string>
 
@@ -28,7 +29,7 @@
     <string name="onboarding_step2_title">챌린지 기간을 선택해주세요</string>
     <string name="onboarding_step2_caption">짧게 시작할수록 성공 확률이 높아져요.</string>
     <string name="onboarding_period_label">기간</string>
-    <string name="onboarding_period_range_error">1~365일 사이로 입력해주세요.</string>
+    <string name="onboarding_period_range_error">1~100일 사이로 입력해주세요.</string>
     <string name="onboarding_period_7days">7일</string>
     <string name="onboarding_period_14days">14일</string>
     <string name="onboarding_period_30days">30일</string>

@@ -54,14 +54,8 @@ data class RecordAlarmSettingsState(
     val receiveEnabled: Boolean = true,
     val missingReminderEnabled: Boolean = true,
     val limitOverEnabled: Boolean = true,
-    val dayMode: ReminderDayMode = ReminderDayMode.WEEKDAY,
-    val selectedDays: Set<DayOfWeekLabel> = setOf(
-        DayOfWeekLabel.MON,
-        DayOfWeekLabel.TUE,
-        DayOfWeekLabel.WED,
-        DayOfWeekLabel.THU,
-        DayOfWeekLabel.FRI
-    ),
+    val dayMode: ReminderDayMode = ReminderDayMode.DAILY,
+    val selectedDays: Set<DayOfWeekLabel> = DayOfWeekLabel.entries.toSet(),
     val hour: Int = 21,
     val minute: Int = 0
 )

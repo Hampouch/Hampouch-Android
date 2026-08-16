@@ -27,8 +27,7 @@ object MyPageMockData {
         return challengeState.challenges
             .sortedByDescending { it.periodStart }
             .map { challenge ->
-                val isOngoing = challenge.id == challengeState.activeChallenge?.id &&
-                    !referenceToday.isAfter(challenge.effectivePeriodEnd)
+                val isOngoing = challenge.isOngoingOn(referenceToday)
                 val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
                 val actualAmount = generateSequence(challenge.periodStart) { it.plusDays(1) }
                     .takeWhile { !it.isAfter(trackedEnd) }
@@ -36,10 +35,11 @@ object MyPageMockData {
                 ChallengeRecord(
                     id = challenge.id,
                     status = when {
-                        challenge.remoteStatus == "SUCCESS" -> ChallengeStatus.SUCCESS
-                        challenge.remoteStatus == "FAIL" -> ChallengeStatus.FAIL
                         challenge.abandonedDate != null -> ChallengeStatus.FAIL
+                        challenge.remoteStatus == "FAIL" -> ChallengeStatus.FAIL
                         isOngoing -> ChallengeStatus.IN_PROGRESS
+                        challenge.remoteStatus == "SUCCESS" -> ChallengeStatus.SUCCESS
+                        challenge.remoteStatus != null -> ChallengeStatus.FAIL
                         actualAmount <= challenge.targetAmount -> ChallengeStatus.SUCCESS
                         else -> ChallengeStatus.FAIL
                     },
@@ -54,9 +54,11 @@ object MyPageMockData {
 
     fun emptyChallengeHistory(): List<ChallengeRecord> = emptyList()
 
-    fun myTips(posts: List<TipPost>, userId: String): List<TipPost> = posts.filter { it.authorId == userId }
+    fun myTips(posts: List<TipPost>, userId: String): List<TipPost> =
+        posts.filter { it.authorId == userId }.sortedBy { it.postedMinutesAgo }
 
-    fun savedTips(posts: List<TipPost>): List<TipPost> = posts.filter { it.isSaved }
+    fun savedTips(posts: List<TipPost>): List<TipPost> =
+        posts.filter { it.isSaved }.sortedBy { it.postedMinutesAgo }
 
     fun emptyTips(): List<TipPost> = emptyList()
 }

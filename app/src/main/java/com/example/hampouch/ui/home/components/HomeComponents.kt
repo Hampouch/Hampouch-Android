@@ -1,8 +1,6 @@
 package com.example.hampouch.ui.home.components
 
 import android.R.attr.maxWidth
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -309,12 +307,6 @@ internal fun characterDrawableRes(state: CharacterState): Int = when (state) {
 
 @Composable
 fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifier) {
-    val animatedRatio by animateFloatAsState(
-        targetValue = challenge.balanceRatio,
-        animationSpec = tween(durationMillis = 500),
-        label = "gauge_ratio"
-    )
-
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -352,7 +344,7 @@ fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifie
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(fraction = animatedRatio.coerceIn(0f, 1f))
+                    .fillMaxWidth(fraction = challenge.balanceRatio.coerceIn(0f, 1f))
                     .clip(RoundedCornerShape(50))
                     .background(if (challenge.isOverLimit) HPSub else HPMain)
             )

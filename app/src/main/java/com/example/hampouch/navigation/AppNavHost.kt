@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -62,6 +63,9 @@ import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.common.ChallengeLookupViewModel
 import com.example.hampouch.ui.common.ExpenseLookupViewModel
+import com.example.hampouch.ui.common.FullScreenLoadError
+import com.example.hampouch.ui.common.FullScreenLoadingIndicator
+import com.example.hampouch.ui.common.LoadState
 import com.example.hampouch.ui.challengeresult.ChallengeResultScreen
 import com.example.hampouch.ui.expenseanalysis.CategoryDetailRoute
 import com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisHeaderMode
@@ -86,6 +90,7 @@ import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
+import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
@@ -151,6 +156,7 @@ fun AppNavHost(
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
+    var showAppSplash by rememberSaveable { mutableStateOf(true) }
 
     val resolvedStartDestination = startDestination
     if (resolvedStartDestination == null) {
@@ -164,6 +170,11 @@ fun AppNavHost(
                 modifier = modifier
             )
         }
+        return
+    }
+
+    if (showAppSplash && resolvedStartDestination != Screen.Onboarding.route) {
+        SplashStep(onTimeout = { showAppSplash = false }, modifier = modifier)
         return
     }
 
@@ -267,10 +278,7 @@ fun AppNavHost(
                     startDestinationViewModel.captureOnboardingComplete(request)
                     goToLogin()
                 },
-                onNavigateToLogin = {
-                    startDestinationViewModel.markOnboardingSkipped()
-                    goToLogin()
-                }
+                onNavigateToLogin = goToLogin
             )
         }
 
@@ -460,13 +468,19 @@ fun AppNavHost(
                     }
                 }
             }
-            uiState.record?.let { current ->
-                ExpenseDetailRoute(
-                    record = current,
+            val detailLoadState = uiState.loadState
+            when {
+                uiState.record != null -> ExpenseDetailRoute(
+                    record = uiState.record!!,
                     onBackClick = { navController.popBackStack() },
                     onEditClick = { navController.navigate(Screen.ExpenseEdit.createRoute(expenseId)) },
-                    onDeleted = viewModel::delete
+                    onDeleted = viewModel::delete,
+                    staleErrorMessage = (detailLoadState as? LoadState.Failure)?.message,
+                    onRetryStaleData = viewModel::retry
                 )
+                detailLoadState is LoadState.Failure ->
+                    FullScreenLoadError(message = detailLoadState.message, onRetry = viewModel::retry)
+                else -> FullScreenLoadingIndicator()
             }
         }
 
@@ -489,22 +503,29 @@ fun AppNavHost(
                     }
                 }
             }
-            uiState.record?.let { current ->
-                val activeChallenge = editChallengeState.activeChallenge
-                val isEditDateSelectable: (LocalDate) -> Boolean = { date ->
-                    if (editChallengeState.hasOngoingChallenge && activeChallenge != null) {
-                        !date.isBefore(activeChallenge.periodStart) && !date.isAfter(activeChallenge.effectivePeriodEnd)
-                    } else {
-                        val lastEndedChallenge = editChallengeState.challenges.lastOrNull()
-                        lastEndedChallenge == null || date.isAfter(lastEndedChallenge.effectivePeriodEnd)
+            val editLoadState = uiState.loadState
+            when {
+                uiState.record != null -> {
+                    val current = uiState.record!!
+                    val activeChallenge = editChallengeState.activeChallenge
+                    val isEditDateSelectable: (LocalDate) -> Boolean = { date ->
+                        if (editChallengeState.hasOngoingChallenge && activeChallenge != null) {
+                            !date.isBefore(activeChallenge.periodStart) && !date.isAfter(activeChallenge.effectivePeriodEnd)
+                        } else {
+                            val lastEndedChallenge = editChallengeState.challenges.lastOrNull()
+                            lastEndedChallenge == null || date.isAfter(lastEndedChallenge.effectivePeriodEnd)
+                        }
                     }
+                    ExpenseEditRoute(
+                        record = current,
+                        onBackClick = { navController.popBackStack() },
+                        onSaved = viewModel::save,
+                        isDateSelectable = isEditDateSelectable
+                    )
                 }
-                ExpenseEditRoute(
-                    record = current,
-                    onBackClick = { navController.popBackStack() },
-                    onSaved = viewModel::save,
-                    isDateSelectable = isEditDateSelectable
-                )
+                editLoadState is LoadState.Failure ->
+                    FullScreenLoadError(message = editLoadState.message, onRetry = viewModel::retry)
+                else -> FullScreenLoadingIndicator()
             }
         }
 
@@ -853,12 +874,13 @@ fun AppNavHost(
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
                 val state = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
                     showBackButton = !locked,
+                    showFollowUpActions = locked,
                     onExpenseAnalysisClick = {
                         navController.navigate(
                             Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
@@ -895,12 +917,11 @@ fun AppNavHost(
             val challenge = challengeState.challengeById(challengeId)
             if (challenge != null) {
                 val previousResult = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
-                    onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {
@@ -956,13 +977,12 @@ fun AppNavHost(
             }
             if (challenge != null && draft != null) {
                 val previousResult = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = draft.budgetTotal,
                     fixedDateDraft = draft,
-                    onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {

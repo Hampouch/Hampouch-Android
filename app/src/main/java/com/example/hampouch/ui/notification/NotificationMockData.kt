@@ -50,7 +50,7 @@ object NotificationMockData {
                 id = "4",
                 category = NotificationCategory.CHALLENGE,
                 section = NotificationSection.TODAY,
-                title = "5일 연속 성공! 포치가 기뻐해요",
+                title = "5일 연속 한도 지키기 성공! 포치가 기뻐해요",
                 message = "이 기세로 완주까지 가봐요",
                 timeLabel = "2시간 전",
                 isRead = false,

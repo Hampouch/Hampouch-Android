@@ -58,6 +58,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.ui.common.FullScreenLoadError
+import com.example.hampouch.ui.common.FullScreenLoadingIndicator
+import com.example.hampouch.ui.common.LoadState
+import com.example.hampouch.ui.common.StaleDataRefreshBanner
 import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -120,6 +124,7 @@ fun ExpenseAnalysisRoute(
     }
 
     val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(periodStart, periodEnd) { viewModel.loadSummary(periodStart, periodEnd) }
 
     val totalAmount = summary?.totalAmount ?: 0
@@ -148,6 +153,18 @@ fun ExpenseAnalysisRoute(
         },
         containerColor = HPGray2
     ) { innerPadding ->
+        if (loadState is LoadState.Failure && summary == null) {
+            FullScreenLoadError(
+                message = (loadState as LoadState.Failure).message,
+                onRetry = viewModel::retry,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
+        if (summary == null && loadState !is LoadState.Content) {
+            FullScreenLoadingIndicator(modifier = Modifier.padding(innerPadding))
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -156,6 +173,14 @@ fun ExpenseAnalysisRoute(
                 .padding(horizontal = 15.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+
+            if (loadState is LoadState.Failure && summary != null) {
+                StaleDataRefreshBanner(
+                    message = (loadState as LoadState.Failure).message,
+                    onRetry = viewModel::retry
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             if (headerMode is ExpenseAnalysisHeaderMode.Month) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -440,6 +465,7 @@ fun MonthlyExpenseRoute(
 ) {
     val currentMonth = YearMonth.from(referenceToday)
     val trend by viewModel.trend.collectAsStateWithLifecycle()
+    val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(currentMonth) { viewModel.loadTrend(currentMonth) }
     val totals = trend?.trend.orEmpty()
     val currentTotal = trend?.totalAmount ?: 0
@@ -452,6 +478,18 @@ fun MonthlyExpenseRoute(
         topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_monthly_title), onBackClick = onBackClick) },
         containerColor = HPGray2
     ) { innerPadding ->
+        if (loadState is LoadState.Failure && trend == null) {
+            FullScreenLoadError(
+                message = (loadState as LoadState.Failure).message,
+                onRetry = viewModel::retry,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
+        if (trend == null && loadState !is LoadState.Content) {
+            FullScreenLoadingIndicator(modifier = Modifier.padding(innerPadding))
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -460,6 +498,13 @@ fun MonthlyExpenseRoute(
                 .padding(horizontal = 15.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+            if (loadState is LoadState.Failure && trend != null) {
+                StaleDataRefreshBanner(
+                    message = (loadState as LoadState.Failure).message,
+                    onRetry = viewModel::retry
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             Text(
                 stringResource(R.string.expenseanalysis_monthly_subtitle),
                 style = MaterialTheme.typography.bodySmall,
@@ -606,6 +651,7 @@ fun CategoryDetailRoute(
 ) {
     var selectedId by remember { mutableStateOf(initialCategoryId) }
     val tagResult by viewModel.tagResult.collectAsStateWithLifecycle()
+    val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         viewModel.loadCategoryAnalysis(selectedId, periodStart, periodEnd)
     }
@@ -618,6 +664,18 @@ fun CategoryDetailRoute(
         topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_category_section_title), onBackClick = onBackClick) },
         containerColor = HPGray2
     ) { innerPadding ->
+        if (loadState is LoadState.Failure && tagResult == null) {
+            FullScreenLoadError(
+                message = (loadState as LoadState.Failure).message,
+                onRetry = viewModel::retry,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
+        if (tagResult == null && loadState !is LoadState.Content) {
+            FullScreenLoadingIndicator(modifier = Modifier.padding(innerPadding))
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -625,6 +683,13 @@ fun CategoryDetailRoute(
                 .padding(horizontal = 15.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+            if (loadState is LoadState.Failure && tagResult != null) {
+                StaleDataRefreshBanner(
+                    message = (loadState as LoadState.Failure).message,
+                    onRetry = viewModel::retry
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             AnalysisTabRow(
                 tabs = ExpenseAnalysisCategoryTabOrder.map { it to analysisCategoryLabel(it) },
                 selectedId = selectedId,
@@ -668,6 +733,7 @@ fun ReasonDetailRoute(
 ) {
     var selectedId by remember { mutableStateOf(initialReasonId) }
     val tagResult by viewModel.tagResult.collectAsStateWithLifecycle()
+    val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         viewModel.loadEmotionAnalysis(selectedId, periodStart, periodEnd)
     }
@@ -680,6 +746,18 @@ fun ReasonDetailRoute(
         topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_reason_section_title), onBackClick = onBackClick) },
         containerColor = HPGray2
     ) { innerPadding ->
+        if (loadState is LoadState.Failure && tagResult == null) {
+            FullScreenLoadError(
+                message = (loadState as LoadState.Failure).message,
+                onRetry = viewModel::retry,
+                modifier = Modifier.padding(innerPadding)
+            )
+            return@Scaffold
+        }
+        if (tagResult == null && loadState !is LoadState.Content) {
+            FullScreenLoadingIndicator(modifier = Modifier.padding(innerPadding))
+            return@Scaffold
+        }
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -687,6 +765,13 @@ fun ReasonDetailRoute(
                 .padding(horizontal = 15.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+            if (loadState is LoadState.Failure && tagResult != null) {
+                StaleDataRefreshBanner(
+                    message = (loadState as LoadState.Failure).message,
+                    onRetry = viewModel::retry
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             AnalysisTabRow(
                 tabs = ExpenseAnalysisReasonTabOrder.map { it to analysisReasonTabLabel(it) },
                 selectedId = selectedId,

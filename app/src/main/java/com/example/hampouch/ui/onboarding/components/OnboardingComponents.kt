@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -241,16 +242,21 @@ fun SkipText(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = HPText,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp)
-    )
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = HPText,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+    }
 }
 
 @Preview(showBackground = true, name = "건너뛰기 텍스트")
@@ -304,6 +310,7 @@ fun LabeledInputRow(
                 .padding(top = if (label != null) 8.dp else 0.dp)
                 .fillMaxWidth()
                 .height(43.dp)
+                .clip(RoundedCornerShape(9.5.dp))
                 .background(HPWhite, RoundedCornerShape(9.5.dp))
                 .border(1.dp, HPGray5, RoundedCornerShape(9.5.dp))
                 .clickable(onClick = onClick)
@@ -351,11 +358,14 @@ fun EditableAmountRow(
     icon: ImageVector? = null,
     suffix: String? = null,
     valueColor: Color? = null,
-    editSeedValue: Int? = value
+    editSeedValue: Int? = value,
+    maxValue: Int? = null,
+    maxValueErrorText: String? = null
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var hasFocusedOnce by remember { mutableStateOf(false) }
+    var showMaxValueError by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -365,12 +375,15 @@ fun EditableAmountRow(
             val seedText = editSeedValue?.toWonText().orEmpty()
             textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
             hasFocusedOnce = false
+            showMaxValueError = false
             focusManager.clearFocus(force = true)
             keyboardController?.hide()
             delay(FocusHandoffDelayMillis)
             focusRequester.requestFocus()
             delay(FocusHandoffDelayMillis)
             keyboardController?.show()
+        } else {
+            showMaxValueError = false
         }
     }
 
@@ -383,6 +396,7 @@ fun EditableAmountRow(
                 .padding(top = if (label != null) 8.dp else 0.dp)
                 .fillMaxWidth()
                 .height(43.dp)
+                .clip(RoundedCornerShape(9.5.dp))
                 .background(HPWhite, RoundedCornerShape(9.5.dp))
                 .border(1.dp, if (isEditing) HPMain else HPGray5, RoundedCornerShape(9.5.dp))
                 .then(
@@ -411,22 +425,31 @@ fun EditableAmountRow(
                         value = textFieldValue,
                         onValueChange = { newValue ->
                             val digitsOnly = newValue.text.filter(Char::isDigit)
-                            val normalizedDigits = digitsOnly.trimStart('0')
+                            val normalizedDigitsRaw = digitsOnly.trimStart('0')
                                 .ifEmpty { if (digitsOnly.isEmpty()) "" else "0" }
-                            val strippedLeadingZeros = digitsOnly.length - normalizedDigits.length
+                            val exceedsMax = maxValue != null &&
+                                (normalizedDigitsRaw.toLongOrNull() ?: 0L) > maxValue
+                            val normalizedDigits = if (exceedsMax) maxValue.toString() else normalizedDigitsRaw
+                            showMaxValueError = exceedsMax
+                            val strippedLeadingZeros = digitsOnly.length - normalizedDigitsRaw.length
                             val digitsBeforeCursor = newValue.text.take(newValue.selection.end).count(Char::isDigit)
                             val normalizedCursorDigits = (digitsBeforeCursor - strippedLeadingZeros).coerceAtLeast(0)
                             val formattedText = normalizedDigits.toLongOrNull()
                                 ?.let { NumberFormat.getNumberInstance(Locale.KOREA).format(it) }
                                 ?: normalizedDigits
-                            var digitsSeen = 0
-                            var cursorIndex = formattedText.length
-                            for ((index, char) in formattedText.withIndex()) {
-                                if (digitsSeen == normalizedCursorDigits) {
-                                    cursorIndex = index
-                                    break
+                            val cursorIndex = if (exceedsMax) {
+                                formattedText.length
+                            } else {
+                                var digitsSeen = 0
+                                var index = formattedText.length
+                                for ((i, char) in formattedText.withIndex()) {
+                                    if (digitsSeen == normalizedCursorDigits) {
+                                        index = i
+                                        break
+                                    }
+                                    if (char.isDigit()) digitsSeen++
                                 }
-                                if (char.isDigit()) digitsSeen++
+                                index
                             }
                             textFieldValue = TextFieldValue(text = formattedText, selection = TextRange(cursorIndex))
                             normalizedDigits.toIntOrNull()?.let(onValueChange)
@@ -462,6 +485,14 @@ fun EditableAmountRow(
             if (suffix != null) {
                 Text(text = suffix, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
             }
+        }
+        if (showMaxValueError && maxValueErrorText != null) {
+            Text(
+                text = maxValueErrorText,
+                style = MaterialTheme.typography.labelSmall,
+                color = HPSub,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }
@@ -559,6 +590,7 @@ fun PeriodPresetRow(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         color = if (selected) HPMain else HPWhite,
                         shape = RoundedCornerShape(12.dp)
@@ -611,6 +643,7 @@ fun CategoryChip(
             .fillMaxWidth()
             .fillMaxHeight()
             .heightIn(min = CategoryChipMinHeight)
+            .clip(RoundedCornerShape(22.dp))
             .background(
                 color = if (selected) HPMain else HPWhite,
                 shape = RoundedCornerShape(22.dp)

@@ -37,6 +37,18 @@ data class ActiveChallenge(
     val effectivePeriodEnd: LocalDate
         get() = abandonedDate?.minusDays(1) ?: periodEnd
 
+    /**
+     * 이 챌린지 자체가 [referenceToday] 기준으로 아직 끝나지 않았는지 여부.
+     * 다른 챌린지와의 비교(어떤 것이 "현재 활성 챌린지"인지)에 기대지 않고
+     * 이 챌린지의 기간/포기 여부만으로 판단한다. periodStart가 같은 챌린지가
+     * 여러 개 있을 때(예: 포기 후 같은 날 새 챌린지 시작) 잘못된 챌린지가
+     * "진행중"으로 판정되는 것을 막기 위함이다.
+     */
+    fun isOngoingOn(referenceToday: LocalDate): Boolean =
+        abandonedDate == null &&
+            !referenceToday.isBefore(periodStart) &&
+            !referenceToday.isAfter(periodEnd)
+
     fun dDayFrom(referenceToday: LocalDate): Int =
         ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt()
 

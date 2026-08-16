@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,7 +59,11 @@ import com.example.hampouch.domain.model.ExpensePeriodSummary
 import com.example.hampouch.domain.model.ExpenseCalendarViewMode
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.ui.common.InlineLoadErrorCard
+import com.example.hampouch.ui.common.InlineLoadingIndicator
+import com.example.hampouch.ui.common.LoadState
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
+import com.example.hampouch.ui.common.StaleDataRefreshBanner
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -133,9 +138,15 @@ fun ExpenseCalendarRoute(
     val records by viewModel.records.collectAsStateWithLifecycle()
     val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
     val weekSummary by viewModel.weekSummary.collectAsStateWithLifecycle()
+    val monthLoadState by viewModel.monthLoadState.collectAsStateWithLifecycle()
+    val weekLoadState by viewModel.weekLoadState.collectAsStateWithLifecycle()
+    val dayLoadState by viewModel.dayLoadState.collectAsStateWithLifecycle()
     LaunchedEffect(displayedMonth) { viewModel.loadMonthSummary(YearMonth.from(displayedMonth)) }
     LaunchedEffect(displayedWeekStart) { viewModel.loadWeekSummary(displayedWeekStart) }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
+
+    val activeCalendarLoadState = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekLoadState else monthLoadState
+    val activeCalendarHasData = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary != null else monthSummary != null
 
     val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
     val summaryByDate = activeSummary?.dailyBreakdown?.associate { it.date to it.amount }.orEmpty()
@@ -207,14 +218,31 @@ fun ExpenseCalendarRoute(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
-                if (viewMode == ExpenseCalendarViewMode.MONTHLY) {
+                val calendarFailedWithNoData = activeCalendarLoadState is LoadState.Failure && !activeCalendarHasData
+                val calendarStaleFailureMessage = (activeCalendarLoadState as? LoadState.Failure)
+                    ?.message
+                    ?.takeIf { activeCalendarHasData }
+                if (calendarStaleFailureMessage != null) {
+                    StaleDataRefreshBanner(
+                        message = calendarStaleFailureMessage,
+                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) viewModel.retryWeek() else viewModel.retryMonth() }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+                if (calendarFailedWithNoData) {
+                    InlineLoadErrorCard(
+                        message = (activeCalendarLoadState as LoadState.Failure).message,
+                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) viewModel.retryWeek() else viewModel.retryMonth() }
+                    )
+                } else if (viewMode == ExpenseCalendarViewMode.MONTHLY) {
                     CalendarStatCard(
                         totalLabel = stringResource(
                             R.string.expensedetail_calendar_monthly_total_format,
                             displayedMonth.monthValue
                         ),
                         totalAmount = monthlyTotal,
-                        dailyAverage = monthlyDailyAverage
+                        dailyAverage = monthlyDailyAverage,
+                        isLoading = activeCalendarLoadState is LoadState.Loading && !activeCalendarHasData
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     MonthCalendarGrid(
@@ -240,7 +268,8 @@ fun ExpenseCalendarRoute(
                             )
                         },
                         totalAmount = weeklyTotal,
-                        dailyAverage = weeklyDailyAverage
+                        dailyAverage = weeklyDailyAverage,
+                        isLoading = activeCalendarLoadState is LoadState.Loading && !activeCalendarHasData
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     WeekNavigator(
@@ -262,7 +291,24 @@ fun ExpenseCalendarRoute(
             Spacer(modifier = Modifier.height(15.dp))
             SelectedDayHeader(selectedDate = selectedDate, referenceToday = referenceToday, dayRecords = dayRecords)
             Spacer(modifier = Modifier.height(10.dp))
-            if (dayRecords.isEmpty()) {
+            val dayFailedWithNoData = dayLoadState is LoadState.Failure && dayRecords.isEmpty()
+            val dayLoadingWithNoData = dayLoadState is LoadState.Loading && dayRecords.isEmpty()
+            val dayStaleFailureMessage = (dayLoadState as? LoadState.Failure)?.message?.takeIf { dayRecords.isNotEmpty() }
+            if (dayStaleFailureMessage != null) {
+                StaleDataRefreshBanner(
+                    message = dayStaleFailureMessage,
+                    onRetry = viewModel::retryDay,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+            }
+            if (dayFailedWithNoData) {
+                InlineLoadErrorCard(
+                    message = (dayLoadState as LoadState.Failure).message,
+                    onRetry = viewModel::retryDay
+                )
+            } else if (dayLoadingWithNoData) {
+                InlineLoadingIndicator()
+            } else if (dayRecords.isEmpty()) {
                 Text(
                     stringResource(R.string.expensedetail_calendar_day_empty_message),
                     style = MaterialTheme.typography.bodyMedium,
@@ -429,7 +475,8 @@ private fun CalendarStatCard(
     totalLabel: String,
     totalAmount: Int,
     dailyAverage: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     Column(
         modifier = modifier
@@ -442,17 +489,22 @@ private fun CalendarStatCard(
     ) {
         Text(totalLabel, style = MaterialTheme.typography.bodySmall, color = HPText)
         Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount)),
-            style = MaterialTheme.typography.titleSmall,
-            color = HPSub
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            stringResource(R.string.expensedetail_calendar_daily_average_format, formatWon(dailyAverage)),
-            style = MaterialTheme.typography.bodySmall,
-            color = HPText
-        )
+        if (isLoading) {
+            CircularProgressIndicator(color = HPMain, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+            Spacer(modifier = Modifier.height(4.dp))
+        } else {
+            Text(
+                stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount)),
+                style = MaterialTheme.typography.titleSmall,
+                color = HPSub
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.expensedetail_calendar_daily_average_format, formatWon(dailyAverage)),
+                style = MaterialTheme.typography.bodySmall,
+                color = HPText
+            )
+        }
     }
 }
 

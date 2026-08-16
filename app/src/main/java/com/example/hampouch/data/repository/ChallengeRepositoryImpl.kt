@@ -124,7 +124,15 @@ class ChallengeRepositoryImpl @Inject constructor(
         _state.update { state ->
             val existingIndex = state.challenges.indexOfFirst { it.id == entry.id }
             val updated = if (existingIndex >= 0) {
-                state.challenges.toMutableList().also { it[existingIndex] = entry }
+                val existing = state.challenges[existingIndex]
+                // 로컬에서 이미 포기 처리된 챌린지는, 서버가 뒤늦게(또는 일시적으로) 비-포기 상태로
+                // 응답하더라도 로컬 abandonedDate를 잃지 않도록 보존한다.
+                val merged = if (existing.abandonedDate != null && entry.abandonedDate == null) {
+                    entry.copy(abandonedDate = existing.abandonedDate)
+                } else {
+                    entry
+                }
+                state.challenges.toMutableList().also { it[existingIndex] = merged }
             } else {
                 state.challenges + entry
             }
@@ -276,12 +284,6 @@ class ChallengeRepositoryImpl @Inject constructor(
         for (month in months) {
             val response = apiService.getChallengeCalendar(challengeId, month.year, month.monthValue)
             days.putAll(response.body()?.data.toDailyRecords())
-        }
-        /** 기록이 없는 날은 0원 지출로 간주해 달력에서도 성공한 날로 계산한다(스펙 명시 규칙). */
-        var date = periodStart
-        while (!date.isAfter(periodEnd)) {
-            days.putIfAbsent(date, DailyRecordStatus.SUCCESS)
-            date = date.plusDays(1)
         }
         return days
     }

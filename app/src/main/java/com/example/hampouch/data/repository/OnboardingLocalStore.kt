@@ -86,14 +86,6 @@ class OnboardingLocalStore @Inject constructor(
         editor.apply()
     }
 
-    fun markOnboardingSkipped() {
-        pendingRequest = null
-        prefs().edit()
-            .putBoolean(KEY_HAS_COMPLETED, true)
-            .putBoolean(KEY_HAS_PENDING, false)
-            .apply()
-    }
-
     fun resetOnboarding() {
         pendingRequest = null
         prefs().edit().clear().apply()

@@ -9,6 +9,12 @@ enum class NotificationCategory(val labelResId: Int) {
     COMMUNITY(R.string.notification_category_community)
 }
 
+fun NotificationSettingsState.isEnabled(category: NotificationCategory): Boolean = when (category) {
+    NotificationCategory.CHALLENGE -> challengeAlarmEnabled
+    NotificationCategory.HAM_BATTLE -> hamBattleAlarmEnabled
+    NotificationCategory.COMMUNITY -> communityAlarmEnabled
+}
+
 enum class NotificationSection(val labelResId: Int) {
     TODAY(R.string.notification_section_today),
     YESTERDAY(R.string.notification_section_yesterday),
