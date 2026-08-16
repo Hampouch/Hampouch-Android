@@ -42,6 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.domain.model.AuthSession
+import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleStatus
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
@@ -83,6 +84,7 @@ import com.example.hampouch.ui.login.LoginScreen
 import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
 import com.example.hampouch.ui.nextchallenge.NextChallengeRoute
 import com.example.hampouch.ui.nextchallenge.NextChallengeTakeABreakRoute
+import com.example.hampouch.ui.nextchallenge.FixedDateNextChallengeRoute
 import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
@@ -436,6 +438,9 @@ fun AppNavHost(
                 onChallengeEndedFinishClick = {
                     val challenge = homeChallengeState.activeChallenge ?: return@HomeScreen
                     navController.navigate(Screen.ChallengeSummary.createRoute(challenge.id, locked = true))
+                },
+                onFixedDateChallengeDue = {
+                    navController.navigate(Screen.FixedDateNextChallenge.route)
                 }
             )
         }
@@ -856,8 +861,11 @@ fun AppNavHost(
             val locked = backStackEntry.arguments?.getBoolean("locked") ?: false
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
+            val challengeLookup: ChallengeLookupViewModel = hiltViewModel()
+            val fixedDateDraft by challengeLookup.fixedDateDraft.collectAsStateWithLifecycle()
             val challenge = challengeState.challengeById(challengeId)
             LaunchedEffect(challengeId) { expenseLookup.loadResult(challengeId) }
+            LaunchedEffect(challengeId) { challengeLookup.loadFixedDateDraft() }
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
                 val state = ChallengeResultMockData.forChallenge(
@@ -875,7 +883,14 @@ fun AppNavHost(
                     onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
                     onShareClick = { onBottomNavItemSelected(BottomNavItem.COMMUNITY) },
                     onStartNewChallengeClick = { suggestedTargetAmount ->
-                        navController.navigate(Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount))
+                        val dueDraft = fixedDateDraft?.takeIf { it.isDue }
+                        if (dueDraft != null) {
+                            navController.navigate(Screen.FixedDateNextChallenge.route)
+                        } else {
+                            navController.navigate(
+                                Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount)
+                            )
+                        }
                     },
                     onTakeABreakClick = { navController.navigate(Screen.TakeABreak.createRoute()) }
                 )
@@ -901,6 +916,68 @@ fun AppNavHost(
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
+                    onBackClick = { navController.popBackStack() },
+                    onStartChallengeClick = {
+                        pendingHomeTab = null
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
+        composable(Screen.FixedDateNextChallenge.route) {
+            FixedDateNextChallengeRoute(
+                onBackClick = { navController.popBackStack() },
+                onStartChallengeClick = {
+                    pendingHomeTab = null
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onEditSettingsClick = { draft ->
+                    navController.navigate(
+                        Screen.FixedDateNextChallengeEdit.createRoute(draft.sourceChallengeId.toString())
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = Screen.FixedDateNextChallengeEdit.route,
+            arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val challengeId = backStackEntry.arguments?.getString("challengeId").orEmpty()
+            val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
+            val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
+            val challengeLookup: ChallengeLookupViewModel = hiltViewModel()
+            val fixedDateDraft by challengeLookup.fixedDateDraft.collectAsStateWithLifecycle()
+            LaunchedEffect(challengeId) { challengeLookup.loadFixedDateDraft() }
+            val draft = fixedDateDraft
+            val challenge = challengeState.challengeById(challengeId) ?: draft?.let {
+                ActiveChallenge(
+                    id = it.sourceChallengeId.toString(),
+                    totalDays = java.time.temporal.ChronoUnit.DAYS
+                        .between(it.previousStartDate, it.previousEndDate).toInt() + 1,
+                    periodStart = it.previousStartDate,
+                    periodEnd = it.previousEndDate,
+                    dailyLimit = it.dailyLimit,
+                    targetAmount = it.budgetTotal,
+                    savedAmount = 0,
+                    streakDays = 0,
+                    editCount = 0,
+                    repeatMonthly = true
+                )
+            }
+            if (challenge != null && draft != null) {
+                val previousResult = ChallengeResultMockData.forChallenge(
+                    challenge, challengeState, expenseLookup::recordsForDate
+                )
+                NextChallengeRoute(
+                    previousResult = previousResult,
+                    suggestedTargetAmount = draft.budgetTotal,
+                    fixedDateDraft = draft,
                     onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
                         pendingHomeTab = null

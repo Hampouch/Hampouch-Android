@@ -27,6 +27,8 @@ sealed interface HomeEvent {
 
     data object ChallengeEndAcknowledged : HomeEvent
 
+    data object FixedDateChallengeDue : HomeEvent
+
     data class ShowMessage(val message: String) : HomeEvent
 }
 
@@ -68,7 +70,21 @@ class HomeViewModel @Inject constructor(
         _loadState.value = LoadState.Loading
         viewModelScope.launch {
             challengeRepository.loadCurrentChallenge()
-                .onSuccess { _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null) }
+                .onSuccess {
+                    _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null)
+                    challengeRepository.loadFixedDateDraft().onSuccess { draft ->
+                        val hasUnacknowledgedEnd = challengeState.value.isChallengeJustEnded(LocalDate.now())
+                        if (draft?.isDue == true && !hasUnacknowledgedEnd) {
+                            _events.send(HomeEvent.FixedDateChallengeDue)
+                        }
+                    }.onFailure { error ->
+                        _events.send(
+                            HomeEvent.ShowMessage(
+                                error.toUserMessage("다음 챌린지 정보를 불러오지 못했습니다.")
+                            )
+                        )
+                    }
+                }
                 .onFailure { error ->
                     val message = error.toUserMessage("챌린지 현황 조회에 실패했습니다.")
                     _loadState.value = LoadState.Failure(message)
@@ -79,10 +95,11 @@ class HomeViewModel @Inject constructor(
 
     fun acknowledgeChallengeEnd() {
         viewModelScope.launch {
-            challengeRepository.acknowledgeChallengeEnd().onFailure { error ->
-                _events.send(HomeEvent.ShowMessage(error.toUserMessage("챌린지 종료 처리에 실패했습니다.")))
-            }
-            _events.send(HomeEvent.ChallengeEndAcknowledged)
+            challengeRepository.acknowledgeChallengeEnd()
+                .onSuccess { _events.send(HomeEvent.ChallengeEndAcknowledged) }
+                .onFailure { error ->
+                    _events.send(HomeEvent.ShowMessage(error.toUserMessage("챌린지 종료 처리에 실패했습니다.")))
+                }
         }
     }
 
