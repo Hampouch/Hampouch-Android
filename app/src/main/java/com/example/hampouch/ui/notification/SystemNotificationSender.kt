@@ -14,7 +14,7 @@ import com.example.hampouch.MainActivity
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.NotificationItem
 
-private const val TEST_CHANNEL_ID = "hampouch_test_channel"
+private const val NOTIFICATION_CHANNEL_ID = "hampouch_notification_channel"
 
 const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
 
@@ -22,7 +22,7 @@ object SystemNotificationSender {
 
     private fun ensureChannel(context: Context) {
         val channel = NotificationChannel(
-            TEST_CHANNEL_ID,
+            NOTIFICATION_CHANNEL_ID,
             context.getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
@@ -59,7 +59,7 @@ object SystemNotificationSender {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, TEST_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(message)

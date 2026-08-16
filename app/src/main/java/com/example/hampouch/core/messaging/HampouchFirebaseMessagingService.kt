@@ -1,5 +1,7 @@
 package com.example.hampouch.core.messaging
 
+import android.util.Log
+import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.NotificationCategory
 import com.example.hampouch.domain.model.isEnabled
 import com.example.hampouch.domain.repository.NotificationRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "HampouchFcmService"
 private const val KEY_NOTIFICATION_ID = "notificationId"
 private const val KEY_TITLE = "title"
 private const val KEY_MESSAGE = "message"
@@ -29,11 +32,19 @@ class HampouchFirebaseMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var notificationSettingsRepository: NotificationSettingsRepository
 
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        serviceScope.launch { notificationRepository.registerDeviceToken(token) }
+        serviceScope.launch {
+            if (authRepository.currentAuthHeader() == null) return@launch
+            notificationRepository.registerDeviceToken(token).onFailure {
+                Log.w(TAG, "새 FCM 토큰 재등록 실패", it)
+            }
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
