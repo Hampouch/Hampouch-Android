@@ -21,6 +21,8 @@ import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.DailyLimitOverride
 import com.example.hampouch.domain.model.DailyRecordStatus
 import com.example.hampouch.domain.model.EmotionStat
+import com.example.hampouch.domain.model.FixedDateChallengeDraft
+import com.example.hampouch.domain.model.FixedDateDraftState
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.SpendingEmotion
 import com.example.hampouch.domain.repository.ChallengeRepository
@@ -69,6 +71,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         )
     )
     override val state: StateFlow<ChallengeState> = _state.asStateFlow()
+
+    private val _fixedDateDraft = MutableStateFlow<FixedDateChallengeDraft?>(null)
+    override val fixedDateDraft: StateFlow<FixedDateChallengeDraft?> = _fixedDateDraft.asStateFlow()
 
     private val current: ChallengeState get() = _state.value
 
@@ -485,51 +490,83 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun renewFixedDateChallenge(): Result<Boolean> = runCatchingNetwork(TAG) {
-        val draftResponse = apiService.getFixedDateChallengeDraft()
-        if (!draftResponse.isSuccessful) {
-            /** 날짜 고정 설정이 없거나 기간 선택으로 전환된 경우(404)만 "갱신할 게 없음"으로 처리한다. */
-            return@runCatchingNetwork if (draftResponse.code() == HTTP_NOT_FOUND) {
-                Result.success(false)
-            } else {
-                Result.failure(draftResponse.toApiException("다음 챌린지 초안을 불러오지 못했습니다."))
+    override suspend fun loadFixedDateDraft(): Result<FixedDateChallengeDraft?> {
+        if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
+            _fixedDateDraft.value = null
+            return Result.success(null)
+        }
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+        return runCatchingNetwork(TAG) {
+            val draftResponse = apiService.getFixedDateChallengeDraft()
+            if (!draftResponse.isSuccessful) {
+                return@runCatchingNetwork if (draftResponse.code() == HTTP_NOT_FOUND) {
+                    _fixedDateDraft.value = null
+                    Result.success(null)
+                } else {
+                    Result.failure(draftResponse.toApiException("다음 챌린지 초안을 불러오지 못했습니다."))
+                }
             }
-        }
-        val draft = draftResponse.body()?.data
-            ?: return@runCatchingNetwork Result.failure(
-                ApiException(code = "EMPTY_RESPONSE", message = "다음 챌린지 초안을 불러오지 못했습니다.")
-            )
-        if (draft.state != "DUE") {
-            return@runCatchingNetwork Result.success(false)
-        }
-        val startResponse = apiService.startFixedDateChallenge(
-            ChallengeFixedDateStartRequest(
+            val draft = draftResponse.body()?.data
+                ?: return@runCatchingNetwork Result.failure(
+                    ApiException(code = "EMPTY_RESPONSE", message = "다음 챌린지 초안을 불러오지 못했습니다.")
+                )
+            val mapped = FixedDateChallengeDraft(
+                state = FixedDateDraftState.valueOf(draft.state),
                 sourceChallengeId = draft.sourceChallengeId,
-                startDate = draft.nextStartDate,
+                previousStartDate = LocalDate.parse(draft.previousStartDate),
+                previousEndDate = LocalDate.parse(draft.previousEndDate),
+                fixedDay = draft.fixedDay,
+                nextStartDate = LocalDate.parse(draft.nextStartDate),
+                nextEndDate = LocalDate.parse(draft.nextEndDate),
+                durationDays = draft.durationDays,
                 budgetTotal = draft.budgetTotal,
-                fixedDay = draft.fixedDay
+                dailyLimit = draft.dailyLimit
             )
-        )
-        val data = startResponse.body()?.data
-        if (startResponse.isSuccessful && data != null) {
-            upsertChallenge(
-                ActiveChallenge(
+            _fixedDateDraft.value = mapped
+            Result.success(mapped)
+        }
+    }
+
+    override suspend fun startFixedDateChallenge(
+        sourceChallengeId: Long,
+        startDate: LocalDate,
+        budgetTotal: Int,
+        fixedDay: Int
+    ): Result<ActiveChallenge> {
+        if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
+            return Result.failure(ApiException(code = "SERVER_DISABLED", message = "날짜 고정 챌린지를 시작할 수 없습니다."))
+        }
+        if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
+        return runCatchingNetwork(TAG) {
+            val startResponse = apiService.startFixedDateChallenge(
+                ChallengeFixedDateStartRequest(
+                    sourceChallengeId = sourceChallengeId,
+                    startDate = startDate.toString(),
+                    budgetTotal = budgetTotal,
+                    fixedDay = fixedDay
+                )
+            )
+            val data = startResponse.body()?.data
+            if (startResponse.isSuccessful && data != null) {
+                val challenge = ActiveChallenge(
                     id = data.challengeId.toString(),
                     totalDays = data.durationDays,
                     periodStart = LocalDate.parse(data.startDate),
                     periodEnd = LocalDate.parse(data.endDate),
                     dailyLimit = data.dailyLimit,
-                    targetAmount = draft.budgetTotal,
+                    targetAmount = budgetTotal,
                     savedAmount = 0,
                     streakDays = 0,
                     editCount = 0,
                     repeatMonthly = true,
                     remoteStatus = data.status
                 )
-            )
-            Result.success(true)
-        } else {
-            Result.failure(startResponse.toApiException("다음 챌린지 시작에 실패했습니다."))
+                upsertChallenge(challenge)
+                _fixedDateDraft.value = null
+                Result.success(challenge)
+            } else {
+                Result.failure(startResponse.toApiException("다음 챌린지 시작에 실패했습니다."))
+            }
         }
     }
 
@@ -554,14 +591,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             }
             if (result.isFailure) return result
         }
-        if (ended.repeatMonthly) {
-            val renewResult = renewFixedDateChallenge()
-            val renewError = renewResult.exceptionOrNull()
-            if (renewError != null) return Result.failure(renewError)
-            markEndAcknowledged(resetExpenseEditFlag = renewResult.getOrDefault(false))
-        } else {
-            markEndAcknowledged(resetExpenseEditFlag = false)
-        }
+        markEndAcknowledged(resetExpenseEditFlag = false)
         return Result.success(Unit)
     }
 
@@ -629,12 +659,14 @@ class ChallengeRepositoryImpl @Inject constructor(
     }
 
     override fun resetForAccount(referenceToday: LocalDate) {
+        _fixedDateDraft.value = null
         _state.value = ChallengeState(
             challenges = if (ChallengeConfig.USE_SERVER_CHALLENGE) emptyList() else buildSeedChallenges(referenceToday)
         )
     }
 
     override fun resetEmpty() {
+        _fixedDateDraft.value = null
         _state.value = ChallengeState()
     }
 }

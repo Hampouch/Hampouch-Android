@@ -8,6 +8,7 @@ import com.example.hampouch.domain.model.ExpensePeriodSummary
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.ExpenseTagAnalysisResult
 import com.example.hampouch.domain.model.ExpenseTrendResult
+import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
@@ -106,6 +107,7 @@ class ExpenseInputViewModelTest {
 
     private class FakeChallengeRepository : ChallengeRepository {
         override val state: StateFlow<ChallengeState> = MutableStateFlow(ChallengeState())
+        override val fixedDateDraft: StateFlow<FixedDateChallengeDraft?> = MutableStateFlow(null)
         override suspend fun loadCurrentChallenge(): Result<Unit> = Result.success(Unit)
         override suspend fun loadHistory(): Result<Unit> = Result.success(Unit)
         override suspend fun loadResult(challengeId: String): Result<Unit> = Result.success(Unit)
@@ -113,6 +115,13 @@ class ExpenseInputViewModelTest {
         override suspend fun startNewChallenge(request: OnboardingRequest, referenceToday: LocalDate): Result<ActiveChallenge> = error("unused")
         override suspend fun abandonChallenge(referenceToday: LocalDate): Result<Unit> = Result.success(Unit)
         override suspend fun acknowledgeChallengeEnd(): Result<Unit> = Result.success(Unit)
+        override suspend fun loadFixedDateDraft(): Result<FixedDateChallengeDraft?> = Result.success(null)
+        override suspend fun startFixedDateChallenge(
+            sourceChallengeId: Long,
+            startDate: LocalDate,
+            budgetTotal: Int,
+            fixedDay: Int
+        ): Result<ActiveChallenge> = error("unused")
         override suspend fun updateTargetAmount(
             newTargetAmount: Int,
             effectiveFrom: LocalDate
