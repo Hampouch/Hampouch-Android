@@ -77,6 +77,7 @@ fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
     onBackClick: () -> Unit,
     showBackButton: Boolean = true,
+    showFollowUpActions: Boolean = true,
     onExpenseAnalysisClick: () -> Unit,
     onAdjustGoalClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -178,7 +179,7 @@ fun ChallengeResultScreen(
                 )
             }
 
-            if (isFinished) {
+            if (isFinished && showFollowUpActions) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Column(
                     modifier = Modifier

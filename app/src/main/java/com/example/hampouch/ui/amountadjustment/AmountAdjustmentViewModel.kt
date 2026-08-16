@@ -40,6 +40,9 @@ class AmountAdjustmentViewModel @Inject constructor(
 
     fun spentOnDate(date: LocalDate): Int = recordsForDate(date).sumOf { it.amount }
 
+    fun hasRecordOnDate(date: LocalDate): Boolean =
+        recordsForDate(date).isNotEmpty() || date in expenseRepository.daysWithRecord.value
+
     fun updateTargetAmount(newTargetAmount: Int) {
         viewModelScope.launch {
             challengeRepository.updateTargetAmount(newTargetAmount)
@@ -59,7 +62,7 @@ class AmountAdjustmentViewModel @Inject constructor(
                     val state = challengeRepository.state.value
                     val suggested = state.activeChallenge?.let { active ->
                         val actualAmount = ChallengeResultMockData
-                            .forChallenge(active, state, ::recordsForDate)
+                            .forChallenge(active, state, ::recordsForDate, ::hasRecordOnDate)
                             .actualAmount
                         recommendedTightenedTarget(actualAmount)
                     } ?: 0

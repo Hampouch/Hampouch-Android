@@ -1,6 +1,8 @@
 package com.example.hampouch.ui.nextchallenge
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -197,11 +199,12 @@ fun NextChallengeRoute(
     previousResult: ChallengeResultUiState,
     suggestedTargetAmount: Int,
     fixedDateDraft: FixedDateChallengeDraft? = null,
-    onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
+    val activity = LocalContext.current as? Activity
+    BackHandler { activity?.finish() }
     var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
     var periodDays by remember(previousResult, fixedDateDraft) {
         mutableStateOf<Int?>(if (fixedDateDraft == null) previousResult.totalDays else null)
@@ -268,7 +271,7 @@ fun NextChallengeRoute(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            NextChallengeTopBar(onBack = onBackClick)
+            Spacer(modifier = Modifier.height(12.dp))
 
             val (heroTitle, heroSubtitle) = when {
                 fixedDateDraft != null -> "약속한 날짜가 됐어요." to "이어서 시작할게요!"
@@ -963,7 +966,6 @@ private fun NextChallengeRouteCompletePreview() {
         NextChallengeRoute(
             previousResult = PreviewCompleteResult,
             suggestedTargetAmount = 350_000,
-            onBackClick = {},
             onStartChallengeClick = {}
         )
     }
@@ -976,7 +978,6 @@ private fun NextChallengeRouteFailPreview() {
         NextChallengeRoute(
             previousResult = PreviewFailResult,
             suggestedTargetAmount = 440_000,
-            onBackClick = {},
             onStartChallengeClick = {}
         )
     }

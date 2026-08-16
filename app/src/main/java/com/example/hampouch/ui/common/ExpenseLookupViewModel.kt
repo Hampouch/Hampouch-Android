@@ -26,6 +26,9 @@ class ExpenseLookupViewModel @Inject constructor(
 
     fun spentOnDate(date: LocalDate): Int = recordsForDate(date).sumOf { it.amount }
 
+    fun hasRecordOnDate(date: LocalDate): Boolean =
+        recordsForDate(date).isNotEmpty() || date in expenseRepository.daysWithRecord.value
+
     fun loadResult(challengeId: String) {
         viewModelScope.launch { challengeRepository.loadResult(challengeId) }
     }

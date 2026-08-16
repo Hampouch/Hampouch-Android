@@ -874,12 +874,13 @@ fun AppNavHost(
             if (challenge != null) {
                 BackHandler(enabled = locked) {}
                 val state = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
                     showBackButton = !locked,
+                    showFollowUpActions = locked,
                     onExpenseAnalysisClick = {
                         navController.navigate(
                             Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)
@@ -916,12 +917,11 @@ fun AppNavHost(
             val challenge = challengeState.challengeById(challengeId)
             if (challenge != null) {
                 val previousResult = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
-                    onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {
@@ -977,13 +977,12 @@ fun AppNavHost(
             }
             if (challenge != null && draft != null) {
                 val previousResult = ChallengeResultMockData.forChallenge(
-                    challenge, challengeState, expenseLookup::recordsForDate
+                    challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = draft.budgetTotal,
                     fixedDateDraft = draft,
-                    onBackClick = { navController.popBackStack() },
                     onStartChallengeClick = {
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {

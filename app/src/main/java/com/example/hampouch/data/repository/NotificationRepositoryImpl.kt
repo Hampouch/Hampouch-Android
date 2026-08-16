@@ -14,8 +14,10 @@ import com.example.hampouch.domain.model.NotificationCategory
 import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.NotificationSection
 import com.example.hampouch.domain.model.NotificationTarget
+import com.example.hampouch.domain.model.isEnabled
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.NotificationRepository
+import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.google.android.gms.tasks.Task
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +26,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.time.LocalDate
@@ -101,16 +103,25 @@ private fun NotificationItemDto.toDomain(now: LocalDateTime): NotificationItem {
 class NotificationRepositoryImpl @Inject constructor(
     private val notificationApi: NotificationApi,
     private val authRepository: AuthRepository,
-    private val mockDataSource: NotificationMockDataSource
+    private val mockDataSource: NotificationMockDataSource,
+    private val notificationSettingsRepository: NotificationSettingsRepository
 ) : NotificationRepository, AccountScopedState {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val allItems = MutableStateFlow(initialItems())
 
-    override val items: StateFlow<List<NotificationItem>> = allItems
-        .map { list -> list.filterNot { isExpired(it) } }
-        .stateIn(scope, SharingStarted.Eagerly, allItems.value.filterNot { isExpired(it) })
+    override val items: StateFlow<List<NotificationItem>> = combine(
+        allItems,
+        notificationSettingsRepository.state
+    ) { list, settings ->
+        list.filterNot { isExpired(it) }.filter { settings.isEnabled(it.category) }
+    }.stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        allItems.value.filterNot { isExpired(it) }
+            .filter { notificationSettingsRepository.state.value.isEnabled(it.category) }
+    )
 
     private fun initialItems(): List<NotificationItem> =
         if (NotificationConfig.USE_SERVER_NOTIFICATION) emptyList() else mockDataSource.populated()
