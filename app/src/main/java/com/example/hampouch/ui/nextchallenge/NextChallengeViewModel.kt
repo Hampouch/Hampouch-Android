@@ -3,6 +3,7 @@ package com.example.hampouch.ui.nextchallenge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +52,30 @@ class NextChallengeViewModel @Inject constructor(
                         NextChallengeEvent.ShowMessage(error.toUserMessage("챌린지 시작에 실패했습니다."))
                     )
                 }
+            _isStarting.value = false
+        }
+    }
+
+    fun startFixedDateChallenge(
+        draft: FixedDateChallengeDraft,
+        startDate: java.time.LocalDate,
+        budgetTotal: Int
+    ) {
+        if (_isStarting.value) return
+        _isStarting.value = true
+        viewModelScope.launch {
+            challengeRepository.startFixedDateChallenge(
+                sourceChallengeId = draft.sourceChallengeId,
+                startDate = startDate,
+                budgetTotal = budgetTotal,
+                fixedDay = startDate.dayOfMonth
+            ).onSuccess {
+                _events.send(NextChallengeEvent.Started)
+            }.onFailure { error ->
+                _events.send(
+                    NextChallengeEvent.ShowMessage(error.toUserMessage("챌린지 시작에 실패했습니다."))
+                )
+            }
             _isStarting.value = false
         }
     }

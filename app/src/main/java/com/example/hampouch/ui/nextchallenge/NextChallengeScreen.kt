@@ -87,6 +87,7 @@ import com.example.hampouch.domain.model.ChallengeResultStatus
 import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.ChallengePeriod
+import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
@@ -191,20 +192,26 @@ private fun buildRecommendationMessage(
 }
 
 @Composable
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 fun NextChallengeRoute(
     previousResult: ChallengeResultUiState,
     suggestedTargetAmount: Int,
+    fixedDateDraft: FixedDateChallengeDraft? = null,
     onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
-    var periodEnabled by remember(previousResult) { mutableStateOf(true) }
-    var periodDays by remember(previousResult) { mutableStateOf<Int?>(previousResult.totalDays) }
+    var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
+    var periodDays by remember(previousResult, fixedDateDraft) {
+        mutableStateOf<Int?>(if (fixedDateDraft == null) previousResult.totalDays else null)
+    }
     var customPeriodDays by remember(previousResult) { mutableStateOf<Int?>(null) }
-    var dateFixed by remember(previousResult) { mutableStateOf(false) }
-    var startDate by remember(previousResult) { mutableStateOf<LocalDate?>(null) }
-    var targetAmount by remember(suggestedTargetAmount) { mutableStateOf<Int?>(suggestedTargetAmount) }
+    var dateFixed by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft != null) }
+    var startDate by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft?.nextStartDate) }
+    var targetAmount by remember(suggestedTargetAmount, fixedDateDraft) {
+        mutableStateOf<Int?>(fixedDateDraft?.budgetTotal ?: suggestedTargetAmount)
+    }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -217,7 +224,9 @@ fun NextChallengeRoute(
             }
         }
     }
-    LaunchedEffect(viewModel) { viewModel.loadRecommendation() }
+    LaunchedEffect(viewModel, fixedDateDraft) {
+        if (fixedDateDraft == null) viewModel.loadRecommendation()
+    }
     val coroutineScope = rememberCoroutineScope()
 
     val serverRecommendationMessage by viewModel.recommendationMessage.collectAsStateWithLifecycle()
@@ -261,24 +270,38 @@ fun NextChallengeRoute(
         ) {
             NextChallengeTopBar(onBack = onBackClick)
 
-            val (heroTitle, heroSubtitle) = if (previousResult.status == ChallengeResultStatus.FAIL) {
-                "괜찮아요!" to "조금 더 쉽게 도전해봐요."
-            } else {
-                "성공이에요!" to "한 단계 올라가 볼까요?"
+            val (heroTitle, heroSubtitle) = when {
+                fixedDateDraft != null -> "약속한 날짜가 됐어요." to "이어서 시작할게요!"
+                previousResult.status == ChallengeResultStatus.FAIL ->
+                    "괜찮아요!" to "조금 더 쉽게 도전해봐요."
+                else -> "성공이에요!" to "한 단계 올라가 볼까요?"
             }
-            NextChallengeHeroCard(title = heroTitle, subtitle = heroSubtitle)
+            NextChallengeHeroCard(
+                title = heroTitle,
+                subtitle = heroSubtitle,
+                backgroundColor = if (fixedDateDraft != null) HPSub3 else HPSub4
+            )
             Spacer(modifier = Modifier.height(20.dp))
-            Column {
-                Text("챌린지 결과", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
-                Spacer(modifier = Modifier.height(10.dp))
-                PreviousResultCard(result = previousResult)
-            }
+            if (fixedDateDraft == null) {
+                Column {
+                    Text("챌린지 결과", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PreviousResultCard(result = previousResult)
+                }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            PochiRecommendationCard(status = previousResult.status, message = recommendationMessage)
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+                PochiRecommendationCard(status = previousResult.status, message = recommendationMessage)
+                Spacer(modifier = Modifier.height(20.dp))
+            }
             Column {
                 Text("챌린지 설정", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
+                if (fixedDateDraft != null) {
+                    Text(
+                        "기간 선택으로 설정 시 등록된 고정 챌린지 정보는 사라져요.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPSub
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
                 ChallengeSettingsSection(
                     periodEnabled = periodEnabled,
@@ -308,7 +331,8 @@ fun NextChallengeRoute(
                         }
                     },
                     startDateText = startDateText,
-                    onStartDateClick = { showDatePicker = true }
+                    onStartDateClick = { showDatePicker = true },
+                    containerColor = if (fixedDateDraft != null) HPSub3 else HPSub4
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
@@ -316,7 +340,7 @@ fun NextChallengeRoute(
                 modifier = modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
+                    .background(if (fixedDateDraft != null) HPSub3 else HPSub4)
                     .padding(horizontal = 15.dp, vertical = 20.dp)
             ) {
                 Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
@@ -398,7 +422,15 @@ fun NextChallengeRoute(
                     dailyTargetAmount = (targetAmount ?: suggestedTargetAmount) / effectivePeriodDays,
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount
                 )
-                viewModel.startNewChallenge(request)
+                if (fixedDateDraft != null && dateFixed) {
+                    viewModel.startFixedDateChallenge(
+                        draft = fixedDateDraft,
+                        startDate = requireNotNull(startDate),
+                        budgetTotal = targetAmount ?: fixedDateDraft.budgetTotal
+                    )
+                } else {
+                    viewModel.startNewChallenge(request)
+                }
             }
         )
     }
@@ -424,14 +456,19 @@ internal fun NextChallengeTopBar(onBack: () -> Unit, modifier: Modifier = Modifi
 }
 
 @Composable
-internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Modifier = Modifier) {
+internal fun NextChallengeHeroCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    backgroundColor: androidx.compose.ui.graphics.Color = HPSub4
+) {
     val heroCircleDiameter = 180.dp
     val heroCircleColor = HPSub2.copy(alpha = 0.10f)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(30.dp))
-            .background(HPSub4)
+            .background(backgroundColor)
             .drawBehind {
                 val diameterPx = heroCircleDiameter.toPx()
                 val radiusPx = diameterPx / 2f
@@ -461,22 +498,21 @@ internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Mo
         ) {
             Text(
                 "NEXT CHALLENGE",
-                style = MaterialTheme.typography.labelLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = HPSub1
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = HPBlack
             )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = HPBlack
             )
         }
@@ -738,6 +774,7 @@ internal fun CustomPeriodDaysInput(
 }
 
 @Composable
+@Suppress("LongParameterList", "LongMethod")
 internal fun ChallengeSettingsSection(
     periodEnabled: Boolean,
     onPeriodEnabledChange: (Boolean) -> Unit,
@@ -751,13 +788,14 @@ internal fun ChallengeSettingsSection(
     onDateFixedChange: (Boolean) -> Unit,
     startDateText: String,
     onStartDateClick: () -> Unit,
+    containerColor: androidx.compose.ui.graphics.Color = HPSub4,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(containerColor)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {

@@ -86,6 +86,7 @@ private val LocalDateSaver: Saver<LocalDate, Long> = Saver(
 )
 
 @Composable
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 fun HomeScreen(
     modifier: Modifier = Modifier,
     initialBottomTab: BottomNavItem = BottomNavItem.HOME,
@@ -118,6 +119,7 @@ fun HomeScreen(
     onNotificationClick: () -> Unit,
     onLoggedOut: () -> Unit,
     onChallengeEndedFinishClick: () -> Unit,
+    onFixedDateChallengeDue: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val referenceToday = remember { LocalDate.now() }
@@ -130,6 +132,7 @@ fun HomeScreen(
             when (event) {
                 HomeEvent.ResumedFromBreak -> onStartChallengeClick()
                 HomeEvent.ChallengeEndAcknowledged -> onChallengeEndedFinishClick()
+                HomeEvent.FixedDateChallengeDue -> onFixedDateChallengeDue()
                 is HomeEvent.ShowMessage ->
                     Toast.makeText(homeContext, event.message, Toast.LENGTH_SHORT).show()
             }
