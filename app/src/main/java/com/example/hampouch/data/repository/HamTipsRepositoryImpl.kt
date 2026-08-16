@@ -202,7 +202,8 @@ class HamTipsRepositoryImpl @Inject constructor(
                         durationDays = recruit.durationDays,
                         capacity = recruit.maxMemberCount,
                         penalty = recruit.penalty,
-                        currentMemberCount = recruit.currentMemberCount
+                        currentMemberCount = recruit.currentMemberCount,
+                        recruit = recruit.recruit
                     )
                 )
             }

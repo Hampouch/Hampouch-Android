@@ -516,7 +516,7 @@ private fun ExpenseInputDetailStep(
             color = HPText
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         Text(
             stringResource(R.string.expenseinput_expense_name_label),
             style = MaterialTheme.typography.bodyMedium,
@@ -529,7 +529,7 @@ private fun ExpenseInputDetailStep(
             placeholder = stringResource(R.string.expensedetail_expense_name_placeholder)
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         Text(
             stringResource(R.string.expensedetail_field_category),
             style = MaterialTheme.typography.bodyMedium,
@@ -560,7 +560,7 @@ private fun ExpenseInputDetailStep(
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         Text(
             stringResource(R.string.expenseinput_reason_label),
             style = MaterialTheme.typography.bodyMedium,
@@ -601,7 +601,7 @@ private fun ExpenseInputDetailStep(
             )
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         Text(
             stringResource(R.string.expenseinput_memo_label),
             style = MaterialTheme.typography.bodyMedium,
@@ -616,7 +616,7 @@ private fun ExpenseInputDetailStep(
             minLines = 5
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
         ExpensePhotoEditSection(
             photoUris = photoUris,
             onPhotosAdded = onPhotosAdded,

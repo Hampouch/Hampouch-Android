@@ -102,6 +102,14 @@ fun HamTipsProfileAvatar(size: androidx.compose.ui.unit.Dp = 36.dp, modifier: Mo
     }
 }
 
+@Preview(showBackground = true, name = "한팁 프로필 아바타")
+@Composable
+private fun HamTipsProfileAvatarPreview() {
+    HampouchTheme {
+        HamTipsProfileAvatar()
+    }
+}
+
 @Composable
 fun HamTipsAuthorTagChip(modifier: Modifier = Modifier) {
     Box(
@@ -116,6 +124,14 @@ fun HamTipsAuthorTagChip(modifier: Modifier = Modifier) {
             color = HPMain,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Preview(showBackground = true, name = "한팁 작성자 태그")
+@Composable
+private fun HamTipsAuthorTagChipPreview() {
+    HampouchTheme {
+        HamTipsAuthorTagChip()
     }
 }
 
@@ -164,6 +180,23 @@ fun HamTipsReplyRow(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "한팁 대댓글 행")
+@Composable
+private fun HamTipsReplyRowPreview() {
+    HampouchTheme {
+        HamTipsReplyRow(
+            reply = TipReply(
+                id = "preview_reply",
+                authorId = "user_altteuli",
+                authorName = "알뜰이",
+                content = "저도 소분 냉동 해봐야겠어요!",
+                timeLabel = "3분전"
+            ),
+            onMoreClick = {}
+        )
     }
 }
 

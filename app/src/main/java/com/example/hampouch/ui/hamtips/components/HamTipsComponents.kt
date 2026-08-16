@@ -62,9 +62,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.domain.model.HamTipsCategoryTab
 import com.example.hampouch.domain.model.HamTipsFabMenuOption
 import com.example.hampouch.domain.model.HamTipsSortOrder
+import com.example.hampouch.domain.model.TipCategory
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.TipCategoryBadge
@@ -76,6 +78,7 @@ import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -94,6 +97,14 @@ fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modi
             modifier = Modifier.weight(1f)
         )
         NotificationBellIcon(onClick = onNotificationClick)
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 메인 상단바")
+@Composable
+private fun HamTipsMainTopBarPreview() {
+    HampouchTheme {
+        HamTipsMainTopBar(onNotificationClick = {})
     }
 }
 
@@ -125,6 +136,14 @@ fun HamTipsDetailTopBar(
             modifier = Modifier.weight(1f)
         )
         NotificationBellIcon(onClick = onNotificationClick)
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 상세 상단바")
+@Composable
+private fun HamTipsDetailTopBarPreview() {
+    HampouchTheme {
+        HamTipsDetailTopBar(title = "냉동 소분 꿀팁", onBackClick = {}, onNotificationClick = {})
     }
 }
 
@@ -179,6 +198,14 @@ fun HamTipsSearchBar(
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 검색창")
+@Composable
+private fun HamTipsSearchBarPreview() {
+    HampouchTheme {
+        HamTipsSearchBar(query = "", onQueryChange = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun HamTipsCategoryTabRow(
     selectedTab: HamTipsCategoryTab,
@@ -216,6 +243,14 @@ fun HamTipsCategoryTabRow(
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 카테고리 탭")
+@Composable
+private fun HamTipsCategoryTabRowPreview() {
+    HampouchTheme {
+        HamTipsCategoryTabRow(selectedTab = HamTipsCategoryTab.ALL, onTabSelected = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun HamTipsSectionHeader(title: String, onViewAllClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -230,6 +265,14 @@ fun HamTipsSectionHeader(title: String, onViewAllClick: () -> Unit, modifier: Mo
             color = HPText,
             modifier = Modifier.clickable(onClick = onViewAllClick)
         )
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 섹션 헤더")
+@Composable
+private fun HamTipsSectionHeaderPreview() {
+    HampouchTheme {
+        HamTipsSectionHeader(title = "인기 꿀팁", onViewAllClick = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -279,6 +322,18 @@ private fun HamTipsStatRow(post: TipPost, modifier: Modifier = Modifier) {
     }
 }
 
+private val PreviewTipPost = TipPost(
+    id = "1",
+    category = TipCategory.DISCOUNT,
+    title = "편의점 1+1 활용 꿀팁",
+    subtitle = "야식 대신 편의점 할인 상품으로 대체하기",
+    authorName = "알뜰이",
+    postedMinutesAgo = 12,
+    viewCount = 128,
+    commentCount = 8,
+    likeCount = 24
+)
+
 @Composable
 fun HamTipsCompactPostCard(post: TipPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -303,6 +358,14 @@ fun HamTipsCompactPostCard(post: TipPost, onClick: () -> Unit, modifier: Modifie
         )
         Spacer(modifier = Modifier.height(12.dp))
         HamTipsStatRow(post = post)
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 카드 - 컴팩트")
+@Composable
+private fun HamTipsCompactPostCardPreview() {
+    HampouchTheme {
+        HamTipsCompactPostCard(post = PreviewTipPost, onClick = {})
     }
 }
 
@@ -366,6 +429,14 @@ fun HamTipsFeedPostCard(post: TipPost, onClick: () -> Unit, modifier: Modifier =
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 카드 - 피드")
+@Composable
+private fun HamTipsFeedPostCardPreview() {
+    HampouchTheme {
+        HamTipsFeedPostCard(post = PreviewTipPost, onClick = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun HamTipsSortDropdown(
     selected: HamTipsSortOrder,
@@ -401,6 +472,19 @@ fun HamTipsSortDropdown(
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 정렬 드롭다운")
+@Composable
+private fun HamTipsSortDropdownPreview() {
+    HampouchTheme {
+        HamTipsSortDropdown(
+            selected = HamTipsSortOrder.LATEST,
+            onSelected = {},
+            initialExpanded = true,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun HamTipsFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
@@ -416,6 +500,14 @@ fun HamTipsFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
             tint = HPWhite,
             modifier = Modifier.size(22.dp)
         )
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 작성 FAB")
+@Composable
+private fun HamTipsFabPreview() {
+    HampouchTheme {
+        HamTipsFab(onClick = {})
     }
 }
 
@@ -473,5 +565,13 @@ fun HamTipsFabMenu(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 작성 FAB 메뉴")
+@Composable
+private fun HamTipsFabMenuPreview() {
+    HampouchTheme {
+        HamTipsFabMenu(visible = true, onOptionClick = {}, onDismiss = {})
     }
 }

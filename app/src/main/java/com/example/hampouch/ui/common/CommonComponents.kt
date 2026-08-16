@@ -41,13 +41,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.theme.Body16Bold
+import com.example.hampouch.ui.theme.HampouchTheme
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
@@ -109,6 +112,14 @@ fun OrDivider(text: String) {
         ) {
             drawLine(HPText, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
         }
+    }
+}
+
+@Preview(showBackground = true, name = "구분선")
+@Composable
+private fun OrDividerPreview() {
+    HampouchTheme {
+        OrDivider(text = "또는")
     }
 }
 
@@ -199,6 +210,23 @@ fun LoginTextField(
     }
 }
 
+@Preview(showBackground = true, name = "로그인 텍스트 필드")
+@Composable
+private fun LoginTextFieldPreview() {
+    HampouchTheme {
+        LoginTextField(
+            label = "이메일",
+            value = "hampouch@example.com",
+            onValueChange = {},
+            placeholder = "이메일을 입력하세요",
+            keyboardOptions = KeyboardOptions.Default,
+            onCheckClick = {},
+            isCheckEnabled = true,
+            isValid = true
+        )
+    }
+}
+
 @Composable
 fun CheckButton(onClick: () -> Unit, enabled: Boolean = true) {
     Button(
@@ -222,10 +250,26 @@ fun CheckButton(onClick: () -> Unit, enabled: Boolean = true) {
     }
 }
 
+@Preview(showBackground = true, name = "확인 버튼")
+@Composable
+private fun CheckButtonPreview() {
+    HampouchTheme {
+        CheckButton(onClick = {})
+    }
+}
+
 @Composable
 fun FieldMessage(text: String) {
     Spacer(modifier = Modifier.size(8.dp))
     Text(text, style = MaterialTheme.typography.bodyMedium, color = HPSub)
+}
+
+@Preview(showBackground = true, name = "필드 메시지")
+@Composable
+private fun FieldMessagePreview() {
+    HampouchTheme {
+        FieldMessage(text = "이미 사용 중인 이메일이에요.")
+    }
 }
 
 @Composable
@@ -237,6 +281,14 @@ fun FieldLinkMessage(text: String, onClick: () -> Unit) {
         color = HPSub,
         modifier = Modifier.clickable(onClick = onClick)
     )
+}
+
+@Preview(showBackground = true, name = "필드 링크 메시지")
+@Composable
+private fun FieldLinkMessagePreview() {
+    HampouchTheme {
+        FieldLinkMessage(text = "인증 코드 재전송", onClick = {})
+    }
 }
 
 @Composable
@@ -257,6 +309,14 @@ fun FooterLinkRow(
         ) {
             Text(linkText, style = Body16Bold, color = HPSub)
         }
+    }
+}
+
+@Preview(showBackground = true, name = "하단 링크 행")
+@Composable
+private fun FooterLinkRowPreview() {
+    HampouchTheme {
+        FooterLinkRow(text = "계정이 없으신가요?", linkText = "회원가입", onClick = {})
     }
 }
 
@@ -287,10 +347,18 @@ fun ReasonTagAndAmountColumn(
     }
 }
 
+@Preview(showBackground = true, name = "이유 태그 · 금액")
 @Composable
-private fun rememberHasUnreadNotifications(
-    viewModel: NotificationViewModel = hiltViewModel()
-): Boolean {
+private fun ReasonTagAndAmountColumnPreview() {
+    HampouchTheme {
+        ReasonTagAndAmountColumn(reasonTag = "스트레스", amountText = "4,500원")
+    }
+}
+
+@Composable
+private fun rememberHasUnreadNotifications(): Boolean {
+    if (LocalInspectionMode.current) return false
+    val viewModel: NotificationViewModel = hiltViewModel()
     val items by viewModel.items.collectAsStateWithLifecycle()
     return items.any { !it.isRead }
 }
@@ -318,5 +386,13 @@ fun NotificationBellIcon(
                     .background(HPSub, CircleShape)
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "알림 벨 아이콘")
+@Composable
+private fun NotificationBellIconPreview() {
+    HampouchTheme {
+        NotificationBellIcon(onClick = {}, hasUnread = true)
     }
 }

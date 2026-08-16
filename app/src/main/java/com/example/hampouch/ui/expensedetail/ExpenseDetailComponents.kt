@@ -61,10 +61,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.ui.home.HomeCategoryCatalog
@@ -75,6 +77,8 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.LocalDate
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
 
@@ -147,6 +151,14 @@ fun ExpenseDetailTopBar(
     )
 }
 
+@Preview(showBackground = true, name = "지출 상세 상단바")
+@Composable
+private fun ExpenseDetailTopBarPreview() {
+    HampouchTheme {
+        ExpenseDetailTopBar(onBackClick = {})
+    }
+}
+
 @Composable
 fun ExpenseDeleteIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
@@ -155,6 +167,14 @@ fun ExpenseDeleteIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) 
             contentDescription = stringResource(R.string.cd_delete_expense),
             tint = HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 삭제 버튼")
+@Composable
+private fun ExpenseDeleteIconButtonPreview() {
+    HampouchTheme {
+        ExpenseDeleteIconButton(onClick = {})
     }
 }
 
@@ -181,6 +201,14 @@ fun CategoryIconCircle(
     }
 }
 
+@Preview(showBackground = true, name = "카테고리 아이콘 원")
+@Composable
+private fun CategoryIconCirclePreview() {
+    HampouchTheme {
+        CategoryIconCircle(categoryId = "cafe", customCategoryName = null)
+    }
+}
+
 @Composable
 fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
     Box(
@@ -193,6 +221,14 @@ fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Preview(showBackground = true, name = "사유 태그 알약")
+@Composable
+private fun ReasonTagPillPreview() {
+    HampouchTheme {
+        ReasonTagPill(label = "스트레스")
+    }
+}
+
 @Composable
 fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
@@ -202,6 +238,14 @@ fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
             .height(1.dp)
     ) {
         drawLine(color, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
+    }
+}
+
+@Preview(showBackground = true, name = "점선 구분선")
+@Composable
+private fun DashedDividerPreview() {
+    HampouchTheme {
+        DashedDivider(modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -223,6 +267,14 @@ fun ExpenseInfoRow(label: String, value: String, modifier: Modifier = Modifier) 
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 정보 행")
+@Composable
+private fun ExpenseInfoRowPreview() {
+    HampouchTheme {
+        ExpenseInfoRow(label = "날짜", value = "2026년 8월 16일")
     }
 }
 
@@ -253,6 +305,14 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "지출 사진 보기 행")
+@Composable
+private fun ExpensePhotoViewRowPreview() {
+    HampouchTheme {
+        ExpensePhotoViewRow(photoUris = listOf(MockPhotoUri, MockPhotoUri))
     }
 }
 
@@ -323,6 +383,20 @@ fun ChoiceChip(
     }
 }
 
+@Preview(showBackground = true, name = "선택 칩")
+@Composable
+private fun ChoiceChipPreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ChoiceChip(label = "스트레스", selected = true, onClick = {})
+            ChoiceChip(label = "보상", selected = false, onClick = {})
+        }
+    }
+}
+
 @Composable
 fun ExpenseTextField(
     value: String,
@@ -374,6 +448,19 @@ fun ExpenseTextField(
     }
 }
 
+@Preview(showBackground = true, name = "지출 텍스트 입력")
+@Composable
+private fun ExpenseTextFieldPreview() {
+    HampouchTheme {
+        ExpenseTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = "메모를 입력하세요",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun AmountTextField(
     amount: Int,
@@ -390,6 +477,14 @@ fun AmountTextField(
         modifier = modifier,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
+}
+
+@Preview(showBackground = true, name = "금액 입력")
+@Composable
+private fun AmountTextFieldPreview() {
+    HampouchTheme {
+        AmountTextField(amount = 4500, onAmountChange = {}, modifier = Modifier.padding(16.dp))
+    }
 }
 
 @Composable
@@ -410,6 +505,16 @@ fun ExpenseFormSection(
         }
         Spacer(modifier = Modifier.height(10.dp))
         content()
+    }
+}
+
+@Preview(showBackground = true, name = "지출 폼 섹션")
+@Composable
+private fun ExpenseFormSectionPreview() {
+    HampouchTheme {
+        ExpenseFormSection(label = "카테고리", modifier = Modifier.padding(16.dp)) {
+            Text("카페", style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        }
     }
 }
 
@@ -518,6 +623,20 @@ fun ExpensePhotoEditSection(
                 AddPhotoTile(onClick = { addLauncher() })
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "지출 사진 편집 섹션")
+@Composable
+private fun ExpensePhotoEditSectionPreview() {
+    HampouchTheme {
+        ExpensePhotoEditSection(
+            photoUris = listOf(MockPhotoUri, MockPhotoUri),
+            onPhotosAdded = {},
+            onPhotosRemoved = {},
+            onPhotoReplaced = { _, _ -> },
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -690,6 +809,24 @@ fun ExpenseSummaryCard(
     }
 }
 
+@Preview(showBackground = true, name = "지출 요약 카드")
+@Composable
+private fun ExpenseSummaryCardPreview() {
+    HampouchTheme {
+        ExpenseSummaryCard(
+            record = ExpenseRecord(
+                id = "preview1",
+                date = LocalDate.of(2026, 8, 16),
+                amount = 4500,
+                categoryId = "cafe",
+                expenseName = "스타벅스",
+                reasonId = "stress"
+            ),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseDateField(
@@ -715,5 +852,13 @@ fun ExpenseDateField(
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+    }
+}
+
+@Preview(showBackground = true, name = "지출 날짜 필드")
+@Composable
+private fun ExpenseDateFieldPreview() {
+    HampouchTheme {
+        ExpenseDateField(label = "2026년 8월 16일", onClick = {}, modifier = Modifier.padding(16.dp))
     }
 }

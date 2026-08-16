@@ -12,5 +12,6 @@ data class HomeUiState(
     val challenge: HomeChallenge?,
     val expenses: List<ExpenseEntry> = emptyList(),
     val miniChallenges: List<MiniChallengeEntry> = emptyList(),
-    val warnings: List<HomeWarning> = emptyList()
+    val warnings: List<HomeWarning> = emptyList(),
+    val pastChallengeEnded: Boolean = false
 )

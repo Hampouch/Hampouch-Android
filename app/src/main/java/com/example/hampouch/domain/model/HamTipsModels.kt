@@ -52,9 +52,10 @@ data class BattleRecruitInfo(
     val capacity: Int,
     val penalty: String,
     val participantIds: List<String> = emptyList(),
-    val currentMemberCount: Int
+    val currentMemberCount: Int,
+    val recruit: Boolean = true
 ) {
-    val isFull: Boolean get() = currentMemberCount >= capacity
+    val isFull: Boolean get() = !recruit || currentMemberCount >= capacity
 }
 
 data class TipReply(

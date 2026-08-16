@@ -139,7 +139,7 @@ fun ExpenseCalendarRoute(
 
     val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
     val summaryByDate = activeSummary?.dailyBreakdown?.associate { it.date to it.amount }.orEmpty()
-    val dayRecords = records.values.filter { it.date == selectedDate }.sortedBy { it.id }
+    val dayRecords = records.values.filter { it.date == selectedDate }.asReversed()
     val inputEnabled = expenseInputEnabled(
         effectiveChallengePeriod,
         referenceToday,

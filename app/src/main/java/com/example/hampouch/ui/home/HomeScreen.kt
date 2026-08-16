@@ -28,10 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.R
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.ExpenseRecord
@@ -57,6 +59,7 @@ import com.example.hampouch.ui.home.components.DateSelectorRow
 import com.example.hampouch.ui.home.components.HomeHeader
 import com.example.hampouch.ui.home.components.MiniChallengeSection
 import com.example.hampouch.ui.home.components.NoActiveChallengeSection
+import com.example.hampouch.ui.home.components.ReturnToTodayButton
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
 import com.example.hampouch.ui.home.components.WarningBannerList
@@ -166,7 +169,7 @@ fun HomeScreen(
     val baseUiState = remember(selectedDate, challengeState, currentUser) {
         mockStateForDate(challengeState, currentUser.name, selectedDate, referenceToday)
     }
-    val storeExpenses = recordsForDate(selectedDate).map { record ->
+    val storeExpenses = recordsForDate(selectedDate).asReversed().map { record ->
         ExpenseEntry(
             id = record.id,
             categoryId = record.categoryId,
@@ -178,7 +181,9 @@ fun HomeScreen(
     }
     val uiState = baseUiState.copy(expenses = storeExpenses)
     val resolvedChallenge = challengeState.challengeFor(selectedDate)
-    val liveChallenge = uiState.challenge?.let { challenge ->
+    val isChallengeOverByToday = resolvedChallenge != null &&
+        referenceToday.isAfter(resolvedChallenge.effectivePeriodEnd)
+    val liveChallenge = if (isChallengeOverByToday) null else uiState.challenge?.let { challenge ->
         val liveDailyLimit = resolvedChallenge?.dailyLimitOn(selectedDate) ?: challenge.dailyLimit
         val todaySpent = uiState.expenses.sumOf { it.amount }
         val progress = resolvedChallenge?.let { rc ->
@@ -217,7 +222,8 @@ fun HomeScreen(
     val displayedUiState = uiState.copy(
         challenge = liveChallenge,
         miniChallenges = miniChallengeState.challengesFor(selectedDate),
-        warnings = warnings
+        warnings = warnings,
+        pastChallengeEnded = isChallengeOverByToday
     )
 
     Scaffold(
@@ -240,6 +246,7 @@ fun HomeScreen(
                     uiState = displayedUiState,
                     referenceToday = referenceToday,
                     onDateSelected = { date -> if (!date.isAfter(referenceToday)) selectedDate = date },
+                    onReturnToTodayClick = { selectedDate = referenceToday },
                     onToggleMiniChallenge = { id ->
                         miniChallengeState.challengesFor(selectedDate).find { it.id == id }?.let { target ->
                             miniChallengeViewModel.setChecked(selectedDate, id, !target.isChecked)
@@ -374,6 +381,7 @@ private fun HomeContent(
     uiState: HomeUiState,
     referenceToday: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
+    onReturnToTodayClick: () -> Unit,
     onToggleMiniChallenge: (String) -> Unit,
     onViewAllMiniChallengesClick: () -> Unit,
     onReminderClick: () -> Unit,
@@ -403,30 +411,51 @@ private fun HomeContent(
             selectedDate = uiState.selectedDate,
             onDateSelected = onDateSelected
         )
-        Spacer(modifier = Modifier.height(15.dp))
+        val isToday = uiState.selectedDate == referenceToday
+        if (!isToday) {
+            Spacer(modifier = Modifier.height(15.dp))
+            ReturnToTodayButton(onClick = onReturnToTodayClick)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
 
         val challenge = uiState.challenge
-        if (challenge == null) {
-            NoActiveChallengeSection(onStartChallengeClick = onStartChallengeClick)
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
-                    .clickable(onClick = onChallengeSummaryClick)
-                    .padding(horizontal = 15.dp, vertical = 13.dp)
-            ) {
-                ChallengeBanner(challenge = challenge)
-                Spacer(modifier = Modifier.height(10.dp))
-                CharacterGaugeSection(challenge = challenge)
-                Spacer(modifier = Modifier.height(12.dp))
-                SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
-            }
+        when {
+            challenge == null && uiState.pastChallengeEnded -> NoActiveChallengeSection(
+                title = stringResource(R.string.home_ended_challenge_title),
+                subtitle = stringResource(R.string.home_ended_challenge_subtitle),
+                ctaText = stringResource(R.string.home_ended_challenge_cta),
+                onCtaClick = onChallengeSummaryClick
+            )
+            challenge == null && !isToday -> NoActiveChallengeSection(
+                title = stringResource(R.string.home_no_past_challenge_title),
+                subtitle = stringResource(R.string.home_no_challenge_subtitle)
+            )
+            challenge == null -> NoActiveChallengeSection(
+                title = stringResource(R.string.home_no_challenge_title),
+                subtitle = stringResource(R.string.home_no_challenge_subtitle),
+                ctaText = stringResource(R.string.home_no_challenge_cta),
+                onCtaClick = onStartChallengeClick
+            )
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(HPSub4)
+                        .clickable(onClick = onChallengeSummaryClick)
+                        .padding(horizontal = 15.dp, vertical = 13.dp)
+                ) {
+                    ChallengeBanner(challenge = challenge)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    CharacterGaugeSection(challenge = challenge)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
+                }
 
-            if (uiState.warnings.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                WarningBannerList(warnings = uiState.warnings, onReminderClick = onReminderClick)
+                if (uiState.warnings.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    WarningBannerList(warnings = uiState.warnings, onReminderClick = onReminderClick)
+                }
             }
         }
 
@@ -459,6 +488,7 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
             uiState = state,
             referenceToday = referenceToday,
             onDateSelected = {},
+            onReturnToTodayClick = {},
             onToggleMiniChallenge = {},
             onReminderClick = {},
             onStartChallengeClick = {},

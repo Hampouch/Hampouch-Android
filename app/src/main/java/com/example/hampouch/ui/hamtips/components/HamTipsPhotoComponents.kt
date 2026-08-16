@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -60,6 +61,7 @@ import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 
 const val HamTipsMaxPhotoCount = 5
 
@@ -181,6 +183,19 @@ fun PhotoAttachGrid(
     }
 }
 
+@Preview(showBackground = true, name = "사진 첨부 그리드")
+@Composable
+private fun PhotoAttachGridPreview() {
+    HampouchTheme {
+        PhotoAttachGrid(
+            photoUris = listOf("content://sample/photo1.jpg", "content://sample/photo2.jpg"),
+            onPhotosAdded = {},
+            onPhotoRemoved = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun PhotoFullScreenViewer(uriString: String, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -201,6 +216,14 @@ fun PhotoFullScreenViewer(uriString: String, onDismiss: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "사진 전체화면 보기")
+@Composable
+private fun PhotoFullScreenViewerPreview() {
+    HampouchTheme {
+        PhotoFullScreenViewer(uriString = "content://sample/photo1.jpg", onDismiss = {})
     }
 }
 
@@ -260,6 +283,17 @@ fun HamTipsPhotoCarousel(photoUris: List<String>, modifier: Modifier = Modifier)
     }
 }
 
+@Preview(showBackground = true, name = "한팁 사진 캐러셀")
+@Composable
+private fun HamTipsPhotoCarouselPreview() {
+    HampouchTheme {
+        HamTipsPhotoCarousel(
+            photoUris = listOf("content://sample/photo1.jpg", "content://sample/photo2.jpg"),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun HamTipsFeedThumbnail(uriString: String?, modifier: Modifier = Modifier) {
     Box(
@@ -276,5 +310,16 @@ fun HamTipsFeedThumbnail(uriString: String?, modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "한팁 피드 썸네일")
+@Composable
+private fun HamTipsFeedThumbnailPreview() {
+    HampouchTheme {
+        HamTipsFeedThumbnail(
+            uriString = "content://sample/photo1.jpg",
+            modifier = Modifier.size(96.dp)
+        )
     }
 }

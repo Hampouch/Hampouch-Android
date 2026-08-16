@@ -25,16 +25,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.NotificationCategory
 import com.example.hampouch.domain.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationSection
+import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPTipDiscountText
 import com.example.hampouch.ui.theme.HPTipEtcText
+import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.LocalDate
 
 @Composable
 fun NotificationTopBar(
@@ -74,6 +79,14 @@ fun NotificationTopBar(
                 color = HPMain
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "알림 상단바")
+@Composable
+private fun NotificationTopBarPreview() {
+    HampouchTheme {
+        NotificationTopBar(onBackClick = {}, onMarkAllReadClick = {})
     }
 }
 
@@ -126,6 +139,28 @@ fun NotificationListItem(
             text = item.message,
             style = MaterialTheme.typography.bodySmall,
             color = HPText
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "알림 리스트 아이템")
+@Composable
+private fun NotificationListItemPreview() {
+    HampouchTheme {
+        NotificationListItem(
+            item = NotificationItem(
+                id = "n1",
+                category = NotificationCategory.CHALLENGE,
+                section = NotificationSection.TODAY,
+                title = "오늘의 지출 한도를 초과했어요",
+                message = "식비 챌린지 예산을 확인해보세요",
+                timeLabel = "5분 전",
+                isRead = false,
+                createdDate = LocalDate.now(),
+                target = NotificationTarget.Home
+            ),
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

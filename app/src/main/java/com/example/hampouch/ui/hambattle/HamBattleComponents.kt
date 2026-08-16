@@ -295,6 +295,26 @@ private fun DisqualifiedParticipantRow(participant: HamBattleParticipantSpending
 
 @Preview(showBackground = true)
 @Composable
+private fun DisqualifiedParticipantRowPreview() {
+    HampouchTheme {
+        Box(
+            modifier = Modifier
+                .background(HPGray5)
+                .padding(16.dp)
+        ) {
+            DisqualifiedParticipantRow(
+                participant = HamBattleParticipantSpending(
+                    name = "친구4",
+                    amount = 95000,
+                    status = HamBattleParticipantStatus.DISQUALIFIED
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
 fun SectionLabelPreview() {
     HampouchTheme {
         SectionLabel(text = "섹션 라벨")

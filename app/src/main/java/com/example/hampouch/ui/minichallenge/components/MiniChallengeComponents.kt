@@ -60,6 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +68,7 @@ import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
@@ -79,6 +81,7 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
@@ -118,6 +121,14 @@ fun MiniChallengeTopBar(
     }
 }
 
+@Preview(showBackground = true, name = "미니 챌린지 상단바")
+@Composable
+private fun MiniChallengeTopBarPreview() {
+    HampouchTheme {
+        MiniChallengeTopBar(onBackClick = {}, onNotificationClick = {})
+    }
+}
+
 private val dateLabelFormatter = DateTimeFormatter.ofPattern("MM.dd")
 
 @Composable
@@ -140,6 +151,21 @@ fun MiniChallengeDateRow(
                 onClick = { onDateSelected(date) }
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "미니 챌린지 날짜 선택")
+@Composable
+private fun MiniChallengeDateRowPreview() {
+    HampouchTheme {
+        val today = remember { LocalDate.now() }
+        MiniChallengeDateRow(
+            dates = listOf(today.minusDays(1), today, today.plusDays(1)),
+            selectedDate = today,
+            today = today,
+            onDateSelected = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -222,6 +248,14 @@ fun MiniChallengeSummaryCard(
         Spacer(modifier = Modifier.width(12.dp))
         val progress = if (totalCount > 0) completedCount / totalCount.toFloat() else 0f
         StreakRing(streakDays = streakDays, progress = progress)
+    }
+}
+
+@Preview(showBackground = true, name = "미니 챌린지 요약 카드")
+@Composable
+private fun MiniChallengeSummaryCardPreview() {
+    HampouchTheme {
+        MiniChallengeSummaryCard(completedCount = 3, totalCount = 5, streakDays = 4, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -367,6 +401,25 @@ fun MiniChallengeItemRow(
     }
 }
 
+@Preview(showBackground = true, name = "미니 챌린지 항목 행")
+@Composable
+private fun MiniChallengeItemRowPreview() {
+    HampouchTheme {
+        MiniChallengeItemRow(
+            item = MiniChallengeEntry(
+                id = "m1",
+                name = "커피 사먹지 않기",
+                duration = miniChallengeDuration(7),
+                achievedDays = 3,
+                isChecked = true
+            ),
+            onToggle = {},
+            onDelete = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 private fun MiniChallengeCheckbox(checked: Boolean, modifier: Modifier = Modifier) {
     Box(
@@ -397,6 +450,21 @@ fun RecommendedMiniChallengeRow(
         items(items = items, key = { it.id }) { item ->
             RecommendedMiniChallengeCard(item = item, onAddClick = { onAddClick(item.id) })
         }
+    }
+}
+
+@Preview(showBackground = true, name = "추천 미니 챌린지 목록")
+@Composable
+private fun RecommendedMiniChallengeRowPreview() {
+    HampouchTheme {
+        RecommendedMiniChallengeRow(
+            items = listOf(
+                RecommendedMiniChallenge(id = "r1", duration = miniChallengeDuration(7), name = "배달 음식 참기"),
+                RecommendedMiniChallenge(id = "r2", duration = miniChallengeDuration(1), name = "커피 사먹지 않기")
+            ),
+            onAddClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -468,6 +536,14 @@ fun MiniChallengeCreateTopBar(
     )
 }
 
+@Preview(showBackground = true, name = "미니 챌린지 생성 상단바")
+@Composable
+private fun MiniChallengeCreateTopBarPreview() {
+    HampouchTheme {
+        MiniChallengeCreateTopBar(onBackClick = {})
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiniChallengeNameField(
@@ -506,6 +582,14 @@ fun MiniChallengeNameField(
     )
 }
 
+@Preview(showBackground = true, name = "미니 챌린지 이름 입력")
+@Composable
+private fun MiniChallengeNameFieldPreview() {
+    HampouchTheme {
+        MiniChallengeNameField(value = "", onValueChange = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun MiniChallengeDurationRow(
     options: List<String>,
@@ -524,6 +608,19 @@ fun MiniChallengeDurationRow(
                 onClick = { onSelect(index) }
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "미니 챌린지 기간 선택")
+@Composable
+private fun MiniChallengeDurationRowPreview() {
+    HampouchTheme {
+        MiniChallengeDurationRow(
+            options = listOf("오늘만", "3일", "7일", "14일"),
+            selectedIndex = 2,
+            onSelect = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -574,6 +671,19 @@ fun MiniChallengeFilterTabRow(
                 onClick = { onSelect(index) }
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "미니 챌린지 필터 탭")
+@Composable
+private fun MiniChallengeFilterTabRowPreview() {
+    HampouchTheme {
+        MiniChallengeFilterTabRow(
+            options = listOf("전체", "진행중", "완료"),
+            selectedIndex = 0,
+            onSelect = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -632,6 +742,18 @@ fun RecommendedMiniChallengeListCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onAddClick)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "추천 미니 챌린지 카드 - 리스트형")
+@Composable
+private fun RecommendedMiniChallengeListCardPreview() {
+    HampouchTheme {
+        RecommendedMiniChallengeListCard(
+            item = RecommendedMiniChallenge(id = "r1", duration = miniChallengeDuration(7), name = "배달 음식 참기"),
+            onAddClick = {},
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

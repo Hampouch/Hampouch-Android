@@ -69,6 +69,8 @@ import com.example.hampouch.ui.theme.HPTipRecordText
 import com.example.hampouch.ui.theme.HPTipRecruitBg
 import com.example.hampouch.ui.theme.HPTipRecruitText
 import com.example.hampouch.ui.theme.HPWhite
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
@@ -105,6 +107,14 @@ fun StatBox(label: String, value: String, highlighted: Boolean, modifier: Modifi
             style = Body16Bold,
             color = if (highlighted) HPWhite else HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true, name = "통계 박스")
+@Composable
+private fun StatBoxPreview() {
+    HampouchTheme {
+        StatBox(label = "성공일수", value = "18일", highlighted = true)
     }
 }
 
@@ -149,6 +159,14 @@ fun GoalSummaryCard(
     }
 }
 
+@Preview(showBackground = true, name = "목표 요약 카드")
+@Composable
+private fun GoalSummaryCardPreview() {
+    HampouchTheme {
+        GoalSummaryCard(label = "이번 챌린지 절약액", amount = 84_000, goalAmount = 300_000, actualAmount = 216_000)
+    }
+}
+
 @Composable
 fun GoalAmountAdjustmentLinkButton(
     onClick: () -> Unit,
@@ -181,6 +199,14 @@ fun GoalAmountAdjustmentLinkButton(
     }
 }
 
+@Preview(showBackground = true, name = "목표 금액 수정 버튼")
+@Composable
+private fun GoalAmountAdjustmentLinkButtonPreview() {
+    HampouchTheme {
+        GoalAmountAdjustmentLinkButton(onClick = {})
+    }
+}
+
 @Composable
 fun ExpenseAnalysisLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
@@ -210,6 +236,14 @@ fun ExpenseAnalysisLinkButton(onClick: () -> Unit, modifier: Modifier = Modifier
             modifier = Modifier.weight(1f)
         )
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = HPText)
+    }
+}
+
+@Preview(showBackground = true, name = "지출 분석 바로가기 버튼")
+@Composable
+private fun ExpenseAnalysisLinkButtonPreview() {
+    HampouchTheme {
+        ExpenseAnalysisLinkButton(onClick = {})
     }
 }
 
@@ -265,6 +299,21 @@ fun SpendingEmotionAnalysis(stats: List<EmotionStat>, modifier: Modifier = Modif
                 EmotionChip(stat = stat, modifier = Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "소비 감정 분석")
+@Composable
+private fun SpendingEmotionAnalysisPreview() {
+    HampouchTheme {
+        SpendingEmotionAnalysis(
+            stats = listOf(
+                EmotionStat(emotion = SpendingEmotion.STRESS, percent = 40, amount = 40_000),
+                EmotionStat(emotion = SpendingEmotion.CRAVING, percent = 30, amount = 30_000),
+                EmotionStat(emotion = SpendingEmotion.REWARD, percent = 20, amount = 20_000),
+                EmotionStat(emotion = SpendingEmotion.ETC, percent = 10, amount = 10_000)
+            )
+        )
     }
 }
 
@@ -405,6 +454,25 @@ fun DailyRecordCalendar(
     }
 }
 
+@Preview(showBackground = true, name = "일별 기록 캘린더")
+@Composable
+private fun DailyRecordCalendarPreview() {
+    HampouchTheme {
+        val periodStart = LocalDate.of(2026, 5, 1)
+        val periodEnd = LocalDate.of(2026, 5, 14)
+        DailyRecordCalendar(
+            periodStart = periodStart,
+            periodEnd = periodEnd,
+            records = mapOf(
+                periodStart to DailyRecordStatus.SUCCESS,
+                periodStart.plusDays(1) to DailyRecordStatus.SUCCESS,
+                periodStart.plusDays(2) to DailyRecordStatus.FAIL,
+                periodStart.plusDays(3) to DailyRecordStatus.SUCCESS
+            )
+        )
+    }
+}
+
 private fun generateCalendarGrid(yearMonth: YearMonth): List<LocalDate> {
     val firstDayOfMonth = yearMonth.atDay(1)
     val leadingDays = firstDayOfMonth.dayOfWeek.value % 7
@@ -520,5 +588,13 @@ fun ChallengeResultBottomActions(
                 color = HPText
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "챌린지 결과 하단 액션")
+@Composable
+private fun ChallengeResultBottomActionsPreview() {
+    HampouchTheme {
+        ChallengeResultBottomActions(onShareClick = {}, onStartNewChallengeClick = {}, onTakeABreakClick = {})
     }
 }

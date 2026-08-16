@@ -40,6 +40,7 @@ private const val CHALLENGE_TOTAL_DAYS = 14
 private const val CHALLENGE_DAILY_LIMIT = 20_000
 private const val CHALLENGE_SAVED_AMOUNT = 21_400
 private const val CHALLENGE_STREAK_DAYS = 4
+private const val HTTP_NOT_FOUND = 404
 
 private const val PREVIOUS_CHALLENGE_TOTAL_DAYS = 7
 private const val PREVIOUS_CHALLENGE_DAILY_LIMIT = 20_000
@@ -271,6 +272,12 @@ class ChallengeRepositoryImpl @Inject constructor(
             val response = apiService.getChallengeCalendar(challengeId, month.year, month.monthValue)
             days.putAll(response.body()?.data.toDailyRecords())
         }
+        /** 기록이 없는 날은 0원 지출로 간주해 달력에서도 성공한 날로 계산한다(스펙 명시 규칙). */
+        var date = periodStart
+        while (!date.isAfter(periodEnd)) {
+            days.putIfAbsent(date, DailyRecordStatus.SUCCESS)
+            date = date.plusDays(1)
+        }
         return days
     }
 
@@ -297,7 +304,8 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     private fun ChallengeEmotionBreakdownDto.toDomain(): EmotionStat = EmotionStat(
         emotion = runCatching { SpendingEmotion.valueOf(emotion) }.getOrDefault(SpendingEmotion.ETC),
-        percent = ratio
+        percent = ratio,
+        amount = amount
     )
 
     override suspend fun updateFocusCategories(categories: List<String>): Result<List<String>> {
@@ -479,8 +487,19 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     private suspend fun renewFixedDateChallenge(): Result<Boolean> = runCatchingNetwork(TAG) {
         val draftResponse = apiService.getFixedDateChallengeDraft()
+        if (!draftResponse.isSuccessful) {
+            /** 날짜 고정 설정이 없거나 기간 선택으로 전환된 경우(404)만 "갱신할 게 없음"으로 처리한다. */
+            return@runCatchingNetwork if (draftResponse.code() == HTTP_NOT_FOUND) {
+                Result.success(false)
+            } else {
+                Result.failure(draftResponse.toApiException("다음 챌린지 초안을 불러오지 못했습니다."))
+            }
+        }
         val draft = draftResponse.body()?.data
-        if (!draftResponse.isSuccessful || draft == null || draft.state != "DUE") {
+            ?: return@runCatchingNetwork Result.failure(
+                ApiException(code = "EMPTY_RESPONSE", message = "다음 챌린지 초안을 불러오지 못했습니다.")
+            )
+        if (draft.state != "DUE") {
             return@runCatchingNetwork Result.success(false)
         }
         val startResponse = apiService.startFixedDateChallenge(
