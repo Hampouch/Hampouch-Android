@@ -43,8 +43,8 @@ private const val EXPIRY_DAYS = 7L
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = MINUTES_PER_HOUR * 24
 
-private const val SCREEN_CHALLENGE_DETAIL = "CHALLENGE_DETAIL"
-private const val SCREEN_CHALLENGE_RESULT = "CHALLENGE_RESULT"
+internal const val SCREEN_CHALLENGE_DETAIL = "CHALLENGE_DETAIL"
+internal const val SCREEN_CHALLENGE_RESULT = "CHALLENGE_RESULT"
 
 private suspend fun <T> Task<T>.await(): T =
     suspendCancellableCoroutine { continuation ->
@@ -74,7 +74,7 @@ private fun resolveTimeLabel(createdAt: LocalDateTime, now: LocalDateTime): Stri
     }
 }
 
-private fun NotificationTargetDto?.toDomain(): NotificationTarget {
+internal fun NotificationTargetDto?.toDomain(): NotificationTarget {
     val challengeId = this?.challengeId?.toString() ?: return NotificationTarget.Home
     return when (this.screen) {
         SCREEN_CHALLENGE_DETAIL, SCREEN_CHALLENGE_RESULT -> NotificationTarget.ChallengeSummary(challengeId)

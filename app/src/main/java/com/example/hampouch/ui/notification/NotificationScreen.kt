@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.example.hampouch.BuildConfig
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.NotificationSection
@@ -73,8 +74,13 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        TestNotificationTriggerButton(notifications = notifications, modifier = Modifier.padding(horizontal = 20.dp))
-        Spacer(modifier = Modifier.height(12.dp))
+        if (BuildConfig.DEBUG) {
+            TestNotificationTriggerButton(
+                notifications = notifications,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         if (notifications.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
