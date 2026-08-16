@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
@@ -94,7 +95,7 @@ private fun BottomNavSlot(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (selected) HPMain else HPText
+    val tint = if (selected) HPBlack else HPText
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -102,7 +103,7 @@ private fun BottomNavSlot(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = item.icon,
+            imageVector = if (selected) item.icon else item.outlineIcon,
             contentDescription = stringResource(item.labelResId),
             tint = tint,
             modifier = Modifier.size(24.dp)

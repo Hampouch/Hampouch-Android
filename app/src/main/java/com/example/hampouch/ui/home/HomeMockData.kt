@@ -12,14 +12,16 @@ import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ActiveChallenge
-import com.example.hampouch.data.model.ExpenseEntry
-import com.example.hampouch.data.model.HomeChallenge
-import com.example.hampouch.data.model.HomeUiState
-import com.example.hampouch.data.model.HomeWarning
-import com.example.hampouch.data.model.MiniChallengeEntry
-import com.example.hampouch.data.model.WarningVariant
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ExpenseEntry
+import com.example.hampouch.domain.model.HomeChallenge
+import com.example.hampouch.ui.home.HomeUiState
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.HomeWarning
+import com.example.hampouch.domain.model.HomeWarningType
+import com.example.hampouch.domain.model.MiniChallengeEntry
+import com.example.hampouch.domain.model.MiniChallengeDuration
+import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
@@ -33,21 +35,22 @@ object HomeCategoryCatalog {
         val id: String,
         val labelResId: Int,
         val icon: ImageVector,
-        val accentColor: Color
+        val accentColor: Color,
+        val chipIconResId: Int
     )
 
     val defaultIcon: ImageVector = Icons.Filled.Restaurant
     val defaultColor: Color = HPText
 
     val categories = listOf(
-        Category("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5)),
-        Category("dining_out", R.string.category_dining_out, Icons.Filled.RamenDining, HPSub2),
-        Category("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD)),
-        Category("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain),
-        Category("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30)),
-        Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A)),
-        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E)),
-        Category("etc", R.string.category_etc, Icons.Filled.Restaurant, HPText)
+        Category("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5), R.drawable.icon_delivery),
+        Category("dining_out", R.string.category_dining_out, Icons.Filled.RamenDining, HPSub2, R.drawable.icon_eatout),
+        Category("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD), R.drawable.icon_conv),
+        Category("cafe", R.string.category_cafe, Icons.Filled.LocalCafe, HPMain, R.drawable.icon_cafe),
+        Category("snack", R.string.category_snack, Icons.Filled.Cake, Color(0xFFED6C30), R.drawable.icon_snack),
+        Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A), R.drawable.icon_shopping),
+        Category("drink", R.string.category_drink, Icons.Filled.SportsBar, Color(0xFFF2A74E), R.drawable.icon_beer),
+        Category("etc", R.string.category_etc, Icons.Filled.Restaurant, HPText, R.drawable.icon_etc)
     )
 
     fun byId(id: String?): Category? = categories.firstOrNull { it.id == id }
@@ -76,8 +79,9 @@ private fun buildChallenge(
 
 object HomeMockData {
 
-    fun freshDayState(userName: String, date: LocalDate): HomeUiState {
-        val challenge = ChallengeRepository.challengeFor(date)
+
+    fun freshDayState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState {
+        val challenge = challengeState.challengeFor(date)
         return HomeUiState(
             userName = userName,
             selectedDate = date,
@@ -88,10 +92,10 @@ object HomeMockData {
         )
     }
 
-    fun lowBalanceWithWarningState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun lowBalanceWithWarningState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
@@ -106,18 +110,14 @@ object HomeMockData {
         ),
         miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
         warnings = listOf(
-            HomeWarning(
-                id = "w1",
-                variant = WarningVariant.SUGGESTION,
-                title = "목표 금액이 너무 힘든가요?",
-                message = "3일 연속 한도 초과 - 금액을 조정해보세요"
-            ),
+            HomeWarning(id = "w1", type = HomeWarningType.LOW_DAILY_BUDGET),
             HomeWarning(
                 id = "w2",
-                variant = WarningVariant.ALERT,
-                title = "배달 주의 구간이에요 !",
-                message = "현재 배달비만 18,000원 소비했어요"
-            )
+                type = HomeWarningType.CATEGORY_OVERSPEND,
+                categoryId = "delivery",
+                categorySpentAmount = 18_000
+            ),
+            HomeWarning(id = "w3", type = HomeWarningType.MISSED_YESTERDAY_RECORD)
         )
     )
 
@@ -131,41 +131,41 @@ object HomeMockData {
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true)
         )
     )
 
-    fun normalBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun normalBalanceState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 7_300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 7_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200),
             ExpenseEntry(id = "e3", amount = 4_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 4, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = 7, achievedDays = 3, isChecked = false)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 4, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = false)
         ),
         warnings = emptyList()
     )
 
-    fun decreasingBalanceState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
+    fun decreasingBalanceState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
         userName = userName,
         selectedDate = date,
-        challenge = buildChallenge(ChallengeRepository.activeChallenge!!, date, todayBalance = 17_300),
+        challenge = buildChallenge(challengeState.activeChallenge!!, date, todayBalance = 17_300),
         expenses = listOf(
             ExpenseEntry(id = "e1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 2_700),
             ExpenseEntry(id = "e2", categoryId = "convenience", name = "세븐일레븐", amount = 1_500),
             ExpenseEntry(id = "e3", amount = 1_500)
         ),
         miniChallenges = listOf(
-            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", totalDays = 7, achievedDays = 2, isChecked = true),
-            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", totalDays = null, achievedDays = 0, isChecked = true),
-            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", totalDays = 7, achievedDays = 3, isChecked = true),
-            MiniChallengeEntry(id = "m4", name = "계단 이용하기", totalDays = 7, achievedDays = 0, isChecked = true)
+            MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 2, isChecked = true),
+            MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true),
+            MiniChallengeEntry(id = "m3", name = "물 많이 마시기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = true),
+            MiniChallengeEntry(id = "m4", name = "계단 이용하기", duration = miniChallengeDuration(7), achievedDays = 0, isChecked = true)
         ),
         warnings = emptyList()
     )

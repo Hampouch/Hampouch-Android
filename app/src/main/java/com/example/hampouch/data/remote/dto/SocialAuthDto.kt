@@ -13,6 +13,7 @@ data class ApiResponse<T>(
 
 data class SocialLoginData(
     val isNewUser: Boolean,
+    val needsNickname: Boolean,
     val accessToken: String,
     val refreshToken: String,
     val tokenType: String,

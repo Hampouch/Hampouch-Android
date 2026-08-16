@@ -62,10 +62,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleChallengeRequest
-import com.example.hampouch.data.model.HamBattleDefaultPenaltyOptions
-import com.example.hampouch.data.model.HamBattleDurationOptions
-import com.example.hampouch.data.model.HamBattleParticipantOptions
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleDefaultPenaltyOptions
+import com.example.hampouch.domain.model.HamBattleDurationOptions
+import com.example.hampouch.domain.model.HamBattleParticipantOptions
 import com.example.hampouch.ui.common.CheckButton
 import com.example.hampouch.ui.dialog.HamBattleStartConfirmDialog
 import com.example.hampouch.ui.theme.Body16Bold
@@ -87,8 +87,8 @@ private val StartDateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HamBattleAddScreen(
-    onBackClick: () -> Unit = {},
-    onStartClick: (HamBattleChallengeRequest) -> Unit = {}
+    onBackClick: () -> Unit,
+    onStartClick: (HamBattleChallengeRequest) -> Unit
 ) {
     var challengeName by rememberSaveable { mutableStateOf("") }
     var selectedParticipantCount by rememberSaveable { mutableStateOf(HamBattleParticipantOptions[1]) }
@@ -100,13 +100,15 @@ fun HamBattleAddScreen(
     var selectedPenalty by rememberSaveable { mutableStateOf(HamBattleDefaultPenaltyOptions.first()) }
     val customPenaltyInputState = rememberTextFieldState()
 
-    val currentRequest = HamBattleChallengeRequest(
-        challengeName = challengeName,
-        participantCount = selectedParticipantCount,
-        durationDays = selectedDuration,
-        startDateMillis = startDateMillis,
-        penalty = selectedPenalty
-    )
+    val currentRequest = startDateMillis?.let { selectedStartDate ->
+        HamBattleChallengeRequest(
+            challengeName = challengeName,
+            participantCount = selectedParticipantCount,
+            durationDays = selectedDuration,
+            startDateMillis = selectedStartDate,
+            penalty = selectedPenalty
+        )
+    }
     val isStartEnabled = challengeName.isNotBlank() &&
         selectedParticipantCount.isNotBlank() &&
         selectedDuration.isNotBlank() &&
@@ -185,7 +187,7 @@ fun HamBattleAddScreen(
         )
     }
 
-    if (showStartConfirmDialog) {
+    if (showStartConfirmDialog && currentRequest != null) {
         HamBattleStartConfirmDialog(
             request = currentRequest,
             onCancel = { showStartConfirmDialog = false },
@@ -536,6 +538,6 @@ private fun SelectablePillPreview() {
 @Composable
 private fun HamBattleAddScreenPreview() {
     HampouchTheme {
-        HamBattleAddScreen()
+        HamBattleAddScreen(onBackClick = {}, onStartClick = {})
     }
 }

@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,16 +51,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
-import com.example.hampouch.data.model.ExpenseCalendarViewMode
-import com.example.hampouch.data.model.ExpenseChallengePeriod
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpensePeriodSummary
+import com.example.hampouch.domain.model.ExpenseCalendarViewMode
+import com.example.hampouch.domain.model.ExpenseChallengePeriod
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
-import com.example.hampouch.ui.expenseanalysis.ExpensePeriodSummary
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -75,10 +79,12 @@ private fun expenseInputEnabled(
     period: ExpenseChallengePeriod?,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    restrictToChallengePeriod: Boolean
+    restrictToChallengePeriod: Boolean,
+    isResting: Boolean
 ): Boolean {
     if (period == null) return false
     if (restrictToChallengePeriod) return period.isActiveOn(selectedDate)
+    if (isResting) return !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
     return !referenceToday.isBefore(period.startDate) && !referenceToday.isAfter(period.endDate) &&
         !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
 }
@@ -104,68 +110,52 @@ fun ExpenseCalendarRoute(
     onExpenseClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
-    challengePeriod: ExpenseChallengePeriod? = ExpenseDetailMockData.activeChallengePeriod(),
-    onExpenseAnalysisClick: () -> Unit = {},
-    onAddExpenseClick: (LocalDate) -> Unit = {},
-    restrictToChallengePeriod: Boolean = false
+    challengePeriod: ExpenseChallengePeriod? = null,
+    onExpenseAnalysisClick: () -> Unit,
+    onAddExpenseClick: (LocalDate) -> Unit,
+    restrictToChallengePeriod: Boolean = false,
+    viewModel: ExpenseCalendarViewModel = hiltViewModel()
 ) {
+    val calendarChallengeState by viewModel.challengeState.collectAsStateWithLifecycle()
+    val restState by viewModel.restState.collectAsStateWithLifecycle()
+    val effectiveChallengePeriod = challengePeriod
+        ?: ExpenseDetailMockData.activeChallengePeriod(calendarChallengeState)
     val initialSelectedDate = if (restrictToChallengePeriod) {
-        challengePeriod?.endDate ?: referenceToday
+        effectiveChallengePeriod?.endDate ?: referenceToday
     } else {
         referenceToday
     }
-    var viewMode by remember { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
-    var selectedDate by remember { mutableStateOf(initialSelectedDate) }
-    var displayedMonth by remember { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
-    var displayedWeekStart by remember { mutableStateOf(weekGridStart(referenceToday)) }
+    var viewMode by rememberSaveable { mutableStateOf(ExpenseCalendarViewMode.MONTHLY) }
+    var selectedDate by rememberSaveable { mutableStateOf(initialSelectedDate) }
+    var displayedMonth by rememberSaveable { mutableStateOf(initialSelectedDate.withDayOfMonth(1)) }
+    var displayedWeekStart by rememberSaveable { mutableStateOf(weekGridStart(referenceToday)) }
 
-    var monthSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
-    var weekSummary by remember { mutableStateOf<ExpensePeriodSummary?>(null) }
-    LaunchedEffect(displayedMonth) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            monthSummary = ExpenseDetailStore.loadMonthSummary(YearMonth.from(displayedMonth)).getOrNull()
-        }
-    }
-    LaunchedEffect(displayedWeekStart) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            weekSummary = ExpenseDetailStore.loadWeekSummary(displayedWeekStart).getOrNull()
-        }
-    }
-    LaunchedEffect(selectedDate) {
-        if (ExpenseConfig.USE_SERVER_EXPENSE) {
-            ExpenseDetailStore.loadDay(selectedDate)
-        }
-    }
+    val records by viewModel.records.collectAsStateWithLifecycle()
+    val monthSummary by viewModel.monthSummary.collectAsStateWithLifecycle()
+    val weekSummary by viewModel.weekSummary.collectAsStateWithLifecycle()
+    LaunchedEffect(displayedMonth) { viewModel.loadMonthSummary(YearMonth.from(displayedMonth)) }
+    LaunchedEffect(displayedWeekStart) { viewModel.loadWeekSummary(displayedWeekStart) }
+    LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
 
-    val summaryByDate = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
-        activeSummary?.dailyBreakdown?.associate { it.date to it.amount } ?: emptyMap()
-    } else {
-        ExpenseDetailStore.recordsById.values
-            .groupBy { it.date }
-            .mapValues { (_, records) -> records.sumOf { it.amount } }
-    }
-    val dayRecords = ExpenseDetailStore.recordsForDate(selectedDate)
-    val inputEnabled = expenseInputEnabled(challengePeriod, referenceToday, selectedDate, restrictToChallengePeriod)
-    val challengeEnded = challengePeriod != null && referenceToday.isAfter(challengePeriod.endDate)
-    val editableRange = challengePeriod.takeIf { restrictToChallengePeriod }
+    val activeSummary = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary else monthSummary
+    val summaryByDate = activeSummary?.dailyBreakdown?.associate { it.date to it.amount }.orEmpty()
+    val dayRecords = records.values.filter { it.date == selectedDate }.asReversed()
+    val inputEnabled = expenseInputEnabled(
+        effectiveChallengePeriod,
+        referenceToday,
+        selectedDate,
+        restrictToChallengePeriod,
+        restState.isResting
+    )
+    val challengeEnded = !restState.isResting &&
+        effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
+    val editableRange = effectiveChallengePeriod.takeIf { restrictToChallengePeriod }
 
-    val monthlyRecordsTotal = ExpenseDetailStore.recordsById.values
-        .filter { it.date.year == displayedMonth.year && it.date.monthValue == displayedMonth.monthValue }
-        .sumOf { it.amount }
-    val monthlyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) monthSummary?.totalAmount ?: 0 else monthlyRecordsTotal
-    val monthlyDailyAverage = if (ExpenseConfig.USE_SERVER_EXPENSE) {
-        monthSummary?.dailyAverage ?: 0
-    } else {
-        monthlyRecordsTotal / displayedMonth.lengthOfMonth()
-    }
+    val monthlyTotal = monthSummary?.totalAmount ?: 0
+    val monthlyDailyAverage = monthSummary?.dailyAverage ?: 0
 
-    val weeklyWeekEnd = displayedWeekStart.plusDays(6)
-    val weeklyRecordsTotal = ExpenseDetailStore.recordsById.values
-        .filter { !it.date.isBefore(displayedWeekStart) && !it.date.isAfter(weeklyWeekEnd) }
-        .sumOf { it.amount }
-    val weeklyTotal = if (ExpenseConfig.USE_SERVER_EXPENSE) weekSummary?.totalAmount ?: 0 else weeklyRecordsTotal
-    val weeklyDailyAverage = if (ExpenseConfig.USE_SERVER_EXPENSE) weekSummary?.dailyAverage ?: 0 else weeklyRecordsTotal / 7
+    val weeklyTotal = weekSummary?.totalAmount ?: 0
+    val weeklyDailyAverage = weekSummary?.dailyAverage ?: 0
 
     val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) displayedWeekStart else displayedMonth
 
@@ -455,7 +445,7 @@ private fun CalendarStatCard(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -674,14 +664,14 @@ private fun SelectedDayHeader(
         Text(
             stringResource(R.string.expensedetail_amount_won_format, formatWon(total)),
             style = MaterialTheme.typography.titleSmall,
-            color = HPMain
+            color = HPSub
         )
     }
 }
 
 @Composable
 private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
+    val categoryLabel = resolveCategoryLabelOrNull(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
         modifier = modifier
@@ -708,21 +698,25 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                record.expenseName ?: categoryLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPBlack,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                categoryLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = HPText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (record.expenseName != null) {
+                Text(
+                    record.expenseName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HPBlack,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (categoryLabel != null) {
+                Text(
+                    categoryLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HPText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         ReasonTagAndAmountColumn(
             reasonTag = reasonLabel,
@@ -735,7 +729,7 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
 @Composable
 private fun ExpenseCalendarMonthlyPreview() {
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {})
+        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
     }
 }
 
@@ -747,6 +741,8 @@ private fun ExpenseCalendarEmptyDayPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today
         )
     }
@@ -760,6 +756,8 @@ private fun ExpenseCalendarChallengeEndedPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today,
             challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today)
         )
@@ -770,7 +768,7 @@ private fun ExpenseCalendarChallengeEndedPreview() {
 @Composable
 private fun ExpenseCalendarWeeklyPreview() {
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {})
+        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
     }
 }
 
@@ -782,6 +780,8 @@ private fun ExpenseCalendarChallengeEndEditPreview() {
         ExpenseCalendarRoute(
             onBackClick = {},
             onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
             referenceToday = today,
             challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today),
             restrictToChallengePeriod = true

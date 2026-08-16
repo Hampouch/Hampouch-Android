@@ -1,26 +1,24 @@
 package com.example.hampouch.ui.hamtips
 
-import com.example.hampouch.data.model.BattleRecruitInfo
-import com.example.hampouch.data.model.MenuRatingInfo
-import com.example.hampouch.data.model.TipCategory
-import com.example.hampouch.data.model.TipComment
-import com.example.hampouch.data.model.TipPost
-import com.example.hampouch.data.model.TipPostType
-import com.example.hampouch.data.model.TipReply
-import com.example.hampouch.data.repository.HamTipsRepository
-import com.example.hampouch.ui.login.LoginMockData
+import com.example.hampouch.domain.model.BattleRecruitInfo
+import com.example.hampouch.domain.model.MenuRatingInfo
+import com.example.hampouch.domain.model.TipCategory
+import com.example.hampouch.domain.model.TipComment
+import com.example.hampouch.domain.model.TipPost
+import com.example.hampouch.domain.model.TipPostDetail
+import com.example.hampouch.domain.model.TipReply
+import com.example.hampouch.data.local.AccountMockDataSource
 
 object HamTipsMockData {
 
-    private const val HERO_AUTHOR_ID = HamTipsRepository.CURRENT_USER_ID
-    private const val HERO_AUTHOR_NAME = HamTipsRepository.CURRENT_USER_NAME
-    private val EDITOR_AUTHOR_ID = LoginMockData.editorUser.id
-    private val EDITOR_AUTHOR_NAME = LoginMockData.editorUser.name
+    private val HERO_AUTHOR_ID = AccountMockDataSource.normalUser.id
+    private val HERO_AUTHOR_NAME = AccountMockDataSource.normalUser.name
+    private val EDITOR_AUTHOR_ID = AccountMockDataSource.editorUser.id
+    private val EDITOR_AUTHOR_NAME = AccountMockDataSource.editorUser.name
 
     fun allPosts(): List<TipPost> = listOf(
         TipPost(
             id = "hamtip_1",
-            type = TipPostType.TIP,
             category = TipCategory.COOKING,
             title = "배달 끊고 한 달 8만원 아낀 밀프렙 루틴",
             subtitle = "일요일 2시간 투자로 일주일 식비를 반으로 줄였어요",
@@ -145,7 +143,6 @@ object HamTipsMockData {
         ),
         TipPost(
             id = "hamtip_7",
-            type = TipPostType.BATTLE,
             category = TipCategory.RECRUIT,
             title = "이번 주 햄배틀 같이 하실 분 구해요",
             subtitle = "하루 2만원 한도 챌린지 같이 하면서 서로 인증해요",
@@ -157,13 +154,14 @@ object HamTipsMockData {
             commentCount = 22,
             likeCount = 88,
             hasImage = false,
-            battleInfo = BattleRecruitInfo(
+            detail = TipPostDetail.Battle(BattleRecruitInfo(
                 link = "hamtip_7",
                 durationDays = 14,
                 capacity = 8,
                 penalty = "인증 안하면 벌금 5천원",
-                participantIds = listOf("user_a", "user_b", "user_c")
-            )
+                participantIds = listOf("user_a", "user_b", "user_c"),
+                currentMemberCount = 3
+            ))
         ),
         TipPost(
             id = "hamtip_8",
@@ -232,7 +230,6 @@ object HamTipsMockData {
         ),
         TipPost(
             id = "hamtip_13",
-            type = TipPostType.BATTLE,
             category = TipCategory.RECRUIT,
             title = "챌린지 같이 하실 분",
             subtitle = "3명 더 모집해요.",
@@ -245,17 +242,17 @@ object HamTipsMockData {
             commentCount = 0,
             likeCount = 573,
             hasImage = false,
-            battleInfo = BattleRecruitInfo(
+            detail = TipPostDetail.Battle(BattleRecruitInfo(
                 link = "hamtip_13",
                 durationDays = 7,
                 capacity = 5,
                 penalty = "커피 쿠폰 쏘기",
-                participantIds = listOf("user_a", "user_b")
-            )
+                participantIds = listOf("user_a", "user_b"),
+                currentMemberCount = 2
+            ))
         ),
         TipPost(
             id = "hamtip_14",
-            type = TipPostType.MENU,
             category = TipCategory.WHAT_TO_EAT,
             title = "마라탕 · 홍대 마라공방 · 9,000원",
             subtitle = "진짜 맛있어요. 제발 가보세요.",
@@ -268,10 +265,12 @@ object HamTipsMockData {
             commentCount = 1,
             likeCount = 689,
             hasImage = true,
-            menuName = "마라탕 (중)",
-            place = "홍대 마라공방",
-            price = 9_000,
-            menuRating = MenuRatingInfo(taste = 5, costEffectiveness = 5, mood = 5),
+            detail = TipPostDetail.Menu(
+                menuName = "마라탕 (중)",
+                place = "홍대 마라공방",
+                price = 9_000,
+                rating = MenuRatingInfo(taste = 5, costEffectiveness = 5, mood = 5)
+            ),
             comments = listOf(
                 TipComment(
                     id = "comment_14_1",
@@ -284,7 +283,6 @@ object HamTipsMockData {
         ),
         TipPost(
             id = "hamtip_15",
-            type = TipPostType.MENU,
             category = TipCategory.WHAT_TO_EAT,
             title = "치즈불닭볶음면 · 홍대 분식집 · 6,500원",
             subtitle = "맵찔이도 순한맛으로 먹을 수 있어요.",
@@ -296,14 +294,15 @@ object HamTipsMockData {
             commentCount = 2,
             likeCount = 258,
             hasImage = false,
-            menuName = "치즈불닭볶음면",
-            place = "홍대 분식집",
-            price = 6_500,
-            menuRating = MenuRatingInfo(taste = 4, costEffectiveness = 5, mood = 4)
+            detail = TipPostDetail.Menu(
+                menuName = "치즈불닭볶음면",
+                place = "홍대 분식집",
+                price = 6_500,
+                rating = MenuRatingInfo(taste = 4, costEffectiveness = 5, mood = 4)
+            )
         ),
         TipPost(
             id = "hamtip_16",
-            type = TipPostType.MENU,
             category = TipCategory.WHAT_TO_EAT,
             title = "제육덮밥 · 학교앞 백반집 · 7,000원",
             subtitle = "양도 많고 반찬도 알차서 가성비 최고예요.",
@@ -315,14 +314,15 @@ object HamTipsMockData {
             commentCount = 0,
             likeCount = 19,
             hasImage = false,
-            menuName = "제육덮밥",
-            place = "학교앞 백반집",
-            price = 7_000,
-            menuRating = MenuRatingInfo(taste = 4, costEffectiveness = 5, mood = 3)
+            detail = TipPostDetail.Menu(
+                menuName = "제육덮밥",
+                place = "학교앞 백반집",
+                price = 7_000,
+                rating = MenuRatingInfo(taste = 4, costEffectiveness = 5, mood = 3)
+            )
         ),
         TipPost(
             id = "hamtip_17",
-            type = TipPostType.TIP,
             category = TipCategory.RECORD,
             title = "포치가 실제로 3개월 써본 가계부 앱 비교",
             subtitle = "자동 분류 정확도랑 잔소리 강도까지 솔직하게 비교했어요",
@@ -340,7 +340,6 @@ object HamTipsMockData {
         ),
         TipPost(
             id = "hamtip_18",
-            type = TipPostType.MENU,
             category = TipCategory.WHAT_TO_EAT,
             title = "김치볶음밥 · 학식당 분식 · 4,500원",
             subtitle = "포치가 직접 먹어보고 인증한 가성비 맛집이에요.",
@@ -353,10 +352,12 @@ object HamTipsMockData {
             commentCount = 3,
             likeCount = 210,
             hasImage = true,
-            menuName = "김치볶음밥",
-            place = "학식당 분식",
-            price = 4_500,
-            menuRating = MenuRatingInfo(taste = 5, costEffectiveness = 5, mood = 4)
+            detail = TipPostDetail.Menu(
+                menuName = "김치볶음밥",
+                place = "학식당 분식",
+                price = 4_500,
+                rating = MenuRatingInfo(taste = 5, costEffectiveness = 5, mood = 4)
+            )
         )
     )
 

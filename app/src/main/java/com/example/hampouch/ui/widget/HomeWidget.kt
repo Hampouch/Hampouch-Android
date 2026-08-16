@@ -36,35 +36,29 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import com.example.hampouch.MainActivity
 import com.example.hampouch.R
-import com.example.hampouch.data.model.CharacterState
-import com.example.hampouch.data.model.HomeChallenge
+import com.example.hampouch.domain.model.HomeChallenge
 import com.example.hampouch.ui.home.components.characterDrawableRes
 import com.example.hampouch.ui.theme.HPBlack
-import com.example.hampouch.ui.theme.HPGray3
+import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
-import com.example.hampouch.ui.theme.HPSub1
-import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 
 /**
  * 홈 화면 "식비 절약 챌린지" 위젯의 [GlanceAppWidget].
- * 피그마 "위젯" 섹션(node-id 2627:19676)의 4가지 카드(여유/주의/부족/휴식기)를 그대로 옮긴 구성이다.
+ * 앱 홈 화면의 챌린지 카드 구조와 수치를 Glance로 옮긴 구성이다.
  * 텍스트는 Pretendard 적용을 위해 [PretendardText](AndroidRemoteViews 기반)를 쓴다.
  *
  * 위젯은 런처/기기마다 실제로 배정되는 크기가 다르고 사용자가 리사이즈도 할 수 있어서
- * (`home_widget_info.xml`의 resizeMode) 피그마의 522x230을 그대로 박아넣을 수 없다.
- * 그래서 [SizeMode.Exact]로 매번 시스템이 실제로 준 크기(가로/세로 각각)를 [LocalSize]로 받고,
- * [rememberWidgetScale]에서 가로·세로 배율을 따로 계산해 [WidgetScale]로 넘긴다 — 가로 방향 값(패딩,
- * 마스코트 너비 등)은 가로 배율로, 세로 방향 값(줄 높이, 세로 여백)은 세로 배율로 각각 스케일한다.
+ * [SizeMode.Exact]와 [LocalSize]로 실제 할당 크기를 읽고 홈 카드 비율을 유지하는 단일 배율을 적용한다.
  */
 class HomeWidget : GlanceAppWidget() {
 
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val state = HomeWidgetDataProvider.currentState()
+        val state = HomeWidgetSnapshotStore(context).read()
         provideContent {
             HomeWidgetContent(state)
         }
@@ -76,28 +70,30 @@ class HomeWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HomeWidget()
 }
 
-/** 이 값 기준(=home_widget_info.xml의 minWidth/minHeight)으로 잡아둔 여백/크기 비율이 배율 1.0이 된다. */
-private val BaseWidgetWidth = 250.dp
-private val BaseWidgetHeight = 110.dp
-private const val MinWidgetScale = 0.85f
-private const val MaxWidgetScale = 2.3f
+/** 일반적인 앱 홈 콘텐츠 폭과 전체 챌린지 카드 높이에서 배율 1.0이 된다. */
+private val DESIGN_WIDGET_WIDTH = 353.dp
+private val DESIGN_WIDGET_HEIGHT = 468.dp
+private val COMPACT_WIDGET_HEIGHT = 220.dp
+private val FULL_CARD_HEIGHT_THRESHOLD = 360.dp
+private const val MIN_LAYOUT_SCALE = 0.7f
+private const val MAX_LAYOUT_SCALE = 1.15f
 
 /**
  * @param width 가로 방향 값(좌우 패딩, 마스코트 너비, 가로 간격 등)에 곱하는 배율.
  * @param height 세로 방향 값(상하 패딩, 줄 높이, 세로 간격 등)에 곱하는 배율.
  */
 private data class WidgetScale(val width: Float, val height: Float) {
-    /** 글자 크기·모서리 반경처럼 가로/세로 어느 쪽으로도 넘치면 안 되는 값에 쓰는, 더 작게 늘어난 쪽 배율. */
     val text: Float get() = minOf(width, height)
 }
 
 /** 지금 실제로 그려지는 위젯 크기([LocalSize])를 기준 크기와 비교해 가로/세로 배율을 각각 구한다. */
 @Composable
-private fun rememberWidgetScale(): WidgetScale {
+private fun rememberWidgetScale(compact: Boolean): WidgetScale {
     val size = LocalSize.current
-    val widthScale = (size.width / BaseWidgetWidth).coerceIn(MinWidgetScale, MaxWidgetScale)
-    val heightScale = (size.height / BaseWidgetHeight).coerceIn(MinWidgetScale, MaxWidgetScale)
-    return WidgetScale(widthScale, heightScale)
+    val designHeight = if (compact) COMPACT_WIDGET_HEIGHT else DESIGN_WIDGET_HEIGHT
+    val uniformScale = minOf(size.width / DESIGN_WIDGET_WIDTH, size.height / designHeight)
+        .coerceIn(MIN_LAYOUT_SCALE, MAX_LAYOUT_SCALE)
+    return WidgetScale(uniformScale, uniformScale)
 }
 
 private fun Dp.scaled(scale: Float): Dp = (value * scale).dp
@@ -105,216 +101,421 @@ private fun TextUnit.scaled(scale: Float): TextUnit = (value * scale).sp
 
 @Composable
 internal fun HomeWidgetContent(state: HomeWidgetState) {
-    val scale = rememberWidgetScale()
+    val compact = LocalSize.current.height < FULL_CARD_HEIGHT_THRESHOLD
+    val scale = rememberWidgetScale(compact)
     // 패딩은 각 상태 컴포저블 안에서 필요한 만큼만 준다(NoActiveChallengeContent의 마스코트처럼
     // 카드 가장자리에 붙어야 하는 요소가 있어서, 여기서 일괄로 주면 안 된다).
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(ImageProvider(R.drawable.bg_widget_card))
             .clickable(actionStartActivity<MainActivity>())
     ) {
         when (state) {
-            is HomeWidgetState.InProgress -> ChallengeProgressContent(state.challenge, scale)
-            HomeWidgetState.NoActiveChallenge -> NoActiveChallengeContent(scale)
+            is HomeWidgetState.InProgress -> if (compact) {
+                CompactChallengeContent(state.challenge, scale)
+            } else {
+                ChallengeProgressContent(state.challenge, scale)
+            }
+            HomeWidgetState.LoggedOut -> IdleContent(
+                titleRes = R.string.widget_login_title,
+                subtitle = LocalContext.current.getString(R.string.widget_login_subtitle),
+                ctaRes = R.string.widget_login_cta,
+                scale = scale
+            )
+            HomeWidgetState.Loading -> IdleContent(
+                titleRes = R.string.widget_loading_title,
+                subtitle = LocalContext.current.getString(R.string.widget_loading_subtitle),
+                ctaRes = R.string.widget_open_app_cta,
+                scale = scale
+            )
+            is HomeWidgetState.Resting -> IdleContent(
+                titleRes = R.string.widget_resting_title,
+                subtitle = LocalContext.current.getString(
+                    R.string.widget_resting_subtitle_format,
+                    state.plannedResumeDateLabel
+                ),
+                ctaRes = R.string.widget_open_app_cta,
+                scale = scale
+            )
+            HomeWidgetState.NoActiveChallenge -> IdleContent(
+                titleRes = R.string.home_no_challenge_title,
+                subtitle = LocalContext.current.getString(R.string.home_no_challenge_subtitle),
+                ctaRes = R.string.home_no_challenge_cta,
+                characterRes = R.drawable.img_widget_hamster_normal,
+                characterHeight = 96.dp,
+                scale = scale
+            )
         }
     }
 }
 
 @Composable
 private fun ChallengeProgressContent(challenge: HomeChallenge, scale: WidgetScale) {
-    val context = LocalContext.current
-    val gaugeColor = when (challenge.characterState) {
-        CharacterState.CHUBBY -> HPSub2
-        CharacterState.NORMAL -> HPMain
-        CharacterState.THIN, CharacterState.OVER_LIMIT -> HPSub
-    }
-
-    // 피그마(522x230): 좌우 패딩 20px(3.83%) · 상하 패딩 25px(10.87%) — 카드 크기에 비례해서 다시 계산.
-    Row(
+    Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .padding(horizontal = 10.dp.scaled(scale.width), vertical = 12.dp.scaled(scale.height)),
+            .background(ImageProvider(R.drawable.bg_widget_card))
+            .padding(horizontal = 15.dp.scaled(scale.width), vertical = 13.dp.scaled(scale.height))
+    ) {
+        ChallengeHeader(challenge, scale)
+        Spacer(modifier = GlanceModifier.height(10.dp.scaled(scale.height)))
+        ChallengeGauge(challenge, scale)
+        Spacer(modifier = GlanceModifier.height(12.dp.scaled(scale.height)))
+        SavingsStreak(challenge, scale)
+    }
+}
+
+/** 4x3 기본 크기에서는 홈 카드의 핵심 정보만 한 화면에 들어오도록 게이지 영역을 가로로 배치한다. */
+@Composable
+@Suppress("LongMethod") // 홈 카드의 캐릭터·게이지·잔액 계층을 하나의 압축 영역으로 유지한다.
+private fun CompactChallengeContent(challenge: HomeChallenge, scale: WidgetScale) {
+    val context = LocalContext.current
+    Column(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .background(ImageProvider(R.drawable.bg_widget_card))
+            .padding(horizontal = 15.dp.scaled(scale.width), vertical = 13.dp.scaled(scale.height))
+    ) {
+        ChallengeHeader(challenge, scale)
+        Spacer(modifier = GlanceModifier.height(7.dp.scaled(scale.height)))
+        Row(
+            modifier = GlanceModifier.fillMaxWidth().height(128.dp.scaled(scale.height)),
+            verticalAlignment = Alignment.Vertical.Bottom
+        ) {
+            Image(
+                provider = ImageProvider(characterDrawableRes(challenge.characterState)),
+                contentDescription = context.getString(R.string.cd_hamster_character),
+                modifier = GlanceModifier.size(
+                    width = 112.dp.scaled(scale.width),
+                    height = 124.dp.scaled(scale.height)
+                )
+            )
+            Spacer(modifier = GlanceModifier.width(8.dp.scaled(scale.width)))
+            Column(
+                modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+                verticalAlignment = Alignment.Vertical.CenterVertically
+            ) {
+                PretendardText(
+                    text = context.getString(
+                        R.string.home_limit_label_format,
+                        formatWon(challenge.dailyLimit)
+                    ),
+                    color = HPText,
+                    fontSize = 14.sp.scaled(scale.text),
+                    weight = PretendardWeight.Regular,
+                    textAlign = WidgetTextAlign.End,
+                    maxLines = 1,
+                    modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.height))
+                )
+                Spacer(modifier = GlanceModifier.height(6.dp.scaled(scale.height)))
+                LinearProgressIndicator(
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .height(10.dp.scaled(scale.height))
+                        .cornerRadius(50.dp),
+                    progress = challenge.balanceRatio,
+                    color = ColorProvider(if (challenge.isOverLimit) HPSub else HPMain),
+                    backgroundColor = ColorProvider(HPGray4)
+                )
+                Spacer(modifier = GlanceModifier.height(10.dp.scaled(scale.height)))
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height)),
+                    verticalAlignment = Alignment.Vertical.CenterVertically
+                ) {
+                    PretendardText(
+                        text = context.getString(R.string.home_today_balance_label),
+                        color = HPText,
+                        fontSize = 16.sp.scaled(scale.text),
+                        weight = PretendardWeight.Regular,
+                        maxLines = 1,
+                        modifier = GlanceModifier.width(72.dp.scaled(scale.width)).fillMaxHeight()
+                    )
+                    PretendardText(
+                        text = context.getString(
+                            R.string.home_amount_won_format,
+                            formatWon(challenge.todayBalance)
+                        ),
+                        color = if (challenge.isOverLimit) HPSub else HPBlack,
+                        fontSize = 20.sp.scaled(scale.text),
+                        weight = PretendardWeight.BoldAutoSize,
+                        textAlign = WidgetTextAlign.End,
+                        maxLines = 1,
+                        modifier = GlanceModifier.defaultWeight().fillMaxHeight()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+@Suppress("LongMethod") // 홈 카드의 두 줄 배너 계층을 그대로 유지한다.
+private fun ChallengeHeader(challenge: HomeChallenge, scale: WidgetScale) {
+    val context = LocalContext.current
+    Row(
+        modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height)),
         verticalAlignment = Alignment.Vertical.CenterVertically
     ) {
-        // 피그마에서 마스코트 높이는 정보 영역 높이의 100%(=180/180)라, 고정 dp 대신 fillMaxHeight로
-        // "이 행에서 실제로 쓸 수 있는 세로 공간을 그대로 채운다"를 그대로 옮겼다. 너비만 배율을 준다.
+        PretendardText(
+            text = context.getString(R.string.home_challenge_in_progress_format, challenge.totalDays),
+            color = HPBlack,
+            fontSize = 20.sp.scaled(scale.text),
+            weight = PretendardWeight.Bold,
+            maxLines = 1,
+            modifier = GlanceModifier.defaultWeight().fillMaxHeight()
+        )
+        PretendardText(
+            text = context.getString(R.string.home_challenge_detail_link) + "  ›",
+            color = HPText,
+            fontSize = 14.sp.scaled(scale.text),
+            weight = PretendardWeight.Regular,
+            textAlign = WidgetTextAlign.End,
+            maxLines = 1,
+            modifier = GlanceModifier.width(82.dp.scaled(scale.width)).fillMaxHeight()
+        )
+    }
+    Spacer(modifier = GlanceModifier.height(4.dp.scaled(scale.height)))
+    Row(
+        modifier = GlanceModifier.fillMaxWidth().height(32.dp.scaled(scale.height)),
+        verticalAlignment = Alignment.Vertical.CenterVertically
+    ) {
+        PretendardText(
+            text = context.getString(
+                R.string.home_challenge_period_format,
+                challenge.periodStartLabel,
+                challenge.periodEndLabel
+            ),
+            color = HPText,
+            fontSize = 14.sp.scaled(scale.text),
+            weight = PretendardWeight.Regular,
+            maxLines = 1,
+            modifier = GlanceModifier.defaultWeight().fillMaxHeight()
+        )
+        Box(
+            modifier = GlanceModifier
+                .background(ColorProvider(HPMain))
+                .cornerRadius(50.dp)
+                .padding(horizontal = 14.dp.scaled(scale.width), vertical = 6.dp.scaled(scale.height))
+        ) {
+            PretendardText(
+                text = if (challenge.dDay == 0) {
+                    context.getString(R.string.home_challenge_dday_today)
+                } else {
+                    context.getString(R.string.home_challenge_dday_format, challenge.dDay)
+                },
+                color = HPWhite,
+                fontSize = 14.sp.scaled(scale.text),
+                weight = PretendardWeight.Medium,
+                textAlign = WidgetTextAlign.Center,
+                maxLines = 1,
+                modifier = GlanceModifier.width(52.dp.scaled(scale.width)).height(20.dp.scaled(scale.height))
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChallengeGauge(challenge: HomeChallenge, scale: WidgetScale) {
+    val context = LocalContext.current
+    Box(
+        modifier = GlanceModifier.fillMaxWidth().height(190.dp.scaled(scale.height)),
+        contentAlignment = Alignment.BottomCenter
+    ) {
         Image(
             provider = ImageProvider(characterDrawableRes(challenge.characterState)),
             contentDescription = context.getString(R.string.cd_hamster_character),
-            modifier = GlanceModifier.width(76.dp.scaled(scale.width)).fillMaxHeight()
+            modifier = GlanceModifier.size(
+                width = 160.dp.scaled(scale.width),
+                height = 180.dp.scaled(scale.height)
+            )
         )
-        Spacer(modifier = GlanceModifier.width(4.dp.scaled(scale.width)))
-        Column(modifier = GlanceModifier.fillMaxHeight().defaultWeight()) {
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Vertical.CenterVertically
-            ) {
-                Column(modifier = GlanceModifier.defaultWeight()) {
-                    PretendardText(
-                        text = context.getString(
-                            R.string.home_challenge_in_progress_format,
-                            challenge.totalDays
-                        ),
-                        color = HPBlack,
-                        fontSize = 15.sp.scaled(scale.text),
-                        weight = PretendardWeight.SemiBold,
-                        maxLines = 1,
-                        modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.text))
-                    )
-                    PretendardText(
-                        text = context.getString(
-                            R.string.home_challenge_period_format,
-                            challenge.periodStartLabel,
-                            challenge.periodEndLabel
-                        ),
-                        color = HPText,
-                        fontSize = 12.sp.scaled(scale.text),
-                        weight = PretendardWeight.Medium,
-                        maxLines = 1,
-                        modifier = GlanceModifier.fillMaxWidth().height(18.dp.scaled(scale.text))
-                    )
-                }
-                StreakBadge(streakDays = challenge.streakDays, scale = scale)
-            }
+    }
+    Spacer(modifier = GlanceModifier.height(8.dp.scaled(scale.height)))
+    PretendardText(
+        text = context.getString(R.string.home_limit_label_format, formatWon(challenge.dailyLimit)),
+        color = HPText,
+        fontSize = 14.sp.scaled(scale.text),
+        weight = PretendardWeight.Regular,
+        textAlign = WidgetTextAlign.End,
+        maxLines = 1,
+        modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.height))
+    )
+    Spacer(modifier = GlanceModifier.height(6.dp.scaled(scale.height)))
+    LinearProgressIndicator(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(10.dp.scaled(scale.height))
+            .cornerRadius(50.dp),
+        progress = challenge.balanceRatio,
+        color = ColorProvider(if (challenge.isOverLimit) HPSub else HPMain),
+        backgroundColor = ColorProvider(HPGray4)
+    )
+    Spacer(modifier = GlanceModifier.height(10.dp.scaled(scale.height)))
+    Row(
+        modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height)),
+        verticalAlignment = Alignment.Vertical.CenterVertically
+    ) {
+        PretendardText(
+            text = context.getString(R.string.home_today_balance_label),
+            color = HPText,
+            fontSize = 16.sp.scaled(scale.text),
+            weight = PretendardWeight.Regular,
+            maxLines = 1,
+            modifier = GlanceModifier.width(90.dp.scaled(scale.width)).fillMaxHeight()
+        )
+        PretendardText(
+            text = context.getString(R.string.home_amount_won_format, formatWon(challenge.todayBalance)),
+            color = if (challenge.isOverLimit) HPSub else HPBlack,
+            fontSize = 20.sp.scaled(scale.text),
+            weight = PretendardWeight.Bold,
+            textAlign = WidgetTextAlign.End,
+            maxLines = 1,
+            modifier = GlanceModifier.defaultWeight().fillMaxHeight()
+        )
+    }
+}
 
-            Spacer(modifier = GlanceModifier.defaultWeight())
-
-            // 피그마 순서: 오늘 잔액(라벨+금액) → 게이지 → 한도 텍스트.
-            Row(
-                modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.text)),
-                verticalAlignment = Alignment.Vertical.CenterVertically
-            ) {
-                PretendardText(
-                    text = context.getString(R.string.home_today_balance_label),
-                    color = HPBlack,
-                    fontSize = 12.sp.scaled(scale.text),
-                    weight = PretendardWeight.Medium,
-                    maxLines = 1,
-                    modifier = GlanceModifier.width(56.dp.scaled(scale.text)).height(18.dp.scaled(scale.text))
-                )
-                PretendardText(
-                    text = context.getString(R.string.home_amount_won_format, formatWon(challenge.todayBalance)),
-                    color = if (challenge.isOverLimit) HPSub else HPBlack,
-                    fontSize = 20.sp.scaled(scale.text),
-                    weight = PretendardWeight.Bold,
-                    textAlign = WidgetTextAlign.End,
-                    maxLines = 1,
-                    modifier = GlanceModifier.defaultWeight().fillMaxHeight()
-                )
-            }
-            Spacer(modifier = GlanceModifier.height(4.dp.scaled(scale.height)))
-            LinearProgressIndicator(
-                modifier = GlanceModifier
-                    .fillMaxWidth()
-                    .height(10.dp.scaled(scale.height))
-                    .cornerRadius(5.dp.scaled(scale.height)),
-                progress = challenge.balanceRatio,
-                color = ColorProvider(gaugeColor),
-                backgroundColor = ColorProvider(HPGray3)
+@Composable
+@Suppress("LongMethod") // 홈 카드의 두 요약 박스를 한 행 단위로 유지한다.
+private fun SavingsStreak(challenge: HomeChallenge, scale: WidgetScale) {
+    val context = LocalContext.current
+    Row(modifier = GlanceModifier.fillMaxWidth().height(82.dp.scaled(scale.height))) {
+        Column(
+            modifier = GlanceModifier
+                .width(187.dp.scaled(scale.width))
+                .fillMaxHeight()
+                .background(ImageProvider(R.drawable.bg_widget_savings))
+                .padding(vertical = 14.dp.scaled(scale.height)),
+            horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+        ) {
+            PretendardText(
+                text = context.getString(R.string.home_saved_amount_label),
+                color = HPText,
+                fontSize = 14.sp.scaled(scale.text),
+                weight = PretendardWeight.Regular,
+                textAlign = WidgetTextAlign.Center,
+                maxLines = 1,
+                modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.height))
             )
             Spacer(modifier = GlanceModifier.height(4.dp.scaled(scale.height)))
             PretendardText(
-                text = context.getString(R.string.home_limit_label_format, formatWon(challenge.dailyLimit)),
-                color = HPText,
-                fontSize = 11.sp.scaled(scale.text),
-                weight = PretendardWeight.Medium,
-                textAlign = WidgetTextAlign.End,
+                text = if (challenge.savedAmount >= 0) {
+                    context.getString(R.string.home_saved_amount_format, formatWon(challenge.savedAmount))
+                } else {
+                    context.getString(R.string.home_saved_amount_negative_format, formatWon(challenge.savedAmount))
+                },
+                color = if (challenge.savedAmount >= 0) HPMain else HPSub,
+                fontSize = 20.sp.scaled(scale.text),
+                weight = PretendardWeight.Bold,
+                textAlign = WidgetTextAlign.Center,
                 maxLines = 1,
-                modifier = GlanceModifier.fillMaxWidth().height(16.dp.scaled(scale.text))
+                modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height))
             )
+        }
+        Spacer(modifier = GlanceModifier.width(12.dp.scaled(scale.width)))
+        Row(
+            modifier = GlanceModifier
+                .width(124.dp.scaled(scale.width))
+                .fillMaxHeight()
+                .background(ImageProvider(R.drawable.bg_widget_streak))
+                .padding(horizontal = 6.dp.scaled(scale.width), vertical = 14.dp.scaled(scale.height)),
+            verticalAlignment = Alignment.Vertical.CenterVertically
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_widget_fire),
+                contentDescription = null,
+                modifier = GlanceModifier.size(32.dp.scaled(scale.text))
+            )
+            Spacer(modifier = GlanceModifier.width(10.dp.scaled(scale.width)))
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                PretendardText(
+                    text = context.getString(R.string.home_streak_label),
+                    color = HPWhite,
+                    fontSize = 14.sp.scaled(scale.text),
+                    weight = PretendardWeight.Regular,
+                    maxLines = 1,
+                    modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.height))
+                )
+                PretendardText(
+                    text = context.getString(R.string.home_streak_days_format, challenge.streakDays),
+                    color = HPWhite,
+                    fontSize = 20.sp.scaled(scale.text),
+                    weight = PretendardWeight.Bold,
+                    maxLines = 1,
+                    modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height))
+                )
+            }
         }
     }
 }
 
+/** 앱 홈의 챌린지 없음 카드를 재사용하는 로그아웃·로딩·휴식·미진행 상태 화면. */
 @Composable
-private fun StreakBadge(streakDays: Int, scale: WidgetScale, modifier: GlanceModifier = GlanceModifier) {
+@Suppress("LongMethod", "LongParameterList") // 홈의 텍스트와 우측 하단 캐릭터 계층을 한 카드로 유지한다.
+private fun IdleContent(
+    titleRes: Int,
+    subtitle: String,
+    ctaRes: Int,
+    characterRes: Int = R.drawable.img_hamster_normal,
+    characterHeight: Dp = 100.dp,
+    scale: WidgetScale
+) {
     val context = LocalContext.current
     Box(
-        modifier = modifier
-            .background(ColorProvider(HPMain))
-            .cornerRadius(10.dp.scaled(scale.text))
-            .padding(horizontal = 10.dp.scaled(scale.text), vertical = 6.dp.scaled(scale.text))
-    ) {
-        PretendardText(
-            text = context.getString(R.string.home_streak_label) + " " +
-                context.getString(R.string.home_streak_days_format, streakDays),
-            color = HPWhite,
-            fontSize = 13.sp.scaled(scale.text),
-            weight = PretendardWeight.SemiBold,
-            textAlign = WidgetTextAlign.Center,
-            maxLines = 1,
-            modifier = GlanceModifier.width(96.dp.scaled(scale.text)).height(26.dp.scaled(scale.text))
-        )
-    }
-}
-
-/**
- * 휴식기(진행 중인 챌린지 없음) 화면.
- *
- * 피그마 원본은 마스코트를 텍스트 위에 절대좌표로 겹쳐 그리고, 딱 522x230에서만 살짝 안 겹치게
- * 손으로 맞춘 배치라 크기가 조금만 달라져도(리사이즈, 다른 화면 크기) 텍스트와 마스코트가
- * 겹치거나 잘렸다. 그래서 겹칠 수 없는 구조(Row로 텍스트 칸과 마스코트 칸을 아예 분리)로 바꿨다 —
- * 어떤 크기에서도 항상 텍스트 칸(defaultWeight)과 마스코트 칸이 서로 침범하지 않는다.
- */
-@Composable
-private fun NoActiveChallengeContent(scale: WidgetScale) {
-    val context = LocalContext.current
-    // 피그마 좌우 패딩(30px)을 그대로 스케일하면 마스코트까지 더해서 텍스트 칸이 너무 좁아져
-    // "포치와 함께 식비를 절약해봐요"의 끝(요)이 잘리고 "절약"이 "절"/"약"으로 쪼개져 줄바꿈됐다.
-    // 문구가 길어서(피그마보다 실제 폰트 크기를 키워 쓰는 만큼) 패딩은 진행중 상태와 같게 줄였다.
-    Row(
         modifier = GlanceModifier
-            .fillMaxSize()
-            .padding(horizontal = 10.dp.scaled(scale.width), vertical = 12.dp.scaled(scale.height)),
-        verticalAlignment = Alignment.Vertical.Bottom
+            .fillMaxWidth()
+            .height(190.dp.scaled(scale.height))
+            .background(ImageProvider(R.drawable.bg_widget_card))
     ) {
         Column(
-            modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
-            verticalAlignment = Alignment.Vertical.CenterVertically
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp.scaled(scale.width), vertical = 40.dp.scaled(scale.height))
         ) {
             PretendardText(
-                text = context.getString(R.string.home_no_challenge_title),
+                text = context.getString(titleRes),
                 color = HPBlack,
-                fontSize = 15.sp.scaled(scale.text),
-                weight = PretendardWeight.SemiBold,
-                maxLines = 2,
-                modifier = GlanceModifier.fillMaxWidth().height(48.dp.scaled(scale.text))
-            )
-            Spacer(modifier = GlanceModifier.height(4.dp.scaled(scale.height)))
-            PretendardText(
-                text = context.getString(R.string.home_no_challenge_subtitle),
-                color = HPText,
-                fontSize = 12.sp.scaled(scale.text),
-                weight = PretendardWeight.Medium,
+                fontSize = 20.sp.scaled(scale.text),
+                weight = PretendardWeight.BoldAutoSize,
                 maxLines = 1,
-                modifier = GlanceModifier.fillMaxWidth().height(18.dp.scaled(scale.text))
+                modifier = GlanceModifier.fillMaxWidth().height(28.dp.scaled(scale.height))
             )
-            Spacer(modifier = GlanceModifier.height(10.dp.scaled(scale.height)))
+            Spacer(modifier = GlanceModifier.height(6.dp.scaled(scale.height)))
             PretendardText(
-                text = context.getString(R.string.home_no_challenge_cta),
-                color = HPSub1,
-                fontSize = 12.sp.scaled(scale.text),
-                weight = PretendardWeight.SemiBold,
+                text = subtitle,
+                color = HPText,
+                fontSize = 14.sp.scaled(scale.text),
+                weight = PretendardWeight.Regular,
+                maxLines = 1,
+                modifier = GlanceModifier.fillMaxWidth().height(22.dp.scaled(scale.height))
+            )
+            Spacer(modifier = GlanceModifier.height(24.dp.scaled(scale.height)))
+            PretendardText(
+                text = context.getString(ctaRes),
+                color = HPMain,
+                fontSize = 16.sp.scaled(scale.text),
+                weight = PretendardWeight.Bold,
                 maxLines = 1,
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(22.dp.scaled(scale.text))
+                    .height(24.dp.scaled(scale.height))
                     .clickable(actionStartActivity<MainActivity>())
             )
         }
-        Spacer(modifier = GlanceModifier.width(4.dp.scaled(scale.width)))
-        // 피그마 원본 비율(마스코트 160x139, 카드 522x230)을 유지하되, 문구가 길어서 텍스트 칸에
-        // 폭을 더 양보하도록 진행중 상태(76dp)보다 작게 잡았다(비율 160:139 ≈ 1.15는 유지).
-        Image(
-            provider = ImageProvider(R.drawable.img_widget_hamster_normal),
-            contentDescription = context.getString(R.string.cd_hamster_character),
-            modifier = GlanceModifier.size(
-                width = 60.dp.scaled(scale.width),
-                height = 52.dp.scaled(scale.height)
+        Row(
+            modifier = GlanceModifier.fillMaxSize(),
+            verticalAlignment = Alignment.Vertical.Bottom
+        ) {
+            Spacer(modifier = GlanceModifier.defaultWeight())
+            Image(
+                provider = ImageProvider(characterRes),
+                contentDescription = context.getString(R.string.cd_hamster_character),
+                modifier = GlanceModifier.size(
+                    width = 110.dp.scaled(scale.width),
+                    height = characterHeight.scaled(scale.height)
+                )
             )
-        )
+            Spacer(modifier = GlanceModifier.width(12.dp.scaled(scale.width)))
+        }
     }
 }
-
-private fun formatWon(amount: Int): String = "%,d".format(amount)

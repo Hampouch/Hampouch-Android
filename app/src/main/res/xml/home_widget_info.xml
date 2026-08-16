@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 홈 화면 "식비 절약 챌린지" 위젯 설정. 피그마 "위젯" 섹션(522:230, 비율 약 2.27:1)의 가로형 카드 비율을 따른다. -->
+<!-- 기본 4x3에서는 핵심 정보를, 세로 확장 시에는 앱 홈 챌린지 카드 전체를 표시한다. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="250dp"
-    android:minHeight="110dp"
+    android:minWidth="300dp"
+    android:minHeight="220dp"
     android:targetCellWidth="4"
-    android:targetCellHeight="2"
+    android:targetCellHeight="3"
     android:maxResizeWidth="520dp"
-    android:maxResizeHeight="230dp"
+    android:maxResizeHeight="650dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:updatePeriodMillis="1800000"
+    android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/home_widget_loading"
     android:description="@string/widget_home_description"
     android:previewLayout="@layout/home_widget_loading" />

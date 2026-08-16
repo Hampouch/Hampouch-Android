@@ -43,8 +43,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MenuRatingType
-import com.example.hampouch.data.model.TipShareCategory
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.domain.model.MenuRatingType
+import com.example.hampouch.domain.model.TipShareCategory
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
@@ -52,6 +53,7 @@ import com.example.hampouch.ui.theme.HPStar
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
 fun HamTipsSimpleTopBar(title: String, onBackClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -80,6 +82,14 @@ fun HamTipsSimpleTopBar(title: String, onBackClick: () -> Unit, modifier: Modifi
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 작성 상단바")
+@Composable
+private fun HamTipsSimpleTopBarPreview() {
+    HampouchTheme {
+        HamTipsSimpleTopBar(title = "꿀팁 공유하기", onBackClick = {})
+    }
+}
+
 @Composable
 fun HamTipsWriteHeader(overline: String, heading: String, subheading: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -91,9 +101,30 @@ fun HamTipsWriteHeader(overline: String, heading: String, subheading: String, mo
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 작성 헤더")
+@Composable
+private fun HamTipsWriteHeaderPreview() {
+    HampouchTheme {
+        HamTipsWriteHeader(
+            overline = "STEP 1",
+            heading = "어떤 꿀팁을 공유할까요?",
+            subheading = "다른 사용자에게 도움이 되는 절약 팁을 남겨주세요",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun HamTipsFieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(text = text, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold, modifier = modifier)
+}
+
+@Preview(showBackground = true, name = "햄팁 필드 라벨")
+@Composable
+private fun HamTipsFieldLabelPreview() {
+    HampouchTheme {
+        HamTipsFieldLabel(text = "제목", modifier = Modifier.padding(16.dp))
+    }
 }
 
 @Composable
@@ -121,6 +152,14 @@ fun HamTipsCategoryPickerRow(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 카테고리 선택")
+@Composable
+private fun HamTipsCategoryPickerRowPreview() {
+    HampouchTheme {
+        HamTipsCategoryPickerRow(selected = TipShareCategory.SHOPPING, onSelected = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -162,6 +201,19 @@ fun HamTipsWriteTextField(
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 작성 텍스트 필드")
+@Composable
+private fun HamTipsWriteTextFieldPreview() {
+    HampouchTheme {
+        HamTipsWriteTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = "제목을 입력해주세요",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun HamTipsTitlePreviewBox(previewText: String, modifier: Modifier = Modifier) {
     Box(
@@ -181,6 +233,14 @@ fun HamTipsTitlePreviewBox(previewText: String, modifier: Modifier = Modifier) {
         } else {
             Text(text = previewText, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 제목 미리보기 박스")
+@Composable
+private fun HamTipsTitlePreviewBoxPreview() {
+    HampouchTheme {
+        HamTipsTitlePreviewBox(previewText = "편의점 1+1 활용 꿀팁", modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -225,6 +285,14 @@ fun HamTipsPriceInputField(price: Int, onPriceChange: (Int) -> Unit, modifier: M
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 가격 입력 필드")
+@Composable
+private fun HamTipsPriceInputFieldPreview() {
+    HampouchTheme {
+        HamTipsPriceInputField(price = 12_000, onPriceChange = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun HamTipsStarRatingRow(
     type: MenuRatingType,
@@ -254,6 +322,14 @@ fun HamTipsStarRatingRow(
             color = HPText,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 별점 입력")
+@Composable
+private fun HamTipsStarRatingRowPreview() {
+    HampouchTheme {
+        HamTipsStarRatingRow(type = MenuRatingType.TASTE, rating = 4, onRatingChange = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -288,6 +364,14 @@ fun HamTipsSubmitButton(
     }
 }
 
+@Preview(showBackground = true, name = "햄팁 제출 버튼")
+@Composable
+private fun HamTipsSubmitButtonPreview() {
+    HampouchTheme {
+        HamTipsSubmitButton(text = "등록하기", enabled = true, onClick = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun HamTipsFieldCard(modifier: Modifier = Modifier, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     Column(
@@ -298,4 +382,15 @@ fun HamTipsFieldCard(modifier: Modifier = Modifier, content: @Composable android
             .padding(horizontal = 16.dp, vertical = 20.dp),
         content = content
     )
+}
+
+@Preview(showBackground = true, name = "햄팁 필드 카드")
+@Composable
+private fun HamTipsFieldCardPreview() {
+    HampouchTheme {
+        HamTipsFieldCard(modifier = Modifier.padding(16.dp)) {
+            HamTipsFieldLabel(text = "메뉴 이름")
+            HamTipsWriteTextField(value = "", onValueChange = {}, placeholder = "메뉴 이름을 입력해주세요")
+        }
+    }
 }

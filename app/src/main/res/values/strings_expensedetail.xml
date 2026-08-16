@@ -1,5 +1,4 @@
 <resources>
-    <!-- 지출 상세 -->
     <string name="expensedetail_title">지출 상세</string>
 
     <string name="expensedetail_field_expense_name">지출명</string>

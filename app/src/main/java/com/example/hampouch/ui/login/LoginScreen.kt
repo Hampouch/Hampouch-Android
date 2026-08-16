@@ -24,6 +24,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,9 +47,9 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import com.example.hampouch.R
 import com.example.hampouch.core.auth.SocialAuthManager
-import com.example.hampouch.data.model.AuthSession
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.core.auth.SocialSignInCancelledException
+import com.example.hampouch.domain.model.AuthSession
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.common.FooterLinkRow
 import com.example.hampouch.ui.common.LoginTextField
 import com.example.hampouch.ui.common.OrDivider
@@ -63,14 +66,11 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "LoginScreen"
 
-/**
- * 구글 로그인 실패를 사용자에게 보여줄 메시지로 변환한다.
- * 계정 선택창을 취소한 경우는 오류가 아니므로 null을 돌려주고 아무 메시지도 띄우지 않는다.
- */
-private fun googleSignInErrorMessage(error: Throwable): String? = when (error) {
+private fun socialSignInErrorMessage(error: Throwable, fallback: String): String? = when (error) {
+    is SocialSignInCancelledException -> null
     is GetCredentialCancellationException -> null
     is NoCredentialException -> "기기에 로그인된 구글 계정이 없습니다."
-    else -> "구글 로그인에 실패했습니다."
+    else -> fallback
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -78,23 +78,26 @@ private fun googleSignInErrorMessage(error: Throwable): String? = when (error) {
 fun LoginScreen(
     completeDialogMessage: String? = null,
     pendingNicknameSession: AuthSession? = null,
-    onLoginSuccess: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    onNavigateToResetPassword: () -> Unit = {}
+    onLoginSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToResetPassword: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var loginErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var visibleCompleteDialogMessage by remember { mutableStateOf(completeDialogMessage) }
     val coroutineScope = rememberCoroutineScope()
-    val authRepository = remember { AuthRepository.getInstance(context) }
 
-    var pendingSocialSignUp by remember { mutableStateOf(pendingNicknameSession) }
-    var socialNickname by rememberSaveable { mutableStateOf("") }
-    var isSocialNicknameAvailable by remember { mutableStateOf(false) }
-    var socialNicknameCheckMessage by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(pendingNicknameSession) {
+        viewModel.restorePendingSocialSignUp(pendingNicknameSession)
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                LoginEvent.LoggedIn -> onLoginSuccess()
+            }
+        }
+    }
 
     visibleCompleteDialogMessage?.let { message ->
         CompleteDialog(
@@ -103,56 +106,15 @@ fun LoginScreen(
         )
     }
 
-    pendingSocialSignUp?.let { session ->
+    if (uiState.pendingSocialSignUp != null) {
         SocialSignUpNicknameDialog(
-            nickname = socialNickname,
-            onNicknameChange = {
-                socialNickname = it
-                isSocialNicknameAvailable = false
-                socialNicknameCheckMessage = null
-            },
-            onCheckNickname = {
-                coroutineScope.launch {
-                    authRepository.checkNicknameAvailability(socialNickname)
-                        .onSuccess { data ->
-                            isSocialNicknameAvailable = data.available
-                            socialNicknameCheckMessage = if (data.available) {
-                                "사용 가능한 닉네임입니다."
-                            } else {
-                                "이미 존재하는 닉네임입니다."
-                            }
-                        }
-                        .onFailure { error ->
-                            isSocialNicknameAvailable = false
-                            socialNicknameCheckMessage = error.toUserMessage("닉네임 확인에 실패했습니다.")
-                        }
-                }
-            },
-            nicknameCheckMessage = socialNicknameCheckMessage,
-            isSignUpEnabled = isSocialNicknameAvailable,
-            onBack = {
-                pendingSocialSignUp = null
-                socialNickname = ""
-                isSocialNicknameAvailable = false
-                socialNicknameCheckMessage = null
-            },
-            onSignUp = {
-                coroutineScope.launch {
-                    authRepository.completeSocialSignUp(session, socialNickname)
-                        .onSuccess {
-                            pendingSocialSignUp = null
-                            socialNickname = ""
-                            isSocialNicknameAvailable = false
-                            socialNicknameCheckMessage = null
-                            loginErrorMessage = null
-                            onLoginSuccess()
-                        }
-                        .onFailure { error ->
-                            Log.e(TAG, "소셜 회원가입 닉네임 설정 실패", error)
-                            socialNicknameCheckMessage = error.toUserMessage("닉네임 설정에 실패했습니다.")
-                        }
-                }
-            }
+            nickname = uiState.socialNickname,
+            onNicknameChange = viewModel::changeSocialNickname,
+            onCheckNickname = viewModel::checkSocialNickname,
+            nicknameCheckMessage = uiState.socialNicknameCheckMessage,
+            isSignUpEnabled = uiState.isSocialNicknameAvailable,
+            onBack = viewModel::cancelSocialSignUp,
+            onSignUp = viewModel::completeSocialSignUp
         )
     }
 
@@ -185,26 +147,15 @@ fun LoginScreen(
                 label = "카카오로 계속하기",
                 onClick = {
                     SocialAuthManager.signInWithKakao(context) { result ->
-                        result.onSuccess { credential ->
-                            coroutineScope.launch {
-                                authRepository.loginWithSocial(credential)
-                                    .onSuccess { outcome ->
-                                        loginErrorMessage = null
-                                        if (outcome.isNewUser) {
-                                            pendingSocialSignUp = outcome.session
-                                        } else {
-                                            onLoginSuccess()
-                                        }
-                                    }
-                                    .onFailure { error ->
-                                        Log.e(TAG, "카카오 로그인 실패", error)
-                                        loginErrorMessage = error.toUserMessage("카카오 로그인에 실패했습니다.")
-                                    }
+                        result
+                            .onSuccess { credential ->
+                                viewModel.loginWithSocial(credential, "카카오 로그인에 실패했습니다.")
                             }
-                        }.onFailure { error ->
-                            Log.e(TAG, "카카오 로그인 실패", error)
-                            loginErrorMessage = "카카오 로그인에 실패했습니다."
-                        }
+                            .onFailure { error ->
+                                Log.e(TAG, "카카오 로그인 실패", error)
+                                socialSignInErrorMessage(error, "카카오 로그인에 실패했습니다.")
+                                    ?.let(viewModel::showError)
+                            }
                     }
                 }
             )
@@ -217,23 +168,12 @@ fun LoginScreen(
                     coroutineScope.launch {
                         SocialAuthManager.signInWithGoogle(context)
                             .onSuccess { credential ->
-                                authRepository.loginWithSocial(credential)
-                                    .onSuccess { outcome ->
-                                        loginErrorMessage = null
-                                        if (outcome.isNewUser) {
-                                            pendingSocialSignUp = outcome.session
-                                        } else {
-                                            onLoginSuccess()
-                                        }
-                                    }
-                                    .onFailure { error ->
-                                        Log.e(TAG, "구글 로그인 실패", error)
-                                        loginErrorMessage = error.toUserMessage("구글 로그인에 실패했습니다.")
-                                    }
+                                viewModel.loginWithSocial(credential, "구글 로그인에 실패했습니다.")
                             }
                             .onFailure { error ->
                                 Log.e(TAG, "구글 로그인 실패", error)
-                                googleSignInErrorMessage(error)?.let { loginErrorMessage = it }
+                                socialSignInErrorMessage(error, "구글 로그인에 실패했습니다.")
+                                    ?.let(viewModel::showError)
                             }
                     }
                 }
@@ -246,8 +186,8 @@ fun LoginScreen(
             Column(horizontalAlignment = Alignment.Start) {
                 LoginTextField(
                     label = "이메일",
-                    value = email,
-                    onValueChange = { email = it },
+                    value = uiState.email,
+                    onValueChange = viewModel::changeEmail,
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -257,36 +197,36 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
                     label = "비밀번호",
-                    value = password,
-                    onValueChange = { password = it },
+                    value = uiState.password,
+                    onValueChange = viewModel::changePassword,
                     placeholder = "비밀번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    visualTransformation = if (isPasswordVisible) {
+                    visualTransformation = if (uiState.isPasswordVisible) {
                         VisualTransformation.None
                     } else {
                         PasswordVisualTransformation()
                     },
                     trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        IconButton(onClick = viewModel::togglePasswordVisibility) {
                             Image(
                                 modifier = Modifier.size(20.dp),
                                 painter = painterResource(
-                                    id = if (isPasswordVisible) {
+                                    id = if (uiState.isPasswordVisible) {
                                         R.drawable.login_eye
                                     } else {
                                         R.drawable.login_no_eye
                                     }
                                 ),
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                                contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password",
                             )
                         }
                     }
                 )
             }
-            loginErrorMessage?.let { message ->
+            uiState.errorMessage?.let { message ->
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
                     message,
@@ -296,19 +236,8 @@ fun LoginScreen(
             }
             Spacer(modifier = Modifier.size(30.dp))
             Button(
-                onClick = {
-                    coroutineScope.launch {
-                        authRepository.login(email, password)
-                            .onSuccess {
-                                loginErrorMessage = null
-                                onLoginSuccess()
-                            }
-                            .onFailure { error ->
-                                Log.e(TAG, "이메일 로그인 실패", error)
-                                loginErrorMessage = error.toUserMessage("로그인에 실패했습니다.")
-                            }
-                    }
-                },
+                onClick = viewModel::login,
+                enabled = !uiState.isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -344,7 +273,10 @@ private fun SocialLoginButton(
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = HPWhite)
+        colors = ButtonDefaults.buttonColors(
+            containerColor = HPWhite,
+            contentColor = HPBlack
+        )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -357,7 +289,7 @@ private fun SocialLoginButton(
                 modifier = Modifier.size(35.dp)
             )
             Spacer(modifier = Modifier.size(13.dp))
-            Text(label, color = HPBlack, style = MaterialTheme.typography.bodyMedium)
+            Text(label, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -366,6 +298,6 @@ private fun SocialLoginButton(
 @Composable
 fun LoginScreenPreview() {
     HampouchTheme {
-        LoginScreen()
+        LoginScreen(onLoginSuccess = {}, onNavigateToSignUp = {}, onNavigateToResetPassword = {})
     }
 }

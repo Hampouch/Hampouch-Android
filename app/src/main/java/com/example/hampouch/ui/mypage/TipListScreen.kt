@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.ui.hamtips.HamTipsMockData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,11 +18,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.TipPostCard
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPText
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
@@ -31,8 +33,8 @@ fun TipListScreen(
     tips: List<TipPost>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onTipClick: (TipPost) -> Unit = {},
-    onNotificationClick: () -> Unit = {}
+    onTipClick: (TipPost) -> Unit,
+    onNotificationClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -43,7 +45,7 @@ fun TipListScreen(
             title = title,
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(horizontal = 20.dp)
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         if (tips.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -74,8 +76,8 @@ private fun MyTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
-            tips = MyPageMockData.myTips(),
-            onBackClick = {}
+            tips = MyPageMockData.myTips(HamTipsMockData.allPosts(), AccountMockDataSource.normalUser.id),
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -88,7 +90,7 @@ private fun MyTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -100,8 +102,8 @@ private fun SavedTipsScreenFilledPreview() {
         TipListScreen(
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
-            tips = MyPageMockData.savedTips(),
-            onBackClick = {}
+            tips = MyPageMockData.savedTips(HamTipsMockData.allPosts()),
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }
@@ -114,7 +116,7 @@ private fun SavedTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}
+            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
         )
     }
 }

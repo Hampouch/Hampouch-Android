@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -59,10 +61,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.ui.home.HomeCategoryCatalog
@@ -73,6 +77,8 @@ import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.theme.HampouchTheme
+import java.time.LocalDate
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
 
@@ -100,9 +106,16 @@ fun resolveCategoryColor(categoryId: String?): Color =
 
 @Composable
 fun resolveCategoryLabel(categoryId: String?, customCategoryName: String?): String =
-    customCategoryName
-        ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
+    resolveCategoryLabelOrNull(categoryId, customCategoryName)
         ?: stringResource(R.string.category_etc)
+
+/**
+ * 카테고리를 고르지 않았으면 null. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
+ * 라벨을 생략할 수 있는 화면(홈 카드, 저장 확인)에서 쓴다.
+ */
+@Composable
+fun resolveCategoryLabelOrNull(categoryId: String?, customCategoryName: String?): String? =
+    customCategoryName ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }
 
 @Composable
 fun resolveReasonLabel(reasonId: String?, customReason: String?): String? =
@@ -138,6 +151,14 @@ fun ExpenseDetailTopBar(
     )
 }
 
+@Preview(showBackground = true, name = "지출 상세 상단바")
+@Composable
+private fun ExpenseDetailTopBarPreview() {
+    HampouchTheme {
+        ExpenseDetailTopBar(onBackClick = {})
+    }
+}
+
 @Composable
 fun ExpenseDeleteIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     IconButton(onClick = onClick, modifier = modifier) {
@@ -146,6 +167,14 @@ fun ExpenseDeleteIconButton(onClick: () -> Unit, modifier: Modifier = Modifier) 
             contentDescription = stringResource(R.string.cd_delete_expense),
             tint = HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 삭제 버튼")
+@Composable
+private fun ExpenseDeleteIconButtonPreview() {
+    HampouchTheme {
+        ExpenseDeleteIconButton(onClick = {})
     }
 }
 
@@ -172,6 +201,14 @@ fun CategoryIconCircle(
     }
 }
 
+@Preview(showBackground = true, name = "카테고리 아이콘 원")
+@Composable
+private fun CategoryIconCirclePreview() {
+    HampouchTheme {
+        CategoryIconCircle(categoryId = "cafe", customCategoryName = null)
+    }
+}
+
 @Composable
 fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
     Box(
@@ -184,6 +221,14 @@ fun ReasonTagPill(label: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Preview(showBackground = true, name = "사유 태그 알약")
+@Composable
+private fun ReasonTagPillPreview() {
+    HampouchTheme {
+        ReasonTagPill(label = "스트레스")
+    }
+}
+
 @Composable
 fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
@@ -193,6 +238,14 @@ fun DashedDivider(modifier: Modifier = Modifier, color: Color = HPGray4) {
             .height(1.dp)
     ) {
         drawLine(color, Offset.Zero, Offset(size.width, 0f), pathEffect = dash)
+    }
+}
+
+@Preview(showBackground = true, name = "점선 구분선")
+@Composable
+private fun DashedDividerPreview() {
+    HampouchTheme {
+        DashedDivider(modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -214,6 +267,14 @@ fun ExpenseInfoRow(label: String, value: String, modifier: Modifier = Modifier) 
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 정보 행")
+@Composable
+private fun ExpenseInfoRowPreview() {
+    HampouchTheme {
+        ExpenseInfoRow(label = "날짜", value = "2026년 8월 16일")
     }
 }
 
@@ -247,27 +308,19 @@ fun ExpensePhotoViewRow(photoUris: List<String>, modifier: Modifier = Modifier) 
     }
 }
 
+@Preview(showBackground = true, name = "지출 사진 보기 행")
 @Composable
-fun <T> ThreeColumnChipGrid(
-    items: List<T>,
-    modifier: Modifier = Modifier,
-    chip: @Composable (T) -> Unit
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items.chunked(3).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                rowItems.forEach { item ->
-                    Box(modifier = Modifier.weight(1f)) { chip(item) }
-                }
-                repeat(3 - rowItems.size) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
+private fun ExpensePhotoViewRowPreview() {
+    HampouchTheme {
+        ExpensePhotoViewRow(photoUris = listOf(MockPhotoUri, MockPhotoUri))
     }
+}
+
+private val ChoiceChipMinHeight = 40.dp
+
+sealed interface ChoiceChipIcon {
+    data class Vector(val image: ImageVector, val tint: Color = HPText) : ChoiceChipIcon
+    data class Resource(val id: Int) : ChoiceChipIcon
 }
 
 @Composable
@@ -276,18 +329,18 @@ fun ChoiceChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    iconRes: Int? = null,
-    iconTint: Color = HPText,
+    icon: ChoiceChipIcon? = null,
     iconSize: Dp = 16.dp,
-    iconSpacing: Dp = 4.dp
+    iconSpacing: Dp = 4.dp,
+    maxLines: Int = Int.MAX_VALUE
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
     val contentColor = if (selected) HPWhite else HPBlack
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .fillMaxHeight()
+            .heightIn(min = ChoiceChipMinHeight)
             .clip(RoundedCornerShape(50))
             .background(backgroundColor)
             .border(
@@ -296,33 +349,51 @@ fun ChoiceChip(
                 shape = RoundedCornerShape(50)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (iconRes != null) {
-            Image(
-                painter = painterResource(iconRes),
+        when (icon) {
+            is ChoiceChipIcon.Resource -> Image(
+                painter = painterResource(icon.id),
                 contentDescription = null,
                 modifier = Modifier.size(iconSize)
             )
-            Spacer(modifier = Modifier.width(iconSpacing))
-        } else if (icon != null) {
-            Icon(
-                imageVector = icon,
+            is ChoiceChipIcon.Vector -> Icon(
+                imageVector = icon.image,
                 contentDescription = null,
-                tint = if (selected) HPWhite else iconTint,
+                tint = if (selected) HPWhite else icon.tint,
                 modifier = Modifier.size(iconSize)
             )
+            null -> Unit
+        }
+        if (icon != null) {
             Spacer(modifier = Modifier.width(iconSpacing))
         }
         Text(
             label,
+            modifier = Modifier.weight(1f, fill = false),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
-            maxLines = 1
+            textAlign = TextAlign.Center,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true, name = "선택 칩")
+@Composable
+private fun ChoiceChipPreview() {
+    HampouchTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ChoiceChip(label = "스트레스", selected = true, onClick = {})
+            ChoiceChip(label = "보상", selected = false, onClick = {})
+        }
     }
 }
 
@@ -377,6 +448,19 @@ fun ExpenseTextField(
     }
 }
 
+@Preview(showBackground = true, name = "지출 텍스트 입력")
+@Composable
+private fun ExpenseTextFieldPreview() {
+    HampouchTheme {
+        ExpenseTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = "메모를 입력하세요",
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun AmountTextField(
     amount: Int,
@@ -393,6 +477,14 @@ fun AmountTextField(
         modifier = modifier,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
+}
+
+@Preview(showBackground = true, name = "금액 입력")
+@Composable
+private fun AmountTextFieldPreview() {
+    HampouchTheme {
+        AmountTextField(amount = 4500, onAmountChange = {}, modifier = Modifier.padding(16.dp))
+    }
 }
 
 @Composable
@@ -413,6 +505,16 @@ fun ExpenseFormSection(
         }
         Spacer(modifier = Modifier.height(10.dp))
         content()
+    }
+}
+
+@Preview(showBackground = true, name = "지출 폼 섹션")
+@Composable
+private fun ExpenseFormSectionPreview() {
+    HampouchTheme {
+        ExpenseFormSection(label = "카테고리", modifier = Modifier.padding(16.dp)) {
+            Text("카페", style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        }
     }
 }
 
@@ -521,6 +623,20 @@ fun ExpensePhotoEditSection(
                 AddPhotoTile(onClick = { addLauncher() })
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "지출 사진 편집 섹션")
+@Composable
+private fun ExpensePhotoEditSectionPreview() {
+    HampouchTheme {
+        ExpensePhotoEditSection(
+            photoUris = listOf(MockPhotoUri, MockPhotoUri),
+            onPhotosAdded = {},
+            onPhotosRemoved = {},
+            onPhotoReplaced = { _, _ -> },
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -634,10 +750,10 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun ExpenseSummaryCard(
-    record: com.example.hampouch.data.model.ExpenseRecord,
+    record: com.example.hampouch.domain.model.ExpenseRecord,
     modifier: Modifier = Modifier
 ) {
-    val categoryLabel = resolveCategoryLabel(record.categoryId, record.customCategoryName)
+    val categoryLabel = resolveCategoryLabelOrNull(record.categoryId, record.customCategoryName)
     val reasonLabel = resolveReasonLabel(record.reasonId, record.customReason)
     Row(
         modifier = modifier
@@ -665,26 +781,48 @@ fun ExpenseSummaryCard(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(
-                    record.expenseName ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = HPBlack,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    categoryLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HPText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                if (record.expenseName != null) {
+                    Text(
+                        record.expenseName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = HPBlack,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (categoryLabel != null) {
+                    Text(
+                        categoryLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
         ReasonTagAndAmountColumn(
             reasonTag = reasonLabel,
             amountText = stringResource(R.string.expensedetail_amount_won_format, formatWon(record.amount))
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "지출 요약 카드")
+@Composable
+private fun ExpenseSummaryCardPreview() {
+    HampouchTheme {
+        ExpenseSummaryCard(
+            record = ExpenseRecord(
+                id = "preview1",
+                date = LocalDate.of(2026, 8, 16),
+                amount = 4500,
+                categoryId = "cafe",
+                expenseName = "스타벅스",
+                reasonId = "stress"
+            ),
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -714,5 +852,13 @@ fun ExpenseDateField(
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+    }
+}
+
+@Preview(showBackground = true, name = "지출 날짜 필드")
+@Composable
+private fun ExpenseDateFieldPreview() {
+    HampouchTheme {
+        ExpenseDateField(label = "2026년 8월 16일", onClick = {}, modifier = Modifier.padding(16.dp))
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,12 +49,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.toUserMessage
+import kotlinx.coroutines.launch
 import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.dialog.CompleteDialog
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ProfileAvatar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
@@ -69,23 +70,27 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun ProfileEditScreen(
     currentName: String,
     currentAvatarUri: String?,
-    isNicknameTaken: (String) -> Boolean,
+    onValidateNickname: suspend (String) -> Result<Boolean>,
     onBackClick: () -> Unit,
     onSubmit: (newName: String, newAvatarUri: String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit
 ) {
     var isEditingName by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var avatarUri by remember { mutableStateOf(currentAvatarUri) }
-    var showPhotoSheet by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
     val nicknameFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    var isCheckingNickname by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val emptyNicknameMessage = stringResource(R.string.profile_edit_nickname_empty)
     val duplicateErrorMessage = stringResource(R.string.profile_edit_nickname_duplicate)
-    val isCompleteEnabled = errorMessage == null && !(isEditingName && nicknameInput.trim().isEmpty())
+    val nicknameCheckFailedMessage = stringResource(R.string.profile_edit_nickname_check_failed)
+    val isCompleteEnabled = errorMessage == null && !isCheckingNickname &&
+        !(isEditingName && nicknameInput.trim().isEmpty())
 
     LaunchedEffect(isEditingName) {
         if (isEditingName) {
@@ -100,7 +105,6 @@ fun ProfileEditScreen(
         if (uri != null) {
             avatarUri = uri.toString()
         }
-        showPhotoSheet = false
     }
 
     Column(
@@ -108,11 +112,11 @@ fun ProfileEditScreen(
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.profile_edit_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier
@@ -136,7 +140,9 @@ fun ProfileEditScreen(
                             .clip(CircleShape)
                             .background(HPWhite)
                             .border(1.dp, HPGray4, CircleShape)
-                            .clickable { showPhotoSheet = true },
+                            .clickable {
+                                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -215,8 +221,23 @@ fun ProfileEditScreen(
                     val finalName = if (isEditingName) nicknameInput.trim() else currentName
                     when {
                         isEditingName && finalName.isEmpty() -> errorMessage = emptyNicknameMessage
-                        isEditingName && isNicknameTaken(finalName) -> errorMessage = duplicateErrorMessage
-                        else -> showCompleteDialog = true
+                        !isEditingName -> showCompleteDialog = true
+                        else -> coroutineScope.launch {
+                            isCheckingNickname = true
+                            onValidateNickname(finalName)
+                                .onSuccess { taken ->
+                                    if (taken) {
+                                        errorMessage = duplicateErrorMessage
+                                    } else {
+                                        errorMessage = null
+                                        showCompleteDialog = true
+                                    }
+                                }
+                                .onFailure { error ->
+                                    errorMessage = error.toUserMessage(nicknameCheckFailedMessage)
+                                }
+                            isCheckingNickname = false
+                        }
                     }
                 },
                 enabled = isCompleteEnabled,
@@ -231,15 +252,6 @@ fun ProfileEditScreen(
         }
     }
 
-    if (showPhotoSheet) {
-        ProfileEditPhotoSheet(
-            onAlbumSelectClick = {
-                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            },
-            onDismiss = { showPhotoSheet = false }
-        )
-    }
-
     if (showCompleteDialog) {
         CompleteDialog(
             message = stringResource(R.string.profile_edit_success_message),
@@ -252,54 +264,6 @@ fun ProfileEditScreen(
     }
 }
 
-@Composable
-private fun ProfileEditPhotoSheet(
-    onAlbumSelectClick: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(onClick = onDismiss)
-            )
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                    .background(HPWhite)
-            ) {
-                ProfileEditSheetRow(
-                    label = stringResource(R.string.profile_edit_album_select),
-                    onClick = onAlbumSelectClick
-                )
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HPGray4))
-                ProfileEditSheetRow(
-                    label = stringResource(R.string.profile_edit_close),
-                    onClick = onDismiss
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileEditSheetRow(label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 18.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
-    }
-}
 
 @Preview(showBackground = true, name = "9. 프로필 수정")
 @Composable
@@ -308,9 +272,9 @@ private fun ProfileEditScreenPreview() {
         ProfileEditScreen(
             currentName = "절약왕 민준",
             currentAvatarUri = null,
-            isNicknameTaken = { it == "햄포치" },
+            onValidateNickname = { Result.success(it == "햄포치") },
             onBackClick = {},
-            onSubmit = { _, _ -> }
+            onSubmit = { _, _ -> }, onNotificationClick = {}
         )
     }
 }

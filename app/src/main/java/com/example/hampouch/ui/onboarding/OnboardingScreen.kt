@@ -7,72 +7,93 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.hampouch.data.model.ChallengePeriodType
-import com.example.hampouch.data.model.OnboardingRequest
+import com.example.hampouch.domain.model.OnboardingRequest
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.ui.dialog.OnboardingExistingLoginConfirmDialog
 import com.example.hampouch.ui.dialog.OnboardingSkipConfirmDialog
-import com.example.hampouch.ui.onboarding.steps.CategorySelectStep
 import com.example.hampouch.ui.onboarding.steps.ChallengeGoalStep
 import com.example.hampouch.ui.onboarding.steps.ExpenseDiagnosisStep
 import com.example.hampouch.ui.onboarding.steps.PeriodStep
 import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlin.math.roundToInt
-
-private fun buildOnboardingRequest(uiState: OnboardingUiState): OnboardingRequest {
-    val periodType = when (uiState.challengePeriodDays) {
-        7 -> ChallengePeriodType.ONE_WEEK
-        14 -> ChallengePeriodType.TWO_WEEKS
-        30 -> ChallengePeriodType.ONE_MONTH
-        else -> ChallengePeriodType.CUSTOM
-    }
-    val impliedPeriodDays = OnboardingCalculations.impliedPeriodDays(uiState)
-    val recommendedTotalTarget =
-        OnboardingCalculations.recommendedTotalTarget(uiState.lastMonthFoodExpense, impliedPeriodDays)
-    val totalTarget = uiState.totalTargetAmount ?: recommendedTotalTarget
-    val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
-        totalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
-    }
-    return OnboardingRequest(
-        lastMonthFoodExpense = uiState.lastMonthFoodExpense,
-        challengePeriodType = periodType,
-        customPeriodDays = uiState.challengePeriodDays,
-        dateFixed = uiState.dateFixed,
-        startDate = uiState.startDate,
-        dailyTargetAmount = dailyTarget,
-        totalTargetAmount = totalTarget,
-        topSpendingCategoryIds = uiState.selectedCategoryIds.toList()
-    )
-}
 
 @Composable
 fun OnboardingRoute(
     onOnboardingComplete: (OnboardingRequest) -> Unit,
-    onNavigateToLogin: () -> Unit = {},
+    onNavigateToLogin: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: OnboardingViewModel = hiltViewModel()
+) {
+    val flowState by viewModel.uiState.collectAsStateWithLifecycle()
+    OnboardingScreen(
+        flowState = flowState,
+        onNavigateToLogin = onNavigateToLogin,
+        onFinishSplash = viewModel::finishSplash,
+        onExpenseChange = viewModel::changeExpense,
+        onPeriodEnabledChange = viewModel::changePeriodEnabled,
+        onPeriodChange = viewModel::changePeriod,
+        onDateFixedChange = viewModel::changeDateFixed,
+        onStartDateChange = viewModel::changeStartDate,
+        onTotalTargetChange = viewModel::changeTotalTarget,
+        onNext = viewModel::next,
+        onBack = viewModel::back,
+        onShowSkip = viewModel::showSkipConfirmation,
+        onDismissSkip = viewModel::dismissSkipConfirmation,
+        onShowExistingLogin = viewModel::showExistingLoginConfirmation,
+        onDismissExistingLogin = viewModel::dismissExistingLoginConfirmation,
+        onSubmit = { viewModel.buildRequest()?.let(onOnboardingComplete) },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun OnboardingScreen(
+    flowState: OnboardingFlowUiState,
+    onNavigateToLogin: () -> Unit,
+    onFinishSplash: () -> Unit,
+    onExpenseChange: (Int) -> Unit,
+    onPeriodEnabledChange: (Boolean) -> Unit,
+    onPeriodChange: (Int) -> Unit,
+    onDateFixedChange: (Boolean) -> Unit,
+    onStartDateChange: (java.time.LocalDate) -> Unit,
+    onTotalTargetChange: (Int) -> Unit,
+    onNext: () -> Unit,
+    onBack: () -> Unit,
+    onShowSkip: () -> Unit,
+    onDismissSkip: () -> Unit,
+    onShowExistingLogin: () -> Unit = onNavigateToLogin,
+    onDismissExistingLogin: () -> Unit = {},
+    onSubmit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var step by rememberSaveable { mutableStateOf(OnboardingStep.SPLASH) }
-    var uiState by rememberSaveable(stateSaver = OnboardingUiStateSaver) { mutableStateOf(OnboardingUiState()) }
-    var showSkipConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    val step = flowState.step
+    val uiState = flowState.draft
 
-    BackHandler(enabled = step != OnboardingStep.SPLASH && step != OnboardingStep.EXPENSE_DIAGNOSIS) {
+    BackHandler(enabled = step != OnboardingStep.SPLASH) {
         when (step) {
-            OnboardingStep.PERIOD_SETTING -> step = OnboardingStep.EXPENSE_DIAGNOSIS
-            OnboardingStep.GOAL_SETTING -> step = OnboardingStep.PERIOD_SETTING
-            OnboardingStep.CATEGORY_SELECT -> step = OnboardingStep.GOAL_SETTING
+            OnboardingStep.PERIOD_SETTING, OnboardingStep.GOAL_SETTING -> onBack()
             else -> Unit
         }
     }
 
-    if (showSkipConfirmDialog) {
+    if (flowState.showSkipConfirmDialog) {
         OnboardingSkipConfirmDialog(
-            onCancel = { showSkipConfirmDialog = false },
+            onCancel = onDismissSkip,
             onConfirm = {
-                showSkipConfirmDialog = false
+                onDismissSkip()
+                onNavigateToLogin()
+            }
+        )
+    }
+
+    if (flowState.showExistingLoginConfirmDialog) {
+        OnboardingExistingLoginConfirmDialog(
+            onCancel = onDismissExistingLogin,
+            onConfirm = {
+                onDismissExistingLogin()
                 onNavigateToLogin()
             }
         )
@@ -86,61 +107,35 @@ fun OnboardingRoute(
     ) { currentStep ->
         when (currentStep) {
             OnboardingStep.SPLASH -> SplashStep(
-                onTimeout = { step = OnboardingStep.EXPENSE_DIAGNOSIS }
+                onTimeout = onFinishSplash
             )
 
             OnboardingStep.EXPENSE_DIAGNOSIS -> ExpenseDiagnosisStep(
                 state = uiState,
-                onExpenseChange = { uiState = uiState.copy(lastMonthFoodExpense = it) },
-                onNext = { step = OnboardingStep.PERIOD_SETTING },
-                onBack = {},
-                onSkipClick = { showSkipConfirmDialog = true },
-                onNavigateToLogin = { showSkipConfirmDialog = true },
-                onExistingMemberLogin = onNavigateToLogin
+                onExpenseChange = onExpenseChange,
+                onNext = onNext,
+                onBack = onNavigateToLogin,
+                onSkipClick = onShowSkip,
+                onNavigateToLogin = onShowSkip,
+                onExistingMemberLogin = onShowExistingLogin
             )
 
             OnboardingStep.PERIOD_SETTING -> PeriodStep(
                 state = uiState,
-                onPeriodEnabledChange = { enabled ->
-                    uiState = uiState.copy(
-                        periodEnabled = enabled,
-                        dateFixed = if (enabled) false else uiState.dateFixed
-                    )
-                },
-                onPeriodChange = { uiState = uiState.copy(challengePeriodDays = it) },
-                onDateFixedChange = { enabled ->
-                    uiState = uiState.copy(
-                        dateFixed = enabled,
-                        periodEnabled = if (enabled) false else uiState.periodEnabled
-                    )
-                },
-                onStartDateChange = { uiState = uiState.copy(startDate = it) },
-                onNext = { step = OnboardingStep.GOAL_SETTING },
-                onBack = { step = OnboardingStep.EXPENSE_DIAGNOSIS },
-                onNavigateToLogin = { showSkipConfirmDialog = true }
+                onPeriodEnabledChange = onPeriodEnabledChange,
+                onPeriodChange = onPeriodChange,
+                onDateFixedChange = onDateFixedChange,
+                onStartDateChange = onStartDateChange,
+                onNext = onNext,
+                onBack = onBack,
+                onNavigateToLogin = onShowSkip
             )
 
             OnboardingStep.GOAL_SETTING -> ChallengeGoalStep(
                 state = uiState,
-                onTotalTargetChange = { uiState = uiState.copy(totalTargetAmount = it) },
-                onNext = { step = OnboardingStep.CATEGORY_SELECT },
-                onBack = { step = OnboardingStep.PERIOD_SETTING },
-                onNavigateToLogin = { showSkipConfirmDialog = true }
-            )
-
-            OnboardingStep.CATEGORY_SELECT -> CategorySelectStep(
-                selectedCategoryIds = uiState.selectedCategoryIds,
-                onToggleCategory = { categoryId ->
-                    uiState = uiState.copy(
-                        selectedCategoryIds = if (categoryId in uiState.selectedCategoryIds) {
-                            uiState.selectedCategoryIds - categoryId
-                        } else {
-                            uiState.selectedCategoryIds + categoryId
-                        }
-                    )
-                },
-                onStart = { onOnboardingComplete(buildOnboardingRequest(uiState)) },
-                onBack = { step = OnboardingStep.GOAL_SETTING }
+                onTotalTargetChange = onTotalTargetChange,
+                onNext = onSubmit,
+                onBack = onBack
             )
         }
     }
@@ -150,6 +145,14 @@ fun OnboardingRoute(
 @Composable
 private fun OnboardingRoutePreview() {
     HampouchTheme {
-        OnboardingRoute(onOnboardingComplete = {})
+        OnboardingScreen(
+            flowState = OnboardingFlowUiState(),
+            onNavigateToLogin = {}, onFinishSplash = {},
+            onExpenseChange = {}, onPeriodEnabledChange = {}, onPeriodChange = {},
+            onDateFixedChange = {}, onStartDateChange = {}, onTotalTargetChange = {},
+            onNext = {}, onBack = {}, onShowSkip = {}, onDismissSkip = {},
+            onShowExistingLogin = {}, onDismissExistingLogin = {},
+            onSubmit = {}
+        )
     }
 }

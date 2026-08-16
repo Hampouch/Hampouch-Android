@@ -33,8 +33,8 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
 
-private const val LoadingDurationMillis = 2000L
-private const val LoadingDotIntervalMillis = 400L
+private const val LoadingDurationMillis = 1400L
+private const val LoadingDotIntervalMillis = 250L
 private const val LoadingMaxDotCount = 3
 
 @Composable

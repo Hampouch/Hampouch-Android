@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.nextchallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,10 +47,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +62,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
@@ -79,14 +83,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.OnboardingRequest
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
+import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriod
+import com.example.hampouch.domain.model.FixedDateChallengeDraft
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
-import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
 import com.example.hampouch.ui.onboarding.components.FocusHandoffDelayMillis
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
@@ -111,6 +116,7 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -144,9 +150,12 @@ internal fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
 internal fun monthlyTotalDays(startDate: LocalDate, referenceToday: LocalDate = LocalDate.now()): Int {
-    val effectiveStart = if (startDate.isBefore(referenceToday)) referenceToday else startDate
-    val periodEnd = effectiveStart.plusMonths(1).minusDays(1)
-    return ChronoUnit.DAYS.between(effectiveStart, periodEnd).toInt() + 1
+    val periodEnd = if (startDate.isAfter(referenceToday)) {
+        startDate.minusDays(1)
+    } else {
+        referenceToday.plusMonths(1).minusDays(1)
+    }
+    return ChronoUnit.DAYS.between(referenceToday, periodEnd).toInt() + 1
 }
 
 private fun buildRecommendationMessage(
@@ -183,25 +192,47 @@ private fun buildRecommendationMessage(
 }
 
 @Composable
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 fun NextChallengeRoute(
     previousResult: ChallengeResultUiState,
     suggestedTargetAmount: Int,
+    fixedDateDraft: FixedDateChallengeDraft? = null,
     onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
-    var periodEnabled by remember(previousResult) { mutableStateOf(true) }
-    var periodDays by remember(previousResult) { mutableStateOf<Int?>(previousResult.totalDays) }
+    var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
+    var periodDays by remember(previousResult, fixedDateDraft) {
+        mutableStateOf<Int?>(if (fixedDateDraft == null) previousResult.totalDays else null)
+    }
     var customPeriodDays by remember(previousResult) { mutableStateOf<Int?>(null) }
-    var dateFixed by remember(previousResult) { mutableStateOf(false) }
-    var startDate by remember(previousResult) { mutableStateOf<LocalDate?>(null) }
-    var targetAmount by remember(suggestedTargetAmount) { mutableStateOf<Int?>(suggestedTargetAmount) }
-    var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
+    var dateFixed by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft != null) }
+    var startDate by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft?.nextStartDate) }
+    var targetAmount by remember(suggestedTargetAmount, fixedDateDraft) {
+        mutableStateOf<Int?>(fixedDateDraft?.budgetTotal ?: suggestedTargetAmount)
+    }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                NextChallengeEvent.Started -> onStartChallengeClick()
+                is NextChallengeEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    LaunchedEffect(viewModel, fixedDateDraft) {
+        if (fixedDateDraft == null) viewModel.loadRecommendation()
+    }
+    val coroutineScope = rememberCoroutineScope()
 
-    val recommendationMessage = remember(previousResult, suggestedTargetAmount) {
-        buildRecommendationMessage(previousResult, suggestedTargetAmount)
+    val serverRecommendationMessage by viewModel.recommendationMessage.collectAsStateWithLifecycle()
+    val recommendationMessage = remember(previousResult, suggestedTargetAmount, serverRecommendationMessage) {
+        serverRecommendationMessage?.let { AnnotatedString(it) }
+            ?: buildRecommendationMessage(previousResult, suggestedTargetAmount)
     }
     val effectivePeriodDays = customPeriodDays?.takeIf { it > 0 }
         ?: periodDays?.takeIf { it > 0 }
@@ -224,8 +255,7 @@ fun NextChallengeRoute(
             (currentCustomPeriodDays < MinPeriodDays || currentCustomPeriodDays > MaxPeriodDays)
     val canStartChallenge = isPeriodOrDateSelected &&
             !customPeriodDaysOutOfRange &&
-            (targetAmount ?: 0) > 0 &&
-            selectedCategoryIds.isNotEmpty()
+            (targetAmount ?: 0) > 0
 
     Scaffold(
         modifier = modifier.imePadding(),
@@ -240,24 +270,38 @@ fun NextChallengeRoute(
         ) {
             NextChallengeTopBar(onBack = onBackClick)
 
-            val (heroTitle, heroSubtitle) = if (previousResult.status == ChallengeResultStatus.FAIL) {
-                "괜찮아요!" to "조금 더 쉽게 도전해봐요."
-            } else {
-                "성공이에요!" to "한 단계 올라가 볼까요?"
+            val (heroTitle, heroSubtitle) = when {
+                fixedDateDraft != null -> "약속한 날짜가 됐어요." to "이어서 시작할게요!"
+                previousResult.status == ChallengeResultStatus.FAIL ->
+                    "괜찮아요!" to "조금 더 쉽게 도전해봐요."
+                else -> "성공이에요!" to "한 단계 올라가 볼까요?"
             }
-            NextChallengeHeroCard(title = heroTitle, subtitle = heroSubtitle)
+            NextChallengeHeroCard(
+                title = heroTitle,
+                subtitle = heroSubtitle,
+                backgroundColor = if (fixedDateDraft != null) HPSub3 else HPSub4
+            )
             Spacer(modifier = Modifier.height(20.dp))
-            Column {
-                Text("챌린지 결과", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
-                Spacer(modifier = Modifier.height(10.dp))
-                PreviousResultCard(result = previousResult)
-            }
+            if (fixedDateDraft == null) {
+                Column {
+                    Text("챌린지 결과", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PreviousResultCard(result = previousResult)
+                }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            PochiRecommendationCard(status = previousResult.status, message = recommendationMessage)
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+                PochiRecommendationCard(status = previousResult.status, message = recommendationMessage)
+                Spacer(modifier = Modifier.height(20.dp))
+            }
             Column {
                 Text("챌린지 설정", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
+                if (fixedDateDraft != null) {
+                    Text(
+                        "기간 선택으로 설정 시 등록된 고정 챌린지 정보는 사라져요.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPSub
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
                 ChallengeSettingsSection(
                     periodEnabled = periodEnabled,
@@ -287,7 +331,8 @@ fun NextChallengeRoute(
                         }
                     },
                     startDateText = startDateText,
-                    onStartDateClick = { showDatePicker = true }
+                    onStartDateClick = { showDatePicker = true },
+                    containerColor = if (fixedDateDraft != null) HPSub3 else HPSub4
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
@@ -295,7 +340,7 @@ fun NextChallengeRoute(
                 modifier = modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
+                    .background(if (fixedDateDraft != null) HPSub3 else HPSub4)
                     .padding(horizontal = 15.dp, vertical = 20.dp)
             ) {
                 Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
@@ -325,49 +370,6 @@ fun NextChallengeRoute(
                         textAlign = TextAlign.End,
                         modifier = Modifier.fillMaxWidth()
                     )
-                }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
-            ) {
-                Text("카테고리", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(6.dp))
-                OnboardingBulletList(
-                    lines = listOf(
-                        "중복 선택 가능",
-                        "선택한 카테고리 소비 시 개입이 강해져요."
-                    )
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                HomeCategoryCatalog.categories.chunked(3).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        row.forEach { category ->
-                            CategoryIconChip(
-                                label = stringResource(category.labelResId),
-                                iconRes = CategoryIconRes[category.id] ?: R.drawable.icon_etc,
-                                selected = category.id in selectedCategoryIds,
-                                onClick = {
-                                    selectedCategoryIds = if (category.id in selectedCategoryIds) {
-                                        selectedCategoryIds - category.id
-                                    } else {
-                                        selectedCategoryIds + category.id
-                                    }
-                                }
-                            )
-                        }
-                        repeat(3 - row.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
             Spacer(modifier = Modifier.height(30.dp))
@@ -412,14 +414,23 @@ fun NextChallengeRoute(
             onConfirm = {
                 showStartConfirmDialog = false
                 val request = OnboardingRequest(
-                    dateFixed = dateFixed,
-                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
-                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
-                    totalTargetAmount = targetAmount ?: suggestedTargetAmount,
-                    topSpendingCategoryIds = selectedCategoryIds.toList()
+                    period = if (dateFixed) {
+                        ChallengePeriod.FixedStart(requireNotNull(startDate))
+                    } else {
+                        ChallengePeriod.Duration(effectivePeriodDays)
+                    },
+                    dailyTargetAmount = (targetAmount ?: suggestedTargetAmount) / effectivePeriodDays,
+                    totalTargetAmount = targetAmount ?: suggestedTargetAmount
                 )
-                ChallengeRepository.startNewChallenge(request)
-                onStartChallengeClick()
+                if (fixedDateDraft != null && dateFixed) {
+                    viewModel.startFixedDateChallenge(
+                        draft = fixedDateDraft,
+                        startDate = requireNotNull(startDate),
+                        budgetTotal = targetAmount ?: fixedDateDraft.budgetTotal
+                    )
+                } else {
+                    viewModel.startNewChallenge(request)
+                }
             }
         )
     }
@@ -445,14 +456,19 @@ internal fun NextChallengeTopBar(onBack: () -> Unit, modifier: Modifier = Modifi
 }
 
 @Composable
-internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Modifier = Modifier) {
+internal fun NextChallengeHeroCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    backgroundColor: androidx.compose.ui.graphics.Color = HPSub4
+) {
     val heroCircleDiameter = 180.dp
     val heroCircleColor = HPSub2.copy(alpha = 0.10f)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(30.dp))
-            .background(HPSub4)
+            .background(backgroundColor)
             .drawBehind {
                 val diameterPx = heroCircleDiameter.toPx()
                 val radiusPx = diameterPx / 2f
@@ -482,22 +498,21 @@ internal fun NextChallengeHeroCard(title: String, subtitle: String, modifier: Mo
         ) {
             Text(
                 "NEXT CHALLENGE",
-                style = MaterialTheme.typography.labelLarge,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = HPSub1
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = HPBlack
             )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = HPBlack
             )
         }
@@ -641,53 +656,11 @@ internal fun switchColors(): SwitchColors = SwitchDefaults.colors(
 )
 
 @Composable
-internal fun RowScope.CategoryIconChip(
-    label: String,
-    iconRes: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .weight(1f)
-            .height(40.dp)
-            .background(
-                color = if (selected) HPMain else HPWhite,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = if (selected) HPMain else HPGray5,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(30.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) HPWhite else HPText,
-            fontSize = 16.sp,
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
 internal fun CustomPeriodDaysInput(
     value: Int?,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    onStartEditing: () -> Unit = {}
+    onStartEditing: () -> Unit
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var hasFocusedOnce by remember { mutableStateOf(false) }
@@ -801,6 +774,7 @@ internal fun CustomPeriodDaysInput(
 }
 
 @Composable
+@Suppress("LongParameterList", "LongMethod")
 internal fun ChallengeSettingsSection(
     periodEnabled: Boolean,
     onPeriodEnabledChange: (Boolean) -> Unit,
@@ -814,13 +788,14 @@ internal fun ChallengeSettingsSection(
     onDateFixedChange: (Boolean) -> Unit,
     startDateText: String,
     onStartDateClick: () -> Unit,
+    containerColor: androidx.compose.ui.graphics.Color = HPSub4,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(containerColor)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
@@ -895,8 +870,8 @@ internal fun ChallengeSettingsSection(
         if (dateFixed) {
             OnboardingBulletList(
                 lines = listOf(
-                    "매월 선택한 날짜에 새로운 챌린지를 자동으로 시작해요.",
-                    "챌린지는 한 달 동안 진행돼요."
+                    stringResource(R.string.onboarding_date_fixed_bullet1),
+                    stringResource(R.string.onboarding_date_fixed_bullet2)
                 )
             )
             LabeledInputRow(

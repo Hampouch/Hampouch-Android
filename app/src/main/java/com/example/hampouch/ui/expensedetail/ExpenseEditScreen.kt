@@ -19,6 +19,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -34,7 +35,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseCategorySelection
+import com.example.hampouch.domain.model.ExpenseReasonSelection
+import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.dialog.ExpenseEditConfirmDialog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPMain
@@ -74,7 +78,8 @@ fun ExpenseEditRoute(
     record: ExpenseRecord,
     onBackClick: () -> Unit,
     onSaved: (ExpenseRecord) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDateSelectable: (LocalDate) -> Boolean = { true }
 ) {
     var date by remember(record.id) { mutableStateOf(record.date) }
     var amount by remember(record.id) { mutableStateOf(record.amount) }
@@ -94,10 +99,16 @@ fun ExpenseEditRoute(
         date = date,
         amount = amount,
         expenseName = expenseName.ifBlank { null },
-        categoryId = if (isCustomCategory) null else categoryId,
-        customCategoryName = if (isCustomCategory) customCategoryText.ifBlank { null } else null,
-        reasonId = if (isCustomReason) null else reasonId,
-        customReason = if (isCustomReason) customReasonText.ifBlank { null } else null,
+        category = if (isCustomCategory) {
+            customCategoryText.ifBlank { null }?.let(ExpenseCategorySelection::Custom)
+        } else {
+            categoryId?.let(ExpenseCategorySelection::Preset)
+        },
+        reason = if (isCustomReason) {
+            customReasonText.ifBlank { null }?.let(ExpenseReasonSelection::Custom)
+        } else {
+            reasonId?.let(ExpenseReasonSelection::Preset)
+        },
         memo = memo.ifBlank { null },
         photoUris = photoUris
     )
@@ -138,12 +149,14 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_category)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = categoryOptions) { option ->
+                        ChipGrid(items = categoryOptions, minColumnWidth = 96.dp) { option ->
                             when (option) {
                                 is CategoryOption.Preset -> ChoiceChip(
                                     label = stringResource(option.category.labelResId),
-                                    icon = option.category.icon,
-                                    iconTint = option.category.accentColor,
+                                    icon = ChoiceChipIcon.Vector(
+                                        option.category.icon,
+                                        option.category.accentColor
+                                    ),
                                     selected = !isCustomCategory && categoryId == option.category.id,
                                     onClick = {
                                         categoryId = option.category.id
@@ -172,7 +185,7 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_reason)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ThreeColumnChipGrid(items = reasonOptions) { option ->
+                        ChipGrid(items = reasonOptions) { option ->
                             when (option) {
                                 is ReasonOption.Preset -> ChoiceChip(
                                     label = stringResource(option.reason.labelResId),
@@ -242,7 +255,15 @@ fun ExpenseEditRoute(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = date.toEpochMillisUtc())
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.toEpochMillisUtc(),
+            selectableDates = remember(isDateSelectable) {
+                object : SelectableDates {
+                    override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                        isDateSelectable(utcTimeMillis.toLocalDateUtc())
+                }
+            }
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {

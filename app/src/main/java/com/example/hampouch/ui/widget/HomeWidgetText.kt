@@ -16,10 +16,12 @@ import com.example.hampouch.R
  * res/font의 커스텀 Pretendard를 못 그린다(자세한 이유는 widget_text_medium.xml 참고).
  * 그래서 굵기별로 미리 만들어둔 [layoutRes]의 순수 TextView를 [AndroidRemoteViews]로 심어서 그린다.
  */
-enum class PretendardWeight(val layoutRes: Int) {
+enum class PretendardWeight(val layoutRes: Int, val usesAutoSize: Boolean = false) {
+    Regular(R.layout.widget_text_regular),
     Medium(R.layout.widget_text_medium),
     SemiBold(R.layout.widget_text_semibold),
-    Bold(R.layout.widget_text_bold)
+    Bold(R.layout.widget_text_bold),
+    BoldAutoSize(R.layout.widget_text_bold_autosize, usesAutoSize = true)
 }
 
 /** [PretendardText] 안에서 글자를 가로로 어디에 붙일지. */
@@ -37,6 +39,7 @@ enum class WidgetTextAlign(val gravity: Int) {
  * 칸이 찌그러들면서 한글 글자가 위아래로 잘려 보이는 문제가 생긴다.
  */
 @Composable
+@Suppress("LongParameterList") // RemoteViews TextView의 스타일 속성을 호출부에서 명시한다.
 fun PretendardText(
     text: String,
     color: Color,
@@ -50,7 +53,9 @@ fun PretendardText(
     val remoteViews = RemoteViews(context.packageName, weight.layoutRes).apply {
         setTextViewText(R.id.widget_text, text)
         setTextColor(R.id.widget_text, color.toArgb())
-        setTextViewTextSize(R.id.widget_text, android.util.TypedValue.COMPLEX_UNIT_SP, fontSize.value)
+        if (!weight.usesAutoSize) {
+            setTextViewTextSize(R.id.widget_text, android.util.TypedValue.COMPLEX_UNIT_SP, fontSize.value)
+        }
         setInt(R.id.widget_text, "setGravity", textAlign.gravity)
         if (maxLines != null) {
             setInt(R.id.widget_text, "setMaxLines", maxLines)
@@ -58,3 +63,5 @@ fun PretendardText(
     }
     AndroidRemoteViews(remoteViews = remoteViews, modifier = modifier)
 }
+
+internal fun formatWon(amount: Int): String = "%,d".format(amount)

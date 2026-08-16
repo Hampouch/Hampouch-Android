@@ -1,14 +1,14 @@
 package com.example.hampouch.ui.challengeresult
 
-import com.example.hampouch.data.model.ActiveChallenge
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.DailyRecordStatus.SUCCESS
-import com.example.hampouch.data.model.EmotionStat
-import com.example.hampouch.data.model.ExpenseRecord
-import com.example.hampouch.data.model.SpendingEmotion
-import com.example.hampouch.data.repository.ChallengeRepository
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
+import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.domain.model.ChallengeResultSummary
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
+import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.DailyRecordStatus.SUCCESS
+import com.example.hampouch.domain.model.EmotionStat
+import com.example.hampouch.domain.model.ExpenseRecord
+import com.example.hampouch.domain.model.SpendingEmotion
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -31,23 +31,51 @@ object ChallengeResultMockData {
         }
     }
 
-    fun forChallenge(challenge: ActiveChallenge, referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState {
+    private fun serverResultOrNull(
+        challenge: ActiveChallenge,
+        isOngoing: Boolean
+    ): ChallengeResultUiState? {
+        if (isOngoing) return null
+        val summary = challenge.resultSummary ?: return null
+        return fromServerResult(challenge, summary)
+    }
+
+    fun forChallenge(
+        challenge: ActiveChallenge,
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate = LocalDate.now()
+    ): ChallengeResultUiState {
+        val isOngoing = challenge.id == challengeState.activeChallenge?.id &&
+            !referenceToday.isAfter(challenge.effectivePeriodEnd)
+        val serverResult = serverResultOrNull(challenge, isOngoing)
+        if (serverResult != null) return serverResult
+        return computeLocalResult(challenge, challengeState, recordsForDate, referenceToday)
+    }
+
+    private fun computeLocalResult(
+        challenge: ActiveChallenge,
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate
+    ): ChallengeResultUiState {
+        val isActiveChallenge = challenge.id == challengeState.activeChallenge?.id
+        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
         val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
             .takeWhile { !it.isAfter(trackedEnd) }
-            .flatMap { ExpenseDetailStore.recordsForDate(it) }
+            .flatMap { recordsForDate(it) }
             .toList()
         val actualAmount = recordsInPeriod.sumOf { it.amount }
 
-        val progress = ChallengeRepository.computeProgress(referenceToday, challenge) { date ->
-            ExpenseDetailStore.recordsForDate(date).sumOf { it.amount }
+        val progress = challengeState.computeProgress(referenceToday, challenge) { date ->
+            recordsForDate(date).sumOf { it.amount }
         }
         val successDays = progress.dailyRecords.values.count { it == SUCCESS }
 
-        val isActiveChallenge = challenge.id == ChallengeRepository.activeChallenge?.id
-        val isOngoing = isActiveChallenge && !referenceToday.isAfter(challenge.effectivePeriodEnd)
-
         val status = when {
+            challenge.remoteStatus == "SUCCESS" -> ChallengeResultStatus.COMPLETE
+            challenge.remoteStatus == "FAIL" -> ChallengeResultStatus.FAIL
             challenge.abandonedDate != null -> ChallengeResultStatus.FAIL
             isOngoing -> ChallengeResultStatus.IN_PROGRESS
             actualAmount <= challenge.targetAmount -> ChallengeResultStatus.COMPLETE
@@ -75,13 +103,48 @@ object ChallengeResultMockData {
             dailyLimit = challenge.dailyLimit,
             emotionStats = computeEmotionStats(recordsInPeriod),
             dailyRecords = progress.dailyRecords,
-            isEditable = isActiveChallenge && ChallengeRepository.hasOngoingChallenge
+            isEditable = isActiveChallenge && challengeState.hasOngoingChallenge
         )
     }
 
-    fun inProgress(referenceToday: LocalDate = LocalDate.now()): ChallengeResultUiState =
-        forChallenge(ChallengeRepository.activeChallenge!!, referenceToday)
+    private fun fromServerResult(
+        challenge: ActiveChallenge,
+        summary: ChallengeResultSummary
+    ): ChallengeResultUiState {
+        val status = if (challenge.remoteStatus == "FAIL" || challenge.abandonedDate != null) {
+            ChallengeResultStatus.FAIL
+        } else {
+            ChallengeResultStatus.COMPLETE
+        }
+        val amountLabel = if (status == ChallengeResultStatus.FAIL) "초과 금액" else "총 절약"
+        val amountValue = if (status == ChallengeResultStatus.FAIL) summary.overAmount else summary.savedAmount
+
+        return ChallengeResultUiState(
+            status = status,
+            title = "${challenge.totalDays}일 챌린지",
+            periodStart = challenge.periodStart,
+            periodEnd = challenge.periodEnd,
+            totalDays = challenge.totalDays,
+            successDays = summary.successDays,
+            streakDays = summary.maxStreak,
+            amountLabel = amountLabel,
+            amountValue = amountValue,
+            goalAmount = summary.budgetTotal,
+            actualAmount = summary.actualSpent,
+            dailyLimit = challenge.dailyLimit,
+            emotionStats = challenge.emotionBreakdown,
+            dailyRecords = challenge.calendarDays,
+            isEditable = false
+        )
+    }
+
+    fun inProgress(
+        challengeState: ChallengeState,
+        recordsForDate: (LocalDate) -> List<ExpenseRecord>,
+        referenceToday: LocalDate = LocalDate.now()
+    ): ChallengeResultUiState =
+        forChallenge(challengeState.activeChallenge!!, challengeState, recordsForDate, referenceToday)
 
     fun recommendedTightenedTarget(actualAmount: Int): Int =
-        ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
+        com.example.hampouch.domain.model.recommendedTightenedTarget(actualAmount)
 }

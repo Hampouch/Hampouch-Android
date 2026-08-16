@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +32,6 @@ import com.example.hampouch.ui.onboarding.components.OnboardingPrimaryButton
 import com.example.hampouch.ui.onboarding.components.OnboardingProgressBar
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.onboarding.components.SectionCard
-import com.example.hampouch.ui.onboarding.components.SkipText
 import com.example.hampouch.ui.onboarding.components.toWonText
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
@@ -46,7 +46,6 @@ fun ChallengeGoalStep(
     onTotalTargetChange: (Int) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
-    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val wonSuffix = stringResource(R.string.onboarding_won_suffix)
@@ -59,7 +58,21 @@ fun ChallengeGoalStep(
     } ?: 0
 
     Scaffold(
-        modifier = modifier.fillMaxSize().imePadding()
+        modifier = modifier.fillMaxSize().imePadding(),
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                OnboardingPrimaryButton(
+                    text = stringResource(R.string.onboarding_start_bytecut),
+                    enabled = true,
+                    onClick = onNext
+                )
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -71,7 +84,7 @@ fun ChallengeGoalStep(
         ) {
             OnboardingTopBar(onBack = onBack)
 
-            OnboardingProgressBar(currentStep = 3, totalSteps = 4)
+            OnboardingProgressBar(currentStep = 3, totalSteps = 3)
 
             OnboardingHeaderCard(
                 stepNumber = 3,
@@ -117,14 +130,6 @@ fun ChallengeGoalStep(
                     )
                 }
             }
-
-            SkipText(text = stringResource(R.string.onboarding_skip), onClick = onNavigateToLogin)
-
-            OnboardingPrimaryButton(
-                text = stringResource(R.string.onboarding_button_next),
-                enabled = true,
-                onClick = onNext
-            )
         }
     }
 }
@@ -141,8 +146,7 @@ private fun ChallengeGoalStepPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }
@@ -158,8 +162,7 @@ private fun ChallengeGoalStepDateFixedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }
@@ -177,8 +180,7 @@ private fun ChallengeGoalStepEditedPreview() {
             ),
             onTotalTargetChange = {},
             onNext = {},
-            onBack = {},
-            onNavigateToLogin = {}
+            onBack = {}
         )
     }
 }

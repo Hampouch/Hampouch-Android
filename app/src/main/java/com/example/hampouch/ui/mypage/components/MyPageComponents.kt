@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,12 +43,12 @@ import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
-import com.example.hampouch.data.model.ChallengeRecord
-import com.example.hampouch.data.model.ChallengeStatus
-import com.example.hampouch.data.model.DayOfWeekLabel
-import com.example.hampouch.data.model.ReminderDayMode
-import com.example.hampouch.data.model.TipCategory
-import com.example.hampouch.data.model.TipPost
+import com.example.hampouch.domain.model.ChallengeRecord
+import com.example.hampouch.domain.model.ChallengeStatus
+import com.example.hampouch.domain.model.DayOfWeekLabel
+import com.example.hampouch.domain.model.ReminderDayMode
+import com.example.hampouch.domain.model.TipCategory
+import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
 import com.example.hampouch.ui.theme.HPGray4
@@ -72,6 +71,8 @@ import com.example.hampouch.ui.theme.HPTipRecordText
 import com.example.hampouch.ui.theme.HPTipRecruitBg
 import com.example.hampouch.ui.theme.HPTipRecruitText
 import com.example.hampouch.ui.theme.HPWhite
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.ui.theme.HampouchTheme
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
 
@@ -99,7 +100,7 @@ fun MyPageMainTopBar(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack,
-            fontWeight = FontWeight.Normal,
+            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
@@ -107,45 +108,11 @@ fun MyPageMainTopBar(
     }
 }
 
+@Preview(showBackground = true, name = "마이페이지 상단바")
 @Composable
-fun MyPageDetailTopBar(
-    title: String,
-    onBackClick: () -> Unit,
-    showMoreMenu: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_back),
-                tint = HPBlack
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = HPBlack,
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f)
-        )
-        if (showMoreMenu) {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = stringResource(R.string.mypage_cd_more),
-                    tint = HPBlack
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.width(48.dp))
-        }
+private fun MyPageMainTopBarPreview() {
+    HampouchTheme {
+        MyPageMainTopBar(title = "마이페이지", onBackClick = {}, onNotificationClick = {})
     }
 }
 
@@ -174,6 +141,14 @@ fun ProfileAvatar(avatarUri: String?, modifier: Modifier = Modifier, size: andro
                 modifier = Modifier.size(size / 2)
             )
         }
+    }
+}
+
+@Preview(showBackground = true, name = "프로필 아바타")
+@Composable
+private fun ProfileAvatarPreview() {
+    HampouchTheme {
+        ProfileAvatar(avatarUri = null)
     }
 }
 
@@ -222,6 +197,20 @@ fun ProfileCard(
     }
 }
 
+@Preview(showBackground = true, name = "프로필 카드")
+@Composable
+private fun ProfileCardPreview() {
+    HampouchTheme {
+        ProfileCard(
+            name = "민준",
+            handle = "minjun123",
+            avatarUri = null,
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun MyPageMenuRow(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -240,6 +229,14 @@ fun MyPageMenuRow(label: String, onClick: () -> Unit, modifier: Modifier = Modif
             modifier = Modifier.weight(1f)
         )
         Icon(imageVector = Icons.Filled.ChevronRight, contentDescription = null, tint = HPText)
+    }
+}
+
+@Preview(showBackground = true, name = "마이페이지 메뉴 항목")
+@Composable
+private fun MyPageMenuRowPreview() {
+    HampouchTheme {
+        MyPageMenuRow(label = "알림 설정", onClick = {}, modifier = Modifier.padding(16.dp))
     }
 }
 
@@ -282,6 +279,21 @@ fun SettingsToggleCard(
     }
 }
 
+@Preview(showBackground = true, name = "설정 토글 카드")
+@Composable
+private fun SettingsToggleCardPreview() {
+    HampouchTheme {
+        SettingsToggleCard(
+            title = "챌린지 알림",
+            subtitle = "챌린지 관련 알림을 받아요",
+            checked = true,
+            onCheckedChange = {},
+            onRowClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun SettingsNavigateCard(
     title: String,
@@ -307,6 +319,19 @@ fun SettingsNavigateCard(
     }
 }
 
+@Preview(showBackground = true, name = "설정 이동 카드")
+@Composable
+private fun SettingsNavigateCardPreview() {
+    HampouchTheme {
+        SettingsNavigateCard(
+            title = "계정 관리",
+            subtitle = "이메일, 비밀번호 변경",
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun SettingsMenuCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(
@@ -316,6 +341,18 @@ fun SettingsMenuCard(modifier: Modifier = Modifier, content: @Composable () -> U
             .background(HPWhite)
     ) {
         content()
+    }
+}
+
+@Preview(showBackground = true, name = "설정 메뉴 카드")
+@Composable
+private fun SettingsMenuCardPreview() {
+    HampouchTheme {
+        SettingsMenuCard(modifier = Modifier.padding(16.dp)) {
+            SettingsMenuRow(label = "공지사항", onClick = {})
+            SettingsMenuDivider()
+            SettingsMenuRow(label = "로그아웃", onClick = {})
+        }
     }
 }
 
@@ -346,6 +383,14 @@ fun SettingsMenuRow(
     }
 }
 
+@Preview(showBackground = true, name = "설정 메뉴 행")
+@Composable
+private fun SettingsMenuRowPreview() {
+    HampouchTheme {
+        SettingsMenuRow(label = "공지사항", onClick = {}, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun SettingsMenuDivider(modifier: Modifier = Modifier) {
     Box(
@@ -354,6 +399,14 @@ fun SettingsMenuDivider(modifier: Modifier = Modifier) {
             .height(1.dp)
             .background(HPGray4)
     )
+}
+
+@Preview(showBackground = true, name = "설정 메뉴 구분선")
+@Composable
+private fun SettingsMenuDividerPreview() {
+    HampouchTheme {
+        SettingsMenuDivider(modifier = Modifier.padding(16.dp))
+    }
 }
 
 @Composable
@@ -365,6 +418,14 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         fontWeight = FontWeight.Normal,
         modifier = modifier.padding(start = 4.dp)
     )
+}
+
+@Preview(showBackground = true, name = "섹션 라벨")
+@Composable
+private fun SectionLabelPreview() {
+    HampouchTheme {
+        SectionLabel(text = "챌린지 기록", modifier = Modifier.padding(16.dp))
+    }
 }
 
 @Composable
@@ -389,8 +450,20 @@ fun StatusBadge(status: ChallengeStatus, modifier: Modifier = Modifier) {
     }
 }
 
+@Preview(showBackground = true, name = "챌린지 상태 뱃지")
 @Composable
-fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modifier: Modifier = Modifier) {
+private fun StatusBadgePreview() {
+    HampouchTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+            StatusBadge(status = ChallengeStatus.IN_PROGRESS)
+            StatusBadge(status = ChallengeStatus.SUCCESS)
+            StatusBadge(status = ChallengeStatus.FAIL)
+        }
+    }
+}
+
+@Composable
+fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val isSuccess = record.status == ChallengeStatus.SUCCESS
     val progressColor = if (isSuccess) HPStatusInProgressText else HPStatusSuccessText
     val progressFraction = if (record.targetAmount > 0) {
@@ -421,15 +494,11 @@ fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modif
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (record.endDateLabel != null) {
-                        stringResource(
-                            R.string.challenge_history_period_format,
-                            record.startDateLabel,
-                            record.endDateLabel
-                        )
-                    } else {
-                        stringResource(R.string.challenge_history_period_ongoing_format, record.startDateLabel)
-                    },
+                    text = stringResource(
+                        R.string.challenge_history_period_format,
+                        record.startDateLabel,
+                        record.endDateLabel
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = HPText
                 )
@@ -497,6 +566,26 @@ fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -> Unit = {}, modif
     }
 }
 
+@Preview(showBackground = true, name = "챌린지 기록 카드")
+@Composable
+private fun ChallengeRecordCardPreview() {
+    HampouchTheme {
+        ChallengeRecordCard(
+            record = ChallengeRecord(
+                id = "c1",
+                status = ChallengeStatus.SUCCESS,
+                totalDays = 14,
+                startDateLabel = "5월 1일",
+                endDateLabel = "5월 14일",
+                targetAmount = 200_000,
+                actualAmount = 178_600
+            ),
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 private val ReminderModeSegmentedOptions = listOf(
     ReminderDayMode.WEEKDAY,
     ReminderDayMode.WEEKEND,
@@ -532,6 +621,18 @@ fun ReminderModeSegmentedRow(
     }
 }
 
+@Preview(showBackground = true, name = "알림 요일 모드 선택")
+@Composable
+private fun ReminderModeSegmentedRowPreview() {
+    HampouchTheme {
+        ReminderModeSegmentedRow(
+            selectedMode = ReminderDayMode.WEEKDAY,
+            onModeSelected = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
     val (bg, textColor) = when (category) {
@@ -558,8 +659,16 @@ fun TipCategoryBadge(category: TipCategory, modifier: Modifier = Modifier) {
     }
 }
 
+@Preview(showBackground = true, name = "꿀팁 카테고리 뱃지")
 @Composable
-fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+private fun TipCategoryBadgePreview() {
+    HampouchTheme {
+        TipCategoryBadge(category = TipCategory.DISCOUNT, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Composable
+fun TipPostCard(tip: TipPost, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -590,6 +699,23 @@ fun TipPostCard(tip: TipPost, modifier: Modifier = Modifier, onClick: () -> Unit
     }
 }
 
+@Preview(showBackground = true, name = "꿀팁 게시글 카드")
+@Composable
+private fun TipPostCardPreview() {
+    HampouchTheme {
+        TipPostCard(
+            tip = TipPost(
+                id = "t1",
+                category = TipCategory.WHAT_TO_EAT,
+                title = "학식 대신 도시락 싸먹기 꿀팁",
+                subtitle = "일주일에 5만원 절약했어요"
+            ),
+            onClick = {},
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
 @Composable
 fun DayOfWeekChipsRow(
     selectedDays: Set<DayOfWeekLabel>,
@@ -616,5 +742,17 @@ fun DayOfWeekChipsRow(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "요일 선택 칩 목록")
+@Composable
+private fun DayOfWeekChipsRowPreview() {
+    HampouchTheme {
+        DayOfWeekChipsRow(
+            selectedDays = setOf(DayOfWeekLabel.MON, DayOfWeekLabel.WED, DayOfWeekLabel.FRI),
+            onDayToggle = {},
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

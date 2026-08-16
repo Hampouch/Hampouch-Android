@@ -18,7 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.data.model.HamBattleChallenge
+import com.example.hampouch.data.local.HamBattleMockFixtures
+import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -30,8 +31,8 @@ private const val PAGE_COUNT = 2
 @Composable
 fun HamBattleChallengesResultPagerScreen(
     challenge: HamBattleChallenge,
-    onBackClick: () -> Unit = {},
-    onStartNewChallengeClick: () -> Unit = {}
+    onBackClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit
 ) {
     val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
 
@@ -106,7 +107,8 @@ private fun ResultPageIndicatorPreview() {
 private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
         HamBattleChallengesResultPagerScreen(
-            challenge = HamBattleMockData.activeChallenges().first()
+            challenge = HamBattleMockFixtures.activeChallenges().first(),
+            onBackClick = {}, onStartNewChallengeClick = {}
         )
     }
 }

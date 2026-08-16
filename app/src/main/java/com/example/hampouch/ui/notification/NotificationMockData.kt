@@ -1,9 +1,9 @@
 package com.example.hampouch.ui.notification
 
-import com.example.hampouch.data.model.NotificationCategory
-import com.example.hampouch.data.model.NotificationItem
-import com.example.hampouch.data.model.NotificationSection
-import com.example.hampouch.data.model.NotificationTarget
+import com.example.hampouch.domain.model.NotificationCategory
+import com.example.hampouch.domain.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationSection
+import com.example.hampouch.domain.model.NotificationTarget
 import java.time.LocalDate
 
 object NotificationMockData {
@@ -100,6 +100,17 @@ object NotificationMockData {
                 isRead = false,
                 createdDate = today,
                 target = NotificationTarget.ChallengeSummary("challenge_previous")
+            ),
+            NotificationItem(
+                id = "16",
+                category = NotificationCategory.CHALLENGE,
+                section = NotificationSection.TODAY,
+                title = "3일 연속 한도를 넘겼어요",
+                message = "목표를 조정해볼 수 있어요",
+                timeLabel = "방금",
+                isRead = false,
+                createdDate = today,
+                target = NotificationTarget.AmountAdjustment
             ),
             NotificationItem(
                 id = "9",

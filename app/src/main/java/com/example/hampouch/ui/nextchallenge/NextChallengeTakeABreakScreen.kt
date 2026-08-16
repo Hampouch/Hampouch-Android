@@ -1,10 +1,9 @@
 package com.example.hampouch.ui.nextchallenge
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,26 +19,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.R
-import com.example.hampouch.data.model.OnboardingRequest
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.ChallengePeriod
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
-import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
-import com.example.hampouch.ui.onboarding.components.OnboardingBulletList
 import com.example.hampouch.ui.onboarding.components.OnboardingTopBar
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
@@ -51,6 +51,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private const val DefaultTakeABreakTotalDays = 14
@@ -59,7 +60,8 @@ private const val DefaultTakeABreakTotalDays = 14
 fun NextChallengeTakeABreakRoute(
     onBackClick: () -> Unit,
     onStartChallengeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
     var periodEnabled by remember { mutableStateOf(false) }
     var periodDays by remember { mutableStateOf<Int?>(null) }
@@ -70,6 +72,17 @@ fun NextChallengeTakeABreakRoute(
     var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                NextChallengeEvent.Started -> onStartChallengeClick()
+                is NextChallengeEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    val coroutineScope = rememberCoroutineScope()
 
     val explicitPeriodDays = customPeriodDays?.takeIf { it > 0 } ?: periodDays?.takeIf { it > 0 }
     val effectivePeriodDays = explicitPeriodDays ?: DefaultTakeABreakTotalDays
@@ -184,48 +197,16 @@ fun NextChallengeTakeABreakRoute(
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
-            ) {
-                Text("카테고리", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(6.dp))
-                OnboardingBulletList(
-                    lines = listOf(
-                        "중복 선택 가능",
-                        "선택한 카테고리 소비 시 개입이 강해져요."
-                    )
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                HomeCategoryCatalog.categories.chunked(3).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        row.forEach { category ->
-                            CategoryIconChip(
-                                label = stringResource(category.labelResId),
-                                iconRes = CategoryIconRes[category.id] ?: R.drawable.icon_etc,
-                                selected = category.id in selectedCategoryIds,
-                                onClick = {
-                                    selectedCategoryIds = if (category.id in selectedCategoryIds) {
-                                        selectedCategoryIds - category.id
-                                    } else {
-                                        selectedCategoryIds + category.id
-                                    }
-                                }
-                            )
-                        }
-                        repeat(3 - row.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+            CategorySelectionCard(
+                selectedCategoryIds = selectedCategoryIds,
+                onToggleCategory = { categoryId ->
+                    selectedCategoryIds = if (categoryId in selectedCategoryIds) {
+                        selectedCategoryIds - categoryId
+                    } else {
+                        selectedCategoryIds + categoryId
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
-            }
+            )
             Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = { showStartConfirmDialog = true },
@@ -268,14 +249,16 @@ fun NextChallengeTakeABreakRoute(
             onConfirm = {
                 showStartConfirmDialog = false
                 val request = OnboardingRequest(
-                    dateFixed = dateFixed,
-                    startDate = if (dateFixed) (startDate ?: LocalDate.now()) else null,
-                    customPeriodDays = if (dateFixed) null else effectivePeriodDays,
+                    period = if (dateFixed) {
+                        ChallengePeriod.FixedStart(requireNotNull(startDate))
+                    } else {
+                        ChallengePeriod.Duration(effectivePeriodDays)
+                    },
+                    dailyTargetAmount = (targetAmount ?: 0) / effectivePeriodDays,
                     totalTargetAmount = targetAmount ?: 0,
                     topSpendingCategoryIds = selectedCategoryIds.toList()
                 )
-                ChallengeRepository.startNewChallenge(request)
-                onStartChallengeClick()
+                viewModel.startNewChallenge(request)
             }
         )
     }

@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.minichallenge
 
+import com.example.hampouch.domain.model.normalizeMiniChallengeName
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.RecommendedMiniChallenge
+import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.ui.dialog.MiniChallengeAddConfirmDialog
 import com.example.hampouch.ui.home.components.EmptyStateBlock
 import com.example.hampouch.ui.minichallenge.components.MiniChallengeFilterTabRow
@@ -34,9 +35,9 @@ fun MiniChallengeRecommendedListScreen(
     recommendedChallenges: List<RecommendedMiniChallenge>,
     modifier: Modifier = Modifier,
     existingNames: List<String> = emptyList(),
-    onBackClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
-    onAddChallenge: (RecommendedMiniChallenge) -> Unit = {}
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onAddChallenge: (RecommendedMiniChallenge) -> Unit
 ) {
     val durationOptions = listOf(
         stringResource(R.string.minichallenge_duration_today),
@@ -52,7 +53,7 @@ fun MiniChallengeRecommendedListScreen(
 
     val filteredChallenges = remember(selectedDurationIndex, recommendedChallenges) {
         val selectedTotalDays = MiniChallengeDurationDayValues[selectedDurationIndex]
-        recommendedChallenges.filter { it.totalDays == selectedTotalDays }
+        recommendedChallenges.filter { it.duration.serverDays == selectedTotalDays }
     }
 
     Scaffold(
@@ -92,7 +93,7 @@ fun MiniChallengeRecommendedListScreen(
                         RecommendedMiniChallengeListCard(
                             item = item,
                             onAddClick = {
-                                if (existingNames.any { MiniChallengeStore.normalizeName(it) == MiniChallengeStore.normalizeName(item.name) }) {
+                                if (existingNames.any { normalizeMiniChallengeName(it) == normalizeMiniChallengeName(item.name) }) {
                                     Toast.makeText(context, duplicateNameMessage, Toast.LENGTH_SHORT).show()
                                 } else {
                                     pendingChallenge = item
@@ -124,7 +125,8 @@ fun MiniChallengeRecommendedListScreen(
 private fun MiniChallengeRecommendedListScreenPreview() {
     HampouchTheme {
         MiniChallengeRecommendedListScreen(
-            recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
+            recommendedChallenges = MiniChallengeMockData.recommendedChallenges(),
+            onBackClick = {}, onNotificationClick = {}, onAddChallenge = {}
         )
     }
 }

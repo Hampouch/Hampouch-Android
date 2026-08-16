@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.hampouch.data.model.HamBattleChallengeRequest
+import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray3
@@ -233,7 +233,7 @@ private val PreviewChallengeRequest = HamBattleChallengeRequest(
     challengeName = "5월 식비 절약왕 가리기",
     participantCount = "5인",
     durationDays = "7일",
-    startDateMillis = null,
+    startDateMillis = 0L,
     penalty = "커피 쿠폰 쏘기"
 )
 

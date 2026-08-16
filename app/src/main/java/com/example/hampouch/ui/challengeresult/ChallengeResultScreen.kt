@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.challengeresult
 
+import com.example.hampouch.ui.common.previewChallengeState
 import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.widget.Toast
@@ -53,11 +54,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ChallengeResultStatus
-import com.example.hampouch.data.model.ChallengeResultUiState
-import com.example.hampouch.data.model.DailyRecordStatus
-import com.example.hampouch.data.model.EmotionStat
-import com.example.hampouch.data.model.SpendingEmotion
+import com.example.hampouch.domain.model.ChallengeResultStatus
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
+import com.example.hampouch.domain.model.DailyRecordStatus
+import com.example.hampouch.domain.model.EmotionStat
+import com.example.hampouch.domain.model.SpendingEmotion
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPSub1
@@ -73,14 +74,14 @@ private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 $
 
 @Composable
 fun ChallengeResultScreen(
-    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(),
-    onBackClick: () -> Unit = {},
+    state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
+    onBackClick: () -> Unit,
     showBackButton: Boolean = true,
-    onExpenseAnalysisClick: () -> Unit = {},
-    onAdjustGoalClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
-    onStartNewChallengeClick: (Int) -> Unit = {},
-    onTakeABreakClick: () -> Unit = {}
+    onExpenseAnalysisClick: () -> Unit,
+    onAdjustGoalClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onStartNewChallengeClick: (Int) -> Unit,
+    onTakeABreakClick: () -> Unit
 ) {
     val isFinished = state.status != ChallengeResultStatus.IN_PROGRESS
     var showGoalAdjustmentDialog by remember { mutableStateOf(false) }
@@ -379,7 +380,11 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
 @Composable
 private fun ChallengeResultScreenInProgressPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = ChallengeResultMockData.inProgress())
+        ChallengeResultScreen(
+            state = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }
 
@@ -427,7 +432,11 @@ private val PreviewFailState = PreviewCompleteState.copy(
 @Composable
 private fun ChallengeResultScreenCompletePreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = PreviewCompleteState)
+        ChallengeResultScreen(
+            state = PreviewCompleteState,
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }
 
@@ -435,6 +444,10 @@ private fun ChallengeResultScreenCompletePreview() {
 @Composable
 private fun ChallengeResultScreenFailPreview() {
     HampouchTheme {
-        ChallengeResultScreen(state = PreviewFailState)
+        ChallengeResultScreen(
+            state = PreviewFailState,
+            onBackClick = {}, onExpenseAnalysisClick = {}, onAdjustGoalClick = {}, onShareClick = {},
+            onStartNewChallengeClick = {}, onTakeABreakClick = {}
+        )
     }
 }

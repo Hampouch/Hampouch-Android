@@ -1,44 +1,44 @@
 package com.example.hampouch.data.repository
 
-import android.content.Context
-import com.example.hampouch.ui.expensedetail.ExpenseDetailStore
-import com.example.hampouch.ui.hambattle.HamBattleMockData
-import com.example.hampouch.ui.login.LoginMockData
-import com.example.hampouch.ui.minichallenge.MiniChallengeStore
-import com.example.hampouch.ui.mypage.AllSettingsStore
-import com.example.hampouch.ui.mypage.MyPageProfileStore
-import com.example.hampouch.ui.mypage.RecordAlarmStore
-import com.example.hampouch.ui.notification.NotificationStore
-import com.example.hampouch.ui.takeabreak.TakeABreakStore
+import android.util.Log
+import com.example.hampouch.domain.repository.AccountScopedState
+import com.example.hampouch.domain.repository.ChallengeRepository
+import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.repository.RestRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object AccountDataCoordinator {
+private const val TAG = "AccountDataCoordinator"
+
+@Singleton
+class AccountDataCoordinator @Inject constructor(
+    private val expenseRepository: ExpenseRepository,
+    private val restRepository: RestRepository,
+    private val challengeRepository: ChallengeRepository,
+    private val accountScopedStates: Set<@JvmSuppressWildcards AccountScopedState>,
+    private val onboardingLocalStore: OnboardingLocalStore
+) {
 
     private var syncedUserId: String? = null
 
-    fun syncIfNeeded(context: Context, userId: String, email: String?) {
+    suspend fun syncIfNeeded(userId: String, email: String?) {
         if (userId == syncedUserId) return
         syncedUserId = userId
-        ExpenseDetailStore.resetForAccount()
-        MiniChallengeStore.resetForAccount()
-        TakeABreakStore.resetForAccount()
-        RecordAlarmStore.resetForAccount()
-        NotificationStore.resetForAccount()
-        MyPageProfileStore.resetForAccount()
-        AllSettingsStore.resetForAccount()
-        HamBattleMockData.resetForAccount()
-        HamTipsRepository.resetForAccount()
 
-        val account = email?.let { e -> LoginMockData.accounts.find { it.email == e } }
-        if (account == null || account.isExistingMember) {
-            ChallengeRepository.resetForAccount()
+        expenseRepository.resetForAccount()
+        restRepository.resetForAccount()
+        accountScopedStates.forEach { it.resetForAccount() }
+
+        /** 예약된 온보딩 요청은 이번 프로세스의 회원가입 성공 직후에만 존재하므로, 그 존재 여부가 곧 "신규 회원" 신호다. */
+        val request = email?.let { onboardingLocalStore.takeReservedRequest(it) }
+        if (request == null) {
+            challengeRepository.resetForAccount()
             return
         }
 
-        val request = OnboardingDataStore.takeReservedRequest(account.email)
-        ChallengeRepository.resetEmpty()
-        if (request != null) {
-            ChallengeRepository.startNewChallenge(request)
+        challengeRepository.resetEmpty()
+        challengeRepository.startNewChallenge(request).onFailure { error ->
+            Log.e(TAG, "예약된 온보딩 요청으로 챌린지를 시작하지 못했습니다.", error)
         }
-        LoginMockData.markAsExistingMember(account.email)
     }
 }

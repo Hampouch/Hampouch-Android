@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,8 +32,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.hampouch.data.model.HamBattleParticipantSpending
-import com.example.hampouch.data.model.HamBattleParticipantStatus
+import coil.compose.AsyncImage
+import com.example.hampouch.R
+import com.example.hampouch.domain.model.HamBattleParticipantSpending
+import com.example.hampouch.domain.model.HamBattleParticipantStatus
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -45,7 +50,7 @@ val StatusWhoWonText = Color(0xFF5572AB)
 
 private val ParticipantNameWidth = 56.dp
 
-fun formatWon(amount: Int): String {
+fun formatWon(amount: Long): String {
     return String.format(Locale.KOREA, "%,d원", amount)
 }
 
@@ -72,13 +77,23 @@ fun TypeBadge(text: String, muted: Boolean = false) {
 }
 
 @Composable
-fun ParticipantAvatar(size: Dp) {
+fun ParticipantAvatar(size: Dp, avatarUrl: String? = null) {
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
             .background(HPGray4)
-    )
+    ) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.icon_normal_avatar),
+            error = painterResource(R.drawable.icon_normal_avatar),
+            fallback = painterResource(R.drawable.icon_normal_avatar),
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable
@@ -99,7 +114,7 @@ fun ParticipantAvatarLabel(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ParticipantAvatar(size = 22.dp)
+                ParticipantAvatar(size = 22.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
@@ -136,7 +151,7 @@ private fun MyParticipantAvatarLabel(participant: HamBattleParticipantSpending, 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ParticipantAvatar(size = 22.dp)
+                ParticipantAvatar(size = 22.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     participant.name,
@@ -193,7 +208,7 @@ fun RankedParticipantList(
     val normal = participants.filter { it.status != HamBattleParticipantStatus.DISQUALIFIED }
     val disqualified = participants.filter { it.status == HamBattleParticipantStatus.DISQUALIFIED }
     val ranked = normal.sortedBy { it.amount }
-    val effectiveMaxAmount = maxAmount ?: participants.maxOf { it.amount }.toFloat()
+    val effectiveMaxAmount = (maxAmount ?: participants.maxOf { it.amount }.toFloat()).coerceAtLeast(1f)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ranked.forEachIndexed { index, participant ->
             Row(
@@ -202,12 +217,12 @@ fun RankedParticipantList(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "%02d".format(index + 1),
+                    "%02d".format(participant.rank ?: index + 1),
                     modifier = Modifier.width(24.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = HPBlack
                 )
-                ParticipantAvatar(size = 24.dp)
+                ParticipantAvatar(size = 24.dp, avatarUrl = participant.avatarUrl)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     participant.name,
@@ -267,7 +282,7 @@ private fun DisqualifiedParticipantRow(participant: HamBattleParticipantSpending
             fontSize = 14.sp,
             modifier = Modifier.width(28.dp)
         )
-        ParticipantAvatar(size = 24.dp)
+        ParticipantAvatar(size = 24.dp, avatarUrl = participant.avatarUrl)
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             participant.name,
@@ -275,6 +290,26 @@ private fun DisqualifiedParticipantRow(participant: HamBattleParticipantSpending
             fontWeight = FontWeight.Bold,
             color = HPText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DisqualifiedParticipantRowPreview() {
+    HampouchTheme {
+        Box(
+            modifier = Modifier
+                .background(HPGray5)
+                .padding(16.dp)
+        ) {
+            DisqualifiedParticipantRow(
+                participant = HamBattleParticipantSpending(
+                    name = "친구4",
+                    amount = 95000,
+                    status = HamBattleParticipantStatus.DISQUALIFIED
+                )
+            )
+        }
     }
 }
 

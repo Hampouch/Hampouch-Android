@@ -1,17 +1,12 @@
 package com.example.hampouch.data.remote.dto
 
-enum class EmailVerificationPurpose {
-    SIGNUP,
-    PASSWORD_RESET
-}
-
 data class EmailSendRequest(
     val email: String,
     val purpose: String
 )
 
 data class EmailSendData(
-    val expiresInSeconds: Int
+    val expiresInSeconds: Long
 )
 
 data class EmailVerifyRequest(

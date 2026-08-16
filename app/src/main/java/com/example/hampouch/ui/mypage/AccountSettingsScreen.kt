@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,9 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -21,17 +25,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
-import com.example.hampouch.data.model.MyPageProfile
+import com.example.hampouch.domain.model.MyPageProfile
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.dialog.ConfirmActionCard
-import com.example.hampouch.ui.mypage.components.MyPageDetailTopBar
+import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.ProfileCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
-import com.example.hampouch.ui.session.UserSession
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun AccountSettingsScreen(
@@ -40,21 +46,33 @@ fun AccountSettingsScreen(
     onProfileEditClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onLoggedOut: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit,
+    viewModel: AccountSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var showWithdrawConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AccountSettingsEvent.LoggedOut -> onLoggedOut()
+                is AccountSettingsEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(HPGray2)
     ) {
-        MyPageDetailTopBar(
+        MyPageMainTopBar(
             title = stringResource(R.string.account_settings_title),
             onBackClick = onBackClick,
-            showMoreMenu = false,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            onNotificationClick = onNotificationClick,
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
         Column(
             modifier = Modifier
@@ -102,8 +120,7 @@ fun AccountSettingsScreen(
                 onCancel = { showWithdrawConfirm = false },
                 onConfirm = {
                     showWithdrawConfirm = false
-                    UserSession.withdraw(context)
-                    onLoggedOut()
+                    viewModel.withdraw()
                 }
             )
         }
@@ -115,11 +132,11 @@ fun AccountSettingsScreen(
 private fun AccountSettingsScreenPreview() {
     HampouchTheme {
         AccountSettingsScreen(
-            profile = MyPageMockData.defaultProfile(),
+            profile = MyPageMockData.defaultProfile(AccountMockDataSource.normalUser),
             onBackClick = {},
             onProfileEditClick = {},
             onChangePasswordClick = {},
-            onLoggedOut = {}
+            onLoggedOut = {}, onNotificationClick = {}
         )
     }
 }

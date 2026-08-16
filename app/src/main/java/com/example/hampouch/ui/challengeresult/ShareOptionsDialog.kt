@@ -44,7 +44,7 @@ enum class ShareOption(val label: String, val iconRes: Int, val packageName: Str
 @Composable
 fun ShareOptionsDialog(
     onDismissRequest: () -> Unit,
-    onOptionSelected: (ShareOption) -> Unit = {}
+    onOptionSelected: (ShareOption) -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
@@ -127,6 +127,6 @@ private fun CancelRow(onClick: () -> Unit) {
 @Composable
 private fun ShareOptionsDialogPreview() {
     HampouchTheme {
-        ShareOptionsDialog(onDismissRequest = {})
+        ShareOptionsDialog(onDismissRequest = {}, onOptionSelected = {})
     }
 }

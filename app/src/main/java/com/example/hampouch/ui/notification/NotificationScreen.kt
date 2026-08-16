@@ -41,8 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.hampouch.R
-import com.example.hampouch.data.model.NotificationItem
-import com.example.hampouch.data.model.NotificationSection
+import com.example.hampouch.domain.model.NotificationItem
+import com.example.hampouch.domain.model.NotificationSection
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.notification.components.NotificationListItem
 import com.example.hampouch.ui.notification.components.NotificationTopBar
@@ -59,8 +59,8 @@ fun NotificationScreen(
     notifications: List<NotificationItem>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onMarkAllReadClick: () -> Unit = {},
-    onNotificationClick: (NotificationItem) -> Unit = {}
+    onMarkAllReadClick: () -> Unit,
+    onNotificationClick: (NotificationItem) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -73,7 +73,6 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        // TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
         TestNotificationTriggerButton(notifications = notifications, modifier = Modifier.padding(horizontal = 20.dp))
         Spacer(modifier = Modifier.height(12.dp))
         if (notifications.isEmpty()) {
@@ -114,7 +113,6 @@ fun NotificationScreen(
     }
 }
 
-// TODO: 실제 알림(FCM) 연동 후 제거 - 잠금화면/상태바 알림 클릭 딥링크 실기기 테스트용 임시 버튼.
 @Composable
 private fun TestNotificationTriggerButton(notifications: List<NotificationItem>, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -234,7 +232,7 @@ private fun LockScreenNotificationMockup(modifier: Modifier = Modifier) {
 @Composable
 private fun NotificationScreenEmptyPreview() {
     HampouchTheme {
-        NotificationScreen(notifications = NotificationMockData.empty(), onBackClick = {})
+        NotificationScreen(notifications = NotificationMockData.empty(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})
     }
 }
 
@@ -242,7 +240,7 @@ private fun NotificationScreenEmptyPreview() {
 @Composable
 private fun NotificationScreenFilledPreview() {
     HampouchTheme {
-        NotificationScreen(notifications = NotificationMockData.populated(), onBackClick = {})
+        NotificationScreen(notifications = NotificationMockData.populated(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})
     }
 }
 

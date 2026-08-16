@@ -1,5 +1,10 @@
 package com.example.hampouch.ui.expenseanalysis
 
+import com.example.hampouch.domain.model.AmountBreakdownItem
+import com.example.hampouch.domain.model.ExpenseAnalysisEtcId
+import com.example.hampouch.domain.model.MonthlyTotal
+import com.example.hampouch.domain.model.WeekdayAmount
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,10 +52,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.ExpenseRecord
+import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.ui.expensedetail.DashedDivider
 import com.example.hampouch.ui.expensedetail.ExpenseReasonCatalog
 import com.example.hampouch.ui.expensedetail.formatWon
@@ -59,6 +65,7 @@ import com.example.hampouch.ui.expensedetail.resolveCategoryIcon
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.Body16Bold
+import com.example.hampouch.ui.theme.HampouchTheme
 import com.example.hampouch.ui.theme.HPAnalysisCafe
 import com.example.hampouch.ui.theme.HPAnalysisConvenience
 import com.example.hampouch.ui.theme.HPAnalysisDelivery
@@ -79,6 +86,7 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPTipEtcBg
 import com.example.hampouch.ui.theme.HPWhite
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -177,6 +185,22 @@ fun ExpenseAnalysisDonutChart(
     }
 }
 
+@Preview(showBackground = true, name = "지출 분석 도넛 차트")
+@Composable
+private fun ExpenseAnalysisDonutChartPreview() {
+    HampouchTheme {
+        ExpenseAnalysisDonutChart(
+            items = listOf(
+                AmountBreakdownItem(id = "delivery", amount = 40_000, percent = 40),
+                AmountBreakdownItem(id = "cafe", amount = 30_000, percent = 30),
+                AmountBreakdownItem(id = ExpenseAnalysisEtcId, amount = 30_000, percent = 30)
+            ),
+            totalAmount = 100_000,
+            colorOf = { id -> analysisCategoryColor(id) }
+        )
+    }
+}
+
 @Composable
 fun CategoryLegendRow(
     label: String,
@@ -219,6 +243,14 @@ fun CategoryLegendRow(
             textAlign = TextAlign.End,
             modifier = Modifier.width(36.dp)
         )
+    }
+}
+
+@Preview(showBackground = true, name = "카테고리 범례 행")
+@Composable
+private fun CategoryLegendRowPreview() {
+    HampouchTheme {
+        CategoryLegendRow(label = "배달음식", dotColor = HPAnalysisDelivery, amount = 40_000, percent = 40)
     }
 }
 
@@ -269,6 +301,14 @@ fun ReasonStatChip(item: AmountBreakdownItem, modifier: Modifier = Modifier) {
     }
 }
 
+@Preview(showBackground = true, name = "이유별 통계 칩")
+@Composable
+private fun ReasonStatChipPreview() {
+    HampouchTheme {
+        ReasonStatChip(item = AmountBreakdownItem(id = "stress", amount = 40_000, percent = 40))
+    }
+}
+
 @Composable
 fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Color, modifier: Modifier = Modifier) {
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -304,6 +344,14 @@ fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Col
             maxLines = 1,
             modifier = Modifier.width(76.dp)
         )
+    }
+}
+
+@Preview(showBackground = true, name = "이유별 진행률 행")
+@Composable
+private fun ReasonProgressRowPreview() {
+    HampouchTheme {
+        ReasonProgressRow(label = "스트레스", amount = 40_000, fraction = 0.4f, barColor = HPSub1)
     }
 }
 
@@ -343,6 +391,22 @@ fun WeekdayBarChart(items: List<WeekdayAmount>, peakDays: Set<DayOfWeek>, modifi
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "요일별 지출 막대 그래프")
+@Composable
+private fun WeekdayBarChartPreview() {
+    HampouchTheme {
+        WeekdayBarChart(
+            items = listOf(
+                WeekdayAmount(DayOfWeek.MONDAY, 10_000),
+                WeekdayAmount(DayOfWeek.TUESDAY, 25_000),
+                WeekdayAmount(DayOfWeek.WEDNESDAY, 5_000),
+                WeekdayAmount(DayOfWeek.THURSDAY, 15_000)
+            ),
+            peakDays = setOf(DayOfWeek.TUESDAY)
+        )
     }
 }
 
@@ -440,6 +504,20 @@ fun MonthlyTrendChart(items: List<MonthlyTotal>, modifier: Modifier = Modifier) 
     }
 }
 
+@Preview(showBackground = true, name = "월별 지출 추이 그래프")
+@Composable
+private fun MonthlyTrendChartPreview() {
+    HampouchTheme {
+        MonthlyTrendChart(
+            items = listOf(
+                MonthlyTotal(month = YearMonth.of(2026, 3), amount = 180_000),
+                MonthlyTotal(month = YearMonth.of(2026, 4), amount = 210_000),
+                MonthlyTotal(month = YearMonth.of(2026, 5), amount = 150_000)
+            )
+        )
+    }
+}
+
 @Composable
 fun AnalysisTabRow(
     tabs: List<Pair<String, String>>,
@@ -472,6 +550,18 @@ fun AnalysisTabRow(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "분석 탭 행")
+@Composable
+private fun AnalysisTabRowPreview() {
+    HampouchTheme {
+        AnalysisTabRow(
+            tabs = listOf("all" to "전체", "delivery" to "배달음식", "cafe" to "카페"),
+            selectedId = "all",
+            onSelect = {}
+        )
     }
 }
 
@@ -522,6 +612,20 @@ fun DetailSpentSummaryCard(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "상세 지출 요약 카드")
+@Composable
+private fun DetailSpentSummaryCardPreview() {
+    HampouchTheme {
+        DetailSpentSummaryCard(
+            titleFormatResId = R.string.expenseanalysis_category_detail_spent_format,
+            label = "배달음식",
+            amount = 40_000,
+            count = 6,
+            percent = 40
+        )
     }
 }
 
@@ -603,6 +707,25 @@ fun ExpenseAnalysisListItem(
     }
 }
 
+@Preview(showBackground = true, name = "지출 분석 목록 아이템")
+@Composable
+private fun ExpenseAnalysisListItemPreview() {
+    HampouchTheme {
+        ExpenseAnalysisListItem(
+            record = ExpenseRecord(
+                id = "1",
+                date = LocalDate.of(2026, 5, 3),
+                amount = 4_500,
+                categoryId = "cafe",
+                expenseName = "스타벅스",
+                reasonId = "stress"
+            ),
+            showReasonChip = true,
+            onClick = {}
+        )
+    }
+}
+
 @Composable
 fun weekdayFullNames(days: List<DayOfWeek>): List<String> =
     days.map { it.getDisplayName(TextStyle.FULL, Locale.KOREA) }
@@ -666,6 +789,22 @@ fun PochiAnalysisCard(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "포치 지출 분석 카드")
+@Composable
+private fun PochiAnalysisCardPreview() {
+    HampouchTheme {
+        PochiAnalysisCard(
+            periodLabel = "이번 달",
+            totalAmount = 150_000,
+            topCategoryLabels = "배달음식",
+            topCategoryPercent = 40,
+            topReasonLabel = "스트레스",
+            topReasonPercent = 35,
+            peakWeekdayLabels = "화요일, 금요일"
         )
     }
 }

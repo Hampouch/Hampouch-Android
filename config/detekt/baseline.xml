@@ -1,0 +1,698 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AuthRepository.kt$AuthRepository$provider == null || userId == null || role == null || status == null || accessToken == null || refreshToken == null || tokenType == null</ID>
+    <ID>CyclomaticComplexMethod:AppNavHost.kt$@Composable fun AppNavHost( modifier: Modifier = Modifier, navController: NavHostController = rememberNavController(), pendingNotificationId: String? = null, onPendingNotificationConsumed: () -&gt; Unit )</ID>
+    <ID>CyclomaticComplexMethod:ExpenseAnalysisScreen.kt$@Composable fun ExpenseAnalysisRoute( headerMode: ExpenseAnalysisHeaderMode, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onMonthlyViewClick: () -&gt; Unit, onCategoryDetailClick: (LocalDate, LocalDate) -&gt; Unit, onReasonDetailClick: (LocalDate, LocalDate) -&gt; Unit, referenceToday: LocalDate = LocalDate.now(), viewModel: ExpenseAnalysisViewModel = hiltViewModel(), allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value )</ID>
+    <ID>CyclomaticComplexMethod:ExpenseCalendarScreen.kt$@Composable fun ExpenseCalendarRoute( onBackClick: () -&gt; Unit, onExpenseClick: (String) -&gt; Unit, modifier: Modifier = Modifier, referenceToday: LocalDate = LocalDate.now(), challengePeriod: ExpenseChallengePeriod? = null, onExpenseAnalysisClick: () -&gt; Unit, onAddExpenseClick: (LocalDate) -&gt; Unit, restrictToChallengePeriod: Boolean = false, viewModel: ExpenseCalendarViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:ExpenseEditScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ExpenseEditRoute( record: ExpenseRecord, onBackClick: () -&gt; Unit, onSaved: (ExpenseRecord) -&gt; Unit, modifier: Modifier = Modifier, isDateSelectable: (LocalDate) -&gt; Boolean = { true } )</ID>
+    <ID>CyclomaticComplexMethod:ExpenseInputScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ExpenseInputRoute( todayBalance: Int, dailyLimit: Int, onBackClick: () -&gt; Unit, onNoSpendingToday: () -&gt; Unit, onComplete: () -&gt; Unit, modifier: Modifier = Modifier, form: ExpenseInputFormState = ExpenseInputFormState(), showMaxAmountError: Boolean = false, onDateSelected: (LocalDate) -&gt; Unit = {}, onAmountDigit: (String) -&gt; Unit = {}, onAmountDelete: () -&gt; Unit = {}, onStepChanged: (Int) -&gt; Unit = {}, onExpenseNameChange: (String) -&gt; Unit = {}, onCategorySelected: (String) -&gt; Unit = {}, onCustomCategoryConfirm: () -&gt; Unit = {}, onCustomCategoryTextChange: (String) -&gt; Unit = {}, onReasonSelected: (String) -&gt; Unit = {}, onCustomReasonConfirm: () -&gt; Unit = {}, onCustomReasonTextChange: (String) -&gt; Unit = {}, onMemoChange: (String) -&gt; Unit = {}, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit = {}, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit = {}, onPhotoReplaced: (Int, String) -&gt; Unit = { _, _ -&gt; } )</ID>
+    <ID>CyclomaticComplexMethod:HamBattleScreen.kt$@Composable fun HamBattleScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, activeChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), waitingChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), onStartNewChallengeClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onViewEndedChallengesClick: () -&gt; Unit, onChallengeClick: (String) -&gt; Unit, onWaitingChallengeClick: (String) -&gt; Unit, onViewEndedChallengeDetailClick: (String) -&gt; Unit, viewModel: HamBattleViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:HamTipsBattleDetailScreen.kt$@Composable fun HamTipsBattleDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onDeleted: () -&gt; Unit, onNavigateToBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:HamTipsScreen.kt$@Composable fun HamTipsScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (String, String, String, Int, MenuRatingInfo, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
+    <ID>CyclomaticComplexMethod:HomeScreen.kt$@Composable fun HomeScreen( modifier: Modifier = Modifier, initialBottomTab: BottomNavItem = BottomNavItem.HOME, openHamTipsWriteBattleOnStart: Boolean = false, initialHamTipsWriteBattleLink: String = "", onExitHamTipsWriteBattle: () -&gt; Unit, initialMyTipDetailPostId: String? = null, initialMyTipDetailScrollToComments: Boolean = false, initialPopularPostId: String? = null, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: (String) -&gt; Unit, onNavigateToMiniChallenge: (LocalDate) -&gt; Unit, onHamBattleStartNewChallengeClick: () -&gt; Unit, onHamBattleChallengeClick: (String) -&gt; Unit, onHamBattleViewEndedChallengesClick: () -&gt; Unit, onHamBattleViewEndedChallengeDetailClick: (String) -&gt; Unit, onHamBattleWaitingChallengeClick: (String) -&gt; Unit, onHamBattleJoinedFromCommunityClick: (String) -&gt; Unit, onHamBattleJoinedFullFromCommunityClick: () -&gt; Unit, onNavigateToExpenseDetail: (String) -&gt; Unit, onNavigateToExpenseCalendar: () -&gt; Unit, onNavigateToChallengeEndExpenseCalendar: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onExtendBreak: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToYesterdayExpenseInput: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onChallengeEndedFinishClick: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:HomeWarningMockData.kt$HomeWarningMockData$fun compute( challenge: HomeChallenge?, resolvedChallenge: ActiveChallenge?, challengeState: ChallengeState, referenceToday: LocalDate, todaysExpenses: List&lt;ExpenseEntry&gt;, recordsForDate: (LocalDate) -&gt; List&lt;ExpenseRecord&gt;, yesterdayHasRecord: Boolean ): List&lt;HomeWarning&gt;</ID>
+    <ID>CyclomaticComplexMethod:MyPageScreen.kt$@Composable fun MyPageScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, initialTipDetailPostId: String? = null, initialTipDetailScrollToComments: Boolean = false )</ID>
+    <ID>CyclomaticComplexMethod:NextChallengeScreen.kt$@Composable fun NextChallengeRoute( previousResult: ChallengeResultUiState, suggestedTargetAmount: Int, onBackClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: NextChallengeViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:NextChallengeTakeABreakScreen.kt$@Composable fun NextChallengeTakeABreakRoute( onBackClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: NextChallengeViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:OnboardingComponents.kt$@Composable fun EditableAmountRow( label: String?, value: Int?, onValueChange: (Int) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, icon: ImageVector? = null, suffix: String? = null, valueColor: Color? = null, editSeedValue: Int? = value )</ID>
+    <ID>CyclomaticComplexMethod:PeriodStep.kt$@Composable fun PeriodStep( state: OnboardingUiState, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (LocalDate) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>CyclomaticComplexMethod:ProfileEditScreen.kt$@Composable fun ProfileEditScreen( currentName: String, currentAvatarUri: String?, onValidateNickname: suspend (String) -&gt; Result&lt;Boolean&gt;, onBackClick: () -&gt; Unit, onSubmit: (newName: String, newAvatarUri: String?) -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit )</ID>
+    <ID>CyclomaticComplexMethod:ResetPasswordScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun ResetPasswordScreen( onResetSuccess: () -&gt; Unit, onNavigateToSignUp: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: ResetPasswordViewModel = hiltViewModel() )</ID>
+    <ID>CyclomaticComplexMethod:SignUpScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun SignUpScreen( onSignUpSuccess: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: SignUpViewModel = hiltViewModel() )</ID>
+    <ID>ForEachOnRange:HamTipsWriteComponents.kt$1..5</ID>
+    <ID>LargeClass:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl : HamTipsRepositoryAccountScopedState</ID>
+    <ID>LongMethod:AccountSettingsScreen.kt$@Composable fun AccountSettingsScreen( profile: MyPageProfile, onBackClick: () -&gt; Unit, onProfileEditClick: () -&gt; Unit, onChangePasswordClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: AccountSettingsViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:AllSettingsScreen.kt$@Composable fun AllSettingsScreen( onBackClick: () -&gt; Unit, onRecordAlarmClick: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: AllSettingsViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:AmountAdjustmentScreen.kt$@Composable fun AmountAdjustmentRoute( challenge: AmountAdjustmentChallenge, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -&gt; Unit, onGoalAmountUpdated: () -&gt; Unit, viewModel: AmountAdjustmentViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:AmountAdjustmentScreen.kt$@Composable private fun ChallengeInfoCard(challenge: AmountAdjustmentChallenge, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:AppNavHost.kt$@Composable fun AppNavHost( modifier: Modifier = Modifier, navController: NavHostController = rememberNavController(), pendingNotificationId: String? = null, onPendingNotificationConsumed: () -&gt; Unit )</ID>
+    <ID>LongMethod:ChallengeEndedDialog.kt$@Composable private fun ChallengeEndedDialogCard( totalDays: Int, hasVisitedExpenseEdit: Boolean, onEditExpenseClick: () -&gt; Unit, onFinishChallengeClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:ChallengeGoalAdjustmentDialog.kt$@Composable private fun ChallengeGoalAdjustmentCard( currentGoalAmount: Int, onStartNewChallengeClick: (Int) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ChallengeGoalStep.kt$@Composable fun ChallengeGoalStep( state: OnboardingUiState, onTotalTargetChange: (Int) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ChallengeResultComponents.kt$@Composable fun DailyRecordCalendar( periodStart: LocalDate, periodEnd: LocalDate, records: Map&lt;LocalDate, DailyRecordStatus&gt;, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ChallengeResultScreen.kt$@Composable fun ChallengeResultScreen( state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }), onBackClick: () -&gt; Unit, showBackButton: Boolean = true, onExpenseAnalysisClick: () -&gt; Unit, onAdjustGoalClick: () -&gt; Unit, onShareClick: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, onTakeABreakClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:ChallengeResultScreen.kt$@Composable private fun ChallengeStatusHeroCard(state: ChallengeResultUiState)</ID>
+    <ID>LongMethod:CommonComponents.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginTextField( label: String, value: String, onValueChange: (String) -&gt; Unit, placeholder: String, keyboardOptions: KeyboardOptions, visualTransformation: VisualTransformation = VisualTransformation.None, trailingIcon: @Composable (() -&gt; Unit)? = null, onCheckClick: (() -&gt; Unit)? = null, isCheckEnabled: Boolean = true, isValid: Boolean = false, enabled: Boolean = true )</ID>
+    <ID>LongMethod:CustomDurationDialog.kt$@Composable fun CustomDurationDialog( initialDays: Int?, onDismiss: () -&gt; Unit, onConfirm: (days: Int) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ExpenseAnalysisComponents.kt$@Composable fun ExpenseAnalysisListItem( record: ExpenseRecord, showReasonChip: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ExpenseAnalysisComponents.kt$@Composable fun MonthlyTrendChart(items: List&lt;MonthlyTotal&gt;, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:ExpenseAnalysisScreen.kt$@Composable fun ExpenseAnalysisRoute( headerMode: ExpenseAnalysisHeaderMode, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onMonthlyViewClick: () -&gt; Unit, onCategoryDetailClick: (LocalDate, LocalDate) -&gt; Unit, onReasonDetailClick: (LocalDate, LocalDate) -&gt; Unit, referenceToday: LocalDate = LocalDate.now(), viewModel: ExpenseAnalysisViewModel = hiltViewModel(), allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value )</ID>
+    <ID>LongMethod:ExpenseCalendarScreen.kt$@Composable fun ExpenseCalendarRoute( onBackClick: () -&gt; Unit, onExpenseClick: (String) -&gt; Unit, modifier: Modifier = Modifier, referenceToday: LocalDate = LocalDate.now(), challengePeriod: ExpenseChallengePeriod? = null, onExpenseAnalysisClick: () -&gt; Unit, onAddExpenseClick: (LocalDate) -&gt; Unit, restrictToChallengePeriod: Boolean = false, viewModel: ExpenseCalendarViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:ExpenseDetailComponents.kt$@Composable fun ExpensePhotoEditSection( photoUris: List&lt;String&gt;, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit, onPhotoReplaced: (index: Int, newUri: String) -&gt; Unit, modifier: Modifier = Modifier, maxCount: Int = ExpensePhotoMaxCount )</ID>
+    <ID>LongMethod:ExpenseDetailMockData.kt$ExpenseDetailMockData$fun initialRecords( challengeState: ChallengeState, referenceToday: LocalDate = LocalDate.now() ): Map&lt;String, ExpenseRecord&gt;</ID>
+    <ID>LongMethod:ExpenseEditScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ExpenseEditRoute( record: ExpenseRecord, onBackClick: () -&gt; Unit, onSaved: (ExpenseRecord) -&gt; Unit, modifier: Modifier = Modifier, isDateSelectable: (LocalDate) -&gt; Boolean = { true } )</ID>
+    <ID>LongMethod:ExpenseInputComponents.kt$@Composable fun ExpenseInputTextEntryDialog( label: String, placeholder: String, value: String, onValueChange: (String) -&gt; Unit, onCancel: () -&gt; Unit, onConfirm: () -&gt; Unit )</ID>
+    <ID>LongMethod:ExpenseInputScreen.kt$@Composable private fun ExpenseInputAmountStep( date: LocalDate, onDateClick: () -&gt; Unit, balance: Int, dailyLimit: Int, amount: Int, onDigit: (String) -&gt; Unit, onDelete: () -&gt; Unit, showMaxAmountError: Boolean, onNoSpendingToday: () -&gt; Unit, primaryButton: @Composable () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ExpenseInputScreen.kt$@Composable private fun ExpenseInputDetailStep( expenseName: String, onExpenseNameChange: (String) -&gt; Unit, categoryId: String?, isCustomCategory: Boolean, customCategoryText: String, onCategorySelected: (String) -&gt; Unit, onCustomCategoryClick: () -&gt; Unit, reasonId: String?, isCustomReason: Boolean, customReasonText: String, onReasonSelected: (String) -&gt; Unit, onCustomReasonClick: () -&gt; Unit, memo: String, onMemoChange: (String) -&gt; Unit, photoUris: List&lt;String&gt;, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit, onPhotoReplaced: (index: Int, newUri: String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ExpenseInputScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ExpenseInputRoute( todayBalance: Int, dailyLimit: Int, onBackClick: () -&gt; Unit, onNoSpendingToday: () -&gt; Unit, onComplete: () -&gt; Unit, modifier: Modifier = Modifier, form: ExpenseInputFormState = ExpenseInputFormState(), showMaxAmountError: Boolean = false, onDateSelected: (LocalDate) -&gt; Unit = {}, onAmountDigit: (String) -&gt; Unit = {}, onAmountDelete: () -&gt; Unit = {}, onStepChanged: (Int) -&gt; Unit = {}, onExpenseNameChange: (String) -&gt; Unit = {}, onCategorySelected: (String) -&gt; Unit = {}, onCustomCategoryConfirm: () -&gt; Unit = {}, onCustomCategoryTextChange: (String) -&gt; Unit = {}, onReasonSelected: (String) -&gt; Unit = {}, onCustomReasonConfirm: () -&gt; Unit = {}, onCustomReasonTextChange: (String) -&gt; Unit = {}, onMemoChange: (String) -&gt; Unit = {}, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit = {}, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit = {}, onPhotoReplaced: (Int, String) -&gt; Unit = { _, _ -&gt; } )</ID>
+    <ID>LongMethod:HamBattleAddScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HamBattleAddScreen( onBackClick: () -&gt; Unit, onStartClick: (HamBattleChallengeRequest) -&gt; Unit )</ID>
+    <ID>LongMethod:HamBattleChallengeCancelledDialog.kt$@Composable private fun HamBattleChallengeCancelledDialogCard( challengeTitle: String, onRecreateClick: () -&gt; Unit, onConfirmClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:HamBattleChallengesPodiumResultScreen.kt$@Composable fun HamBattleChallengesPodiumResultScreen( challenge: HamBattleChallenge, onBackClick: () -&gt; Unit, onStartNewChallengeClick: () -&gt; Unit, viewModel: HamBattleViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamBattleChallengesPodiumResultScreen.kt$@Composable private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending)</ID>
+    <ID>LongMethod:HamBattleComponents.kt$@Composable fun RankedParticipantList( participants: List&lt;HamBattleParticipantSpending&gt;, maxAmount: Float? = null )</ID>
+    <ID>LongMethod:HamBattleEndedChallengesDetailScreen.kt$@Composable fun HamBattleEndedChallengesDetailScreen( challenge: HamBattleChallenge, onBackClick: () -&gt; Unit, onShareResultClick: () -&gt; Unit, onStartNewChallengeClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:HamBattleEndedChallengesDetailScreen.kt$@Composable private fun EndedRankRow( rank: Int, participant: HamBattleParticipantSpending, isWinner: Boolean, isMe: Boolean, isLastPlace: Boolean )</ID>
+    <ID>LongMethod:HamBattleEndedChallengesDetailScreen.kt$@Composable private fun SummaryCard( title: String, type: String, periodLabel: String, winner: HamBattleParticipantSpending?, participantCount: Int )</ID>
+    <ID>LongMethod:HamBattleMissedSpendingDialog.kt$@Composable private fun HamBattleMissedSpendingDialogCard( challengeTitle: String, onInputSpendingClick: () -&gt; Unit, onConfirmClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:HamBattleMockFixtures.kt$HamBattleMockFixtures$fun seedChallenges(): List&lt;HamBattleChallenge&gt;</ID>
+    <ID>LongMethod:HamBattleScreen.kt$@Composable fun HamBattleScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, activeChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), waitingChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), onStartNewChallengeClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onViewEndedChallengesClick: () -&gt; Unit, onChallengeClick: (String) -&gt; Unit, onWaitingChallengeClick: (String) -&gt; Unit, onViewEndedChallengeDetailClick: (String) -&gt; Unit, viewModel: HamBattleViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamBattleScreen.kt$@Composable private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -&gt; Unit)</ID>
+    <ID>LongMethod:HamBattleStartConfirmDialog.kt$@Composable fun ConfirmActionCard( question: String, confirmLabel: String, onCancel: () -&gt; Unit, onConfirm: () -&gt; Unit, subtext: String? = null, subtextLines: List&lt;String&gt;? = null, subtextColor: Color = HPSub, subtextTextAlign: TextAlign = TextAlign.Center )</ID>
+    <ID>LongMethod:HamBattleWaitingChallengeDetailScreen.kt$@Composable fun HamBattleWaitingChallengeDetailScreen( challenge: HamBattleChallenge, onBackClick: () -&gt; Unit, onShareToCommunityClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:HamBattleWaitingChallengeExpiredDialog.kt$@Composable private fun HamBattleWaitingChallengeExpiredDialogCard( challengeTitle: String, onRecreateClick: () -&gt; Unit, onConfirmClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:HamTipsBattleDetailScreen.kt$@Composable fun HamTipsBattleDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onDeleted: () -&gt; Unit, onNavigateToBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamTipsDetailScreen.kt$@Composable fun HamTipsDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, onDeleted: () -&gt; Unit, scrollToComments: Boolean = false, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamTipsMockData.kt$HamTipsMockData$fun allPosts(): List&lt;TipPost&gt;</ID>
+    <ID>LongMethod:HamTipsScreen.kt$@Composable fun HamTipsScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteBattleContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, initialLink: String = "", waitingChallengeLinks: List&lt;String&gt;? = null, onSubmit: (String, String, String) -&gt; Unit )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteMenuContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (String, String, String, Int, MenuRatingInfo, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
+    <ID>LongMethod:HamTipsWriteScreens.kt$@Composable fun HamTipsWriteTipContent( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmit: (TipCategory, String, String, List&lt;String&gt;, List&lt;String&gt;) -&gt; Unit )</ID>
+    <ID>LongMethod:HomeComponents.kt$@Composable fun CharacterGaugeSection(challenge: HomeChallenge, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:HomeComponents.kt$@Composable fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable fun HomeScreen( modifier: Modifier = Modifier, initialBottomTab: BottomNavItem = BottomNavItem.HOME, openHamTipsWriteBattleOnStart: Boolean = false, initialHamTipsWriteBattleLink: String = "", onExitHamTipsWriteBattle: () -&gt; Unit, initialMyTipDetailPostId: String? = null, initialMyTipDetailScrollToComments: Boolean = false, initialPopularPostId: String? = null, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: (String) -&gt; Unit, onNavigateToMiniChallenge: (LocalDate) -&gt; Unit, onHamBattleStartNewChallengeClick: () -&gt; Unit, onHamBattleChallengeClick: (String) -&gt; Unit, onHamBattleViewEndedChallengesClick: () -&gt; Unit, onHamBattleViewEndedChallengeDetailClick: (String) -&gt; Unit, onHamBattleWaitingChallengeClick: (String) -&gt; Unit, onHamBattleJoinedFromCommunityClick: (String) -&gt; Unit, onHamBattleJoinedFullFromCommunityClick: () -&gt; Unit, onNavigateToExpenseDetail: (String) -&gt; Unit, onNavigateToExpenseCalendar: () -&gt; Unit, onNavigateToChallengeEndExpenseCalendar: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onExtendBreak: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToYesterdayExpenseInput: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onChallengeEndedFinishClick: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun HomeContent( uiState: HomeUiState, referenceToday: LocalDate, onDateSelected: (LocalDate) -&gt; Unit, onReturnToTodayClick: () -&gt; Unit, onToggleMiniChallenge: (String) -&gt; Unit, onViewAllMiniChallengesClick: () -&gt; Unit, onReminderClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: () -&gt; Unit, onExpenseClick: (String) -&gt; Unit, onViewAllExpensesClick: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:LoginScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun LoginScreen( completeDialogMessage: String? = null, pendingNicknameSession: AuthSession? = null, onLoginSuccess: () -&gt; Unit, onNavigateToSignUp: () -&gt; Unit, onNavigateToResetPassword: () -&gt; Unit, viewModel: LoginViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:MiniChallengeComponents.kt$@Composable fun MiniChallengeItemRow( item: MiniChallengeEntry, onToggle: () -&gt; Unit, onDelete: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:MiniChallengeComponents.kt$@Composable private fun StreakRing(streakDays: Int, progress: Float, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:MiniChallengeCreateScreen.kt$@Composable fun MiniChallengeCreateScreen( modifier: Modifier = Modifier, existingNames: List&lt;String&gt; = emptyList(), onBackClick: () -&gt; Unit, onAddChallengeClick: (name: String, duration: MiniChallengeDuration) -&gt; Unit )</ID>
+    <ID>LongMethod:MiniChallengeRecommendedListScreen.kt$@Composable fun MiniChallengeRecommendedListScreen( recommendedChallenges: List&lt;RecommendedMiniChallenge&gt;, modifier: Modifier = Modifier, existingNames: List&lt;String&gt; = emptyList(), onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onAddChallenge: (RecommendedMiniChallenge) -&gt; Unit )</ID>
+    <ID>LongMethod:MiniChallengeScreen.kt$@Composable fun MiniChallengeScreen( modifier: Modifier = Modifier, initialDate: LocalDate = LocalDate.now(), onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, viewModel: MiniChallengeViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:MiniChallengeScreen.kt$@Composable private fun MiniChallengeDashboardScreen( modifier: Modifier = Modifier, selectedDate: LocalDate, onDateSelected: (LocalDate) -&gt; Unit, todayChallenges: List&lt;MiniChallengeEntry&gt;, recommendedChallenges: List&lt;RecommendedMiniChallenge&gt;, streakDaysOverride: Int? = null, onToggleChallenge: (String) -&gt; Unit, onDeleteChallenge: (String) -&gt; Unit, onAddRecommendedChallenge: (RecommendedMiniChallenge) -&gt; Unit, onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onStartNewChallengeClick: () -&gt; Unit, onViewAllRecommendedClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:MissingExpenseReminderDialog.kt$@Composable private fun MissingExpenseReminderDialogCard( onInputNowClick: () -&gt; Unit, onNoSpendingTodayClick: () -&gt; Unit, onLaterClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:MyPageComponents.kt$@Composable fun ChallengeRecordCard(record: ChallengeRecord, onClick: () -&gt; Unit, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:MyPageScreen.kt$@Composable fun MyPageScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, initialTipDetailPostId: String? = null, initialTipDetailScrollToComments: Boolean = false )</ID>
+    <ID>LongMethod:NextChallengeScreen.kt$@Composable fun NextChallengeRoute( previousResult: ChallengeResultUiState, suggestedTargetAmount: Int, onBackClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: NextChallengeViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:NextChallengeScreen.kt$@Composable internal fun ChallengeSettingsSection( periodEnabled: Boolean, onPeriodEnabledChange: (Boolean) -&gt; Unit, periodDays: Int?, onPeriodDaysChange: (Int) -&gt; Unit, customPeriodDays: Int?, onCustomPeriodDaysChange: (Int) -&gt; Unit, onCustomPeriodEditingStart: () -&gt; Unit, customPeriodDaysOutOfRange: Boolean, dateFixed: Boolean, onDateFixedChange: (Boolean) -&gt; Unit, startDateText: String, onStartDateClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:NextChallengeScreen.kt$@Composable internal fun CustomPeriodDaysInput( value: Int?, onValueChange: (Int) -&gt; Unit, modifier: Modifier = Modifier, onStartEditing: () -&gt; Unit )</ID>
+    <ID>LongMethod:NextChallengeTakeABreakScreen.kt$@Composable fun NextChallengeTakeABreakRoute( onBackClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: NextChallengeViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:NotificationMockData.kt$NotificationMockData$fun populated(): List&lt;NotificationItem&gt;</ID>
+    <ID>LongMethod:OnboardingComponents.kt$@Composable fun EditableAmountRow( label: String?, value: Int?, onValueChange: (Int) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, icon: ImageVector? = null, suffix: String? = null, valueColor: Color? = null, editSeedValue: Int? = value )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable fun OnboardingScreen( flowState: OnboardingFlowUiState, onNavigateToLogin: () -&gt; Unit, onFinishSplash: () -&gt; Unit, onExpenseChange: (Int) -&gt; Unit, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (java.time.LocalDate) -&gt; Unit, onTotalTargetChange: (Int) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onShowSkip: () -&gt; Unit, onDismissSkip: () -&gt; Unit, onShowExistingLogin: () -&gt; Unit = onNavigateToLogin, onDismissExistingLogin: () -&gt; Unit = {}, onSubmit: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:PeriodStep.kt$@Composable fun PeriodStep( state: OnboardingUiState, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (LocalDate) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:ProfileEditScreen.kt$@Composable fun ProfileEditScreen( currentName: String, currentAvatarUri: String?, onValidateNickname: suspend (String) -&gt; Result&lt;Boolean&gt;, onBackClick: () -&gt; Unit, onSubmit: (newName: String, newAvatarUri: String?) -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:RecordAlarmScreen.kt$@Composable fun RecordAlarmScreen( onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: RecordAlarmViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:ResetPasswordScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun ResetPasswordScreen( onResetSuccess: () -&gt; Unit, onNavigateToSignUp: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: ResetPasswordViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:SignUpScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun SignUpScreen( onSignUpSuccess: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: SignUpViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:SocialSignUpNicknameDialog.kt$@Composable private fun SocialSignUpNicknameDialogCard( nickname: String, onNicknameChange: (String) -&gt; Unit, onCheckNickname: () -&gt; Unit, nicknameCheckMessage: String?, isSignUpEnabled: Boolean, onSignUp: () -&gt; Unit, onBack: () -&gt; Unit )</ID>
+    <ID>LongMethod:TakeABreakEndedDialog.kt$@Composable private fun TakeABreakEndedDialogCard( onStartNowClick: () -&gt; Unit, onStartTomorrowClick: () -&gt; Unit, onRestMoreClick: () -&gt; Unit )</ID>
+    <ID>LongMethod:TakeABreakScreen.kt$@Composable fun TakeABreakScreen( uiState: TakeABreakUiState = TakeABreakUiState(), onBack: () -&gt; Unit, onKeepChallenge: () -&gt; Unit, onSelectDuration: (BreakDuration) -&gt; Unit, onCustomDaysChange: (String) -&gt; Unit, onSubmit: () -&gt; Unit )</ID>
+    <ID>LongMethod:TakeABreakScreen.kt$@Composable private fun CustomDaysInputField( value: String, onValueChange: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:AccountScopedStateModule.kt$AccountScopedStateModule$( notificationRepository: NotificationRepositoryImpl, miniChallengeRepository: MiniChallengeRepositoryImpl, hamTipsRepository: HamTipsRepositoryImpl, battleRepository: BattleRepositoryImpl, recordAlarmRepository: RecordAlarmRepositoryImpl, myPageProfileRepository: MyPageProfileRepositoryImpl, notificationSettingsRepository: NotificationSettingsRepositoryImpl, hamBattleMockStore: HamBattleMockStore )</ID>
+    <ID>LongParameterList:AccountSettingsScreen.kt$( profile: MyPageProfile, onBackClick: () -&gt; Unit, onProfileEditClick: () -&gt; Unit, onChangePasswordClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: AccountSettingsViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:AmountAdjustmentScreen.kt$( challenge: AmountAdjustmentChallenge, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -&gt; Unit, onGoalAmountUpdated: () -&gt; Unit, viewModel: AmountAdjustmentViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:ChallengeResultScreen.kt$( state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }), onBackClick: () -&gt; Unit, showBackButton: Boolean = true, onExpenseAnalysisClick: () -&gt; Unit, onAdjustGoalClick: () -&gt; Unit, onShareClick: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, onTakeABreakClick: () -&gt; Unit )</ID>
+    <ID>LongParameterList:CommonComponents.kt$( label: String, value: String, onValueChange: (String) -&gt; Unit, placeholder: String, keyboardOptions: KeyboardOptions, visualTransformation: VisualTransformation = VisualTransformation.None, trailingIcon: @Composable (() -&gt; Unit)? = null, onCheckClick: (() -&gt; Unit)? = null, isCheckEnabled: Boolean = true, isValid: Boolean = false, enabled: Boolean = true )</ID>
+    <ID>LongParameterList:ExpenseAnalysisComponents.kt$( periodLabel: String, totalAmount: Int, topCategoryLabels: String, topCategoryPercent: Int, topReasonLabel: String, topReasonPercent: Int, peakWeekdayLabels: String?, modifier: Modifier = Modifier, serverInsight: String? = null )</ID>
+    <ID>LongParameterList:ExpenseAnalysisComponents.kt$( titleFormatResId: Int, label: String, amount: Int, count: Int, percent: Int, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseAnalysisScreen.kt$( headerMode: ExpenseAnalysisHeaderMode, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onMonthlyViewClick: () -&gt; Unit, onCategoryDetailClick: (LocalDate, LocalDate) -&gt; Unit, onReasonDetailClick: (LocalDate, LocalDate) -&gt; Unit, referenceToday: LocalDate = LocalDate.now(), viewModel: ExpenseAnalysisViewModel = hiltViewModel(), allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value )</ID>
+    <ID>LongParameterList:ExpenseAnalysisScreen.kt$( periodStart: LocalDate, periodEnd: LocalDate, initialCategoryId: String, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, referenceToday: LocalDate = LocalDate.now(), viewModel: ExpenseAnalysisViewModel = hiltViewModel(), allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value )</ID>
+    <ID>LongParameterList:ExpenseAnalysisScreen.kt$( periodStart: LocalDate, periodEnd: LocalDate, initialReasonId: String, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, referenceToday: LocalDate = LocalDate.now(), viewModel: ExpenseAnalysisViewModel = hiltViewModel(), allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value )</ID>
+    <ID>LongParameterList:ExpenseCalendarScreen.kt$( date: LocalDate, isCurrentMonth: Boolean, referenceToday: LocalDate, selected: Boolean, amount: Int?, onClick: () -&gt; Unit, modifier: Modifier = Modifier, forceMutedColor: Boolean = false )</ID>
+    <ID>LongParameterList:ExpenseCalendarScreen.kt$( month: LocalDate, referenceToday: LocalDate, selectedDate: LocalDate, summaryByDate: Map&lt;LocalDate, Int&gt;, onDateSelected: (LocalDate) -&gt; Unit, modifier: Modifier = Modifier, editableRange: ExpenseChallengePeriod? = null )</ID>
+    <ID>LongParameterList:ExpenseCalendarScreen.kt$( onBackClick: () -&gt; Unit, onExpenseClick: (String) -&gt; Unit, modifier: Modifier = Modifier, referenceToday: LocalDate = LocalDate.now(), challengePeriod: ExpenseChallengePeriod? = null, onExpenseAnalysisClick: () -&gt; Unit, onAddExpenseClick: (LocalDate) -&gt; Unit, restrictToChallengePeriod: Boolean = false, viewModel: ExpenseCalendarViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:ExpenseCalendarScreen.kt$( title: String, onBackClick: () -&gt; Unit, onAnalysisClick: () -&gt; Unit, onPreviousMonth: () -&gt; Unit, onNextMonth: () -&gt; Unit, modifier: Modifier = Modifier, monthNavEnabled: Boolean = true, showAnalysisAction: Boolean = true )</ID>
+    <ID>LongParameterList:ExpenseCalendarScreen.kt$( weekStart: LocalDate, referenceToday: LocalDate, selectedDate: LocalDate, summaryByDate: Map&lt;LocalDate, Int&gt;, onDateSelected: (LocalDate) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseDetailComponents.kt$( label: String, selected: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier, icon: ChoiceChipIcon? = null, iconSize: Dp = 16.dp, iconSpacing: Dp = 4.dp, maxLines: Int = Int.MAX_VALUE )</ID>
+    <ID>LongParameterList:ExpenseDetailComponents.kt$( photoUris: List&lt;String&gt;, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit, onPhotoReplaced: (index: Int, newUri: String) -&gt; Unit, modifier: Modifier = Modifier, maxCount: Int = ExpensePhotoMaxCount )</ID>
+    <ID>LongParameterList:ExpenseDetailComponents.kt$( uri: String, selectMode: Boolean, selected: Boolean, onToggleSelected: () -&gt; Unit, onChangeClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseDetailComponents.kt$( value: String, onValueChange: (String) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, singleLine: Boolean = true, minLines: Int = 1, keyboardOptions: KeyboardOptions = KeyboardOptions.Default, showBorder: Boolean = true, contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 12.dp) )</ID>
+    <ID>LongParameterList:ExpenseDiagnosisStep.kt$( state: OnboardingUiState, onExpenseChange: (Int) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onSkipClick: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, onExistingMemberLogin: () -&gt; Unit = onNavigateToLogin, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseInputComponents.kt$( label: String, placeholder: String, value: String, onValueChange: (String) -&gt; Unit, onCancel: () -&gt; Unit, onConfirm: () -&gt; Unit )</ID>
+    <ID>LongParameterList:ExpenseInputScreen.kt$( date: LocalDate, onDateClick: () -&gt; Unit, balance: Int, dailyLimit: Int, amount: Int, onDigit: (String) -&gt; Unit, onDelete: () -&gt; Unit, showMaxAmountError: Boolean, onNoSpendingToday: () -&gt; Unit, primaryButton: @Composable () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseInputScreen.kt$( expenseName: String, onExpenseNameChange: (String) -&gt; Unit, categoryId: String?, isCustomCategory: Boolean, customCategoryText: String, onCategorySelected: (String) -&gt; Unit, onCustomCategoryClick: () -&gt; Unit, reasonId: String?, isCustomReason: Boolean, customReasonText: String, onReasonSelected: (String) -&gt; Unit, onCustomReasonClick: () -&gt; Unit, memo: String, onMemoChange: (String) -&gt; Unit, photoUris: List&lt;String&gt;, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit, onPhotoReplaced: (index: Int, newUri: String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ExpenseInputScreen.kt$( todayBalance: Int, dailyLimit: Int, onBackClick: () -&gt; Unit, onNoSpendingToday: () -&gt; Unit, onComplete: () -&gt; Unit, modifier: Modifier = Modifier, form: ExpenseInputFormState = ExpenseInputFormState(), showMaxAmountError: Boolean = false, onDateSelected: (LocalDate) -&gt; Unit = {}, onAmountDigit: (String) -&gt; Unit = {}, onAmountDelete: () -&gt; Unit = {}, onStepChanged: (Int) -&gt; Unit = {}, onExpenseNameChange: (String) -&gt; Unit = {}, onCategorySelected: (String) -&gt; Unit = {}, onCustomCategoryConfirm: () -&gt; Unit = {}, onCustomCategoryTextChange: (String) -&gt; Unit = {}, onReasonSelected: (String) -&gt; Unit = {}, onCustomReasonConfirm: () -&gt; Unit = {}, onCustomReasonTextChange: (String) -&gt; Unit = {}, onMemoChange: (String) -&gt; Unit = {}, onPhotosAdded: (List&lt;String&gt;) -&gt; Unit = {}, onPhotosRemoved: (Set&lt;Int&gt;) -&gt; Unit = {}, onPhotoReplaced: (Int, String) -&gt; Unit = { _, _ -&gt; } )</ID>
+    <ID>LongParameterList:HamBattleAddScreen.kt$( selectedParticipantCount: String, onParticipantCountSelect: (String) -&gt; Unit, selectedDuration: String, onDurationSelect: (String) -&gt; Unit, startDateMillis: Long?, onStartDateClick: () -&gt; Unit, penaltyOptions: List&lt;String&gt;, selectedPenalty: String, onPenaltySelect: (String) -&gt; Unit, customPenaltyInputState: TextFieldState, onAddCustomPenalty: () -&gt; Unit )</ID>
+    <ID>LongParameterList:HamBattleChallengesPodiumResultScreen.kt$( extraRanked: List&lt;HamBattleParticipantSpending&gt;, penalty: String, lastPlaceName: String, showPenaltyBox: Boolean, onStartNewChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:HamBattleMockStore.kt$HamBattleMockStore$( authorName: String, title: String, penalty: String, battleCode: String, totalCount: Int, referenceToday: LocalDate = LocalDate.now() )</ID>
+    <ID>LongParameterList:HamBattleScreen.kt$( modifier: Modifier = Modifier, activeChallenges: List&lt;HamBattleChallenge&gt;, waitingChallenges: List&lt;HamBattleChallenge&gt;, onStartNewChallengeClick: () -&gt; Unit, onViewEndedChallengesClick: () -&gt; Unit, onChallengeClick: (String) -&gt; Unit, onWaitingChallengeClick: (String) -&gt; Unit )</ID>
+    <ID>LongParameterList:HamBattleScreen.kt$( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, activeChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), waitingChallenges: List&lt;HamBattleChallenge&gt; = emptyList(), onStartNewChallengeClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onViewEndedChallengesClick: () -&gt; Unit, onChallengeClick: (String) -&gt; Unit, onWaitingChallengeClick: (String) -&gt; Unit, onViewEndedChallengeDetailClick: (String) -&gt; Unit, viewModel: HamBattleViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HamBattleStartConfirmDialog.kt$( question: String, confirmLabel: String, onCancel: () -&gt; Unit, onConfirm: () -&gt; Unit, subtext: String? = null, subtextLines: List&lt;String&gt;? = null, subtextColor: Color = HPSub, subtextTextAlign: TextAlign = TextAlign.Center )</ID>
+    <ID>LongParameterList:HamTipsBattleDetailScreen.kt$( post: TipPost, onBackClick: () -&gt; Unit, onDeleted: () -&gt; Unit, onNavigateToBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HamTipsCommentComponents.kt$( comment: TipComment, showAuthorTag: Boolean, onReplyClick: () -&gt; Unit, onMoreClick: () -&gt; Unit, onReplyMoreClick: (TipReply) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:HamTipsCommentComponents.kt$( value: String, onValueChange: (String) -&gt; Unit, onSubmit: () -&gt; Unit, placeholder: String, replyTargetName: String?, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:HamTipsDetailScreen.kt$( post: TipPost, onBackClick: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, onDeleted: () -&gt; Unit, scrollToComments: Boolean = false, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HamTipsRepository.kt$HamTipsRepository$( postId: String, category: TipCategory, title: String, content: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; = emptyList() )</ID>
+    <ID>LongParameterList:HamTipsRepository.kt$HamTipsRepository$( postId: String, title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; = emptyList() )</ID>
+    <ID>LongParameterList:HamTipsRepository.kt$HamTipsRepository$( title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; = emptyList() )</ID>
+    <ID>LongParameterList:HamTipsScreen.kt$( posts: List&lt;TipPost&gt;, sortOrder: HamTipsSortOrder, onSortOrderChange: (HamTipsSortOrder) -&gt; Unit, modifier: Modifier = Modifier, initialSortExpanded: Boolean = false, onPostClick: (TipPost) -&gt; Unit, scrollToPostId: String? = null, scrollState: ScrollState? = null, containerRootY: Float? = null )</ID>
+    <ID>LongParameterList:HamTipsScreen.kt$( query: String, onQueryChange: (String) -&gt; Unit, selectedCategoryTab: HamTipsCategoryTab, onCategoryTabSelected: (HamTipsCategoryTab) -&gt; Unit, popularPosts: List&lt;TipPost&gt;, pochipickPosts: List&lt;TipPost&gt;, allPosts: List&lt;TipPost&gt;, sortOrder: HamTipsSortOrder, onSortOrderChange: (HamTipsSortOrder) -&gt; Unit, onNotificationClick: () -&gt; Unit, onPopularViewAllClick: () -&gt; Unit, onPochipickViewAllClick: () -&gt; Unit, modifier: Modifier = Modifier, onPostClick: (TipPost) -&gt; Unit )</ID>
+    <ID>LongParameterList:HamTipsScreen.kt$( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HamTipsScreen.kt$( title: String, query: String, onQueryChange: (String) -&gt; Unit, selectedCategoryTab: HamTipsCategoryTab, onCategoryTabSelected: (HamTipsCategoryTab) -&gt; Unit, posts: List&lt;TipPost&gt;, sortOrder: HamTipsSortOrder, onSortOrderChange: (HamTipsSortOrder) -&gt; Unit, onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, modifier: Modifier = Modifier, initialSortExpanded: Boolean = false, onPostClick: (TipPost) -&gt; Unit, scrollToPostId: String? = null )</ID>
+    <ID>LongParameterList:HamTipsWriteComponents.kt$( text: String, enabled: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier, disabledContainerColor: Color = HPMain.copy(alpha = 0.4f), disabledContentColor: Color = HPWhite.copy(alpha = 0.8f) )</ID>
+    <ID>LongParameterList:HamTipsWriteComponents.kt$( value: String, onValueChange: (String) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, minHeight: androidx.compose.ui.unit.Dp = 48.dp, singleLine: Boolean = true )</ID>
+    <ID>LongParameterList:HamTipsWriteScreens.kt$( editingPost: TipPost? = null, onBackClick: () -&gt; Unit, onSubmitted: () -&gt; Unit, initialLink: String = "", viewModel: HamTipsWriteViewModel = hiltViewModel(), battleViewModel: HamBattleViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HamTipsWriteViewModel.kt$HamTipsWriteViewModel$( editingPost: TipPost?, category: TipCategory, title: String, content: String, photoUris: List&lt;String&gt;, photoKeys: List&lt;String&gt; )</ID>
+    <ID>LongParameterList:HamTipsWriteViewModel.kt$HamTipsWriteViewModel$( editingPost: TipPost?, title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, photoUris: List&lt;String&gt;, photoKeys: List&lt;String&gt; )</ID>
+    <ID>LongParameterList:HomeScreen.kt$( modifier: Modifier = Modifier, initialBottomTab: BottomNavItem = BottomNavItem.HOME, openHamTipsWriteBattleOnStart: Boolean = false, initialHamTipsWriteBattleLink: String = "", onExitHamTipsWriteBattle: () -&gt; Unit, initialMyTipDetailPostId: String? = null, initialMyTipDetailScrollToComments: Boolean = false, initialPopularPostId: String? = null, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: (String) -&gt; Unit, onNavigateToMiniChallenge: (LocalDate) -&gt; Unit, onHamBattleStartNewChallengeClick: () -&gt; Unit, onHamBattleChallengeClick: (String) -&gt; Unit, onHamBattleViewEndedChallengesClick: () -&gt; Unit, onHamBattleViewEndedChallengeDetailClick: (String) -&gt; Unit, onHamBattleWaitingChallengeClick: (String) -&gt; Unit, onHamBattleJoinedFromCommunityClick: (String) -&gt; Unit, onHamBattleJoinedFullFromCommunityClick: () -&gt; Unit, onNavigateToExpenseDetail: (String) -&gt; Unit, onNavigateToExpenseCalendar: () -&gt; Unit, onNavigateToChallengeEndExpenseCalendar: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onExtendBreak: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToYesterdayExpenseInput: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onChallengeEndedFinishClick: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:HomeScreen.kt$( uiState: HomeUiState, referenceToday: LocalDate, onDateSelected: (LocalDate) -&gt; Unit, onReturnToTodayClick: () -&gt; Unit, onToggleMiniChallenge: (String) -&gt; Unit, onViewAllMiniChallengesClick: () -&gt; Unit, onReminderClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, onCalendarClick: () -&gt; Unit, onChallengeSummaryClick: () -&gt; Unit, onExpenseClick: (String) -&gt; Unit, onViewAllExpensesClick: () -&gt; Unit, onAddExpenseClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:HomeWarningMockData.kt$HomeWarningMockData$( challenge: HomeChallenge?, resolvedChallenge: ActiveChallenge?, challengeState: ChallengeState, referenceToday: LocalDate, todaysExpenses: List&lt;ExpenseEntry&gt;, recordsForDate: (LocalDate) -&gt; List&lt;ExpenseRecord&gt;, yesterdayHasRecord: Boolean )</ID>
+    <ID>LongParameterList:LoginScreen.kt$( completeDialogMessage: String? = null, pendingNicknameSession: AuthSession? = null, onLoginSuccess: () -&gt; Unit, onNavigateToSignUp: () -&gt; Unit, onNavigateToResetPassword: () -&gt; Unit, viewModel: LoginViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:MiniChallengeRecommendedListScreen.kt$( recommendedChallenges: List&lt;RecommendedMiniChallenge&gt;, modifier: Modifier = Modifier, existingNames: List&lt;String&gt; = emptyList(), onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onAddChallenge: (RecommendedMiniChallenge) -&gt; Unit )</ID>
+    <ID>LongParameterList:MiniChallengeScreen.kt$( modifier: Modifier = Modifier, selectedDate: LocalDate, onDateSelected: (LocalDate) -&gt; Unit, todayChallenges: List&lt;MiniChallengeEntry&gt;, recommendedChallenges: List&lt;RecommendedMiniChallenge&gt;, streakDaysOverride: Int? = null, onToggleChallenge: (String) -&gt; Unit, onDeleteChallenge: (String) -&gt; Unit, onAddRecommendedChallenge: (RecommendedMiniChallenge) -&gt; Unit, onBackClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, onStartNewChallengeClick: () -&gt; Unit, onViewAllRecommendedClick: () -&gt; Unit )</ID>
+    <ID>LongParameterList:MyPageComponents.kt$( title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, onRowClick: (() -&gt; Unit)? = null )</ID>
+    <ID>LongParameterList:MyPageScreen.kt$( profile: MyPageProfile, onBackClick: () -&gt; Unit, onProfileCardClick: () -&gt; Unit, onChallengeHistoryClick: () -&gt; Unit, onMyTipsClick: () -&gt; Unit, onSavedTipsClick: () -&gt; Unit, onAllSettingsClick: () -&gt; Unit, onLogoutClick: () -&gt; Unit, onNotificationClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:MyPageScreen.kt$( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNotificationClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -&gt; Unit, onNavigateToAmountAdjustment: () -&gt; Unit, onNavigateToTakeABreak: () -&gt; Unit, onStartNewChallengeClick: (Int) -&gt; Unit, initialTipDetailPostId: String? = null, initialTipDetailScrollToComments: Boolean = false )</ID>
+    <ID>LongParameterList:NextChallengeScreen.kt$( periodEnabled: Boolean, onPeriodEnabledChange: (Boolean) -&gt; Unit, periodDays: Int?, onPeriodDaysChange: (Int) -&gt; Unit, customPeriodDays: Int?, onCustomPeriodDaysChange: (Int) -&gt; Unit, onCustomPeriodEditingStart: () -&gt; Unit, customPeriodDaysOutOfRange: Boolean, dateFixed: Boolean, onDateFixedChange: (Boolean) -&gt; Unit, startDateText: String, onStartDateClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:NextChallengeScreen.kt$( previousResult: ChallengeResultUiState, suggestedTargetAmount: Int, onBackClick: () -&gt; Unit, onStartChallengeClick: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: NextChallengeViewModel = hiltViewModel() )</ID>
+    <ID>LongParameterList:OnboardingComponents.kt$( label: String, icon: ImageVector?, accentColor: Color, selected: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:OnboardingComponents.kt$( label: String?, value: Int?, onValueChange: (Int) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, icon: ImageVector? = null, suffix: String? = null, valueColor: Color? = null, editSeedValue: Int? = value )</ID>
+    <ID>LongParameterList:OnboardingComponents.kt$( label: String?, valueText: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier, icon: ImageVector? = null, suffix: String? = null, valueColor: Color? = null )</ID>
+    <ID>LongParameterList:OnboardingScreen.kt$( flowState: OnboardingFlowUiState, onNavigateToLogin: () -&gt; Unit, onFinishSplash: () -&gt; Unit, onExpenseChange: (Int) -&gt; Unit, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (java.time.LocalDate) -&gt; Unit, onTotalTargetChange: (Int) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onShowSkip: () -&gt; Unit, onDismissSkip: () -&gt; Unit, onShowExistingLogin: () -&gt; Unit = onNavigateToLogin, onDismissExistingLogin: () -&gt; Unit = {}, onSubmit: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:PeriodStep.kt$( state: OnboardingUiState, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (LocalDate) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongParameterList:ProfileEditScreen.kt$( currentName: String, currentAvatarUri: String?, onValidateNickname: suspend (String) -&gt; Result&lt;Boolean&gt;, onBackClick: () -&gt; Unit, onSubmit: (newName: String, newAvatarUri: String?) -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit )</ID>
+    <ID>LongParameterList:SignUpScreen.kt$( isTermsChecked: Boolean, onTermsCheckedChange: (Boolean) -&gt; Unit, isPrivacyChecked: Boolean, onPrivacyCheckedChange: (Boolean) -&gt; Unit, isMarketingChecked: Boolean, onMarketingCheckedChange: (Boolean) -&gt; Unit )</ID>
+    <ID>LongParameterList:SocialSignUpNicknameDialog.kt$( nickname: String, onNicknameChange: (String) -&gt; Unit, onCheckNickname: () -&gt; Unit, nicknameCheckMessage: String?, isSignUpEnabled: Boolean, onSignUp: () -&gt; Unit, onBack: () -&gt; Unit )</ID>
+    <ID>LongParameterList:TakeABreakScreen.kt$( uiState: TakeABreakUiState = TakeABreakUiState(), onBack: () -&gt; Unit, onKeepChallenge: () -&gt; Unit, onSelectDuration: (BreakDuration) -&gt; Unit, onCustomDaysChange: (String) -&gt; Unit, onSubmit: () -&gt; Unit )</ID>
+    <ID>LongParameterList:TipListScreen.kt$( title: String, emptyMessage: String, tips: List&lt;TipPost&gt;, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onTipClick: (TipPost) -&gt; Unit, onNotificationClick: () -&gt; Unit )</ID>
+    <ID>LongParameterList:UsersRepositoryImpl.kt$UsersRepositoryImpl$( @ApplicationContext private val context: Context, private val usersApi: UsersApi, private val authRepository: AuthRepository, private val myPageProfileRepository: MyPageProfileRepository, private val notificationSettingsRepository: NotificationSettingsRepository, private val recordAlarmRepository: RecordAlarmRepository, private val okHttpClient: OkHttpClient )</ID>
+    <ID>MagicNumber:ActiveChallengeModels.kt$ActiveChallenge$15</ID>
+    <ID>MagicNumber:AmountAdjustmentModels.kt$AmountAdjustmentChallenge$15</ID>
+    <ID>MagicNumber:AmountAdjustmentScreen.kt$50</ID>
+    <ID>MagicNumber:AmountAdjustmentScreen.kt$AmountAdjustmentOption.RELAX_10$1.1</ID>
+    <ID>MagicNumber:AmountAdjustmentScreen.kt$AmountAdjustmentOption.RELAX_20$1.2</ID>
+    <ID>MagicNumber:AmountAdjustmentScreen.kt$AmountAdjustmentOption.RELAX_30$1.3</ID>
+    <ID>MagicNumber:AppNavHost.kt$300</ID>
+    <ID>MagicNumber:AuthRepository.kt$AuthRepository$401</ID>
+    <ID>MagicNumber:AuthRepository.kt$AuthRepository$403</ID>
+    <ID>MagicNumber:BattleRepositoryImpl.kt$7</ID>
+    <ID>MagicNumber:BottomNavBar.kt$50</ID>
+    <ID>MagicNumber:ChallengeGoalAdjustmentDialog.kt$GoalAdjustmentOption.RELAX_10$1.1</ID>
+    <ID>MagicNumber:ChallengeGoalAdjustmentDialog.kt$GoalAdjustmentOption.RELAX_20$1.2</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0x3342A8A7</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0x33729739</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0x33B19347</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0x33E17866</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0x8542A8A7</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0xFF729739</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0xFFB19347</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$0xFFE17866</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$14</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$2026</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$3</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$5</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$6</ID>
+    <ID>MagicNumber:ChallengeResultComponents.kt$7</ID>
+    <ID>MagicNumber:ChallengeResultMockData.kt$ChallengeResultMockData$100.0</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$1.3f</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$10</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$11</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$12</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$13</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$14</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$15</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$2026</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$25</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$3</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$4</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$42</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$5</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$6</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$7</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$8</ID>
+    <ID>MagicNumber:ChallengeResultScreen.kt$9</ID>
+    <ID>MagicNumber:ChallengeState.kt$50_000</ID>
+    <ID>MagicNumber:ChangePasswordScreen.kt$8</ID>
+    <ID>MagicNumber:Color.kt$0xF9FBFBFB</ID>
+    <ID>MagicNumber:Color.kt$0xFCFDFDFD</ID>
+    <ID>MagicNumber:Color.kt$0xFF000000</ID>
+    <ID>MagicNumber:Color.kt$0xFF1E3A5F</ID>
+    <ID>MagicNumber:Color.kt$0xFF2E8F7A</ID>
+    <ID>MagicNumber:Color.kt$0xFF3B82F6</ID>
+    <ID>MagicNumber:Color.kt$0xFF4A79A8</ID>
+    <ID>MagicNumber:Color.kt$0xFF4F9A3C</ID>
+    <ID>MagicNumber:Color.kt$0xFF4FC1D0</ID>
+    <ID>MagicNumber:Color.kt$0xFF5F3C16</ID>
+    <ID>MagicNumber:Color.kt$0xFF6B6B6B</ID>
+    <ID>MagicNumber:Color.kt$0xFF729739</ID>
+    <ID>MagicNumber:Color.kt$0xFF828282</ID>
+    <ID>MagicNumber:Color.kt$0xFF8B5FBF</ID>
+    <ID>MagicNumber:Color.kt$0xFF935C21</ID>
+    <ID>MagicNumber:Color.kt$0xFF9B6FCE</ID>
+    <ID>MagicNumber:Color.kt$0xFFA65633</ID>
+    <ID>MagicNumber:Color.kt$0xFFAD865C</ID>
+    <ID>MagicNumber:Color.kt$0xFFB19347</ID>
+    <ID>MagicNumber:Color.kt$0xFFC4C4C4</ID>
+    <ID>MagicNumber:Color.kt$0xFFDCF0EC</ID>
+    <ID>MagicNumber:Color.kt$0xFFE17866</ID>
+    <ID>MagicNumber:Color.kt$0xFFE2E2E2</ID>
+    <ID>MagicNumber:Color.kt$0xFFE3EDF7</ID>
+    <ID>MagicNumber:Color.kt$0xFFE4D8CE</ID>
+    <ID>MagicNumber:Color.kt$0xFFE8637E</ID>
+    <ID>MagicNumber:Color.kt$0xFFEBEBEB</ID>
+    <ID>MagicNumber:Color.kt$0xFFECECEC</ID>
+    <ID>MagicNumber:Color.kt$0xFFECF2E0</ID>
+    <ID>MagicNumber:Color.kt$0xFFEDE3F5</ID>
+    <ID>MagicNumber:Color.kt$0xFFF2994A</ID>
+    <ID>MagicNumber:Color.kt$0xFFF2C94C</ID>
+    <ID>MagicNumber:Color.kt$0xFFF2E7C9</ID>
+    <ID>MagicNumber:Color.kt$0xFFF6F6F6</ID>
+    <ID>MagicNumber:Color.kt$0xFFF7EFD8</ID>
+    <ID>MagicNumber:Color.kt$0xFFFBF0EC</ID>
+    <ID>MagicNumber:Color.kt$0xFFFFC53D</ID>
+    <ID>MagicNumber:Color.kt$0xFFFFFFFF</ID>
+    <ID>MagicNumber:CommonComponents.kt$1000</ID>
+    <ID>MagicNumber:CommonComponents.kt$10f</ID>
+    <ID>MagicNumber:CommonComponents.kt$50</ID>
+    <ID>MagicNumber:CommonComponents.kt$60</ID>
+    <ID>MagicNumber:CommonComponents.kt$8f</ID>
+    <ID>MagicNumber:ExpenseAnalysisCalculations.kt$100f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0.04f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0.06f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0.15f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0.88f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0x3342A8A7</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0x33729739</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0x33B19347</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0x33E17866</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xAC00</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFF42A8A7</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFF729739</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFFB19347</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$0xFFE17866</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$10.0</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$10_000</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$10f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$11171</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$15_000</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$2026</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$25_000</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$28</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$3</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$360f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$4</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$5</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$50</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$5_000</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$5f</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$8</ID>
+    <ID>MagicNumber:ExpenseAnalysisComponents.kt$90f</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$1.7f</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$100</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$14</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$2026</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$31</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$5</ID>
+    <ID>MagicNumber:ExpenseAnalysisScreen.kt$50</ID>
+    <ID>MagicNumber:ExpenseAnalysisViewModel.kt$ExpenseAnalysisViewModel$5_000</ID>
+    <ID>MagicNumber:ExpenseCalendarScreen.kt$50</ID>
+    <ID>MagicNumber:ExpenseCalendarScreen.kt$6</ID>
+    <ID>MagicNumber:ExpenseCalendarScreen.kt$7</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$0.4f</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$16</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$2026</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$50</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$6f</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$8</ID>
+    <ID>MagicNumber:ExpenseDetailComponents.kt$8f</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$1.5</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$10</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$11</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$12</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$13</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$19_500</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$20</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$3</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$3_000</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$4</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$5</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$6</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$6_000</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$7</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$8</ID>
+    <ID>MagicNumber:ExpenseDetailMockData.kt$ExpenseDetailMockData$9</ID>
+    <ID>MagicNumber:ExpenseInputComponents.kt$3</ID>
+    <ID>MagicNumber:ExpenseInputComponents.kt$50</ID>
+    <ID>MagicNumber:ExpenseInputScreen.kt$50</ID>
+    <ID>MagicNumber:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$100f</ID>
+    <ID>MagicNumber:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$6</ID>
+    <ID>MagicNumber:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$7</ID>
+    <ID>MagicNumber:HamBattleAddScreen.kt$50</ID>
+    <ID>MagicNumber:HamBattleChallengesPodiumResultScreen.kt$3</ID>
+    <ID>MagicNumber:HamBattleChallengesPodiumResultScreen.kt$50</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$0xFF729739</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$0xFFECF2E0</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$15000</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$20000</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$30</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$50</ID>
+    <ID>MagicNumber:HamBattleChallengesResultScreen.kt$50000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$0xFF5572AB</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$12000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$15000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$30</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$30000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$35000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$45000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$50</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$50000</ID>
+    <ID>MagicNumber:HamBattleComponents.kt$85000</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$0xFFE17866</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$0xFFFBF0EC</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$10000</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$15000</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$40000</ID>
+    <ID>MagicNumber:HamBattleEndedChallengesDetailScreen.kt$50</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$113_000</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$152_600</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$161_000</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$1_152_600</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$2026</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$24</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$3</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$4</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$5</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$61_000</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$73_200</ID>
+    <ID>MagicNumber:HamBattleMockFixtures.kt$HamBattleMockFixtures$87_500</ID>
+    <ID>MagicNumber:HamBattleMockStore.kt$HamBattleMockStore$7</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$0xFF729739</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$0xFFECF2E0</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$20f</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$3</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$4f</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$50</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$6f</ID>
+    <ID>MagicNumber:HamBattleScreen.kt$7</ID>
+    <ID>MagicNumber:HamTipsCommentComponents.kt$50</ID>
+    <ID>MagicNumber:HamTipsComponents.kt$180</ID>
+    <ID>MagicNumber:HamTipsComponents.kt$220</ID>
+    <ID>MagicNumber:HamTipsComponents.kt$50</ID>
+    <ID>MagicNumber:HamTipsComponents.kt$60</ID>
+    <ID>MagicNumber:HamTipsDetailScreen.kt$5</ID>
+    <ID>MagicNumber:HamTipsDetailScreen.kt$6f</ID>
+    <ID>MagicNumber:HamTipsModels.kt$MenuRatingInfo$3f</ID>
+    <ID>MagicNumber:HamTipsPhotoComponents.kt$10f</ID>
+    <ID>MagicNumber:HamTipsPhotoComponents.kt$8f</ID>
+    <ID>MagicNumber:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$1000</ID>
+    <ID>MagicNumber:HamTipsScreen.kt$10</ID>
+    <ID>MagicNumber:HamTipsScreen.kt$300</ID>
+    <ID>MagicNumber:HamTipsScreen.kt$4</ID>
+    <ID>MagicNumber:HamTipsWriteComponents.kt$5</ID>
+    <ID>MagicNumber:HamTipsWriteComponents.kt$50</ID>
+    <ID>MagicNumber:HamTipsWriteComponents.kt$9</ID>
+    <ID>MagicNumber:HomeComponents.kt$45</ID>
+    <ID>MagicNumber:HomeComponents.kt$50</ID>
+    <ID>MagicNumber:HomeComponents.kt$7</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFF178BFD</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFF2859C5</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFFAB3A3A</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFFED6C30</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeCategoryCatalog$0xFFF2A74E</ID>
+    <ID>MagicNumber:HomeMockData.kt$HomeMockData$7</ID>
+    <ID>MagicNumber:HomeModels.kt$CharacterState.Companion$0.3f</ID>
+    <ID>MagicNumber:HomeModels.kt$CharacterState.Companion$0.7f</ID>
+    <ID>MagicNumber:MiniChallengeComponents.kt$200</ID>
+    <ID>MagicNumber:MiniChallengeComponents.kt$50</ID>
+    <ID>MagicNumber:MiniChallengeComponents.kt$7</ID>
+    <ID>MagicNumber:MiniChallengeDurations.kt$14</ID>
+    <ID>MagicNumber:MiniChallengeDurations.kt$3</ID>
+    <ID>MagicNumber:MiniChallengeDurations.kt$31</ID>
+    <ID>MagicNumber:MiniChallengeDurations.kt$7</ID>
+    <ID>MagicNumber:MiniChallengeMockData.kt$MiniChallengeMockData$3</ID>
+    <ID>MagicNumber:MiniChallengeMockData.kt$MiniChallengeMockData$7</ID>
+    <ID>MagicNumber:MyPageComponents.kt$50</ID>
+    <ID>MagicNumber:MyPageScreen.kt$300</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$14</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$2026</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$30</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$5</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$50</ID>
+    <ID>MagicNumber:NextChallengeScreen.kt$7</ID>
+    <ID>MagicNumber:NotificationMockData.kt$NotificationMockData$5</ID>
+    <ID>MagicNumber:NotificationScreen.kt$0xFF241C17</ID>
+    <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$0.9</ID>
+    <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$1000</ID>
+    <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$1000.0</ID>
+    <ID>MagicNumber:OnboardingCalculations.kt$OnboardingCalculations$30</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$14</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$30</ID>
+    <ID>MagicNumber:OnboardingComponents.kt$7</ID>
+    <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$14</ID>
+    <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$30</ID>
+    <ID>MagicNumber:OnboardingModels.kt$OnboardingRequest$7</ID>
+    <ID>MagicNumber:PreviewData.kt$13</ID>
+    <ID>MagicNumber:PreviewData.kt$6</ID>
+    <ID>MagicNumber:ResetPasswordViewModel.kt$ResetPasswordUiState$8</ID>
+    <ID>MagicNumber:RestRepositoryImpl.kt$RestRepositoryImpl$14</ID>
+    <ID>MagicNumber:RestRepositoryImpl.kt$RestRepositoryImpl$3</ID>
+    <ID>MagicNumber:RestRepositoryImpl.kt$RestRepositoryImpl$404</ID>
+    <ID>MagicNumber:RestRepositoryImpl.kt$RestRepositoryImpl$7</ID>
+    <ID>MagicNumber:ShareImageUtils.kt$100</ID>
+    <ID>MagicNumber:SignUpViewModel.kt$SignUpUiState$8</ID>
+    <ID>MagicNumber:TakeABreakScreen.kt$3</ID>
+    <ID>MagicNumber:TimeAgo.kt$60</ID>
+    <ID>MatchingDeclarationName:AmountAdjustmentModels.kt$AmountAdjustmentChallenge</ID>
+    <ID>MatchingDeclarationName:AuthMeDto.kt$AuthMeData</ID>
+    <ID>MatchingDeclarationName:ExpenseAnalysisScreen.kt$ExpenseAnalysisHeaderMode</ID>
+    <ID>MatchingDeclarationName:HamTipsCommentComponents.kt$HamTipsMenuSheetItem</ID>
+    <ID>MatchingDeclarationName:NicknameCheckDto.kt$NicknameCheckData</ID>
+    <ID>MatchingDeclarationName:PasswordResetDto.kt$PasswordResetRequest</ID>
+    <ID>MatchingDeclarationName:ShareOptionsDialog.kt$ShareOption</ID>
+    <ID>MaxLineLength:AmountAdjustmentScreen.kt$Text(stringResource(R.string.amountadjustment_submit_button), style = MaterialTheme.typography.titleSmall)</ID>
+    <ID>MaxLineLength:AmountAdjustmentScreen.kt$challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 0)</ID>
+    <ID>MaxLineLength:AmountAdjustmentScreen.kt$challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 1)</ID>
+    <ID>MaxLineLength:AppNavHost.kt$Screen.ExpenseAnalysisChallenge.createRoute(state.totalDays, state.periodStart, state.periodEnd)</ID>
+    <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"READY","joinedCount":2}""")</ID>
+    <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"READY","capacity":4,"joinedCount":2}""")</ID>
+    <ID>MaxLineLength:BattleSummaryDtoDeserializerTest.kt$BattleSummaryDtoDeserializerTest$val dto = parse("""{"battleId":1,"battleCode":"A","title":"t","penalty":"p","startDate":"2026-08-12","endDate":"2026-08-18","status":"TERMINATED","winnerNickname":"winner"}""")</ID>
+    <ID>MaxLineLength:ChallengeEndedDialog.kt$properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = false)</ID>
+    <ID>MaxLineLength:ChallengeGoalStep.kt$val recommendedTotalTarget = OnboardingCalculations.recommendedTotalTarget(state.lastMonthFoodExpense, impliedPeriodDays)</ID>
+    <ID>MaxLineLength:ChallengeHistoryScreen.kt$ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})</ID>
+    <ID>MaxLineLength:ChallengeHistoryScreen.kt$ChallengeHistoryScreen(records = MyPageMockData.emptyChallengeHistory(), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})</ID>
+    <ID>MaxLineLength:ChallengeResultMockData.kt$ChallengeResultMockData$val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd</ID>
+    <ID>MaxLineLength:ChallengeResultScreen.kt$label = if (state.status == ChallengeResultStatus.COMPLETE) "목표 대비 총 절약" else state.amountLabel</ID>
+    <ID>MaxLineLength:ChallengeResultScreen.kt$onStartNewChallengeClick(ChallengeResultMockData.recommendedTightenedTarget(state.actualAmount))</ID>
+    <ID>MaxLineLength:ChallengeResultScreen.kt$state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() })</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$"craving" -&gt; ReasonVisual(R.drawable.icon_fork, Color(0x33729739), Color(0xFF729739), R.string.expenseanalysis_reason_craving_short)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$"lazy" -&gt; ReasonVisual(R.drawable.icon_sleepy, Color(0x3342A8A7), Color(0xFF42A8A7), R.string.expenseanalysis_reason_lazy_short)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$"reward" -&gt; ReasonVisual(R.drawable.icon_present, Color(0x33B19347), Color(0xFFB19347), R.string.expenseanalysis_reason_reward_short)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$"stress" -&gt; ReasonVisual(R.drawable.icon_stress, Color(0x33E17866), Color(0xFFE17866), R.string.expenseanalysis_reason_stress_short)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) } ?: stringResource(R.string.category_etc)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$Text(stringResource(titleFormatResId, withRoParticle(label)), style = MaterialTheme.typography.bodyMedium, color = HPText)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisComponents.kt$withStyle(highlight) { append(stringResource(R.string.expensedetail_amount_won_format, formatWon(totalAmount))) }</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$ExpenseAnalysisHeaderMode$Challenge : ExpenseAnalysisHeaderMode</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$Icon(Icons.Filled.ChevronLeft, contentDescription = stringResource(R.string.cd_calendar_month_prev), tint = HPBlack)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$Icon(Icons.Filled.ChevronRight, contentDescription = stringResource(R.string.cd_calendar_month_next), tint = HPBlack)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$MonthlyStatRow(currentMonth = currentMonth, currentTotal = currentTotal, average = average, changePercent = changePercent)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$changePercent &lt; 0 -&gt; stringResource(R.string.expenseanalysis_monthly_change_decrease_format, -changePercent)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$changePercent &gt; 0 -&gt; stringResource(R.string.expenseanalysis_monthly_change_increase_format, changePercent)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$if (isHighest) R.string.expenseanalysis_monthly_badge_highest else R.string.expenseanalysis_monthly_badge_current</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$if (maxAmount &lt;= 0) emptySet() else weekdayItems.filter { it.amount == maxAmount }.map { it.dayOfWeek }.take(2).toSet()</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$is ExpenseAnalysisHeaderMode.Challenge -&gt; stringResource(R.string.expenseanalysis_challenge_title_format, headerMode.totalDays)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$is ExpenseAnalysisHeaderMode.Month -&gt; stringResource(R.string.expenseanalysis_monthly_month_format, displayedMonth.monthValue)</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_category_section_title), onBackClick = onBackClick) }</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_monthly_title), onBackClick = onBackClick) }</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$topBar = { DetailTopBar(title = stringResource(R.string.expenseanalysis_reason_section_title), onBackClick = onBackClick) }</ID>
+    <ID>MaxLineLength:ExpenseAnalysisScreen.kt$val names = ordered.map { it.getDisplayName(TextStyle.NARROW, Locale.KOREA) + stringResource(R.string.expenseanalysis_weekday_suffix) }</ID>
+    <ID>MaxLineLength:ExpenseCalendarScreen.kt$Icon(Icons.Filled.ChevronLeft, contentDescription = stringResource(R.string.cd_calendar_week_prev), tint = HPBlack)</ID>
+    <ID>MaxLineLength:ExpenseCalendarScreen.kt$Icon(Icons.Filled.ChevronRight, contentDescription = stringResource(R.string.cd_calendar_week_next), tint = HPBlack)</ID>
+    <ID>MaxLineLength:ExpenseCalendarScreen.kt$stringResource(R.string.expensedetail_calendar_week_label_format, weekStart.monthValue, ordinals[ordinalIndex])</ID>
+    <ID>MaxLineLength:ExpenseCalendarScreen.kt$val weekOrdinalIndex = (weekOfMonthOrdinal(displayedWeekStart) - 1).coerceIn(0, weekOrdinals.size - 1)</ID>
+    <ID>MaxLineLength:ExpenseDetailScreen.kt$ExpenseInfoRow(label = stringResource(R.string.expensedetail_field_expense_name), value = record.expenseName)</ID>
+    <ID>MaxLineLength:ExpenseDetailScreen.kt$Text(stringResource(R.string.expensedetail_edit_button), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)</ID>
+    <ID>MaxLineLength:ExpenseDetailScreen.kt$Text(stringResource(R.string.expensedetail_field_memo), style = MaterialTheme.typography.bodyMedium, color = HPText)</ID>
+    <ID>MaxLineLength:ExpenseDetailScreen.kt$Text(stringResource(R.string.expensedetail_field_photo), style = MaterialTheme.typography.bodyMedium, color = HPText)</ID>
+    <ID>MaxLineLength:ExpenseInputViewModelTest.kt$ExpenseInputViewModelTest.FakeChallengeRepository$override suspend fun startNewChallenge(request: OnboardingRequest, referenceToday: LocalDate): Result&lt;ActiveChallenge&gt;</ID>
+    <ID>MaxLineLength:ExpenseInputViewModelTest.kt$ExpenseInputViewModelTest.FakeChallengeRepository$override suspend fun updateFocusCategories(categories: List&lt;String&gt;): Result&lt;List&lt;String&gt;&gt;</ID>
+    <ID>MaxLineLength:ExpenseInputViewModelTest.kt$ExpenseInputViewModelTest.FakeExpenseRepository$override suspend fun loadAnalysis(periodStart: LocalDate, periodEnd: LocalDate): Result&lt;ExpenseAnalysisSummary&gt;</ID>
+    <ID>MaxLineLength:ExpenseInputViewModelTest.kt$ExpenseInputViewModelTest.FakeExpenseRepository$override suspend fun loadCategoryAnalysis(categoryId: String, periodStart: LocalDate, periodEnd: LocalDate): Result&lt;ExpenseTagAnalysisResult&gt;</ID>
+    <ID>MaxLineLength:ExpenseInputViewModelTest.kt$ExpenseInputViewModelTest.FakeExpenseRepository$override suspend fun loadEmotionAnalysis(reasonId: String, periodStart: LocalDate, periodEnd: LocalDate): Result&lt;ExpenseTagAnalysisResult&gt;</ID>
+    <ID>MaxLineLength:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$val serverCategory = if (categoryId == ExpenseAnalysisEtcId) "ETC" else (localCategoryToServer[categoryId] ?: "ETC")</ID>
+    <ID>MaxLineLength:HamBattleChallengesPodiumResultScreen.kt$HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0], onBackClick = {}, onStartNewChallengeClick = {})</ID>
+    <ID>MaxLineLength:HamBattleChallengesPodiumResultScreen.kt$HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1], onBackClick = {}, onStartNewChallengeClick = {})</ID>
+    <ID>MaxLineLength:HamBattleModels.kt$HamBattleChallenge$return "${start.format(HamBattlePeriodDateFormatter)} - ${end.format(HamBattlePeriodDateFormatter)} (${durationDays}일)"</ID>
+    <ID>MaxLineLength:HamTipsBattleDetailScreen.kt$Dialog</ID>
+    <ID>MaxLineLength:HamTipsBattleDetailScreen.kt$text = stringResource(if (isFull) R.string.hamtips_battle_recruit_done else R.string.hamtips_battle_join)</ID>
+    <ID>MaxLineLength:HamTipsCommentComponents.kt$HamTipsMenuSheetItem(label = stringResource(R.string.hamtips_more_menu_delete), isDestructive = true, onClick = {})</ID>
+    <ID>MaxLineLength:HamTipsCommentComponents.kt$TipReply(id = "preview_reply_1", authorId = "user_altteuli", authorName = "알뜰이", content = "굿굿", timeLabel = "방금")</ID>
+    <ID>MaxLineLength:HamTipsCommentComponents.kt$TipReply(id = "preview_reply_2", authorId = "user_altteuli", authorName = "알뜰이", content = "굿굿", timeLabel = "방금")</ID>
+    <ID>MaxLineLength:HamTipsCommentComponents.kt$text = if (comment.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else comment.authorName</ID>
+    <ID>MaxLineLength:HamTipsCommentComponents.kt$text = if (reply.isDeleted) stringResource(R.string.hamtips_comment_deleted_author) else reply.authorName</ID>
+    <ID>MaxLineLength:HamTipsComponents.kt$HamTipsCategoryTabRow(selectedTab = HamTipsCategoryTab.ALL, onTabSelected = {}, modifier = Modifier.padding(16.dp))</ID>
+    <ID>MaxLineLength:HamTipsComponents.kt$Icon(imageVector = icon, contentDescription = contentDescription, tint = HPText, modifier = Modifier.size(14.dp))</ID>
+    <ID>MaxLineLength:HamTipsComponents.kt$Text(text = formatTimeAgo(post.postedMinutesAgo), style = MaterialTheme.typography.labelSmall, color = HPText)</ID>
+    <ID>MaxLineLength:HamTipsComponents.kt$Text(text = stringResource(selected.labelResId), style = MaterialTheme.typography.labelMedium, color = HPText)</ID>
+    <ID>MaxLineLength:HamTipsDetailScreen.kt$Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPBlack, modifier = Modifier.width(56.dp))</ID>
+    <ID>MaxLineLength:HamTipsDetailScreen.kt$if (replyTarget != null) R.string.hamtips_reply_input_placeholder else R.string.hamtips_comment_input_placeholder</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$link = link</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$return if (post != null) Result.success(post) else Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$val id = commentId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$val id = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$val id = replyId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$val post = postById(postId) ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$val postIdLong = postId.toLongOrNull() ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$BottomNavBar(selectedItem = selectedBottomTab, onItemSelected = onItemSelected, onAddClick = onAddClick)</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$HamTipsFeedSection(posts = allPosts, sortOrder = sortOrder, onSortOrderChange = onSortOrderChange, onPostClick = onPostClick)</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$HamTipsSortDropdown(selected = sortOrder, onSelected = onSortOrderChange, initialExpanded = initialSortExpanded)</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$pochipickPosts.take(4).forEach { post -&gt; HamTipsCompactPostCard(post = post, onClick = { onPostClick(post) }) }</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$popularPosts.take(4).forEach { post -&gt; HamTipsCompactPostCard(post = post, onClick = { onPostClick(post) }) }</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$posts = filteredSortedPosts(pochipickPosts, selectedCategoryTab.category, searchQuery, sortOrder)</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$posts = filteredSortedPosts(popularPosts, selectedCategoryTab.category, searchQuery, sortOrder)</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$private</ID>
+    <ID>MaxLineLength:HamTipsScreen.kt$targetOffset = (coordinates.positionInRoot().y - containerRootY!! + scrollState!!.value).toInt()</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$HamTipsCategoryPickerRow(selected = TipShareCategory.SHOPPING, onSelected = {}, modifier = Modifier.padding(16.dp))</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$HamTipsStarRatingRow(type = MenuRatingType.TASTE, rating = 4, onRatingChange = {}, modifier = Modifier.padding(16.dp))</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = label, style = MaterialTheme.typography.bodyMedium, color = HPBlack, modifier = Modifier.width(56.dp))</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = previewText, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$Text(text = text, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold, modifier = modifier)</ID>
+    <ID>MaxLineLength:HamTipsWriteComponents.kt$fun</ID>
+    <ID>MaxLineLength:HamTipsWriteScreens.kt$mutableStateOf(TipShareCategory.entries.find { it.category == editingPost?.category } ?: TipShareCategory.SHOPPING)</ID>
+    <ID>MaxLineLength:HomeComponents.kt$Text(text = entry.name, style = MaterialTheme.typography.bodyMedium, color = HPBlack, fontWeight = FontWeight.Bold)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeCategoryCatalog$Category("convenience", R.string.category_convenience, Icons.Filled.Storefront, Color(0xFF178BFD), R.drawable.icon_conv)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeCategoryCatalog$Category("delivery", R.string.category_delivery, Icons.Filled.DeliveryDining, Color(0xFF2859C5), R.drawable.icon_delivery)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeCategoryCatalog$Category("mart", R.string.category_mart, Icons.Filled.ShoppingBasket, Color(0xFFAB3A3A), R.drawable.icon_shopping)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 2, isChecked = true)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 4, isChecked = true)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = false)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m3", name = "물 많이 마시기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = true)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$MiniChallengeEntry(id = "m4", name = "계단 이용하기", duration = miniChallengeDuration(7), achievedDays = 0, isChecked = true)</ID>
+    <ID>MaxLineLength:HomeMockData.kt$HomeMockData$fun</ID>
+    <ID>MaxLineLength:HomeScreen.kt$HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.decreasingBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }</ID>
+    <ID>MaxLineLength:HomeScreen.kt$HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.freshDayState(previewChallengeState(today), MOCK_USER_NAME, today), today) }</ID>
+    <ID>MaxLineLength:HomeScreen.kt$HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.lowBalanceWithWarningState(previewChallengeState(today), MOCK_USER_NAME, today), today) }</ID>
+    <ID>MaxLineLength:HomeScreen.kt$HampouchTheme { HomeScreenPreviewScaffold(HomeMockData.normalBalanceState(previewChallengeState(today), MOCK_USER_NAME, today), today) }</ID>
+    <ID>MaxLineLength:HomeScreen.kt$if</ID>
+    <ID>MaxLineLength:LoginScreen.kt$contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password"</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = false)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = miniChallengeDuration(3), achievedDays = 0, isChecked = false)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "m3", name = "저녁 집밥 먹기", duration = miniChallengeDuration(7), achievedDays = 0, isChecked = false)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "m4", name = "물 많이 마시기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = false)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "y1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 4, isChecked = true)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "y2", name = "배달 음식 참기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = true)</ID>
+    <ID>MaxLineLength:MiniChallengeMockData.kt$MiniChallengeMockData$MiniChallengeEntry(id = "y3", name = "저녁 집밥 먹기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = false)</ID>
+    <ID>MaxLineLength:MiniChallengeRecommendedListScreen.kt$if</ID>
+    <ID>MaxLineLength:MiniChallengeScreen.kt$if</ID>
+    <ID>MaxLineLength:MyPageMockData.kt$MyPageMockData$val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd</ID>
+    <ID>MaxLineLength:MyPageScreen.kt$onEditClick = { route = if (it.type == TipPostType.MENU) MyPageRoute.EDIT_MENU else MyPageRoute.EDIT_TIP }</ID>
+    <ID>MaxLineLength:NotificationScreen.kt$NotificationScreen(notifications = NotificationMockData.empty(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})</ID>
+    <ID>MaxLineLength:NotificationScreen.kt$NotificationScreen(notifications = NotificationMockData.populated(), onBackClick = {}, onMarkAllReadClick = {}, onNotificationClick = {})</ID>
+    <ID>MaxLineLength:OnboardingComponents.kt$keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)</ID>
+    <ID>MaxLineLength:ProfileEditScreen.kt$photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))</ID>
+    <ID>MaxLineLength:ProfileEditScreen.kt$val finalName = if (isEditingName &amp;&amp; nicknameInput.trim().isNotEmpty()) nicknameInput.trim() else currentName</ID>
+    <ID>MaxLineLength:RecordAlarmScreen.kt$viewModel.update { it.copy(dayMode = ReminderDayMode.CUSTOM, selectedDays = updated) }</ID>
+    <ID>MaxLineLength:ResetPasswordScreen.kt$contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password"</ID>
+    <ID>MaxLineLength:Screen.kt$Screen.ExpenseAnalysisChallenge$data</ID>
+    <ID>MaxLineLength:SignUpScreen.kt$contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password"</ID>
+    <ID>MaxLineLength:TakeABreakEndedDialog.kt$properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = false, dismissOnClickOutside = false)</ID>
+    <ID>NewLineAtEndOfFile:CompleteDialog.kt$com.example.hampouch.ui.dialog.CompleteDialog.kt</ID>
+    <ID>NewLineAtEndOfFile:ExampleUnitTest.kt$com.example.hampouch.ExampleUnitTest.kt</ID>
+    <ID>NewLineAtEndOfFile:Theme.kt$com.example.hampouch.ui.theme.Theme.kt</ID>
+    <ID>NewLineAtEndOfFile:Type.kt$com.example.hampouch.ui.theme.Type.kt</ID>
+    <ID>ReturnCount:AuthHeaderInterceptor.kt$AuthHeaderInterceptor$override fun intercept(chain: Interceptor.Chain): Response</ID>
+    <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun abandonChallenge(referenceToday: LocalDate): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun acknowledgeChallengeEnd(): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl$override suspend fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$private fun categoryRequestPair(record: ExpenseRecord): Pair&lt;String?, String?&gt;</ID>
+    <ID>ReturnCount:HamBattleModels.kt$HamBattleChallenge$fun status(referenceToday: LocalDate = LocalDate.now()): HamBattleStatus</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun createMenuPost( title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; ): Result&lt;TipPost&gt;</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun createTipPost( category: TipCategory, title: String, content: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; ): Result&lt;TipPost&gt;</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun deleteReply(postId: String, commentId: String, replyId: String): Result&lt;Unit&gt;</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun updateMenuPost( postId: String, title: String, menuName: String, place: String, price: Int, rating: MenuRatingInfo, comment: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; ): Result&lt;TipPost&gt;</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$override suspend fun updateTipPost( postId: String, category: TipCategory, title: String, content: String, imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt; ): Result&lt;TipPost&gt;</ID>
+    <ID>ReturnCount:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$private suspend fun resolveImageKeys(imageUris: List&lt;String&gt;, imageKeys: List&lt;String&gt;): Result&lt;List&lt;String&gt;&gt;</ID>
+    <ID>ReturnCount:OnboardingLocalStore.kt$OnboardingLocalStore$fun restorePendingIfNeeded()</ID>
+    <ID>ReturnCount:OnboardingViewModel.kt$OnboardingViewModel$fun buildRequest(): OnboardingRequest?</ID>
+    <ID>SwallowedException:ChallengeResultScreen.kt$e: ActivityNotFoundException</ID>
+    <ID>SwallowedException:HamBattleEndedChallengesDetailScreen.kt$e: ActivityNotFoundException</ID>
+    <ID>SwallowedException:HamTipsPhotoComponents.kt$error: Exception</ID>
+    <ID>TooGenericExceptionCaught:ApiCall.kt$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AuthRepository.kt$AuthRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BattleRepositoryImpl.kt$error: Exception</ID>
+    <ID>TooGenericExceptionCaught:HamTipsPhotoComponents.kt$error: Exception</ID>
+    <ID>TooGenericExceptionCaught:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SocialAuthManager.kt$SocialAuthManager$e: Exception</ID>
+    <ID>TooManyFunctions:ApiService.kt$AuthApi</ID>
+    <ID>TooManyFunctions:ApiService.kt$ChallengeApi</ID>
+    <ID>TooManyFunctions:ApiService.kt$CommunityApi</ID>
+    <ID>TooManyFunctions:ApiService.kt$ExpenseApi</ID>
+    <ID>TooManyFunctions:AuthRepository.kt$AuthRepository : AuthTokenProvider</ID>
+    <ID>TooManyFunctions:BattleRepositoryImpl.kt$BattleRepositoryImpl : BattleRepositoryAccountScopedState</ID>
+    <ID>TooManyFunctions:ChallengeRepository.kt$ChallengeRepository</ID>
+    <ID>TooManyFunctions:ChallengeRepositoryImpl.kt$ChallengeRepositoryImpl : ChallengeRepository</ID>
+    <ID>TooManyFunctions:ChallengeResultComponents.kt$com.example.hampouch.ui.challengeresult.ChallengeResultComponents.kt</ID>
+    <ID>TooManyFunctions:CommonComponents.kt$com.example.hampouch.ui.common.CommonComponents.kt</ID>
+    <ID>TooManyFunctions:ExpenseAnalysisCalculations.kt$com.example.hampouch.domain.model.ExpenseAnalysisCalculations.kt</ID>
+    <ID>TooManyFunctions:ExpenseAnalysisComponents.kt$com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisComponents.kt</ID>
+    <ID>TooManyFunctions:ExpenseAnalysisScreen.kt$com.example.hampouch.ui.expenseanalysis.ExpenseAnalysisScreen.kt</ID>
+    <ID>TooManyFunctions:ExpenseCalendarScreen.kt$com.example.hampouch.ui.expensedetail.ExpenseCalendarScreen.kt</ID>
+    <ID>TooManyFunctions:ExpenseDetailComponents.kt$com.example.hampouch.ui.expensedetail.ExpenseDetailComponents.kt</ID>
+    <ID>TooManyFunctions:ExpenseInputComponents.kt$com.example.hampouch.ui.expenseinput.ExpenseInputComponents.kt</ID>
+    <ID>TooManyFunctions:ExpenseInputViewModel.kt$ExpenseInputViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:ExpenseRepository.kt$ExpenseRepository</ID>
+    <ID>TooManyFunctions:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl : ExpenseRepository</ID>
+    <ID>TooManyFunctions:HamBattleAddScreen.kt$com.example.hampouch.ui.hambattle.HamBattleAddScreen.kt</ID>
+    <ID>TooManyFunctions:HamBattleChallengesPodiumResultScreen.kt$com.example.hampouch.ui.hambattle.HamBattleChallengesPodiumResultScreen.kt</ID>
+    <ID>TooManyFunctions:HamBattleChallengesResultScreen.kt$com.example.hampouch.ui.hambattle.HamBattleChallengesResultScreen.kt</ID>
+    <ID>TooManyFunctions:HamBattleComponents.kt$com.example.hampouch.ui.hambattle.HamBattleComponents.kt</ID>
+    <ID>TooManyFunctions:HamBattleMockStore.kt$HamBattleMockStore : AccountScopedState</ID>
+    <ID>TooManyFunctions:HamBattleScreen.kt$com.example.hampouch.ui.hambattle.HamBattleScreen.kt</ID>
+    <ID>TooManyFunctions:HamBattleViewModel.kt$HamBattleViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HamTipsCommentComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsCommentComponents.kt</ID>
+    <ID>TooManyFunctions:HamTipsComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsComponents.kt</ID>
+    <ID>TooManyFunctions:HamTipsDetailScreen.kt$com.example.hampouch.ui.hamtips.HamTipsDetailScreen.kt</ID>
+    <ID>TooManyFunctions:HamTipsDetailViewModel.kt$HamTipsDetailViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HamTipsPhotoComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsPhotoComponents.kt</ID>
+    <ID>TooManyFunctions:HamTipsRepository.kt$HamTipsRepository</ID>
+    <ID>TooManyFunctions:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl : HamTipsRepositoryAccountScopedState</ID>
+    <ID>TooManyFunctions:HamTipsScreen.kt$com.example.hampouch.ui.hamtips.HamTipsScreen.kt</ID>
+    <ID>TooManyFunctions:HamTipsWriteComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsWriteComponents.kt</ID>
+    <ID>TooManyFunctions:HamTipsWriteScreens.kt$com.example.hampouch.ui.hamtips.HamTipsWriteScreens.kt</ID>
+    <ID>TooManyFunctions:HomeComponents.kt$com.example.hampouch.ui.home.components.HomeComponents.kt</ID>
+    <ID>TooManyFunctions:LoginViewModel.kt$LoginViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:MiniChallengeComponents.kt$com.example.hampouch.ui.minichallenge.components.MiniChallengeComponents.kt</ID>
+    <ID>TooManyFunctions:MiniChallengeRepositoryImpl.kt$MiniChallengeRepositoryImpl : MiniChallengeRepositoryAccountScopedState</ID>
+    <ID>TooManyFunctions:MyPageComponents.kt$com.example.hampouch.ui.mypage.components.MyPageComponents.kt</ID>
+    <ID>TooManyFunctions:NetworkModule.kt$NetworkModule</ID>
+    <ID>TooManyFunctions:NextChallengeScreen.kt$com.example.hampouch.ui.nextchallenge.NextChallengeScreen.kt</ID>
+    <ID>TooManyFunctions:NotificationRepositoryImpl.kt$NotificationRepositoryImpl : NotificationRepositoryAccountScopedState</ID>
+    <ID>TooManyFunctions:OnboardingComponents.kt$com.example.hampouch.ui.onboarding.components.OnboardingComponents.kt</ID>
+    <ID>TooManyFunctions:OnboardingViewModel.kt$OnboardingViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:RepositoryModule.kt$RepositoryModule</ID>
+    <ID>TooManyFunctions:SignUpViewModel.kt$SignUpViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:TakeABreakScreen.kt$com.example.hampouch.ui.takeabreak.TakeABreakScreen.kt</ID>
+    <ID>TooManyFunctions:UsersRepositoryImpl.kt$UsersRepositoryImpl : UsersRepository</ID>
+    <ID>TopLevelPropertyNaming:CompleteDialog.kt$private const val CompleteDialogDurationMillis = 1000L</ID>
+    <ID>TopLevelPropertyNaming:ExpenseAnalysis.kt$const val ExpenseAnalysisEtcId = "etc"</ID>
+    <ID>TopLevelPropertyNaming:ExpenseDetailComponents.kt$const val ExpensePhotoMaxCount = 5</ID>
+    <ID>TopLevelPropertyNaming:ExpenseDetailMockData.kt$internal const val MockPhotoUri = "drawable://img_hamster_chubby"</ID>
+    <ID>TopLevelPropertyNaming:ExpenseInputScreen.kt$internal const val MaxExpenseAmount = 999_999_999L</ID>
+    <ID>TopLevelPropertyNaming:ExpenseInputScreen.kt$private const val ExpenseInputPhotoMaxCount = 5</ID>
+    <ID>TopLevelPropertyNaming:HamBattleScreen.kt$private const val CollapsedRankCount = 3</ID>
+    <ID>TopLevelPropertyNaming:HamTipsPhotoComponents.kt$const val HamTipsMaxPhotoCount = 5</ID>
+    <ID>TopLevelPropertyNaming:HomeComponents.kt$private const val StreakBoxWidthDeltaRatio = 0.2f</ID>
+    <ID>TopLevelPropertyNaming:LoadingStep.kt$private const val LoadingDotIntervalMillis = 250L</ID>
+    <ID>TopLevelPropertyNaming:LoadingStep.kt$private const val LoadingDurationMillis = 1400L</ID>
+    <ID>TopLevelPropertyNaming:LoadingStep.kt$private const val LoadingMaxDotCount = 3</ID>
+    <ID>TopLevelPropertyNaming:NextChallengeScreen.kt$internal const val MaxPeriodDays = 365</ID>
+    <ID>TopLevelPropertyNaming:NextChallengeScreen.kt$internal const val MinPeriodDays = 1</ID>
+    <ID>TopLevelPropertyNaming:NextChallengeTakeABreakScreen.kt$private const val DefaultTakeABreakTotalDays = 14</ID>
+    <ID>TopLevelPropertyNaming:OnboardingComponents.kt$internal const val FocusHandoffDelayMillis: Long = 60L</ID>
+    <ID>TopLevelPropertyNaming:PeriodStep.kt$private const val MaxPeriodDays = 365</ID>
+    <ID>TopLevelPropertyNaming:PeriodStep.kt$private const val MinPeriodDays = 1</ID>
+    <ID>TopLevelPropertyNaming:SplashStep.kt$private const val SplashFadeInDurationMillis = 2000</ID>
+    <ID>TopLevelPropertyNaming:SplashStep.kt$private const val SplashLogoAspectRatio = 413f / 52f</ID>
+    <ID>UnusedParameter:ExpenseAnalysisScreen.kt$allRecords: List&lt;ExpenseRecord&gt; = viewModel.records.collectAsStateWithLifecycle().value</ID>
+    <ID>UnusedParameter:ExpenseAnalysisScreen.kt$referenceToday: LocalDate = LocalDate.now()</ID>
+    <ID>UnusedParameter:ExpenseDetailComponents.kt$customCategoryName: String?</ID>
+    <ID>UnusedParameter:ExpenseDiagnosisStep.kt$onBack: () -&gt; Unit</ID>
+    <ID>UnusedParameter:HomeScreen.kt$referenceToday: LocalDate</ID>
+    <ID>UnusedParameter:NextChallengeScreen.kt$status: ChallengeResultStatus</ID>
+    <ID>UnusedPrivateProperty:AmountAdjustmentScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:AppNavHost.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:AppNavHost.kt$val genericErrorMessage = "햄배틀 생성에 실패했어요."</ID>
+    <ID>UnusedPrivateProperty:HamBattleChallengesResultPagerScreen.kt$private const val PAGE_RANKING_LIST = 1</ID>
+    <ID>UnusedPrivateProperty:HamTipsBattleDetailScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:HamTipsDetailScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:HomeScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:MyPageScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:NextChallengeScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>UnusedPrivateProperty:NextChallengeTakeABreakScreen.kt$val coroutineScope = rememberCoroutineScope()</ID>
+    <ID>VariableNaming:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$/** "기타" 칩을 서버에 실어 보낼 때 쓰는 customCategory 값. 읽을 때 다시 칩으로 되돌린다. */ private val EtcCategoryLabel = "기타"</ID>
+    <ID>WildcardImport:ExampleUnitTest.kt$import org.junit.Assert.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

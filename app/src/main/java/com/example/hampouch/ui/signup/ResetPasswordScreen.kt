@@ -21,6 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,9 +41,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.remote.dto.EmailVerificationPurpose
-import com.example.hampouch.data.remote.toUserMessage
-import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.domain.model.EmailVerificationPurpose
+import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.common.FieldLinkMessage
 import com.example.hampouch.ui.common.FieldMessage
 import com.example.hampouch.ui.common.FooterLinkRow
@@ -57,36 +59,25 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ResetPasswordScreen(
-    onResetSuccess: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    onNavigateToLogin: () -> Unit = {}
+    onResetSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    viewModel: ResetPasswordViewModel = hiltViewModel()
 ) {
-    var email by rememberSaveable { mutableStateOf("") }
-    var emailCode by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var nickname by rememberSaveable { mutableStateOf("") }
-    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
-    var emailSendMessage by remember { mutableStateOf<String?>(null) }
-    var emailVerifyMessage by remember { mutableStateOf<String?>(null) }
-    var isEmailVerified by remember { mutableStateOf(false) }
-    var isSendingEmailCode by remember { mutableStateOf(false) }
-    var hasSentEmailCode by remember { mutableStateOf(false) }
-    var isVerifyingEmailCode by remember { mutableStateOf(false) }
-    var emailCodeExpiresAtMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var isNicknameAvailable by remember { mutableStateOf<Boolean?>(null) }
-    var resetErrorMessage by remember { mutableStateOf<String?>(null) }
-    val isPasswordValid = password.length >= 8 &&
-            password.any { it in 'a'..'z' || it in 'A'..'Z' } &&
-            password.any { it.isDigit() }
-    val showPasswordError = password.isNotEmpty() && !isPasswordValid
-    val isResetEnabled = isEmailVerified && isPasswordValid
-    val emailCodeRemainingSeconds = rememberCountdownSeconds(emailCodeExpiresAtMillis)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ResetPasswordEvent.Reset -> onResetSuccess()
+            }
+        }
+    }
+    val emailCodeRemainingSeconds = rememberCountdownSeconds(uiState.emailCodeExpiresAtMillis)
     val isEmailCodeExpired = emailCodeRemainingSeconds == 0
-    val isEmailFieldEnabled = !isSendingEmailCode && !isEmailVerified && (!hasSentEmailCode || isEmailCodeExpired)
-    val isCodeFieldEnabled = hasSentEmailCode && !isEmailCodeExpired && !isVerifyingEmailCode && !isEmailVerified
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val authRepository = remember { AuthRepository.getInstance(context) }
+    val isEmailFieldEnabled =
+        !uiState.isSendingEmailCode && !uiState.isEmailVerified && (!uiState.hasSentEmailCode || isEmailCodeExpired)
+    val isCodeFieldEnabled =
+        uiState.hasSentEmailCode && !isEmailCodeExpired && !uiState.isVerifyingEmailCode && !uiState.isEmailVerified
 
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
@@ -116,50 +107,20 @@ fun ResetPasswordScreen(
             Column(horizontalAlignment = Alignment.Start) {
                 LoginTextField(
                     label = "가입한 이메일",
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        isEmailVerified = false
-                        hasSentEmailCode = false
-                    },
+                    value = uiState.email,
+                    onValueChange = viewModel::changeEmail,
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = {
-                        if (email.isBlank()) {
-                            emailSendMessage = "이메일을 입력해주세요."
-                        } else {
-                            isSendingEmailCode = true
-                            coroutineScope.launch {
-                                authRepository.sendEmailVerificationCode(email, EmailVerificationPurpose.PASSWORD_RESET)
-                                    .onSuccess { data ->
-                                        emailSendMessage = "인증번호가 발송되었습니다."
-                                        hasSentEmailCode = true
-                                        emailCode = ""
-                                        emailCodeExpiresAtMillis =
-                                            System.currentTimeMillis() + data.expiresInSeconds * 1000L
-                                    }
-                                    .onFailure { error ->
-                                        emailSendMessage = error.toUserMessage("인증번호 발송에 실패했습니다.")
-                                    }
-                                isSendingEmailCode = false
-                            }
-                        }
-                    },
+                    onCheckClick = viewModel::sendEmailCode,
                     isCheckEnabled = isEmailFieldEnabled,
                     enabled = isEmailFieldEnabled
                 )
-                emailSendMessage?.let { FieldMessage(it) }
-                if (hasSentEmailCode && !isEmailVerified) {
-                    FieldLinkMessage("이메일을 잘못 입력하셨나요?") {
-                        hasSentEmailCode = false
-                        emailCode = ""
-                        emailSendMessage = null
-                        emailVerifyMessage = null
-                        emailCodeExpiresAtMillis = null
-                    }
+                uiState.emailSendMessage?.let { FieldMessage(it) }
+                if (uiState.hasSentEmailCode && !uiState.isEmailVerified) {
+                    FieldLinkMessage("이메일을 잘못 입력하셨나요?", viewModel::resetEmailVerification)
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
@@ -168,95 +129,66 @@ fun ResetPasswordScreen(
                     } else {
                         "인증번호"
                     },
-                    value = emailCode,
-                    onValueChange = {
-                        emailCode = it
-                        isEmailVerified = false
-                    },
+                    value = uiState.emailCode,
+                    onValueChange = viewModel::changeEmailCode,
                     placeholder = "인증번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = {
-                        isVerifyingEmailCode = true
-                        coroutineScope.launch {
-                            authRepository.verifyEmailCode(email, emailCode, EmailVerificationPurpose.PASSWORD_RESET)
-                                .onSuccess {
-                                    isEmailVerified = true
-                                    emailCodeExpiresAtMillis = null
-                                    emailVerifyMessage = "이메일 인증이 완료되었습니다."
-                                }
-                                .onFailure { error ->
-                                    isEmailVerified = false
-                                    emailVerifyMessage = error.toUserMessage("인증번호를 다시 확인해주세요.")
-                                }
-                            isVerifyingEmailCode = false
-                        }
-                    },
+                    onCheckClick = viewModel::verifyEmailCode,
                     isCheckEnabled = isCodeFieldEnabled,
                     enabled = isCodeFieldEnabled
                 )
                 if (isEmailCodeExpired) {
                     FieldMessage("인증번호가 만료되었습니다.")
                 } else {
-                    emailVerifyMessage?.let { FieldMessage(it) }
+                    uiState.emailVerifyMessage?.let { FieldMessage(it) }
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
                     label = "비밀번호 재설정",
-                    value = password,
-                    onValueChange = { password = it },
+                    value = uiState.password,
+                    onValueChange = viewModel::changePassword,
                     placeholder = "8자 이상, 영문 + 숫자 조합",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    isValid = isPasswordValid,
-                    visualTransformation = if (isPasswordVisible) {
+                    isValid = uiState.isPasswordValid,
+                    visualTransformation = if (uiState.isPasswordVisible) {
                         VisualTransformation.None
                     } else {
                         PasswordVisualTransformation()
                     },
                     trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        IconButton(onClick = viewModel::togglePasswordVisibility) {
                             Image(
                                 modifier = Modifier.size(20.dp),
                                 painter = painterResource(
-                                    id = if (isPasswordVisible) {
+                                    id = if (uiState.isPasswordVisible) {
                                         R.drawable.login_eye
                                     } else {
                                         R.drawable.login_no_eye
                                     }
                                 ),
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                                contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password",
                             )
                         }
                     }
                 )
-                if (showPasswordError) {
-                    FieldMessage("비밀번호를 다시 입력해주세요.")
+                if (uiState.showPasswordError) {
+                    FieldMessage("비밀번호는 8자 이상이며 영문, 숫자를 포함해야 합니다.")
                 }
             }
 
-            resetErrorMessage?.let { FieldMessage(it) }
+            uiState.resetErrorMessage?.let { FieldMessage(it) }
 
             Spacer(modifier = Modifier.size(30.dp))
 
             Button(
-                onClick = {
-                    coroutineScope.launch {
-                        authRepository.resetPassword(email, password)
-                            .onSuccess {
-                                resetErrorMessage = null
-                                onResetSuccess()
-                            }
-                            .onFailure { error ->
-                                resetErrorMessage = error.toUserMessage("비밀번호 재설정에 실패했습니다.")
-                            }
-                    }
-                },
-                enabled = isResetEnabled,
+                onClick = viewModel::resetPassword,
+                enabled = uiState.isResetEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -285,6 +217,6 @@ fun ResetPasswordScreen(
 @Composable
 fun ResetPasswordScreenPreview() {
     HampouchTheme {
-        ResetPasswordScreen()
+        ResetPasswordScreen(onResetSuccess = {}, onNavigateToSignUp = {}, onNavigateToLogin = {})
     }
 }

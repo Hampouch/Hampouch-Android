@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    위젯 카드 배경: 피그마 "챌린지 위젯" 프레임의 세로 그라데이션(#FCFAF2 → #F7EFD8).
-    라운드는 피그마 원본(522x230 프레임에 42px, 즉 카드 높이의 약 18%)의 비율을 실제 위젯
-    높이(기본 110dp)에 맞춰 24dp로 축소했다. 42dp를 그대로 쓰면 카드 높이의 38%가 되어
-    알약(pill)에 가깝게 과하게 둥글어 보인다.
--->
+<!-- 앱 홈 챌린지 카드와 동일한 HPSub4 배경 및 20dp 모서리. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <corners android:radius="24dp" />
-    <gradient
-        android:angle="270"
-        android:startColor="#FCFAF2"
-        android:endColor="#F7EFD8"
-        android:type="linear" />
+    <corners android:radius="20dp" />
+    <solid android:color="#F2E7C9" />
 </shape>

@@ -1,5 +1,7 @@
 package com.example.hampouch.ui.amountadjustment
 
+import com.example.hampouch.ui.common.previewChallengeState
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,15 +31,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,8 +52,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.data.model.AmountAdjustmentChallenge
-import com.example.hampouch.data.repository.ChallengeRepository
+import com.example.hampouch.domain.model.AmountAdjustmentChallenge
+import com.example.hampouch.domain.model.toUserMessage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
 import com.example.hampouch.ui.dialog.AbandonChallengeConfirmDialog
 import com.example.hampouch.ui.dialog.AmountAdjustmentConfirmDialog
@@ -68,36 +74,51 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 private val AmountAdjustmentPeriodFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
 
 private enum class AmountAdjustmentOption(val labelResId: Int, val multiplier: Double) {
-    KEEP(R.string.amountadjustment_option_keep, 1.0),
     RELAX_10(R.string.amountadjustment_option_relax_10, 1.1),
-    RELAX_20(R.string.amountadjustment_option_relax_20, 1.2)
+    RELAX_20(R.string.amountadjustment_option_relax_20, 1.2),
+    RELAX_30(R.string.amountadjustment_option_relax_30, 1.3)
 }
 
+/** 배율 적용 후 소수점 이하는 버린다(스펙 명시 규칙). */
 private fun AmountAdjustmentOption.amountFor(targetAmount: Int): Int =
-    (targetAmount * multiplier).roundToInt()
+    (targetAmount * multiplier).toInt()
 
 @Composable
 fun AmountAdjustmentRoute(
     challenge: AmountAdjustmentChallenge,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit = { _, _ -> },
-    onGoalAmountUpdated: () -> Unit = {}
+    onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -> Unit,
+    onGoalAmountUpdated: () -> Unit,
+    viewModel: AmountAdjustmentViewModel = hiltViewModel()
 ) {
     var editCount by remember(challenge) { mutableIntStateOf(challenge.editCount) }
     var selectedOption by remember(challenge) {
-        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.KEEP)
+        mutableStateOf<AmountAdjustmentOption?>(AmountAdjustmentOption.RELAX_20)
     }
     var customAmount by remember(challenge) { mutableStateOf<Int?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showAbandonConfirmDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is AmountAdjustmentEvent.ChallengeAbandoned ->
+                    onChallengeAbandoned(event.challengeId, event.suggestedTargetAmount)
+                AmountAdjustmentEvent.GoalAmountUpdated -> onGoalAmountUpdated()
+                is AmountAdjustmentEvent.ShowMessage ->
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
-    val canEdit = editCount < challenge.maxEditCount && selectedOption != AmountAdjustmentOption.KEEP
+    val canEdit = editCount < challenge.maxEditCount
     val selectedAmount = customAmount
         ?: selectedOption?.amountFor(challenge.targetAmount)
         ?: challenge.targetAmount
@@ -240,8 +261,7 @@ fun AmountAdjustmentRoute(
             onConfirm = {
                 showConfirmDialog = false
                 editCount = (editCount + 1).coerceAtMost(challenge.maxEditCount)
-                ChallengeRepository.updateTargetAmount(selectedAmount)
-                onGoalAmountUpdated()
+                viewModel.updateTargetAmount(selectedAmount)
             },
             subtext = if (isLastEdit) stringResource(R.string.amountadjustment_last_edit_warning) else null
         )
@@ -252,11 +272,7 @@ fun AmountAdjustmentRoute(
             onCancel = { showAbandonConfirmDialog = false },
             onConfirm = {
                 showAbandonConfirmDialog = false
-                ChallengeRepository.abandonChallenge()
-                val actualAmount =
-                    ChallengeResultMockData.forChallenge(ChallengeRepository.activeChallenge!!).actualAmount
-                val suggestedTargetAmount = ChallengeResultMockData.recommendedTightenedTarget(actualAmount)
-                onChallengeAbandoned(challenge.id, suggestedTargetAmount)
+                viewModel.abandonChallenge(challenge.id)
             }
         )
     }
@@ -458,8 +474,8 @@ private fun DailyFoodGoalCard(amount: Int, modifier: Modifier = Modifier) {
 private fun AmountAdjustmentScreenPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 0),
-            onBackClick = {}
+            challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 0),
+            onBackClick = {}, onGoalAmountUpdated = {}, onChallengeAbandoned = { _, _ -> }
         )
     }
 }
@@ -469,8 +485,8 @@ private fun AmountAdjustmentScreenPreview() {
 private fun AmountAdjustmentScreenMaxEditPreview() {
     HampouchTheme {
         AmountAdjustmentRoute(
-            challenge = AmountAdjustmentMockData.challenge().copy(editCount = 1),
-            onBackClick = {}
+            challenge = AmountAdjustmentMockData.challenge(previewChallengeState(), spentOnDate = { 0 }).copy(editCount = 1),
+            onBackClick = {}, onGoalAmountUpdated = {}, onChallengeAbandoned = { _, _ -> }
         )
     }
 }

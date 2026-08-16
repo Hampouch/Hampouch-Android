@@ -34,7 +34,13 @@ sealed class Screen(val route: String) {
             "next_challenge/$challengeId/$suggestedTargetAmount"
     }
     data object NextChallengeTakeABreak : Screen("next_challenge_take_a_break")
-    data object TakeABreak : Screen("take_a_break")
+    data object FixedDateNextChallenge : Screen("fixed_date_next_challenge")
+    data object FixedDateNextChallengeEdit : Screen("fixed_date_next_challenge_edit/{challengeId}") {
+        fun createRoute(challengeId: String) = "fixed_date_next_challenge_edit/$challengeId"
+    }
+    data object TakeABreak : Screen("take_a_break?extend={extend}") {
+        fun createRoute(extend: Boolean = false) = "take_a_break?extend=$extend"
+    }
     data object AmountAdjustment : Screen("amount_adjustment")
     data object ExpenseDetail : Screen("expense_detail/{expenseId}") {
         fun createRoute(expenseId: String) = "expense_detail/$expenseId"
