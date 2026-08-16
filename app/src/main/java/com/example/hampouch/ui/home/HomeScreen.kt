@@ -432,30 +432,31 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(10.dp))
 
         AnimatedContent(
-            targetState = uiState.selectedDate,
+            targetState = uiState,
+            contentKey = { it.selectedDate },
             transitionSpec = {
-                val movingForward = targetState.isAfter(initialState)
+                val movingForward = targetState.selectedDate.isAfter(initialState.selectedDate)
                 val slideSpec = tween<IntOffset>(durationMillis = 300)
                 val fadeSpec = tween<Float>(durationMillis = 300)
-                (slideInHorizontally(animationSpec = slideSpec) { fullWidth ->
+                ((slideInHorizontally(animationSpec = slideSpec) { fullWidth ->
                     if (movingForward) fullWidth / 4 else -fullWidth / 4
                 } + fadeIn(animationSpec = fadeSpec)) togetherWith
                     (slideOutHorizontally(animationSpec = slideSpec) { fullWidth ->
                         if (movingForward) -fullWidth / 4 else fullWidth / 4
-                    } + fadeOut(animationSpec = fadeSpec))
+                    } + fadeOut(animationSpec = fadeSpec))).using(null)
             },
             label = "home_date_content"
-        ) {
+        ) { animatedUiState ->
             Column {
-                val challenge = uiState.challenge
+                val challenge = animatedUiState.challenge
                 when {
-                    challenge == null && uiState.pastChallengeEnded -> NoActiveChallengeSection(
+                    challenge == null && animatedUiState.pastChallengeEnded -> NoActiveChallengeSection(
                         title = stringResource(R.string.home_ended_challenge_title),
                         subtitle = stringResource(R.string.home_ended_challenge_subtitle),
                         ctaText = stringResource(R.string.home_ended_challenge_cta),
                         onCtaClick = onChallengeSummaryClick
                     )
-                    challenge == null && !isToday -> NoActiveChallengeSection(
+                    challenge == null && animatedUiState.selectedDate != referenceToday -> NoActiveChallengeSection(
                         title = stringResource(R.string.home_no_past_challenge_title),
                         subtitle = stringResource(R.string.home_no_challenge_subtitle)
                     )
@@ -481,23 +482,23 @@ private fun HomeContent(
                             SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
                         }
 
-                        if (uiState.warnings.isNotEmpty()) {
+                        if (animatedUiState.warnings.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            WarningBannerList(warnings = uiState.warnings, onReminderClick = onReminderClick)
+                            WarningBannerList(warnings = animatedUiState.warnings, onReminderClick = onReminderClick)
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
                 TodayExpenseSection(
-                    expenses = uiState.expenses,
+                    expenses = animatedUiState.expenses,
                     onViewAllClick = onViewAllExpensesClick,
                     onAddExpenseClick = onAddExpenseClick,
                     onExpenseClick = onExpenseClick
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 MiniChallengeSection(
-                    items = uiState.miniChallenges,
+                    items = animatedUiState.miniChallenges,
                     onViewAllClick = onViewAllMiniChallengesClick,
                     onToggle = onToggleMiniChallenge
                 )
