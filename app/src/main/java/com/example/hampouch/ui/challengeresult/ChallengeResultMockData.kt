@@ -60,7 +60,6 @@ object ChallengeResultMockData {
         hasRecordOnDate: (LocalDate) -> Boolean,
         referenceToday: LocalDate
     ): ChallengeResultUiState {
-        val isActiveChallenge = challenge.id == challengeState.activeChallenge?.id
         val isOngoing = challenge.isOngoingOn(referenceToday)
         val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd
         val recordsInPeriod = generateSequence(challenge.periodStart) { it.plusDays(1) }
@@ -117,7 +116,7 @@ object ChallengeResultMockData {
             dailyLimit = challenge.dailyLimit,
             emotionStats = computeEmotionStats(recordsInPeriod),
             dailyRecords = progress.dailyRecords,
-            isEditable = isActiveChallenge && challengeState.hasOngoingChallenge
+            isEditable = true
         )
     }
 
@@ -150,7 +149,7 @@ object ChallengeResultMockData {
             dailyLimit = challenge.dailyLimit,
             emotionStats = challenge.emotionBreakdown,
             dailyRecords = challenge.calendarDays,
-            isEditable = false
+            isEditable = true
         )
     }
 
