@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -46,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.notification.NotificationViewModel
@@ -386,6 +388,34 @@ fun NotificationBellIcon(
                     .background(HPSub, CircleShape)
             )
         }
+    }
+}
+
+/**
+ * 제목을 좌우 액션 요소의 폭과 무관하게 화면(바) 전체 너비 기준으로 항상 중앙 정렬하는 상단바 레이아웃.
+ * `Row` + `weight(1f)` 방식은 좌우 요소 폭이 다르면 제목이 남는 공간의 중앙으로 쏠리므로 사용하지 않는다.
+ */
+@Composable
+fun ScreenCenteredTopBar(
+    modifier: Modifier = Modifier,
+    height: Dp = 64.dp,
+    leading: @Composable () -> Unit = {},
+    trailing: @Composable () -> Unit = {},
+    title: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            title()
+        }
+        Box(modifier = Modifier.align(Alignment.CenterStart)) { leading() }
+        Box(modifier = Modifier.align(Alignment.CenterEnd)) { trailing() }
     }
 }
 

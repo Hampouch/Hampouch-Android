@@ -55,7 +55,6 @@ private const val DEFAULT_BATTLE_DURATION_DAYS = 7
 private const val DEFAULT_BATTLE_CAPACITY = 5
 private const val JUST_NOW_LABEL = "방금"
 private const val DEFAULT_PAGE_SIZE = 20
-private const val HTTP_NOT_FOUND = 404
 
 @Singleton
 class HamTipsRepositoryImpl @Inject constructor(
@@ -263,8 +262,6 @@ class HamTipsRepositoryImpl @Inject constructor(
                 data.popularPosts.forEach { upsert(it.toTipPost()) }
                 data.pochiPicks.forEach { upsert(it.toTipPost(isEditorAuthor = true)) }
                 data.posts.content.forEach { upsert(it.toTipPost()) }
-                Result.success(Unit)
-            } else if (response.code() == HTTP_NOT_FOUND) {
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "커뮤니티 홈을 불러오지 못했습니다."))

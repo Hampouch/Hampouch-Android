@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.common.NotificationBellIcon
+import com.example.hampouch.ui.common.ScreenCenteredTopBar
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
 import com.example.hampouch.domain.model.ChallengeRecord
@@ -83,28 +84,26 @@ fun MyPageMainTopBar(
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp),
-        verticalAlignment = Alignment.CenterVertically
+    ScreenCenteredTopBar(
+        modifier = modifier,
+        leading = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cd_back),
+                    tint = HPBlack
+                )
+            }
+        },
+        trailing = { NotificationBellIcon(onClick = onNotificationClick) }
     ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_back),
-                tint = HPBlack
-            )
-        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f)
+            textAlign = TextAlign.Center
         )
-        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 

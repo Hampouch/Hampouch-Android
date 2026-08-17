@@ -77,7 +77,7 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
         }
         val days = OnboardingCalculations.impliedPeriodDays(draft) ?: return null
         val recommended = OnboardingCalculations.recommendedTotalTarget(draft.lastMonthFoodExpense, days)
-        val total = draft.totalTargetAmount ?: recommended ?: return null
+        val total = (draft.totalTargetAmount ?: recommended)?.takeIf { it > 0 } ?: return null
         return OnboardingRequest(
             lastMonthFoodExpense = draft.lastMonthFoodExpense,
             period = period,

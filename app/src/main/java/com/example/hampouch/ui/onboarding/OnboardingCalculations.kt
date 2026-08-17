@@ -2,7 +2,7 @@ package com.example.hampouch.ui.onboarding
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 object OnboardingCalculations {
 
@@ -23,6 +23,7 @@ object OnboardingCalculations {
     fun recommendedTotalTarget(lastMonthFoodExpense: Int?, periodDays: Int?): Int? {
         if (lastMonthFoodExpense == null || periodDays == null || periodDays <= 0) return null
         val rawRecommendation = lastMonthFoodExpense.toDouble() / 30 * periodDays * 0.9
-        return (rawRecommendation / 1000.0).roundToInt() * 1000
+        val roundedToThousands = (rawRecommendation / 1000.0).roundToLong() * 1000
+        return roundedToThousands.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
     }
 }

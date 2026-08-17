@@ -143,6 +143,43 @@ private fun rememberHamBattleChallenge(
     return battleId?.let { battleState.detailFor(it) }
 }
 
+private data class StartupGateState(
+    val resolvedStartDestination: String?,
+    val startupErrorMessage: String?,
+    val isResolving: Boolean,
+    val showAppSplash: Boolean,
+    val isOnboardingDestination: Boolean
+)
+
+@Composable
+private fun StartupGate(
+    state: StartupGateState,
+    onRetry: () -> Unit,
+    onSplashTimeout: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    when {
+        state.resolvedStartDestination == null && state.startupErrorMessage != null -> {
+            StartupConnectionErrorScreen(
+                message = state.startupErrorMessage,
+                isRetrying = state.isResolving,
+                onRetry = onRetry,
+                modifier = modifier
+            )
+        }
+        state.showAppSplash && !state.isOnboardingDestination -> {
+            SplashStep(
+                keepVisible = state.resolvedStartDestination == null,
+                onTimeout = onSplashTimeout,
+                modifier = modifier
+            )
+        }
+        else -> {
+            Box(modifier = modifier.fillMaxSize().background(HPGray2))
+        }
+    }
+}
+
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
@@ -181,22 +218,21 @@ fun AppNavHost(
     var showAppSplash by rememberSaveable { mutableStateOf(true) }
 
     val resolvedStartDestination = startDestination
-    if (resolvedStartDestination == null) {
-        if (startupErrorMessage == null) {
-            Box(modifier = modifier.fillMaxSize().background(HPGray2))
-        } else {
-            StartupConnectionErrorScreen(
-                message = startupErrorMessage.orEmpty(),
-                isRetrying = isResolving,
-                onRetry = startDestinationViewModel::retry,
-                modifier = modifier
-            )
-        }
-        return
-    }
+    val isOnboardingDestination = resolvedStartDestination == Screen.Onboarding.route
 
-    if (showAppSplash && resolvedStartDestination != Screen.Onboarding.route) {
-        SplashStep(onTimeout = { showAppSplash = false }, modifier = modifier)
+    if (resolvedStartDestination == null || (showAppSplash && !isOnboardingDestination)) {
+        StartupGate(
+            state = StartupGateState(
+                resolvedStartDestination = resolvedStartDestination,
+                startupErrorMessage = startupErrorMessage,
+                isResolving = isResolving,
+                showAppSplash = showAppSplash,
+                isOnboardingDestination = isOnboardingDestination
+            ),
+            onRetry = startDestinationViewModel::retry,
+            onSplashTimeout = { showAppSplash = false },
+            modifier = modifier
+        )
         return
     }
 

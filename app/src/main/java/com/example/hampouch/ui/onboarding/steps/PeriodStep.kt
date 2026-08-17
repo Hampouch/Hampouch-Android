@@ -19,6 +19,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -254,7 +255,18 @@ private fun StartDatePickerDialog(
     onDateSelected: (LocalDate) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDate.toEpochMillisUtc())
+    val today = remember { LocalDate.now() }
+    val minSelectableMillis = remember(today) { today.toEpochMillisUtc() }
+    val maxSelectableMillis = remember(today) { today.plusDays(MaxPeriodDays.toLong() + 1).toEpochMillisUtc() }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDate.toEpochMillisUtc(),
+        selectableDates = remember(minSelectableMillis, maxSelectableMillis) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                    utcTimeMillis in minSelectableMillis..maxSelectableMillis
+            }
+        }
+    )
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {

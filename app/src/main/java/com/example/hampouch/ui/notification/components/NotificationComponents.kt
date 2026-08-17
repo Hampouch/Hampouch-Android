@@ -32,6 +32,7 @@ import com.example.hampouch.domain.model.NotificationCategory
 import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.NotificationSection
 import com.example.hampouch.domain.model.NotificationTarget
+import com.example.hampouch.ui.common.ScreenCenteredTopBar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub4
@@ -47,38 +48,38 @@ fun NotificationTopBar(
     onMarkAllReadClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_back),
-                tint = HPBlack
-            )
+    ScreenCenteredTopBar(
+        modifier = modifier,
+        leading = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cd_back),
+                    tint = HPBlack
+                )
+            }
+        },
+        trailing = {
+            TextButton(
+                onClick = onMarkAllReadClick,
+                colors = ButtonDefaults.textButtonColors(contentColor = HPMain)
+            ) {
+                Text(
+                    text = stringResource(R.string.notification_mark_all_read),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = HPMain
+                )
+            }
         }
+    ) {
         Text(
             text = stringResource(R.string.notification_title),
             style = MaterialTheme.typography.titleSmall,
             color = HPBlack,
             fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f)
+            textAlign = TextAlign.Center
         )
-        TextButton(
-            onClick = onMarkAllReadClick,
-            colors = ButtonDefaults.textButtonColors(contentColor = HPMain)
-        ) {
-            Text(
-                text = stringResource(R.string.notification_mark_all_read),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = HPMain
-            )
-        }
     }
 }
 

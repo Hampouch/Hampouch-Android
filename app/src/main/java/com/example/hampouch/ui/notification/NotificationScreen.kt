@@ -1,10 +1,5 @@
 package com.example.hampouch.ui.notification
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,14 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import com.example.hampouch.BuildConfig
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.NotificationSection
@@ -50,7 +40,6 @@ import com.example.hampouch.ui.notification.components.NotificationListItem
 import com.example.hampouch.ui.notification.components.NotificationTopBar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
-import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -77,7 +66,6 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        DebugNotificationTrigger(notifications = notifications)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -119,52 +107,6 @@ fun NotificationScreen(
                 item(contentType = "footer") { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
-    }
-}
-
-@Composable
-private fun DebugNotificationTrigger(notifications: List<NotificationItem>) {
-    if (!BuildConfig.DEBUG) return
-
-    TestNotificationTriggerButton(
-        notifications = notifications,
-        modifier = Modifier.padding(horizontal = 20.dp)
-    )
-    Spacer(modifier = Modifier.height(12.dp))
-}
-
-@Composable
-private fun TestNotificationTriggerButton(notifications: List<NotificationItem>, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val sendAll = { notifications.forEach { SystemNotificationSender.sendNotification(context, it) } }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) sendAll() }
-
-    Button(
-        onClick = {
-            val permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
-            if (permissionGranted) {
-                sendAll()
-            } else {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = HPMain, contentColor = HPWhite)
-    ) {
-        Text(
-            text = stringResource(R.string.notification_test_send_button),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
