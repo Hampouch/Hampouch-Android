@@ -3,6 +3,7 @@ package com.example.hampouch
 import android.app.Application
 import com.kakao.sdk.common.KakaoSdk
 import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
+import com.example.hampouch.ui.widget.HomeWidgetSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -16,5 +17,6 @@ class HampouchApplication : Application() {
         super.onCreate()
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
         homeWidgetStatePublisher.start()
+        HomeWidgetSyncScheduler.schedule(this)
     }
 }

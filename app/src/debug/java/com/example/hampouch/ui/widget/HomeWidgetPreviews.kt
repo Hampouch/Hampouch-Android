@@ -13,7 +13,7 @@ import com.example.hampouch.domain.model.HomeChallenge
  * 여기 프리뷰가 곧 실제 위젯 렌더링과 같다. 데이터는 [com.example.hampouch.data.repository.ChallengeRepository]의
  * 목데이터(한도 20,000원 · 연속 달성 4일)와 같은 값을 써서 홈 화면 프리뷰들과 숫자를 맞췄다.
  *
- * 300x220 기본 4x3 크기와 앱 홈 카드 전체 크기인 353x468을 함께 확인한다.
+ * 실제 런처의 4x2 최소 크기(250x110)와 Figma 원본 크기(522x230)를 함께 확인한다.
  */
 private val previewChubbyChallenge = HomeChallenge(
     totalDays = 14,
@@ -28,68 +28,68 @@ private val previewChubbyChallenge = HomeChallenge(
 private val previewNormalChallenge = previewChubbyChallenge.copy(todayBalance = 7_300)
 private val previewThinChallenge = previewChubbyChallenge.copy(todayBalance = 300)
 
-// --- 기본 크기 (300x220, 4x3) ---
+// --- 실제 런처 최소 크기 (250x110, 4x2) ---
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetChubbyPreview() {
     HomeWidgetContent(HomeWidgetState.InProgress(previewChubbyChallenge))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetNormalPreview() {
     HomeWidgetContent(HomeWidgetState.InProgress(previewNormalChallenge))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetThinPreview() {
     HomeWidgetContent(HomeWidgetState.InProgress(previewThinChallenge))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetNoActiveChallengePreview() {
     HomeWidgetContent(HomeWidgetState.NoActiveChallenge)
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetLoggedOutPreview() {
     HomeWidgetContent(HomeWidgetState.LoggedOut)
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetLoadingPreview() {
     HomeWidgetContent(HomeWidgetState.Loading)
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 300, heightDp = 220)
+@Preview(widthDp = 250, heightDp = 110)
 @Composable
 private fun HomeWidgetRestingPreview() {
     HomeWidgetContent(HomeWidgetState.Resting(plannedResumeDateLabel = "8월 20일"))
 }
 
-// --- 앱 홈 카드 기준 크기 (353x468) ---
+// --- Figma 원본 기준 크기 (522x230) ---
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 353, heightDp = 468)
+@Preview(widthDp = 522, heightDp = 230)
 @Composable
 private fun HomeWidgetChubbyMaxSizePreview() {
     HomeWidgetContent(HomeWidgetState.InProgress(previewChubbyChallenge))
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(widthDp = 353, heightDp = 468)
+@Preview(widthDp = 522, heightDp = 230)
 @Composable
 private fun HomeWidgetNoActiveChallengeMaxSizePreview() {
     HomeWidgetContent(HomeWidgetState.NoActiveChallenge)

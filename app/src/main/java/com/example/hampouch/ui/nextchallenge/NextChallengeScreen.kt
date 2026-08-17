@@ -226,9 +226,9 @@ fun NextChallengeRoute(
         serverRecommendationMessage?.let { AnnotatedString(it) }
             ?: buildRecommendationMessage(previousResult, suggestedTargetAmount)
     }
-    val effectivePeriodDays = customPeriodDays?.takeIf { it > 0 }
+    val effectivePeriodDays = (customPeriodDays?.takeIf { it > 0 }
         ?: periodDays?.takeIf { it > 0 }
-        ?: previousResult.totalDays
+        ?: previousResult.totalDays).coerceAtLeast(1)
     val currentStartDate = startDate
     val dailyGoal = when {
         periodEnabled -> (targetAmount ?: 0) / effectivePeriodDays

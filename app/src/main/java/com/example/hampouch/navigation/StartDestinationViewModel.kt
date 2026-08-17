@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.data.repository.OnboardingLocalStore
+import com.example.hampouch.data.repository.PendingChallengeResultStore
 import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.OnboardingRequest
+import com.example.hampouch.domain.model.PendingChallengeResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +17,18 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+internal fun pendingChallengeResultRoute(
+    userId: Long,
+    pending: PendingChallengeResult?
+): String? = pending
+    ?.takeIf { it.userId == userId }
+    ?.let { Screen.ChallengeSummary.createRoute(it.challengeId, locked = true) }
+
 @HiltViewModel
 class StartDestinationViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val onboardingLocalStore: OnboardingLocalStore
+    private val onboardingLocalStore: OnboardingLocalStore,
+    private val pendingChallengeResultStore: PendingChallengeResultStore
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -33,6 +43,8 @@ class StartDestinationViewModel @Inject constructor(
     private val _isResolving = MutableStateFlow(false)
     val isResolving: StateFlow<Boolean> = _isResolving.asStateFlow()
 
+    val pendingChallengeResult: StateFlow<PendingChallengeResult?> = pendingChallengeResultStore.pending
+
     init {
         viewModelScope.launch { resolve() }
     }
@@ -45,10 +57,14 @@ class StartDestinationViewModel @Inject constructor(
             val session = authRepository.userSession.first()
             val destination = when {
                 session == null && onboardingLocalStore.hasCompletedOnboarding() -> {
+                    pendingChallengeResultStore.clear()
                     onboardingLocalStore.resetOnboarding()
                     Screen.Onboarding.route
                 }
-                session == null -> Screen.Onboarding.route
+                session == null -> {
+                    pendingChallengeResultStore.clear()
+                    Screen.Onboarding.route
+                }
                 else -> resolveForSession(session)
             }
             if (destination != null) {
@@ -62,16 +78,9 @@ class StartDestinationViewModel @Inject constructor(
 
     private suspend fun resolveForSession(session: AuthSession): String? =
         when (val status = authRepository.checkSessionStatus(session)) {
-            is SessionStatus.Valid -> {
-                if (status.needsNickname) {
-                    _pendingNicknameSession.value = session
-                    Screen.Login.route
-                } else {
-                    authRepository.saveSession(authRepository.userSession.first() ?: session)
-                    Screen.Home.route
-                }
-            }
+            is SessionStatus.Valid -> resolveValidSession(session, status)
             SessionStatus.Invalid -> {
+                pendingChallengeResultStore.clear()
                 authRepository.clearSession()
                 if (onboardingLocalStore.hasCompletedOnboarding()) {
                     Screen.Login.route
@@ -85,6 +94,23 @@ class StartDestinationViewModel @Inject constructor(
             }
         }
 
+    private suspend fun resolveValidSession(
+        session: AuthSession,
+        status: SessionStatus.Valid
+    ): String {
+        if (status.needsNickname) {
+            _pendingNicknameSession.value = session
+            return Screen.Login.route
+        }
+        authRepository.saveSession(authRepository.userSession.first() ?: session)
+        val pending = pendingChallengeResultStore.pending.value
+        val pendingRoute = pendingChallengeResultRoute(session.userId, pending)
+        if (pending != null && pendingRoute == null) {
+            pendingChallengeResultStore.clear()
+        }
+        return pendingRoute ?: Screen.Home.route
+    }
+
     fun retry() {
         viewModelScope.launch { resolve() }
     }
@@ -93,11 +119,16 @@ class StartDestinationViewModel @Inject constructor(
         onboardingLocalStore.captureOnboardingComplete(request)
     }
 
+    fun clearPendingChallengeResult() {
+        pendingChallengeResultStore.clear()
+    }
+
     fun consumePendingNicknameSession() {
         _pendingNicknameSession.value = null
     }
 
     fun logout() {
+        pendingChallengeResultStore.clear()
         viewModelScope.launch { authRepository.clearSession() }
     }
 }

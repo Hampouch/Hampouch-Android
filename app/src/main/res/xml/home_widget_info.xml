@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 기본 4x3에서는 핵심 정보를, 세로 확장 시에는 앱 홈 챌린지 카드 전체를 표시한다. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="300dp"
-    android:minHeight="220dp"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
     android:targetCellWidth="4"
-    android:targetCellHeight="3"
-    android:maxResizeWidth="520dp"
-    android:maxResizeHeight="650dp"
-    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="2"
+    android:resizeMode="none"
     android:widgetCategory="home_screen"
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/home_widget_loading"

@@ -21,6 +21,10 @@ enum class PretendardWeight(val layoutRes: Int, val usesAutoSize: Boolean = fals
     Medium(R.layout.widget_text_medium),
     SemiBold(R.layout.widget_text_semibold),
     Bold(R.layout.widget_text_bold),
+    Medium18AutoSize(R.layout.widget_text_medium_18_autosize, usesAutoSize = true),
+    SemiBold16AutoSize(R.layout.widget_text_semibold_16_autosize, usesAutoSize = true),
+    SemiBold18AutoSize(R.layout.widget_text_semibold_18_autosize, usesAutoSize = true),
+    SemiBold24AutoSize(R.layout.widget_text_semibold_24_autosize, usesAutoSize = true),
     BoldAutoSize(R.layout.widget_text_bold_autosize, usesAutoSize = true)
 }
 

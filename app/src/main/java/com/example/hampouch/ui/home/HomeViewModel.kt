@@ -63,6 +63,7 @@ class HomeViewModel @Inject constructor(
     fun retry() = retryAction?.invoke()
 
     init {
+        viewModelScope.launch { homeWidgetStatePublisher.publishSessionStarted() }
         viewModelScope.launch { restRepository.syncStatus() }
         loadCurrentChallenge()
     }
@@ -74,7 +75,7 @@ class HomeViewModel @Inject constructor(
             challengeRepository.loadCurrentChallenge()
                 .onSuccess {
                     _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null)
-                    homeWidgetStatePublisher.publishNoActiveAfterSync()
+                    homeWidgetStatePublisher.publishAfterHomeSync()
                     challengeRepository.loadFixedDateDraft().onSuccess { draft ->
                         val hasUnacknowledgedEnd = challengeState.value.isChallengeJustEnded(LocalDate.now())
                         if (draft?.isDue == true && !hasUnacknowledgedEnd) {

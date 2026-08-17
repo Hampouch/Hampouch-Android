@@ -1,7 +1,7 @@
 package com.example.hampouch.data.remote.dto
 
 data class ChallengeCreateRequest(
-    val durationDays: Int?,
+    val durationDays: Int,
     val budgetTotal: Int,
     val startDate: String,
     val resetByPayday: Boolean,
@@ -11,7 +11,6 @@ data class ChallengeCreateRequest(
 
 data class ChallengeCreateData(
     val challengeId: Long,
-    val durationDays: Int,
     val dailyLimit: Int,
     val startDate: String,
     val endDate: String,

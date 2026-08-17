@@ -44,8 +44,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ChallengeResultStatus
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleStatus
+import com.example.hampouch.domain.model.PendingChallengeResult
 import com.example.hampouch.ui.hambattle.HamBattleAddScreen
 import com.example.hampouch.ui.hambattle.HamBattleChallengesResultPagerScreen
 import com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen
@@ -61,6 +63,7 @@ import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.challengeresult.ChallengeResultUiState
 import com.example.hampouch.ui.common.ChallengeLookupViewModel
 import com.example.hampouch.ui.common.ExpenseLookupViewModel
 import com.example.hampouch.ui.common.FullScreenLoadError
@@ -106,6 +109,24 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "AppNavHost"
 
+private fun PendingChallengeResult.toUiState(): ChallengeResultUiState = ChallengeResultUiState(
+    status = ChallengeResultStatus.FAIL,
+    title = title,
+    periodStart = periodStart,
+    periodEnd = periodEnd,
+    totalDays = totalDays,
+    successDays = successDays,
+    streakDays = streakDays,
+    amountLabel = "초과 금액",
+    amountValue = amountValue,
+    goalAmount = goalAmount,
+    actualAmount = actualAmount,
+    dailyLimit = dailyLimit,
+    emotionStats = emotionStats,
+    dailyRecords = dailyRecords,
+    isEditable = false
+)
+
 @Composable
 private fun rememberHamBattleChallenge(
     challengeId: String?,
@@ -148,6 +169,7 @@ fun AppNavHost(
     val coroutineScope = rememberCoroutineScope()
     val notificationViewModel: NotificationViewModel = hiltViewModel()
     val startDestination by startDestinationViewModel.startDestination.collectAsStateWithLifecycle()
+    val pendingChallengeResult by startDestinationViewModel.pendingChallengeResult.collectAsStateWithLifecycle()
     val startupErrorMessage by startDestinationViewModel.startupErrorMessage.collectAsStateWithLifecycle()
     val isResolving by startDestinationViewModel.isResolving.collectAsStateWithLifecycle()
     val pendingNicknameSession by startDestinationViewModel.pendingNicknameSession.collectAsStateWithLifecycle()
@@ -871,11 +893,17 @@ fun AppNavHost(
             val challenge = challengeState.challengeById(challengeId)
             LaunchedEffect(challengeId) { expenseLookup.loadResult(challengeId) }
             LaunchedEffect(challengeId) { challengeLookup.loadFixedDateDraft() }
-            if (challenge != null) {
-                BackHandler(enabled = locked) {}
-                val state = ChallengeResultMockData.forChallenge(
+            val state = if (challenge != null) {
+                ChallengeResultMockData.forChallenge(
                     challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
+            } else {
+                pendingChallengeResult
+                    ?.takeIf { it.challengeId == challengeId }
+                    ?.toUiState()
+            }
+            if (state != null) {
+                BackHandler(enabled = locked) {}
                 ChallengeResultScreen(
                     state = state,
                     onBackClick = { navController.popBackStack() },
@@ -894,7 +922,7 @@ fun AppNavHost(
                             navController.navigate(Screen.FixedDateNextChallenge.route)
                         } else {
                             navController.navigate(
-                                Screen.NextChallenge.createRoute(challenge.id, suggestedTargetAmount)
+                                Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)
                             )
                         }
                     },
@@ -915,14 +943,21 @@ fun AppNavHost(
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
             val challenge = challengeState.challengeById(challengeId)
-            if (challenge != null) {
-                val previousResult = ChallengeResultMockData.forChallenge(
+            val previousResult = if (challenge != null) {
+                ChallengeResultMockData.forChallenge(
                     challenge, challengeState, expenseLookup::recordsForDate, expenseLookup::hasRecordOnDate
                 )
+            } else {
+                pendingChallengeResult
+                    ?.takeIf { it.challengeId == challengeId }
+                    ?.toUiState()
+            }
+            if (previousResult != null) {
                 NextChallengeRoute(
                     previousResult = previousResult,
                     suggestedTargetAmount = suggestedTargetAmount,
                     onStartChallengeClick = {
+                        startDestinationViewModel.clearPendingChallengeResult()
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
@@ -936,6 +971,7 @@ fun AppNavHost(
             FixedDateNextChallengeRoute(
                 onBackClick = { navController.popBackStack() },
                 onStartChallengeClick = {
+                    startDestinationViewModel.clearPendingChallengeResult()
                     pendingHomeTab = null
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -984,6 +1020,7 @@ fun AppNavHost(
                     suggestedTargetAmount = draft.budgetTotal,
                     fixedDateDraft = draft,
                     onStartChallengeClick = {
+                        startDestinationViewModel.clearPendingChallengeResult()
                         pendingHomeTab = null
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
@@ -997,6 +1034,7 @@ fun AppNavHost(
             NextChallengeTakeABreakRoute(
                 onBackClick = { navController.popBackStack() },
                 onStartChallengeClick = {
+                    startDestinationViewModel.clearPendingChallengeResult()
                     pendingHomeTab = null
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -1017,6 +1055,7 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onKeepChallenge = { navController.popBackStack() },
                 onBreakStarted = {
+                    startDestinationViewModel.clearPendingChallengeResult()
                     pendingHomeTab = null
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
@@ -1036,8 +1075,8 @@ fun AppNavHost(
             AmountAdjustmentRoute(
                 challenge = AmountAdjustmentMockData.challenge(challengeState, expenseLookup::spentOnDate),
                 onBackClick = { navController.popBackStack() },
-                onChallengeAbandoned = { challengeId, suggestedTargetAmount ->
-                    navController.navigate(Screen.NextChallenge.createRoute(challengeId, suggestedTargetAmount)) {
+                onChallengeAbandoned = { challengeId, _ ->
+                    navController.navigate(Screen.ChallengeSummary.createRoute(challengeId, locked = true)) {
                         popUpTo(0) { inclusive = true }
                     }
                 },

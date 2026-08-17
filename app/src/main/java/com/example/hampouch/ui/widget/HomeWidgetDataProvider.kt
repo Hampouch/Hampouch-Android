@@ -57,7 +57,10 @@ class HomeWidgetSnapshotStore @Inject constructor(
         if (preferences.getString(KEY_TYPE, null) == TYPE_RESTING &&
             preferences.getString(KEY_ACCOUNT, null) == accountKey &&
             preferences.getString(KEY_RESUME_DATE_LABEL, null) == resumeDateLabel
-        ) return
+        ) {
+            HomeWidget().updateAll(context)
+            return
+        }
         preferences.edit(commit = true) {
             clear()
             putString(KEY_TYPE, TYPE_RESTING)
@@ -81,7 +84,10 @@ class HomeWidgetSnapshotStore @Inject constructor(
             savedAmount = challenge.savedAmount,
             streakDays = challenge.streakDays
         )
-        if (matches(values)) return
+        if (matches(values)) {
+            HomeWidget().updateAll(context)
+            return
+        }
         preferences.edit(commit = true) {
             clear()
             putString(KEY_TYPE, TYPE_IN_PROGRESS)
@@ -101,7 +107,10 @@ class HomeWidgetSnapshotStore @Inject constructor(
     private suspend fun write(type: String, accountKey: String?) {
         if (preferences.getString(KEY_TYPE, null) == type &&
             preferences.getString(KEY_ACCOUNT, null) == accountKey
-        ) return
+        ) {
+            HomeWidget().updateAll(context)
+            return
+        }
         preferences.edit(commit = true) {
             clear()
             putString(KEY_TYPE, type)
