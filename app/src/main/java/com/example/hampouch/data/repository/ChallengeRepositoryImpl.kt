@@ -145,7 +145,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         _state.update { state ->
             state.copy(
                 challenges = state.challenges.filterNot {
-                    it.abandonedDate == null && !today.isAfter(it.effectivePeriodEnd)
+                    !it.isTerminal && !today.isAfter(it.effectivePeriodEnd)
                 }
             )
         }
@@ -244,6 +244,7 @@ class ChallengeRepositoryImpl @Inject constructor(
     override suspend fun loadResult(challengeId: String): Result<Unit> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) return Result.success(Unit)
         val id = challengeId.toLongOrNull() ?: return Result.success(Unit)
+        if (current.challengeById(challengeId)?.isOngoingOn(LocalDate.now()) == true) return Result.success(Unit)
         if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getChallengeResult(id)
@@ -424,9 +425,11 @@ class ChallengeRepositoryImpl @Inject constructor(
             abandonedDate = referenceToday,
             remoteStatus = remoteStatus ?: challenge.remoteStatus
         )
+        // dropLast(1)로 지우면 안 된다: challenges의 마지막 요소가 항상 challenge와 같다는
+        // 보장이 없다(리스트에 항목이 쌓인 순서에 따라 달라짐). id로 정확히 찾아 교체한다.
+        upsertChallenge(updated)
         _state.update {
             it.copy(
-                challenges = it.challenges.dropLast(1) + updated,
                 endAcknowledged = true,
                 hasVisitedExpenseEditAfterEnd = false
             )
@@ -619,7 +622,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                     dailyLimitOverrides = challenge.dailyLimitOverrides +
                         DailyLimitOverride(effectiveFrom, data.dailyLimit)
                 )
-                _state.update { it.copy(challenges = it.challenges.dropLast(1) + updated) }
+                upsertChallenge(updated)
                 Result.success(Unit)
             } else {
                 Result.failure(response.toApiException("목표 금액 조정에 실패했습니다."))
@@ -639,7 +642,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             editCount = challenge.editCount + 1,
             dailyLimitOverrides = challenge.dailyLimitOverrides + DailyLimitOverride(effectiveFrom, newDailyLimit)
         )
-        _state.update { it.copy(challenges = it.challenges.dropLast(1) + updated) }
+        upsertChallenge(updated)
     }
 
     override suspend fun loadRecommendation(): Result<String> {

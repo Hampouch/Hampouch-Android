@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.mypage
 
+import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ChallengeRecord
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ChallengeStatus
@@ -25,7 +26,14 @@ object MyPageMockData {
     fun challengeHistory(challengeState: ChallengeState, spentOnDate: (LocalDate) -> Int): List<ChallengeRecord> {
         val referenceToday = LocalDate.now()
         return challengeState.challenges
-            .sortedByDescending { it.periodStart }
+            // 서버 challengeId는 생성 시마다 증가하는 값이라 실제 생성순을 그대로 반영한다.
+            // periodStart만으로는 같은 날 포기 후 재생성된 챌린지의 순서를 구분할 수 없고(둘 다
+            // 오늘 시작), 로컬 리스트에 항목이 쌓인 순서는 API 호출 타이밍에 따라 달라져 신뢰할 수
+            // 없으므로, id를 우선 키로 사용하고 서버 id가 없는 로컬/목업 챌린지만 periodStart로 정렬한다.
+            .sortedWith(
+                compareByDescending<ActiveChallenge> { it.id.toLongOrNull() ?: Long.MIN_VALUE }
+                    .thenByDescending { it.periodStart }
+            )
             .map { challenge ->
                 val isOngoing = challenge.isOngoingOn(referenceToday)
                 val trackedEnd = if (referenceToday.isBefore(challenge.effectivePeriodEnd)) referenceToday else challenge.effectivePeriodEnd

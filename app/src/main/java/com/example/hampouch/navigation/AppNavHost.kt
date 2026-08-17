@@ -1067,6 +1067,11 @@ fun AppNavHost(
         composable(Screen.AmountAdjustment.route) {
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
+            // 포기 처리 성공 직후, NextChallenge 화면으로 내비게이션이 실제로 반영되기 전
+            // 잠깐 이 화면이 새 challengeState로 재구성될 수 있다. 이때는 activeChallenge가
+            // 없어질 수 있으므로(방금 포기한 챌린지가 더 이상 진행중이 아니게 됨),
+            // AmountAdjustmentMockData.challenge()의 requireNotNull이 던지기 전에 여기서 막는다.
+            if (challengeState.activeChallenge == null) return@composable
             AmountAdjustmentRoute(
                 challenge = AmountAdjustmentMockData.challenge(challengeState, expenseLookup::spentOnDate),
                 onBackClick = { navController.popBackStack() },
