@@ -55,6 +55,7 @@ private const val DEFAULT_BATTLE_DURATION_DAYS = 7
 private const val DEFAULT_BATTLE_CAPACITY = 5
 private const val JUST_NOW_LABEL = "방금"
 private const val DEFAULT_PAGE_SIZE = 20
+private const val DEFAULT_COMMENT_PAGE_SIZE = 20
 
 @Singleton
 class HamTipsRepositoryImpl @Inject constructor(
@@ -172,7 +173,9 @@ class HamTipsRepositoryImpl @Inject constructor(
         content = content,
         timeLabel = formatTimeAgoLabel(minutesAgoFrom(createdAt)),
         isDeleted = isDeleted,
-        replies = replies.map { it.toTipReply() }
+        replies = replies.map { it.toTipReply() },
+        replyCount = replyCount,
+        hasMoreReplies = hasMoreReplies
     )
 
     private fun CommunityPostDetailData.toTipPost(isEditorAuthor: Boolean): TipPost = TipPost(
@@ -222,7 +225,7 @@ class HamTipsRepositoryImpl @Inject constructor(
         hasImage = images.isNotEmpty(),
         imageUris = images.map { it.imageUrl },
         imageKeys = images.map { it.imageKey },
-        comments = comments.map { it.toTipComment() },
+        comments = comments.content.map { it.toTipComment() },
         isLiked = isLiked,
         isSaved = isBookmarked
     )
@@ -356,7 +359,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             ?: return Result.failure(ApiException("COMMUNITY_POST_NOT_FOUND", "게시글을 찾을 수 없습니다."))
         requireAuthentication().getOrElse { return Result.failure(it) }
         return runCatchingNetwork {
-            val response = apiService.getCommunityPostDetail(id)
+            val response = apiService.getCommunityPostDetail(id, 0, DEFAULT_COMMENT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
                 val isEditorAuthor = postById(postId)?.isEditorAuthor ?: false

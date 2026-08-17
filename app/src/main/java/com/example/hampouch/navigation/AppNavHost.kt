@@ -57,7 +57,9 @@ import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
 import com.example.hampouch.core.config.BattleConfig
+import com.example.hampouch.core.config.CommunityConfig
 import com.example.hampouch.core.config.ExpenseConfig
+import com.example.hampouch.domain.model.communityBattleInviteUrl
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
 import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
@@ -905,7 +907,12 @@ fun AppNavHost(
                         onShareToCommunityClick = {
                             pendingHomeTab = null
                             openCommunityWriteBattle = true
-                            pendingWriteBattleLink = challenge.battleCode.orEmpty()
+                            val battleCode = challenge.battleCode.orEmpty()
+                            pendingWriteBattleLink = if (CommunityConfig.USE_SERVER_COMMUNITY && battleCode.isNotEmpty()) {
+                                communityBattleInviteUrl(battleCode)
+                            } else {
+                                battleCode
+                            }
                             navController.navigate(Screen.Home.route)
                         }
                     )
