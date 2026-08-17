@@ -37,9 +37,11 @@ private const val SplashLogoAspectRatio = 413f / 52f
 @Composable
 fun SplashStep(
     onTimeout: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    keepVisible: Boolean = false
 ) {
     var visible by remember { mutableStateOf(false) }
+    var minDurationElapsed by remember { mutableStateOf(false) }
     val logoAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(durationMillis = SplashFadeInDurationMillis),
@@ -49,7 +51,13 @@ fun SplashStep(
     LaunchedEffect(Unit) {
         visible = true
         delay((SplashFadeInDurationMillis).toLong())
-        onTimeout()
+        minDurationElapsed = true
+    }
+
+    LaunchedEffect(minDurationElapsed, keepVisible) {
+        if (minDurationElapsed && !keepVisible) {
+            onTimeout()
+        }
     }
 
     Surface(modifier = modifier.fillMaxSize()) {

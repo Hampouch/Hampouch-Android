@@ -77,7 +77,7 @@ class ExpenseInputViewModel @Inject constructor(
         val alreadySpent = expenseRepository.recordsForDate(initialDate).sumOf { it.amount }
         return ExpenseInputUiState(
             dailyLimit = dailyLimit,
-            todayBalance = (dailyLimit - alreadySpent).coerceAtLeast(0),
+            todayBalance = dailyLimit - alreadySpent,
             form = ExpenseInputFormState(
                 step = savedStateHandle[StepKey] ?: 1,
                 date = LocalDate.ofEpochDay(savedStateHandle[DateKey] ?: initialDate.toEpochDay())

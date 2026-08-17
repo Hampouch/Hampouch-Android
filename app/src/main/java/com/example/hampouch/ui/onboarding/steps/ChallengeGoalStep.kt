@@ -68,7 +68,7 @@ fun ChallengeGoalStep(
             ) {
                 OnboardingPrimaryButton(
                     text = stringResource(R.string.onboarding_start_bytecut),
-                    enabled = true,
+                    enabled = effectiveTotalTarget != null && effectiveTotalTarget > 0,
                     onClick = onNext
                 )
             }

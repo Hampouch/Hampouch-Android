@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,7 +108,7 @@ fun HamTipsScreen(
     initialPopularPostId: String? = null,
     viewModel: HamTipsViewModel = hiltViewModel()
 ) {
-    var route by remember {
+    var route by rememberSaveable {
         mutableStateOf(
             when {
                 initialPopularPostId != null -> HamTipsRoute.POPULAR_ALL
@@ -116,10 +117,10 @@ fun HamTipsScreen(
             }
         )
     }
-    var isExternalWriteBattleEntry by remember { mutableStateOf(openWriteBattleOnStart) }
-    var selectedCategoryTab by remember { mutableStateOf(HamTipsCategoryTab.ALL) }
-    var searchQuery by remember { mutableStateOf("") }
-    var sortOrder by remember { mutableStateOf(HamTipsSortOrder.LATEST) }
+    var isExternalWriteBattleEntry by rememberSaveable { mutableStateOf(openWriteBattleOnStart) }
+    var selectedCategoryTab by rememberSaveable { mutableStateOf(HamTipsCategoryTab.ALL) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var sortOrder by rememberSaveable { mutableStateOf(HamTipsSortOrder.LATEST) }
     val hamTipsContext = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { message ->
@@ -127,8 +128,8 @@ fun HamTipsScreen(
         }
     }
     var showFabMenu by remember { mutableStateOf(false) }
-    var selectedPostId by remember { mutableStateOf<String?>(null) }
-    var editingPostId by remember { mutableStateOf<String?>(null) }
+    var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
+    var editingPostId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val allPosts by viewModel.posts.collectAsStateWithLifecycle()
     val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }

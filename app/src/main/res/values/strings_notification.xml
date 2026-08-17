@@ -21,5 +21,4 @@
 
     <string name="notification_channel_name">햄포치 알림</string>
     <string name="notification_channel_description">챌린지, 햄배틀, 커뮤니티 알림을 보내드려요.</string>
-    <string name="notification_test_send_button">테스트 알림 보내기</string>
 </resources>

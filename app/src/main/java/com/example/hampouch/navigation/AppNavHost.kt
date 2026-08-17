@@ -181,22 +181,29 @@ fun AppNavHost(
     var showAppSplash by rememberSaveable { mutableStateOf(true) }
 
     val resolvedStartDestination = startDestination
-    if (resolvedStartDestination == null) {
-        if (startupErrorMessage == null) {
-            Box(modifier = modifier.fillMaxSize().background(HPGray2))
-        } else {
-            StartupConnectionErrorScreen(
-                message = startupErrorMessage.orEmpty(),
-                isRetrying = isResolving,
-                onRetry = startDestinationViewModel::retry,
-                modifier = modifier
-            )
-        }
+    val isOnboardingDestination = resolvedStartDestination == Screen.Onboarding.route
+
+    if (resolvedStartDestination == null && startupErrorMessage != null) {
+        StartupConnectionErrorScreen(
+            message = startupErrorMessage.orEmpty(),
+            isRetrying = isResolving,
+            onRetry = startDestinationViewModel::retry,
+            modifier = modifier
+        )
         return
     }
 
-    if (showAppSplash && resolvedStartDestination != Screen.Onboarding.route) {
-        SplashStep(onTimeout = { showAppSplash = false }, modifier = modifier)
+    if (showAppSplash && !isOnboardingDestination) {
+        SplashStep(
+            keepVisible = resolvedStartDestination == null,
+            onTimeout = { showAppSplash = false },
+            modifier = modifier
+        )
+        return
+    }
+
+    if (resolvedStartDestination == null) {
+        Box(modifier = modifier.fillMaxSize().background(HPGray2))
         return
     }
 
