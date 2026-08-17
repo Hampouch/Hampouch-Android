@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,6 +22,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -704,17 +707,16 @@ fun CategoryDetailRoute(
                 percent = selectedPercent
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 20.dp)
             ) {
-                records.forEach { record ->
+                items(records, key = { it.id }, contentType = { "expense_record" }) { record ->
                     ExpenseAnalysisListItem(record = record, showReasonChip = true, onClick = {})
                 }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -786,17 +788,16 @@ fun ReasonDetailRoute(
                 percent = selectedPercent
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 20.dp)
             ) {
-                records.forEach { record ->
+                items(records, key = { it.id }, contentType = { "expense_record" }) { record ->
                     ExpenseAnalysisListItem(record = record, showReasonChip = true, onClick = {})
                 }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }

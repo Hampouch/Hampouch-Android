@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
@@ -195,22 +196,22 @@ fun ExpenseCalendarRoute(
         },
         containerColor = HPGray2
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(HPSub4)
-                    .padding(5.dp)
-                    .padding(top = 5.dp)
-            ) {
+            item(contentType = "calendar") {
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(HPSub4)
+                        .padding(5.dp)
+                        .padding(top = 5.dp)
+                ) {
                 if (!restrictToChallengePeriod) {
                     CalendarViewModeToggle(
                         viewMode = viewMode,
@@ -286,71 +287,81 @@ fun ExpenseCalendarRoute(
                         onDateSelected = { selectedDate = it }
                     )
                 }
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                SelectedDayHeader(selectedDate = selectedDate, referenceToday = referenceToday, dayRecords = dayRecords)
+                Spacer(modifier = Modifier.height(10.dp))
             }
-
-            Spacer(modifier = Modifier.height(15.dp))
-            SelectedDayHeader(selectedDate = selectedDate, referenceToday = referenceToday, dayRecords = dayRecords)
-            Spacer(modifier = Modifier.height(10.dp))
             val dayFailedWithNoData = dayLoadState is LoadState.Failure && dayRecords.isEmpty()
             val dayLoadingWithNoData = dayLoadState is LoadState.Loading && dayRecords.isEmpty()
             val dayStaleFailureMessage = (dayLoadState as? LoadState.Failure)?.message?.takeIf { dayRecords.isNotEmpty() }
             if (dayStaleFailureMessage != null) {
-                StaleDataRefreshBanner(
-                    message = dayStaleFailureMessage,
-                    onRetry = viewModel::retryDay,
-                    modifier = Modifier.padding(bottom = 10.dp)
-                )
+                item(contentType = "load_state") {
+                    StaleDataRefreshBanner(
+                        message = dayStaleFailureMessage,
+                        onRetry = viewModel::retryDay,
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    )
+                }
             }
             if (dayFailedWithNoData) {
-                InlineLoadErrorCard(
-                    message = (dayLoadState as LoadState.Failure).message,
-                    onRetry = viewModel::retryDay
-                )
+                item(contentType = "load_state") {
+                    InlineLoadErrorCard(
+                        message = (dayLoadState as LoadState.Failure).message,
+                        onRetry = viewModel::retryDay
+                    )
+                }
             } else if (dayLoadingWithNoData) {
-                InlineLoadingIndicator()
+                item(contentType = "load_state") { InlineLoadingIndicator() }
             } else if (dayRecords.isEmpty()) {
-                Text(
-                    stringResource(R.string.expensedetail_calendar_day_empty_message),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                item(contentType = "empty_state") {
+                    Text(
+                        stringResource(R.string.expensedetail_calendar_day_empty_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = HPText,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    dayRecords.forEach { record ->
-                        ExpenseCalendarListItem(record = record, onClick = { onExpenseClick(record.id) })
-                    }
+                items(dayRecords, key = { it.id }, contentType = { "expense_record" }) { record ->
+                    ExpenseCalendarListItem(record = record, onClick = { onExpenseClick(record.id) })
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            Button(
-                onClick = { if (inputEnabled) onAddExpenseClick(selectedDate) },
-                enabled = inputEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (inputEnabled) HPMain else HPGray4,
-                    disabledContainerColor = HPGray4,
-                    contentColor = if (inputEnabled) HPWhite else HPText,
-                    disabledContentColor = HPText
-                )
-            ) {
-                Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
+            item(contentType = "action") {
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = { if (inputEnabled) onAddExpenseClick(selectedDate) },
+                    enabled = inputEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (inputEnabled) HPMain else HPGray4,
+                        disabledContainerColor = HPGray4,
+                        contentColor = if (inputEnabled) HPWhite else HPText,
+                        disabledContentColor = HPText
+                    )
+                ) {
+                    Text(
+                        stringResource(R.string.home_expense_input_button),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+                if (!inputEnabled && challengeEnded && !restrictToChallengePeriod) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.expensedetail_calendar_input_disabled_message),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = HPText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
-            if (!inputEnabled && challengeEnded && !restrictToChallengePeriod) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.expensedetail_calendar_input_disabled_message),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HPText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

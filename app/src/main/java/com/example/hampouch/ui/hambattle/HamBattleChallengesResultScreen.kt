@@ -13,9 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -82,16 +83,17 @@ fun HamBattleChallengesResultScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            RankingCard(
-                type = challenge.type,
-                dDay = challenge.dDayLabel(),
-                periodLabel = challenge.periodLabel(),
-                ranked = ranked,
-                disqualified = disqualified
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                RankingCard(
+                    type = challenge.type,
+                    dDay = challenge.dDayLabel(),
+                    periodLabel = challenge.periodLabel(),
+                    ranked = ranked,
+                    disqualified = disqualified
+                )
+            }
 
             Spacer(modifier = Modifier.height(15.dp))
             OneVsOnePenaltyBox(penalty = challenge.penalty, lastPlaceName = lastPlaceName)
@@ -139,46 +141,58 @@ private fun RankingCard(
     ranked: List<HamBattleParticipantSpending>,
     disqualified: List<HamBattleParticipantSpending>
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .clip(RoundedCornerShape(20.dp))
             .background(HPSub4)
-            .padding(15.dp)
+            .padding(15.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("현재 순위", style = Body16Bold, color = HPBlack)
-            StatusBadge(text = "진행중")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("$type · $dDay", style = MaterialTheme.typography.bodyMedium, color = HPText)
-            Text(periodLabel, style = MaterialTheme.typography.bodyMedium, color = HPText)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ranked.forEachIndexed { index, participant ->
-                RankRow(
-                    rank = participant.rank ?: index + 1,
-                    participant = participant,
-                    highlighted = participant.name == "나"
-                )
+        item(contentType = "ranking_header") {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("현재 순위", style = Body16Bold, color = HPBlack)
+                    StatusBadge(text = "진행중")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("$type · $dDay", style = MaterialTheme.typography.bodyMedium, color = HPText)
+                    Text(periodLabel, style = MaterialTheme.typography.bodyMedium, color = HPText)
+                }
+                Spacer(modifier = Modifier.height(6.dp))
             }
-            disqualified.forEach { participant ->
-                DisqualifiedRow(participant = participant)
-            }
+        }
+        itemsIndexed(
+            items = ranked,
+            key = { _, participant -> participantStableKey(participant) },
+            contentType = { _, _ -> "ranked_participant" }
+        ) { index, participant ->
+            RankRow(
+                rank = participant.rank ?: index + 1,
+                participant = participant,
+                highlighted = participant.name == "나"
+            )
+        }
+        items(
+            items = disqualified,
+            key = { participantStableKey(it) },
+            contentType = { "disqualified_participant" }
+        ) { participant ->
+            DisqualifiedRow(participant = participant)
         }
     }
 }
+
+private fun participantStableKey(participant: HamBattleParticipantSpending): String =
+    participant.userId?.toString() ?: "${participant.name}:${participant.status}"
 
 @Composable
 private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highlighted: Boolean) {

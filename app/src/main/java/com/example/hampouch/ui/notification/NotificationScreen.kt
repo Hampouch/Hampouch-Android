@@ -19,15 +19,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +64,8 @@ fun NotificationScreen(
     onMarkAllReadClick: () -> Unit,
     onNotificationClick: (NotificationItem) -> Unit
 ) {
+    val notificationsBySection = remember(notifications) { notifications.groupBy { it.section } }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -74,49 +77,60 @@ fun NotificationScreen(
             onMarkAllReadClick = onMarkAllReadClick,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        if (BuildConfig.DEBUG) {
-            TestNotificationTriggerButton(
-                notifications = notifications,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (notifications.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(R.string.notification_empty_message),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-            ) {
-                NotificationSection.entries.forEach { section ->
-                    val items = notifications.filter { it.section == section }
-                    if (items.isNotEmpty()) {
-                        SectionLabel(
-                            text = stringResource(section.labelResId),
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+        DebugNotificationTrigger(notifications = notifications)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
+        ) {
+            if (notifications.isEmpty()) {
+                item(contentType = "empty_state") {
+                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.notification_empty_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = HPText
                         )
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items.forEach { item ->
-                                NotificationListItem(
-                                    item = item,
-                                    onClick = { onNotificationClick(item) }
-                                )
-                            }
+                    }
+                }
+            } else {
+                NotificationSection.entries.forEach { section ->
+                    val sectionItems = notificationsBySection[section].orEmpty()
+                    if (sectionItems.isNotEmpty()) {
+                        item(key = "section:$section", contentType = "section_header") {
+                            SectionLabel(
+                                text = stringResource(section.labelResId),
+                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            )
+                        }
+                        items(
+                            items = sectionItems,
+                            key = { it.id },
+                            contentType = { "notification" }
+                        ) { item ->
+                            NotificationListItem(
+                                item = item,
+                                onClick = { onNotificationClick(item) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                item(contentType = "footer") { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
+}
+
+@Composable
+private fun DebugNotificationTrigger(notifications: List<NotificationItem>) {
+    if (!BuildConfig.DEBUG) return
+
+    TestNotificationTriggerButton(
+        notifications = notifications,
+        modifier = Modifier.padding(horizontal = 20.dp)
+    )
+    Spacer(modifier = Modifier.height(12.dp))
 }
 
 @Composable

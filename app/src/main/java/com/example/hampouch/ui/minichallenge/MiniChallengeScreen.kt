@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +22,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -168,58 +167,62 @@ private fun MiniChallengeDashboardScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-            MiniChallengeDateRow(
-                dates = listOf(
-                    selectedDate.minusDays(1),
-                    selectedDate,
-                    selectedDate.plusDays(1)
-                ),
-                selectedDate = selectedDate,
-                today = today,
-                onDateSelected = onDateSelected
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            MiniChallengeSummaryCard(
-                completedCount = todayChallenges.count { it.isChecked },
-                totalCount = todayChallenges.size,
-                streakDays = streakDaysOverride ?: (todayChallenges.maxOfOrNull { it.achievedDays } ?: 0)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column {
+            item(contentType = "date") {
+                Spacer(modifier = Modifier.height(10.dp))
+                MiniChallengeDateRow(
+                    dates = listOf(
+                        selectedDate.minusDays(1),
+                        selectedDate,
+                        selectedDate.plusDays(1)
+                    ),
+                    selectedDate = selectedDate,
+                    today = today,
+                    onDateSelected = onDateSelected
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            item(contentType = "summary") {
+                MiniChallengeSummaryCard(
+                    completedCount = todayChallenges.count { it.isChecked },
+                    totalCount = todayChallenges.size,
+                    streakDays = streakDaysOverride ?: (todayChallenges.maxOfOrNull { it.achievedDays } ?: 0)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            item(contentType = "section_header") {
                 Text(
                     stringResource(R.string.minichallenge_today_title),
                     style = MaterialTheme.typography.titleSmall,
                     color = HPBlack
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                if (todayChallenges.isEmpty()) {
+            }
+            if (todayChallenges.isEmpty()) {
+                item(contentType = "empty_state") {
                     EmptyStateBlock(title = stringResource(R.string.minichallenge_today_empty))
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        todayChallenges.forEach { item ->
-                            key(item.id) {
-                                MiniChallengeItemRow(
-                                    item = item,
-                                    onToggle = { onToggleChallenge(item.id) },
-                                    onDelete = { onDeleteChallenge(item.id) }
-                                )
-                            }
-                        }
-                    }
+                }
+            } else {
+                items(
+                    items = todayChallenges,
+                    key = { it.id },
+                    contentType = { "today_challenge" }
+                ) { item ->
+                    MiniChallengeItemRow(
+                        item = item,
+                        onToggle = { onToggleChallenge(item.id) },
+                        onDelete = { onDeleteChallenge(item.id) }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column {
+            item(contentType = "recommended") {
+                Spacer(modifier = Modifier.height(10.dp))
                 SectionHeader(
                     title = stringResource(R.string.minichallenge_recommended_title),
                     onViewAllClick = onViewAllRecommendedClick
@@ -240,26 +243,27 @@ private fun MiniChallengeDashboardScreen(
                         }
                     )
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = onStartNewChallengeClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HPMain,
-                    contentColor = HPWhite
-                )
-            ) {
-                Text(
-                    stringResource(R.string.minichallenge_start_button),
-                    style = MaterialTheme.typography.titleSmall
-                )
+            item(contentType = "action") {
+                Button(
+                    onClick = onStartNewChallengeClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = HPMain,
+                        contentColor = HPWhite
+                    )
+                ) {
+                    Text(
+                        stringResource(R.string.minichallenge_start_button),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 

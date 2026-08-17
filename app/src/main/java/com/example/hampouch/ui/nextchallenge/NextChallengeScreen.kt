@@ -134,17 +134,6 @@ internal const val MaxPeriodDays = 100
 internal val PeriodPresetDayOptions: List<Pair<Int, String>> =
     listOf(7 to "7일", 14 to "14일", 30 to "30일")
 
-internal val CategoryIconRes: Map<String, Int> = mapOf(
-    "delivery" to R.drawable.icon_delivery,
-    "dining_out" to R.drawable.icon_eatout,
-    "convenience" to R.drawable.icon_conv,
-    "cafe" to R.drawable.icon_cafe,
-    "snack" to R.drawable.icon_snack,
-    "mart" to R.drawable.icon_shopping,
-    "drink" to R.drawable.icon_beer,
-    "etc" to R.drawable.icon_etc
-)
-
 internal fun LocalDate.toEpochMillisUtc(): Long =
     atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 

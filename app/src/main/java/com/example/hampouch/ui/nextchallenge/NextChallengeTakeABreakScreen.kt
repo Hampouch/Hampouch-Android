@@ -69,7 +69,6 @@ fun NextChallengeTakeABreakRoute(
     var dateFixed by remember { mutableStateOf(false) }
     var startDate by remember { mutableStateOf<LocalDate?>(null) }
     var targetAmount by remember { mutableStateOf<Int?>(null) }
-    var selectedCategoryIds by remember { mutableStateOf(setOf("delivery")) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -104,8 +103,7 @@ fun NextChallengeTakeABreakRoute(
         (currentCustomPeriodDays < MinPeriodDays || currentCustomPeriodDays > MaxPeriodDays)
     val canStartChallenge = isPeriodOrDateSelected &&
         !customPeriodDaysOutOfRange &&
-        (targetAmount ?: 0) > 0 &&
-        selectedCategoryIds.isNotEmpty()
+        (targetAmount ?: 0) > 0
 
     Scaffold(
         modifier = modifier.imePadding(),
@@ -115,99 +113,93 @@ fun NextChallengeTakeABreakRoute(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            OnboardingTopBar(onBack = onBackClick)
-
-            NextChallengeHeroCard(
-                title = "휴식기가 끝났어요.",
-                subtitle = "다시 시작해볼까요?"
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Column {
-                Text("챌린지 설정", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
-                Spacer(modifier = Modifier.height(10.dp))
-                ChallengeSettingsSection(
-                    periodEnabled = periodEnabled,
-                    onPeriodEnabledChange = { enabled ->
-                        periodEnabled = enabled
-                        if (enabled) dateFixed = false
-                    },
-                    periodDays = periodDays,
-                    onPeriodDaysChange = { days ->
-                        periodDays = days
-                        customPeriodDays = null
-                    },
-                    customPeriodDays = customPeriodDays,
-                    onCustomPeriodDaysChange = { value ->
-                        customPeriodDays = value
-                        periodDays = null
-                    },
-                    onCustomPeriodEditingStart = { periodDays = null },
-                    customPeriodDaysOutOfRange = customPeriodDaysOutOfRange,
-                    dateFixed = dateFixed,
-                    onDateFixedChange = { enabled ->
-                        dateFixed = enabled
-                        if (enabled) {
-                            periodEnabled = false
-                        } else {
-                            startDate = null
-                        }
-                    },
-                    startDateText = startDateText,
-                    onStartDateClick = { showDatePicker = true }
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
-                    .padding(horizontal = 15.dp, vertical = 20.dp)
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(8.dp))
-                EditableAmountRow(
-                    label = null,
-                    value = targetAmount,
-                    onValueChange = { targetAmount = it },
-                    placeholder = "직접 입력",
-                    suffix = "원"
+                OnboardingTopBar(onBack = onBackClick)
+
+                NextChallengeHeroCard(
+                    title = "휴식기가 끝났어요.",
+                    subtitle = "다시 시작해볼까요?"
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("하루 식비 목표", style = Body16Bold, color = HPBlack)
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(HPSub2)
-                        .padding(horizontal = 18.dp, vertical = 14.dp)
-                ) {
-                    Text(
-                        formatWon(dailyGoal),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = HPWhite,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.height(20.dp))
+                Column {
+                    Text("챌린지 설정", style = Body16Bold, fontSize = 18.sp, color = HPBlack)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ChallengeSettingsSection(
+                        periodEnabled = periodEnabled,
+                        onPeriodEnabledChange = { enabled ->
+                            periodEnabled = enabled
+                            if (enabled) dateFixed = false
+                        },
+                        periodDays = periodDays,
+                        onPeriodDaysChange = { days ->
+                            periodDays = days
+                            customPeriodDays = null
+                        },
+                        customPeriodDays = customPeriodDays,
+                        onCustomPeriodDaysChange = { value ->
+                            customPeriodDays = value
+                            periodDays = null
+                        },
+                        onCustomPeriodEditingStart = { periodDays = null },
+                        customPeriodDaysOutOfRange = customPeriodDaysOutOfRange,
+                        dateFixed = dateFixed,
+                        onDateFixedChange = { enabled ->
+                            dateFixed = enabled
+                            if (enabled) {
+                                periodEnabled = false
+                            } else {
+                                startDate = null
+                            }
+                        },
+                        startDateText = startDateText,
+                        onStartDateClick = { showDatePicker = true }
                     )
                 }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            CategorySelectionCard(
-                selectedCategoryIds = selectedCategoryIds,
-                onToggleCategory = { categoryId ->
-                    selectedCategoryIds = if (categoryId in selectedCategoryIds) {
-                        selectedCategoryIds - categoryId
-                    } else {
-                        selectedCategoryIds + categoryId
+                Spacer(modifier = Modifier.height(20.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(HPSub4)
+                        .padding(horizontal = 15.dp, vertical = 20.dp)
+                ) {
+                    Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    EditableAmountRow(
+                        label = null,
+                        value = targetAmount,
+                        onValueChange = { targetAmount = it },
+                        placeholder = "직접 입력",
+                        suffix = "원"
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("하루 식비 목표", style = Body16Bold, color = HPBlack)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(HPSub2)
+                            .padding(horizontal = 18.dp, vertical = 14.dp)
+                    ) {
+                        Text(
+                            formatWon(dailyGoal),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = HPWhite,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
-            )
-            Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+            }
             Button(
                 onClick = { showStartConfirmDialog = true },
                 enabled = canStartChallenge,
@@ -228,7 +220,7 @@ fun NextChallengeTakeABreakRoute(
                     color = HPWhite
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 
@@ -255,8 +247,7 @@ fun NextChallengeTakeABreakRoute(
                         ChallengePeriod.Duration(effectivePeriodDays)
                     },
                     dailyTargetAmount = (targetAmount ?: 0) / effectivePeriodDays,
-                    totalTargetAmount = targetAmount ?: 0,
-                    topSpendingCategoryIds = selectedCategoryIds.toList()
+                    totalTargetAmount = targetAmount ?: 0
                 )
                 viewModel.startNewChallenge(request)
             }

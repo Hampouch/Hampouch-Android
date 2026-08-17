@@ -5,10 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,23 +48,25 @@ fun TipListScreen(
             onNotificationClick = onNotificationClick,
             modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
-        if (tips.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = emptyMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HPText
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                tips.forEach { tip -> TipPostCard(tip = tip, onClick = { onTipClick(tip) }) }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (tips.isEmpty()) {
+                item(contentType = "empty_state") {
+                    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = emptyMessage,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = HPText
+                        )
+                    }
+                }
+            } else {
+                items(tips, key = { it.id }, contentType = { "tip" }) { tip ->
+                    TipPostCard(tip = tip, onClick = { onTipClick(tip) })
+                }
             }
         }
     }
