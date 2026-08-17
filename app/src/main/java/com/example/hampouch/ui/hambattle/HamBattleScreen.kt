@@ -564,17 +564,18 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
                 color = HPMain
             )
             val battleCode = challenge.battleCode
+            val inviteUrl = battleCode?.let(::buildBattleInviteUrl)
             TextButton(
-                enabled = !battleCode.isNullOrBlank(),
+                enabled = inviteUrl != null,
                 onClick = {
-                    if (battleCode != null) {
-                        clipboardManager.setText(AnnotatedString(battleCode))
-                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (inviteUrl != null) {
+                        clipboardManager.setText(AnnotatedString(inviteUrl))
+                        Toast.makeText(context, "초대 링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
                     }
                 }
             ) {
                 Text(
-                    "코드 다시 복사",
+                    "링크 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = StatusWhoWonText

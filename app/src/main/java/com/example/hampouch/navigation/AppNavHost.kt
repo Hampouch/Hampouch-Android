@@ -40,6 +40,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.hampouch.domain.model.AuthSession
@@ -56,6 +57,8 @@ import com.example.hampouch.ui.hambattle.HamBattleEvent
 import com.example.hampouch.ui.hambattle.HamBattleViewModel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen
+import com.example.hampouch.ui.hambattle.BattleInviteViewModel
+import com.example.hampouch.ui.hambattle.buildBattleInviteUrl
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
@@ -155,14 +158,31 @@ fun AppNavHost(
     val context = LocalContext.current
     val startDestinationViewModel: StartDestinationViewModel = hiltViewModel()
     val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val battleInviteViewModel: BattleInviteViewModel = hiltViewModel()
     val battleState by battleViewModel.state.collectAsStateWithLifecycle()
+    val pendingBattleInviteCode by battleInviteViewModel.pendingBattleCode.collectAsStateWithLifecycle()
+    var externalJoinCodeInFlight by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(battleViewModel) {
         battleViewModel.events.collect { event ->
             when (event) {
                 HamBattleEvent.Created -> navController.popBackStack()
-                is HamBattleEvent.Joined -> Unit
-                is HamBattleEvent.ShowMessage ->
+                is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
+                    externalJoinCodeInFlight = null
+                    battleInviteViewModel.consume(code)
+                    navController.navigate(Screen.HamBattle.route) {
+                        launchSingleTop = true
+                    }
+                }
+                is HamBattleEvent.ShowMessage -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    externalJoinCodeInFlight?.let { code ->
+                        externalJoinCodeInFlight = null
+                        battleInviteViewModel.consume(code)
+                        navController.navigate(Screen.HamBattle.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -179,6 +199,8 @@ fun AppNavHost(
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
     var showAppSplash by rememberSaveable { mutableStateOf(true) }
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
 
     val resolvedStartDestination = startDestination
     if (resolvedStartDestination == null) {
@@ -198,6 +220,25 @@ fun AppNavHost(
     if (showAppSplash && resolvedStartDestination != Screen.Onboarding.route) {
         SplashStep(onTimeout = { showAppSplash = false }, modifier = modifier)
         return
+    }
+
+    LaunchedEffect(pendingBattleInviteCode, currentRoute) {
+        val battleCode = pendingBattleInviteCode ?: return@LaunchedEffect
+        val unauthenticatedRoutes = setOf(
+            Screen.Onboarding.route,
+            Screen.Login.route,
+            Screen.SignUp.route,
+            Screen.ResetPassword.route,
+            Screen.Loading.route
+        )
+        if (
+            currentRoute != null &&
+            currentRoute !in unauthenticatedRoutes &&
+            externalJoinCodeInFlight == null
+        ) {
+            externalJoinCodeInFlight = battleCode
+            battleViewModel.join(battleCode)
+        }
     }
 
     val onBottomNavItemSelected: (BottomNavItem) -> Unit = { item ->
@@ -869,7 +910,9 @@ fun AppNavHost(
                         onShareToCommunityClick = {
                             pendingHomeTab = null
                             openCommunityWriteBattle = true
-                            pendingWriteBattleLink = challenge.battleCode.orEmpty()
+                            pendingWriteBattleLink = challenge.battleCode
+                                ?.let(::buildBattleInviteUrl)
+                                .orEmpty()
                             navController.navigate(Screen.Home.route)
                         }
                     )
