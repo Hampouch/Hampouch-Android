@@ -811,7 +811,8 @@ fun AppNavHost(
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onViewEndedChallengeDetailClick = { challengeId ->
                     navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(challengeId))
-                }
+                },
+                viewModel = battleViewModel
             )
         }
 
