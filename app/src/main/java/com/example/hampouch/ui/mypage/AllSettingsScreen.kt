@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
+import com.example.hampouch.domain.model.NotificationSettingsState
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
@@ -43,6 +44,26 @@ fun AllSettingsScreen(
     viewModel: AllSettingsViewModel = hiltViewModel()
 ) {
     val notificationState by viewModel.state.collectAsStateWithLifecycle()
+    AllSettingsContent(
+        notificationState = notificationState,
+        actions = AllSettingsActions(
+            onBackClick = onBackClick,
+            onRecordAlarmClick = onRecordAlarmClick,
+            onNotificationClick = onNotificationClick,
+            onChallengeAlarmChange = viewModel::setChallengeAlarmEnabled,
+            onHamBattleAlarmChange = viewModel::setHamBattleAlarmEnabled,
+            onCommunityAlarmChange = viewModel::setCommunityAlarmEnabled
+        ),
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun AllSettingsContent(
+    notificationState: NotificationSettingsState,
+    actions: AllSettingsActions,
+    modifier: Modifier = Modifier
+) {
     var showComingSoonDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -52,8 +73,8 @@ fun AllSettingsScreen(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.settings_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = actions.onBackClick,
+            onNotificationClick = actions.onNotificationClick
         )
         Column(
             modifier = Modifier
@@ -61,64 +82,9 @@ fun AllSettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            SectionLabel(text = stringResource(R.string.settings_section_notification))
-            Spacer(modifier = Modifier.height(8.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SettingsNavigateCard(
-                    title = stringResource(R.string.settings_record_alarm_title),
-                    subtitle = stringResource(R.string.settings_record_alarm_subtitle),
-                    onClick = onRecordAlarmClick
-                )
-                SettingsToggleCard(
-                    title = stringResource(R.string.settings_challenge_alarm_title),
-                    subtitle = stringResource(R.string.settings_challenge_alarm_subtitle),
-                    checked = notificationState.challengeAlarmEnabled,
-                    onCheckedChange = viewModel::setChallengeAlarmEnabled,
-                    onRowClick = { viewModel.setChallengeAlarmEnabled(!notificationState.challengeAlarmEnabled) }
-                )
-                SettingsToggleCard(
-                    title = stringResource(R.string.settings_hambattle_alarm_title),
-                    subtitle = stringResource(R.string.settings_hambattle_alarm_subtitle),
-                    checked = notificationState.hamBattleAlarmEnabled,
-                    onCheckedChange = viewModel::setHamBattleAlarmEnabled,
-                    onRowClick = { viewModel.setHamBattleAlarmEnabled(!notificationState.hamBattleAlarmEnabled) }
-                )
-                SettingsToggleCard(
-                    title = stringResource(R.string.settings_community_alarm_title),
-                    subtitle = stringResource(R.string.settings_community_alarm_subtitle),
-                    checked = notificationState.communityAlarmEnabled,
-                    onCheckedChange = viewModel::setCommunityAlarmEnabled,
-                    onRowClick = { viewModel.setCommunityAlarmEnabled(!notificationState.communityAlarmEnabled) }
-                )
-            }
-
+            AllSettingsNotificationSection(notificationState = notificationState, actions = actions)
             Spacer(modifier = Modifier.height(24.dp))
-            SectionLabel(text = stringResource(R.string.settings_section_data))
-            Spacer(modifier = Modifier.height(8.dp))
-            SettingsMenuCard {
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_export_expense),
-                    onClick = { showComingSoonDialog = true },
-                    showChevron = false
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            SectionLabel(text = stringResource(R.string.settings_section_support))
-            Spacer(modifier = Modifier.height(8.dp))
-            SettingsMenuCard {
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_customer_center),
-                    onClick = { showComingSoonDialog = true },
-                    showChevron = false
-                )
-                SettingsMenuDivider()
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_terms),
-                    onClick = { showComingSoonDialog = true },
-                    showChevron = false
-                )
-            }
+            AllSettingsDataAndSupportSection(onComingSoonClick = { showComingSoonDialog = true })
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -136,13 +102,84 @@ fun AllSettingsScreen(
     }
 }
 
+@Composable
+private fun AllSettingsNotificationSection(notificationState: NotificationSettingsState, actions: AllSettingsActions) {
+    SectionLabel(text = stringResource(R.string.settings_section_notification))
+    Spacer(modifier = Modifier.height(8.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SettingsNavigateCard(
+            title = stringResource(R.string.settings_record_alarm_title),
+            subtitle = stringResource(R.string.settings_record_alarm_subtitle),
+            onClick = actions.onRecordAlarmClick
+        )
+        SettingsToggleCard(
+            title = stringResource(R.string.settings_challenge_alarm_title),
+            subtitle = stringResource(R.string.settings_challenge_alarm_subtitle),
+            checked = notificationState.challengeAlarmEnabled,
+            onCheckedChange = actions.onChallengeAlarmChange,
+            onRowClick = { actions.onChallengeAlarmChange(!notificationState.challengeAlarmEnabled) }
+        )
+        SettingsToggleCard(
+            title = stringResource(R.string.settings_hambattle_alarm_title),
+            subtitle = stringResource(R.string.settings_hambattle_alarm_subtitle),
+            checked = notificationState.hamBattleAlarmEnabled,
+            onCheckedChange = actions.onHamBattleAlarmChange,
+            onRowClick = { actions.onHamBattleAlarmChange(!notificationState.hamBattleAlarmEnabled) }
+        )
+        SettingsToggleCard(
+            title = stringResource(R.string.settings_community_alarm_title),
+            subtitle = stringResource(R.string.settings_community_alarm_subtitle),
+            checked = notificationState.communityAlarmEnabled,
+            onCheckedChange = actions.onCommunityAlarmChange,
+            onRowClick = { actions.onCommunityAlarmChange(!notificationState.communityAlarmEnabled) }
+        )
+    }
+}
+
+@Composable
+private fun AllSettingsDataAndSupportSection(onComingSoonClick: () -> Unit) {
+    SectionLabel(text = stringResource(R.string.settings_section_data))
+    Spacer(modifier = Modifier.height(8.dp))
+    SettingsMenuCard {
+        SettingsMenuRow(
+            label = stringResource(R.string.settings_export_expense),
+            onClick = onComingSoonClick,
+            showChevron = false
+        )
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+    SectionLabel(text = stringResource(R.string.settings_section_support))
+    Spacer(modifier = Modifier.height(8.dp))
+    SettingsMenuCard {
+        SettingsMenuRow(
+            label = stringResource(R.string.settings_customer_center),
+            onClick = onComingSoonClick,
+            showChevron = false
+        )
+        SettingsMenuDivider()
+        SettingsMenuRow(
+            label = stringResource(R.string.settings_terms),
+            onClick = onComingSoonClick,
+            showChevron = false
+        )
+    }
+}
+
 @Preview(showBackground = true, name = "3. 전체 설정")
 @Composable
 private fun AllSettingsScreenPreview() {
     HampouchTheme {
-        AllSettingsScreen(
-            onBackClick = {},
-            onRecordAlarmClick = {}, onNotificationClick = {}
+        AllSettingsContent(
+            notificationState = NotificationSettingsState(),
+            actions = AllSettingsActions(
+                onBackClick = {},
+                onRecordAlarmClick = {},
+                onNotificationClick = {},
+                onChallengeAlarmChange = {},
+                onHamBattleAlarmChange = {},
+                onCommunityAlarmChange = {}
+            )
         )
     }
 }

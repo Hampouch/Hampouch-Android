@@ -19,7 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -84,7 +83,7 @@ fun FixedDateNextChallengeRoute(
 }
 
 @Composable
-@Suppress("LongMethod")
+@Suppress("LongMethod", "UnusedParameter")
 fun FixedDateNextChallengeScreen(
     draft: FixedDateChallengeDraft,
     onBackClick: () -> Unit,
@@ -144,16 +143,8 @@ fun FixedDateNextChallengeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = HPMain)
             ) {
                 Text(
-                    "챌린지 시작하기",
+                    "챌린지 참가하기",
                     color = HPWhite,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            TextButton(onClick = onEditSettingsClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    "설정 수정하기",
-                    color = HPText,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )

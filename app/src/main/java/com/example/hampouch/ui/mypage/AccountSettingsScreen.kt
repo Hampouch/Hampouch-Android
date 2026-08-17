@@ -51,7 +51,6 @@ fun AccountSettingsScreen(
     viewModel: AccountSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    var showWithdrawConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -63,6 +62,27 @@ fun AccountSettingsScreen(
         }
     }
 
+    AccountSettingsContent(
+        profile = profile,
+        actions = AccountSettingsActions(
+            onBackClick = onBackClick,
+            onProfileEditClick = onProfileEditClick,
+            onChangePasswordClick = onChangePasswordClick,
+            onNotificationClick = onNotificationClick,
+            onWithdraw = viewModel::withdraw
+        ),
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun AccountSettingsContent(
+    profile: MyPageProfile,
+    actions: AccountSettingsActions,
+    modifier: Modifier = Modifier
+) {
+    var showWithdrawConfirm by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -70,8 +90,8 @@ fun AccountSettingsScreen(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.account_settings_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = actions.onBackClick,
+            onNotificationClick = actions.onNotificationClick
         )
         Column(
             modifier = Modifier
@@ -85,44 +105,57 @@ fun AccountSettingsScreen(
                 avatarUri = profile.avatarUri
             )
             Spacer(modifier = Modifier.height(20.dp))
-            SettingsMenuCard {
-                SettingsMenuRow(
-                    label = stringResource(R.string.account_settings_profile_edit),
-                    onClick = onProfileEditClick
-                )
-                SettingsMenuDivider()
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_change_password),
-                    onClick = onChangePasswordClick
-                )
-                SettingsMenuDivider()
-                SettingsMenuRow(
-                    label = stringResource(R.string.settings_withdraw),
-                    onClick = { showWithdrawConfirm = true },
-                    labelColor = HPSub,
-                    showChevron = false
-                )
-            }
+            AccountSettingsMenu(actions = actions, onWithdrawClick = { showWithdrawConfirm = true })
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
     if (showWithdrawConfirm) {
-        Dialog(
-            onDismissRequest = { showWithdrawConfirm = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            ConfirmActionCard(
-                question = stringResource(R.string.settings_withdraw_confirm_title),
-                subtext = stringResource(R.string.settings_withdraw_confirm_subtext),
-                confirmLabel = stringResource(R.string.settings_withdraw),
-                onCancel = { showWithdrawConfirm = false },
-                onConfirm = {
-                    showWithdrawConfirm = false
-                    viewModel.withdraw()
-                }
-            )
-        }
+        AccountWithdrawDialog(
+            onDismiss = { showWithdrawConfirm = false },
+            onConfirm = {
+                showWithdrawConfirm = false
+                actions.onWithdraw()
+            }
+        )
+    }
+}
+
+@Composable
+private fun AccountSettingsMenu(actions: AccountSettingsActions, onWithdrawClick: () -> Unit) {
+    SettingsMenuCard {
+        SettingsMenuRow(
+            label = stringResource(R.string.account_settings_profile_edit),
+            onClick = actions.onProfileEditClick
+        )
+        SettingsMenuDivider()
+        SettingsMenuRow(
+            label = stringResource(R.string.settings_change_password),
+            onClick = actions.onChangePasswordClick
+        )
+        SettingsMenuDivider()
+        SettingsMenuRow(
+            label = stringResource(R.string.settings_withdraw),
+            onClick = onWithdrawClick,
+            labelColor = HPSub,
+            showChevron = false
+        )
+    }
+}
+
+@Composable
+private fun AccountWithdrawDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        ConfirmActionCard(
+            question = stringResource(R.string.settings_withdraw_confirm_title),
+            subtext = stringResource(R.string.settings_withdraw_confirm_subtext),
+            confirmLabel = stringResource(R.string.settings_withdraw),
+            onCancel = onDismiss,
+            onConfirm = onConfirm
+        )
     }
 }
 
@@ -130,12 +163,15 @@ fun AccountSettingsScreen(
 @Composable
 private fun AccountSettingsScreenPreview() {
     HampouchTheme {
-        AccountSettingsScreen(
+        AccountSettingsContent(
             profile = MyPageMockData.defaultProfile(AccountMockDataSource.normalUser),
-            onBackClick = {},
-            onProfileEditClick = {},
-            onChangePasswordClick = {},
-            onLoggedOut = {}, onNotificationClick = {}
+            actions = AccountSettingsActions(
+                onBackClick = {},
+                onProfileEditClick = {},
+                onChangePasswordClick = {},
+                onNotificationClick = {},
+                onWithdraw = {}
+            )
         )
     }
 }

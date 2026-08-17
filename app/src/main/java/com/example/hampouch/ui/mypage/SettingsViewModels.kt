@@ -20,6 +20,15 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
+data class AllSettingsActions(
+    val onBackClick: () -> Unit,
+    val onRecordAlarmClick: () -> Unit,
+    val onNotificationClick: () -> Unit,
+    val onChallengeAlarmChange: (Boolean) -> Unit,
+    val onHamBattleAlarmChange: (Boolean) -> Unit,
+    val onCommunityAlarmChange: (Boolean) -> Unit
+)
+
 @HiltViewModel
 class AllSettingsViewModel @Inject constructor(
     private val notificationSettingsRepository: NotificationSettingsRepository,

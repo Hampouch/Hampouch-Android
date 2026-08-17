@@ -88,9 +88,6 @@ private val PasswordFieldStateSaver = Saver<PasswordFieldState, List<Any>>(
 private fun rememberPasswordFieldState(): PasswordFieldState =
     rememberSaveable(saver = PasswordFieldStateSaver) { PasswordFieldState() }
 
-private fun isValidNewPassword(password: String): Boolean =
-    password.length >= 8 && password.any { it.isLetter() } && password.any { it.isDigit() }
-
 private fun validatePasswordFields(
     currentPassword: String,
     isNewPasswordValid: Boolean,
@@ -110,6 +107,21 @@ fun ChangePasswordScreen(
     modifier: Modifier = Modifier,
     viewModel: ChangePasswordViewModel = hiltViewModel()
 ) {
+    ChangePasswordContent(
+        email = email,
+        actions = actions,
+        onChangePassword = viewModel::changePassword,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ChangePasswordContent(
+    email: String,
+    actions: ChangePasswordActions,
+    onChangePassword: suspend (currentPassword: String, newPassword: String) -> Result<Unit>,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -120,14 +132,18 @@ fun ChangePasswordScreen(
             onBackClick = actions.onBackClick,
             onNotificationClick = actions.onNotificationClick
         )
-        ChangePasswordForm(email = email, viewModel = viewModel, onSubmitSuccess = actions.onSubmitSuccess)
+        ChangePasswordForm(
+            email = email,
+            onChangePassword = onChangePassword,
+            onSubmitSuccess = actions.onSubmitSuccess
+        )
     }
 }
 
 @Composable
 private fun ChangePasswordForm(
     email: String,
-    viewModel: ChangePasswordViewModel,
+    onChangePassword: suspend (currentPassword: String, newPassword: String) -> Result<Unit>,
     onSubmitSuccess: () -> Unit
 ) {
     var isSubmitting by rememberSaveable { mutableStateOf(false) }
@@ -136,7 +152,9 @@ private fun ChangePasswordForm(
     val currentPasswordField = rememberPasswordFieldState()
     val newPasswordField = rememberPasswordFieldState()
     val confirmPasswordField = rememberPasswordFieldState()
-    val isNewPasswordValid = isValidNewPassword(newPasswordField.value)
+    val isNewPasswordValid = newPasswordField.value.length >= 8 &&
+        newPasswordField.value.any { it.isLetter() } &&
+        newPasswordField.value.any { it.isDigit() }
 
     Column(
         modifier = Modifier
@@ -175,7 +193,7 @@ private fun ChangePasswordForm(
                 onErrorFieldChange = { errorField = it },
                 onCurrentPasswordErrorChange = { currentPasswordErrorMessage = it }
             ),
-            viewModel = viewModel,
+            onChangePassword = onChangePassword,
             onSubmitSuccess = onSubmitSuccess
         )
     }
@@ -246,7 +264,7 @@ private fun ChangePasswordSubmitButton(
     values: ChangePasswordFormValues,
     isSubmitting: Boolean,
     mutators: ChangePasswordFormMutators,
-    viewModel: ChangePasswordViewModel,
+    onChangePassword: suspend (currentPassword: String, newPassword: String) -> Result<Unit>,
     onSubmitSuccess: () -> Unit
 ) {
     val context = LocalContext.current
@@ -267,7 +285,7 @@ private fun ChangePasswordSubmitButton(
             if (errorField == null) {
                 mutators.onSubmittingChange(true)
                 coroutineScope.launch {
-                    viewModel.changePassword(values.currentPassword, values.newPassword)
+                    onChangePassword(values.currentPassword, values.newPassword)
                         .onSuccess {
                             mutators.onSubmittingChange(false)
                             onSubmitSuccess()
@@ -377,9 +395,10 @@ private fun PasswordInputField(spec: PasswordFieldSpec, state: PasswordFieldStat
 @Composable
 private fun ChangePasswordScreenPreview() {
     HampouchTheme {
-        ChangePasswordScreen(
+        ChangePasswordContent(
             email = "hampouch@example.com",
-            actions = ChangePasswordActions(onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {})
+            actions = ChangePasswordActions(onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {}),
+            onChangePassword = { _, _ -> Result.success(Unit) }
         )
     }
 }
