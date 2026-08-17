@@ -49,6 +49,8 @@ class BattleRepositoryImpl @Inject constructor(
     private val _state = MutableStateFlow(BattleState())
     override val state: StateFlow<BattleState> = _state.asStateFlow()
     private var capacityByBattleId: Map<Long, Int> = emptyMap()
+    private var hasMyAvatarOverride: Boolean = false
+    private var myAvatarOverride: String? = null
 
     private fun replaceLists(
         ready: List<HamBattleChallenge>,
@@ -78,7 +80,33 @@ class BattleRepositoryImpl @Inject constructor(
 
     override fun resetForAccount() {
         capacityByBattleId = emptyMap()
+        hasMyAvatarOverride = false
+        myAvatarOverride = null
         _state.value = BattleState()
+    }
+
+    override fun updateMyAvatar(avatarUrl: String?) {
+        hasMyAvatarOverride = true
+        myAvatarOverride = avatarUrl
+        _state.update { current ->
+            val updateAvatar: (HamBattleChallenge) -> HamBattleChallenge = { challenge ->
+                challenge.copy(
+                    participants = challenge.participants.map { participant ->
+                        if (participant.name == ME_NAME) {
+                            participant.copy(avatarUrl = avatarUrl)
+                        } else {
+                            participant
+                        }
+                    }
+                )
+            }
+            current.copy(
+                ongoingBattles = current.ongoingBattles.map(updateAvatar),
+                detailByBattleId = current.detailByBattleId.mapValues { (_, detail) ->
+                    updateAvatar(detail)
+                }
+            )
+        }
     }
 
     override suspend fun loadMyBattles(): Result<Unit> {
@@ -94,7 +122,11 @@ class BattleRepositoryImpl @Inject constructor(
             body.battles.forEach { dto ->
                 when (dto) {
                     is MyBattleSummaryDto.Ready -> ready += dto.toDomain()
-                    is MyBattleSummaryDto.Ongoing -> ongoing += dto.toDomain(myUserId)
+                    is MyBattleSummaryDto.Ongoing -> ongoing += dto.toDomain(
+                        myUserId = myUserId,
+                        hasMyAvatarOverride = hasMyAvatarOverride,
+                        myAvatarOverride = myAvatarOverride
+                    )
                     is MyBattleSummaryDto.Terminated -> terminated += dto.toDomain()
                 }
             }
@@ -109,7 +141,14 @@ class BattleRepositoryImpl @Inject constructor(
             val myUserId = requireUserId()
             val response = apiService.getBattleDetail(battleId)
             val body = requireBody(response, "햄배틀 상세 조회에 실패했습니다.")
-            setDetail(battleId, body.toDomain(myUserId))
+            setDetail(
+                battleId,
+                body.toDomain(
+                    myUserId = myUserId,
+                    hasMyAvatarOverride = hasMyAvatarOverride,
+                    myAvatarOverride = myAvatarOverride
+                )
+            )
         }.onFailure { rethrowIfCancelled(it, "햄배틀 상세 조회") }
     }
 
@@ -213,13 +252,17 @@ private fun durationDaysBetween(startDate: String, endDate: String): Int {
     return days
 }
 
-private fun BattleParticipantDto.toDomain(myUserId: Long): HamBattleParticipantSpending {
+private fun BattleParticipantDto.toDomain(
+    myUserId: Long,
+    hasMyAvatarOverride: Boolean = false,
+    myAvatarOverride: String? = null
+): HamBattleParticipantSpending {
     val disqualified = isValid == false
     return HamBattleParticipantSpending(
         name = if (userId == myUserId) ME_NAME else nickname,
         amount = totalAmount,
         status = if (disqualified) HamBattleParticipantStatus.DISQUALIFIED else HamBattleParticipantStatus.NORMAL,
-        avatarUrl = avatarUrl,
+        avatarUrl = if (userId == myUserId && hasMyAvatarOverride) myAvatarOverride else avatarUrl,
         userId = userId,
         todayAmount = todayAmount,
         rank = rank
@@ -239,8 +282,14 @@ private fun MyBattleSummaryDto.Ready.toDomain(): HamBattleChallenge = HamBattleC
     serverState = HamBattleServerState.Ready(joinedCount)
 )
 
-private fun MyBattleSummaryDto.Ongoing.toDomain(myUserId: Long): HamBattleChallenge {
-    val domainParticipants = participants.map { it.toDomain(myUserId) }
+private fun MyBattleSummaryDto.Ongoing.toDomain(
+    myUserId: Long,
+    hasMyAvatarOverride: Boolean,
+    myAvatarOverride: String?
+): HamBattleChallenge {
+    val domainParticipants = participants.map {
+        it.toDomain(myUserId, hasMyAvatarOverride, myAvatarOverride)
+    }
     return HamBattleChallenge(
         id = battleId.toString(),
         type = if (domainParticipants.size <= 2) "1 vs 1" else "그룹",
@@ -269,8 +318,14 @@ private fun MyBattleSummaryDto.Terminated.toDomain(): HamBattleChallenge = HamBa
     serverState = HamBattleServerState.Terminated(winnerNickname)
 )
 
-internal fun BattleDetailData.toDomain(myUserId: Long): HamBattleChallenge {
-    val domainParticipants = participants.map { it.toDomain(myUserId) }
+internal fun BattleDetailData.toDomain(
+    myUserId: Long,
+    hasMyAvatarOverride: Boolean = false,
+    myAvatarOverride: String? = null
+): HamBattleChallenge {
+    val domainParticipants = participants.map {
+        it.toDomain(myUserId, hasMyAvatarOverride, myAvatarOverride)
+    }
     return HamBattleChallenge(
         id = battleId.toString(),
         type = if (domainParticipants.size <= 2) "1 vs 1" else "그룹",

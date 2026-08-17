@@ -38,6 +38,8 @@ class HamBattleViewModel @Inject constructor(
 
     private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
     private var retryAction: (() -> Unit)? = null
 
     fun retry() = retryAction?.invoke()
@@ -78,24 +80,32 @@ class HamBattleViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     fun loadMyBattles() {
+        if (_isRefreshing.value) return
         retryAction = ::loadMyBattles
         _loadState.value = LoadState.Loading
+        _isRefreshing.value = true
         viewModelScope.launch {
-            battleRepository.loadMyBattles()
-                .onSuccess {
-                    val current = state.value
-                    _loadState.value = LoadState.Content(
-                        current.readyBattles.isEmpty() && current.ongoingBattles.isEmpty() &&
-                            current.terminatedBattles.isEmpty()
-                    )
-                }
-                .onFailure {
-                    val message = it.toUserMessage("햄배틀 목록 조회에 실패했습니다.")
-                    _loadState.value = LoadState.Failure(message)
-                    _events.send(HamBattleEvent.ShowMessage(message))
-                }
+            try {
+                battleRepository.loadMyBattles()
+                    .onSuccess {
+                        val current = state.value
+                        _loadState.value = LoadState.Content(
+                            current.readyBattles.isEmpty() && current.ongoingBattles.isEmpty() &&
+                                current.terminatedBattles.isEmpty()
+                        )
+                    }
+                    .onFailure {
+                        val message = it.toUserMessage("햄배틀 목록 조회에 실패했습니다.")
+                        _loadState.value = LoadState.Failure(message)
+                        _events.send(HamBattleEvent.ShowMessage(message))
+                    }
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
+
+    fun refreshMyBattles() = loadMyBattles()
 
     fun loadBattleDetail(battleId: Long) {
         retryAction = { loadBattleDetail(battleId) }

@@ -9,6 +9,7 @@ import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.BattleRepository
 import com.example.hampouch.domain.repository.HamTipsRepository
+import com.example.hampouch.ui.hambattle.extractBattleCodeFromInviteValue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
@@ -122,10 +123,7 @@ class HamTipsDetailViewModel @Inject constructor(
 }
 
 internal fun extractBattleCode(battleUrl: String): String? {
-    val normalized = battleUrl.trim().substringBefore('#').substringBefore('?').trimEnd('/')
-    if (normalized.isBlank()) return null
-    val battleCode = normalized.substringAfterLast('/')
-    return battleCode.takeIf { it.isNotBlank() && it != "invite" }
+    return extractBattleCodeFromInviteValue(battleUrl)
 }
 
 internal fun Throwable.toBattleJoinEvent(): HamTipsDetailEvent {

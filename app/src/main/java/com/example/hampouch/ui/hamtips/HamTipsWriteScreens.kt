@@ -52,6 +52,8 @@ import com.example.hampouch.ui.dialog.ConfirmActionCard
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.domain.model.HamBattleStatus
 import com.example.hampouch.ui.hambattle.HamBattleViewModel
+import com.example.hampouch.ui.hambattle.extractBattleCodeFromInviteValue
+import com.example.hampouch.ui.hambattle.normalizeBattleInviteUrl
 import com.example.hampouch.ui.hamtips.components.HamTipsCategoryPickerRow
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldCard
 import com.example.hampouch.ui.hamtips.components.HamTipsFieldLabel
@@ -509,7 +511,11 @@ fun HamTipsWriteBattleContent(
     var showLinkNotFoundError by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val isSubmitEnabled = formState.title.isNotBlank() && formState.content.isNotBlank() && formState.link.isNotBlank()
+    val battleCode = extractBattleCodeFromInviteValue(formState.link)
+    val normalizedLink = normalizeBattleInviteUrl(formState.link)
+    val isSubmitEnabled = formState.title.isNotBlank() &&
+        formState.content.isNotBlank() &&
+        normalizedLink != null
 
     HamTipsWriteScaffold(
         onBackClick = onBackClick,
@@ -518,7 +524,7 @@ fun HamTipsWriteBattleContent(
                 text = stringResource(R.string.hamtips_write_submit),
                 enabled = isSubmitEnabled,
                 onClick = {
-                    if (waitingChallengeLinks == null || formState.link.trim() in waitingChallengeLinks) {
+                    if (waitingChallengeLinks == null || battleCode in waitingChallengeLinks) {
                         showLinkNotFoundError = false
                         showConfirmDialog = true
                     } else {
@@ -580,7 +586,7 @@ fun HamTipsWriteBattleContent(
             onCancel = { showConfirmDialog = false },
             onConfirm = {
                 showConfirmDialog = false
-                onSubmit(formState.title, formState.content, formState.link.trim())
+                normalizedLink?.let { onSubmit(formState.title, formState.content, it) }
             }
         )
     }

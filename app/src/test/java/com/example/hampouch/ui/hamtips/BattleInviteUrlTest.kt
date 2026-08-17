@@ -10,7 +10,7 @@ class BattleInviteUrlTest {
     fun `extracts battle code from invitation url`() {
         assertEquals(
             "ABC123",
-            extractBattleCode("https://hampouch.app/battles/invite/ABC123")
+            extractBattleCode("https://invite.hampouch.com/battles/invite/ABC123")
         )
     }
 
@@ -18,7 +18,7 @@ class BattleInviteUrlTest {
     fun `ignores query fragment and trailing slash`() {
         assertEquals(
             "ABC123",
-            extractBattleCode("https://hampouch.app/battles/invite/ABC123/?source=community#join")
+            extractBattleCode("https://invite.hampouch.com/battles/invite/ABC123/?source=community#join")
         )
     }
 
@@ -29,6 +29,12 @@ class BattleInviteUrlTest {
 
     @Test
     fun `rejects empty invitation code`() {
-        assertNull(extractBattleCode("https://hampouch.app/battles/invite/"))
+        assertNull(extractBattleCode("https://invite.hampouch.com/battles/invite/"))
+    }
+
+    @Test
+    fun `rejects foreign and server api urls`() {
+        assertNull(extractBattleCode("https://example.com/battles/invite/ABC123"))
+        assertNull(extractBattleCode("https://api.hampouch.com/api/battles/invitations/ABC123"))
     }
 }
