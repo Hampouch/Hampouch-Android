@@ -10,9 +10,13 @@ import com.example.hampouch.domain.model.EmotionStat
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.SpendingEmotion
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 object ChallengeResultMockData {
+
+    private fun ActiveChallenge.resolvedTotalDays(): Int = totalDays.takeIf { it > 0 }
+        ?: (ChronoUnit.DAYS.between(periodStart, periodEnd).toInt() + 1).coerceAtLeast(1)
 
     private fun reasonIdToEmotion(reasonId: String?): SpendingEmotion = when (reasonId) {
         "stress" -> SpendingEmotion.STRESS
@@ -100,13 +104,14 @@ object ChallengeResultMockData {
             ChallengeResultStatus.FAIL -> (actualAmount - challenge.targetAmount).coerceAtLeast(0)
             ChallengeResultStatus.COMPLETE -> (challenge.targetAmount - actualAmount).coerceAtLeast(0)
         }
+        val totalDays = challenge.resolvedTotalDays()
 
         return ChallengeResultUiState(
             status = status,
-            title = "${challenge.totalDays}일 챌린지",
+            title = "${totalDays}일 챌린지",
             periodStart = challenge.periodStart,
             periodEnd = challenge.periodEnd,
-            totalDays = challenge.totalDays,
+            totalDays = totalDays,
             successDays = successDays,
             streakDays = progress.streakDays,
             amountLabel = amountLabel,
@@ -133,13 +138,14 @@ object ChallengeResultMockData {
         }
         val amountLabel = if (status == ChallengeResultStatus.FAIL) "초과 금액" else "총 절약"
         val amountValue = if (status == ChallengeResultStatus.FAIL) summary.overAmount else summary.savedAmount
+        val totalDays = challenge.resolvedTotalDays()
 
         return ChallengeResultUiState(
             status = status,
-            title = "${challenge.totalDays}일 챌린지",
+            title = "${totalDays}일 챌린지",
             periodStart = challenge.periodStart,
             periodEnd = challenge.periodEnd,
-            totalDays = challenge.totalDays,
+            totalDays = totalDays,
             successDays = summary.successDays,
             streakDays = summary.maxStreak,
             amountLabel = amountLabel,

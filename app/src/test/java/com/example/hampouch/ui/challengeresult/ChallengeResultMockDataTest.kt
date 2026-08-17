@@ -137,4 +137,33 @@ class ChallengeResultMockDataTest {
 
         assertEquals(ChallengeResultStatus.FAIL, result.status)
     }
+
+    @Test
+    fun `서버 기간이 0이면 시작일과 종료일로 결과 기간을 복구한다`() {
+        val startDate = LocalDate.of(2026, 8, 17)
+        val challenge = ActiveChallenge(
+            id = "zero-duration",
+            totalDays = 0,
+            periodStart = startDate,
+            periodEnd = startDate.plusDays(6),
+            dailyLimit = 7_142,
+            targetAmount = 50_000,
+            savedAmount = 0,
+            streakDays = 0,
+            editCount = 0,
+            abandonedDate = startDate,
+            remoteStatus = "FAIL"
+        )
+
+        val result = ChallengeResultMockData.forChallenge(
+            challenge = challenge,
+            challengeState = ChallengeState(challenges = listOf(challenge)),
+            recordsForDate = { emptyList() },
+            hasRecordOnDate = { false },
+            referenceToday = startDate
+        )
+
+        assertEquals(7, result.totalDays)
+        assertEquals("7일 챌린지", result.title)
+    }
 }

@@ -382,7 +382,7 @@ class ChallengeRepositoryImpl @Inject constructor(
         return runCatchingNetwork(TAG) {
             val response = apiService.createChallenge(
                 ChallengeCreateRequest(
-                    durationDays = if (repeatMonthly) null else totalDays,
+                    durationDays = totalDays,
                     budgetTotal = budgetTotal,
                     startDate = periodStart.toString(),
                     resetByPayday = repeatMonthly,
@@ -396,7 +396,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                 val createdEnd = LocalDate.parse(data.endDate)
                 val newChallenge = ActiveChallenge(
                     id = data.challengeId.toString(),
-                    totalDays = data.durationDays,
+                    totalDays = challengeDurationDays(createdStart, createdEnd),
                     periodStart = createdStart,
                     periodEnd = createdEnd,
                     dailyLimit = data.dailyLimit,
@@ -674,4 +674,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         _fixedDateDraft.value = null
         _state.value = ChallengeState()
     }
+}
+
+internal fun challengeDurationDays(startDate: LocalDate, endDate: LocalDate): Int {
+    require(!endDate.isBefore(startDate))
+    return ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
 }

@@ -7,6 +7,7 @@ import com.example.hampouch.domain.model.PendingChallengeResult
 import com.example.hampouch.domain.model.SpendingEmotion
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,13 +68,18 @@ class PendingChallengeResultStore @Inject constructor(
         val challengeId = preferences.getString(KEY_CHALLENGE_ID, null) ?: return null
         val title = preferences.getString(KEY_TITLE, null) ?: return null
         if (requiredKeys.any { !preferences.contains(it) }) return null
+        val periodStart = LocalDate.ofEpochDay(preferences.getLong(KEY_PERIOD_START, 0L))
+        val periodEnd = LocalDate.ofEpochDay(preferences.getLong(KEY_PERIOD_END, 0L))
+        val storedTotalDays = preferences.getInt(KEY_TOTAL_DAYS, 0)
+        val totalDays = storedTotalDays.takeIf { it > 0 }
+            ?: (ChronoUnit.DAYS.between(periodStart, periodEnd).toInt() + 1).coerceAtLeast(1)
         return PendingChallengeResult(
             userId = preferences.getLong(KEY_USER_ID, 0L),
             challengeId = challengeId,
-            title = title,
-            periodStart = LocalDate.ofEpochDay(preferences.getLong(KEY_PERIOD_START, 0L)),
-            periodEnd = LocalDate.ofEpochDay(preferences.getLong(KEY_PERIOD_END, 0L)),
-            totalDays = preferences.getInt(KEY_TOTAL_DAYS, 0),
+            title = if (storedTotalDays > 0) title else "${totalDays}일 챌린지",
+            periodStart = periodStart,
+            periodEnd = periodEnd,
+            totalDays = totalDays,
             successDays = preferences.getInt(KEY_SUCCESS_DAYS, 0),
             streakDays = preferences.getInt(KEY_STREAK_DAYS, 0),
             amountValue = preferences.getInt(KEY_AMOUNT_VALUE, 0),

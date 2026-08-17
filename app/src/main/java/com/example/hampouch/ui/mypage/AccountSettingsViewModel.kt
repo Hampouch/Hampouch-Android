@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.UsersRepository
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -19,7 +20,8 @@ sealed interface AccountSettingsEvent {
 
 @HiltViewModel
 class AccountSettingsViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val homeWidgetStatePublisher: HomeWidgetStatePublisher
 ) : ViewModel() {
 
     private val _events = Channel<AccountSettingsEvent>(Channel.BUFFERED)
@@ -28,7 +30,10 @@ class AccountSettingsViewModel @Inject constructor(
     fun withdraw() {
         viewModelScope.launch {
             authRepository.withdraw()
-                .onSuccess { _events.send(AccountSettingsEvent.LoggedOut) }
+                .onSuccess {
+                    homeWidgetStatePublisher.publishLoggedOut()
+                    _events.send(AccountSettingsEvent.LoggedOut)
+                }
                 .onFailure { error ->
                     _events.send(
                         AccountSettingsEvent.ShowMessage(error.toUserMessage("회원 탈퇴에 실패했습니다."))
@@ -45,6 +50,7 @@ class AccountSettingsViewModel @Inject constructor(
                         AccountSettingsEvent.ShowMessage(error.toUserMessage("로그아웃에 실패했습니다."))
                     )
                 }
+            homeWidgetStatePublisher.publishLoggedOut()
             _events.send(AccountSettingsEvent.LoggedOut)
         }
     }
