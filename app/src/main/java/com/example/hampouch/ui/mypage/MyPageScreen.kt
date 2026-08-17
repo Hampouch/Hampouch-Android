@@ -425,8 +425,7 @@ private fun MyPageMainContent(
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = onNotificationClick
         )
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             Spacer(modifier = Modifier.height(16.dp))

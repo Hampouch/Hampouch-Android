@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -82,10 +83,12 @@ fun MyPageMainTopBar(
     title: String,
     onBackClick: () -> Unit,
     onNotificationClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(start = 4.dp, end = 20.dp)
 ) {
     ScreenCenteredTopBar(
         modifier = modifier,
+        contentPadding = contentPadding,
         leading = {
             IconButton(onClick = onBackClick) {
                 Icon(

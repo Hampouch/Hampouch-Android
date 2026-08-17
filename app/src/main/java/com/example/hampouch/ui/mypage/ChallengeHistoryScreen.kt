@@ -42,8 +42,7 @@ fun ChallengeHistoryScreen(
         MyPageMainTopBar(
             title = stringResource(R.string.challenge_history_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = onNotificationClick
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

@@ -66,6 +66,9 @@ import com.example.hampouch.ui.hamtips.components.HamTipsMainTopBar
 import com.example.hampouch.ui.hamtips.components.HamTipsSearchBar
 import com.example.hampouch.ui.hamtips.components.HamTipsSectionHeader
 import com.example.hampouch.ui.hamtips.components.HamTipsSortDropdown
+import com.example.hampouch.ui.common.InlineLoadErrorCard
+import com.example.hampouch.ui.common.LoadState
+import com.example.hampouch.ui.common.StaleDataRefreshBanner
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HampouchTheme
@@ -132,6 +135,7 @@ fun HamTipsScreen(
     var editingPostId by rememberSaveable { mutableStateOf<String?>(null) }
 
     val allPosts by viewModel.posts.collectAsStateWithLifecycle()
+    val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }
     val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
@@ -276,6 +280,8 @@ fun HamTipsScreen(
                             onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
                             onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
                             onPostClick = onPostClick,
+                            loadState = loadState,
+                            onRetry = viewModel::retry,
                             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
@@ -298,6 +304,8 @@ fun HamTipsScreen(
                             onBackClick = onBackToMain,
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
+                            loadState = loadState,
+                            onRetry = viewModel::retry,
                             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
@@ -318,6 +326,8 @@ fun HamTipsScreen(
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             scrollToPostId = initialPopularPostId,
+                            loadState = loadState,
+                            onRetry = viewModel::retry,
                             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
@@ -337,6 +347,8 @@ fun HamTipsScreen(
                             onBackClick = onBackToMain,
                             onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
+                            loadState = loadState,
+                            onRetry = viewModel::retry,
                             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
                         )
                     }
@@ -431,8 +443,11 @@ private fun HamTipsMainContent(
     onPopularViewAllClick: () -> Unit,
     onPochipickViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
+    loadState: LoadState = LoadState.Idle,
+    onRetry: () -> Unit = {},
     onPostClick: (TipPost) -> Unit
 ) {
+    val hasAnyPosts = popularPosts.isNotEmpty() || pochipickPosts.isNotEmpty() || allPosts.isNotEmpty()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -446,6 +461,16 @@ private fun HamTipsMainContent(
         Spacer(modifier = Modifier.height(16.dp))
         HamTipsCategoryTabRow(selectedTab = selectedCategoryTab, onTabSelected = onCategoryTabSelected)
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (loadState is LoadState.Failure) {
+            if (hasAnyPosts) {
+                StaleDataRefreshBanner(message = loadState.message, onRetry = onRetry)
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                InlineLoadErrorCard(message = loadState.message, onRetry = onRetry)
+                return@Column
+            }
+        }
 
         HamTipsSectionHeader(
             title = stringResource(R.string.hamtips_section_popular),
@@ -493,7 +518,9 @@ private fun HamTipsFeedRouteContent(
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
     onPostClick: (TipPost) -> Unit,
-    scrollToPostId: String? = null
+    scrollToPostId: String? = null,
+    loadState: LoadState = LoadState.Idle,
+    onRetry: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var containerRootY by remember { mutableStateOf<Float?>(null) }
@@ -511,6 +538,17 @@ private fun HamTipsFeedRouteContent(
         Spacer(modifier = Modifier.height(16.dp))
         HamTipsCategoryTabRow(selectedTab = selectedCategoryTab, onTabSelected = onCategoryTabSelected)
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (loadState is LoadState.Failure) {
+            if (posts.isNotEmpty()) {
+                StaleDataRefreshBanner(message = loadState.message, onRetry = onRetry)
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                InlineLoadErrorCard(message = loadState.message, onRetry = onRetry)
+                return@Column
+            }
+        }
+
         HamTipsFeedSection(
             posts = posts,
             sortOrder = sortOrder,

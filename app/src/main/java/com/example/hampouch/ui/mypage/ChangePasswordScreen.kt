@@ -118,8 +118,7 @@ fun ChangePasswordScreen(
         MyPageMainTopBar(
             title = stringResource(R.string.change_password_title),
             onBackClick = actions.onBackClick,
-            onNotificationClick = actions.onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = actions.onNotificationClick
         )
         ChangePasswordForm(email = email, viewModel = viewModel, onSubmitSuccess = actions.onSubmitSuccess)
     }

@@ -115,8 +115,7 @@ fun ProfileEditScreen(
         MyPageMainTopBar(
             title = stringResource(R.string.profile_edit_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = onNotificationClick
         )
         Column(
             modifier = Modifier

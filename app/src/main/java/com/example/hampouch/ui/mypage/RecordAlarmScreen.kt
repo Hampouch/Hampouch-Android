@@ -111,8 +111,7 @@ fun RecordAlarmScreen(
         MyPageMainTopBar(
             title = stringResource(R.string.record_alarm_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = onNotificationClick
         )
         Column(
             modifier = Modifier
