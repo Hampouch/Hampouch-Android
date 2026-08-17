@@ -18,6 +18,14 @@ sealed interface AccountSettingsEvent {
     data class ShowMessage(val message: String) : AccountSettingsEvent
 }
 
+data class AccountSettingsActions(
+    val onBackClick: () -> Unit,
+    val onProfileEditClick: () -> Unit,
+    val onChangePasswordClick: () -> Unit,
+    val onNotificationClick: () -> Unit,
+    val onWithdraw: () -> Unit
+)
+
 @HiltViewModel
 class AccountSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,

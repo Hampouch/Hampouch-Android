@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,11 +45,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
 import com.example.hampouch.ui.notification.NotificationViewModel
@@ -394,19 +396,26 @@ fun NotificationBellIcon(
 /**
  * 제목을 좌우 액션 요소의 폭과 무관하게 화면(바) 전체 너비 기준으로 항상 중앙 정렬하는 상단바 레이아웃.
  * `Row` + `weight(1f)` 방식은 좌우 요소 폭이 다르면 제목이 남는 공간의 중앙으로 쏠리므로 사용하지 않는다.
+ *
+ * [contentPadding]은 leading/trailing 아이콘의 시각적 여백 조정에만 쓰이고, 제목 중앙 정렬의 기준이 되는
+ * 전체 너비에는 영향을 주지 않는다. 이 바를 감싸는 [modifier]에 비대칭 `padding`(예: start=4dp, end=20dp)을
+ * 직접 걸면 바 전체 폭 자체가 비대칭으로 줄어들어 제목이 다시 한쪽으로 치우치므로 사용하지 않는다.
  */
+private val ScreenCenteredTopBarHeight = 64.dp
+
 @Composable
 fun ScreenCenteredTopBar(
     modifier: Modifier = Modifier,
-    height: Dp = 64.dp,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     leading: @Composable () -> Unit = {},
     trailing: @Composable () -> Unit = {},
     title: @Composable () -> Unit
 ) {
+    val layoutDirection = LocalLayoutDirection.current
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(height)
+            .height(ScreenCenteredTopBarHeight)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -414,8 +423,16 @@ fun ScreenCenteredTopBar(
         ) {
             title()
         }
-        Box(modifier = Modifier.align(Alignment.CenterStart)) { leading() }
-        Box(modifier = Modifier.align(Alignment.CenterEnd)) { trailing() }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = contentPadding.calculateStartPadding(layoutDirection))
+        ) { leading() }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = contentPadding.calculateEndPadding(layoutDirection))
+        ) { trailing() }
     }
 }
 

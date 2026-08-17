@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.R
+import com.example.hampouch.data.local.AccountMockDataSource
 import com.example.hampouch.domain.model.MyPageProfile
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostType
@@ -425,11 +426,9 @@ private fun MyPageMainContent(
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            onNotificationClick = onNotificationClick
         )
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            Spacer(modifier = Modifier.height(16.dp))
             ProfileCard(
                 name = profile.name,
                 handle = profile.handle,
@@ -472,13 +471,16 @@ private fun MyPageMainContent(
 @Composable
 private fun MyPageScreenPreview() {
     HampouchTheme {
-        MyPageScreen(
-            selectedBottomTab = BottomNavItem.MY_PAGE,
-            onItemSelected = {},
-            onAddClick = {},
-            onNavigateToHamBattleLink = {}, onNotificationClick = {}, onLoggedOut = {},
-            onNavigateToChallengeExpenseAnalysis = { _, _, _ -> }, onNavigateToAmountAdjustment = {},
-            onNavigateToTakeABreak = {}, onStartNewChallengeClick = {}
+        MyPageMainContent(
+            profile = MyPageMockData.defaultProfile(AccountMockDataSource.normalUser),
+            onBackClick = {},
+            onProfileCardClick = {},
+            onChallengeHistoryClick = {},
+            onMyTipsClick = {},
+            onSavedTipsClick = {},
+            onAllSettingsClick = {},
+            onLogoutClick = {},
+            onNotificationClick = {}
         )
     }
 }
