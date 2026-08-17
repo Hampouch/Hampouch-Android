@@ -15,7 +15,7 @@ private const val BATTLE_INVITE_PATH_SEGMENT_COUNT = 3
 
 internal fun buildBattleInviteUrl(battleCode: String): String? {
     val normalizedCode = battleCode.trim().takeIf(String::isNotEmpty) ?: return null
-    val encodedCode = URLEncoder.encode(normalizedCode, StandardCharsets.UTF_8)
+    val encodedCode = URLEncoder.encode(normalizedCode, StandardCharsets.UTF_8.name())
         .replace("+", "%20")
     return "$BATTLE_INVITE_BASE_URL/$encodedCode"
 }
@@ -29,7 +29,7 @@ internal fun extractBattleCodeFromInviteUrl(url: String?): String? = runCatching
     require(pathSegments.size == BATTLE_INVITE_PATH_SEGMENT_COUNT)
     require(pathSegments[0] == "battles" && pathSegments[1] == "invite")
 
-    URLDecoder.decode(pathSegments[2], StandardCharsets.UTF_8).takeIf(String::isNotBlank)
+    URLDecoder.decode(pathSegments[2], StandardCharsets.UTF_8.name()).takeIf(String::isNotBlank)
 }.getOrNull()
 
 internal fun extractBattleCodeFromInviteValue(value: String): String? =
