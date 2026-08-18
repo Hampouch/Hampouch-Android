@@ -1,0 +1,51 @@
+name: Build and Email APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      recipient:
+        description: 'Override recipient email (optional, defaults to MAIL_TO secret)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug -PskipGoogleServices --stacktrace
+
+      - name: Send APK via email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Hampouch APK build (${{ github.ref_name }} @ ${{ github.sha }})"
+          to: ${{ inputs.recipient || secrets.MAIL_TO }}
+          from: Hampouch CI
+          body: |
+            Hampouch APK 빌드가 완료되었습니다.
+
+            브랜치: ${{ github.ref_name }}
+            커밋: ${{ github.sha }}
+            실행자: ${{ github.actor }}
+          attachments: app/build/outputs/apk/debug/app-debug.apk
