@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
@@ -136,6 +137,14 @@ fun HamTipsScreen(
 
     val allPosts by viewModel.posts.collectAsStateWithLifecycle()
     val loadState by viewModel.loadState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    var refreshRequestedByGesture by remember { mutableStateOf(false) }
+    HamTipsRefreshCompletionToast(
+        isRefreshing = isRefreshing,
+        requestedByGesture = refreshRequestedByGesture,
+        message = "커뮤니티를 새로고침했어요.",
+        onConsumed = { refreshRequestedByGesture = false }
+    )
     val popularPosts = allPosts.filter { it.likeCount >= 10 }.sortedBy { it.postedMinutesAgo }
     val pochipickPosts = allPosts.filter { it.isEditorAuthor }
 
@@ -263,7 +272,23 @@ fun HamTipsScreen(
                     HamTipsFab(onClick = { showFabMenu = true })
                 }
             ) { innerPadding ->
-                when (currentRoute) {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        refreshRequestedByGesture = true
+                        when (currentRoute) {
+                            HamTipsRoute.MAIN -> viewModel.loadHome(sortOrder)
+                            HamTipsRoute.CATEGORY -> selectedCategoryTab.category?.let {
+                                viewModel.loadCategoryPosts(it, sortOrder)
+                            }
+                            HamTipsRoute.POPULAR_ALL -> viewModel.loadPopularPosts(sortOrder)
+                            HamTipsRoute.POCHIPICK_ALL -> viewModel.loadPochipickPosts(sortOrder)
+                            else -> Unit
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when (currentRoute) {
                     HamTipsRoute.MAIN -> {
                         LaunchedEffect(sortOrder) { viewModel.loadHome(sortOrder) }
                         HamTipsMainContent(
@@ -353,7 +378,8 @@ fun HamTipsScreen(
                         )
                     }
 
-                    else -> Unit
+                        else -> Unit
+                    }
                 }
             }
 

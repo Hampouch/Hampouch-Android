@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.widget
 
+import android.content.Context
 import android.util.Log
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.ChallengeState
@@ -8,6 +9,7 @@ import com.example.hampouch.domain.model.RestState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,7 @@ private const val TAG = "HomeWidgetPublisher"
 /** 앱 상태 변경을 감지해 주기적인 네트워크 조회 없이 위젯 스냅샷을 갱신한다. */
 @Singleton
 class HomeWidgetStatePublisher @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val authRepository: AuthRepository,
     private val challengeRepository: ChallengeRepository,
     private val expenseRepository: ExpenseRepository,
@@ -58,16 +61,25 @@ class HomeWidgetStatePublisher @Inject constructor(
     }
 
     suspend fun publishSessionStarted() {
+        val accountKey = authRepository.userSession.first()?.userId?.toString()
+        if (accountKey == null) {
+            publishLoggedOut()
+            return
+        }
         publishMutex.withLock {
-            val accountKey = authRepository.userSession.first()?.userId?.toString()
-            if (accountKey == null) {
-                publishLoggedOutLocked()
-                return@withLock
-            }
             snapshotStore.markSession(accountKey)
             observedAccount = accountKey
             hadActiveChallenge = false
         }
+        HomeWidgetSyncScheduler.enqueueNow(context)
+    }
+
+    suspend fun requestImmediateSync() {
+        if (authRepository.userSession.first() == null) {
+            publishLoggedOut()
+            return
+        }
+        HomeWidgetSyncScheduler.enqueueNow(context)
     }
 
     suspend fun publishAfterHomeSync() {

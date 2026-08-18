@@ -6,6 +6,7 @@ import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,8 @@ sealed interface NextChallengeEvent {
 
 @HiltViewModel
 class NextChallengeViewModel @Inject constructor(
-    private val challengeRepository: ChallengeRepository
+    private val challengeRepository: ChallengeRepository,
+    private val homeWidgetStatePublisher: HomeWidgetStatePublisher
 ) : ViewModel() {
 
     private val _isStarting = MutableStateFlow(false)
@@ -46,7 +48,10 @@ class NextChallengeViewModel @Inject constructor(
         _isStarting.value = true
         viewModelScope.launch {
             challengeRepository.startNewChallenge(request)
-                .onSuccess { _events.send(NextChallengeEvent.Started) }
+                .onSuccess {
+                    homeWidgetStatePublisher.publishAfterHomeSync()
+                    _events.send(NextChallengeEvent.Started)
+                }
                 .onFailure { error ->
                     _events.send(
                         NextChallengeEvent.ShowMessage(error.toUserMessage("챌린지 시작에 실패했습니다."))
@@ -70,6 +75,7 @@ class NextChallengeViewModel @Inject constructor(
                 budgetTotal = budgetTotal,
                 fixedDay = startDate.dayOfMonth
             ).onSuccess {
+                homeWidgetStatePublisher.publishAfterHomeSync()
                 _events.send(NextChallengeEvent.Started)
             }.onFailure { error ->
                 _events.send(

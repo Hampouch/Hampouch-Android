@@ -165,6 +165,25 @@ private fun MiniChallengeDashboardScreen(
                 onBackClick = onBackClick,
                 onNotificationClick = onNotificationClick
             )
+        },
+        bottomBar = {
+            Button(
+                onClick = onStartNewChallengeClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HPMain,
+                    contentColor = HPWhite
+                )
+            ) {
+                Text(
+                    stringResource(R.string.minichallenge_start_button),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -241,25 +260,6 @@ private fun MiniChallengeDashboardScreen(
                                 pendingChallenge = recommended
                             }
                         }
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-            item(contentType = "action") {
-                Button(
-                    onClick = onStartNewChallengeClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = HPMain,
-                        contentColor = HPWhite
-                    )
-                ) {
-                    Text(
-                        stringResource(R.string.minichallenge_start_button),
-                        style = MaterialTheme.typography.titleSmall
                     )
                 }
                 Spacer(modifier = Modifier.height(20.dp))
