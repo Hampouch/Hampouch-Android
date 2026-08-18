@@ -9,7 +9,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-and-mail:
@@ -32,7 +32,24 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug -PskipGoogleServices --stacktrace
 
-      - name: Send APK via email
+      - name: Rename APK with run number
+        id: apk
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk "dist/hampouch-debug-${{ github.run_number }}.apk"
+          echo "path=dist/hampouch-debug-${{ github.run_number }}.apk" >> "$GITHUB_OUTPUT"
+          echo "tag=apk-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create release with APK
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.apk.outputs.tag }}
+          name: "Hampouch APK build #${{ github.run_number }}"
+          body: "Branch: ${{ github.ref_name }} / Commit: ${{ github.sha }}"
+          files: ${{ steps.apk.outputs.path }}
+
+      - name: Send download link via email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -45,7 +62,8 @@ jobs:
           body: |
             Hampouch APK 빌드가 완료되었습니다.
 
+            다운로드: ${{ steps.release.outputs.url }}
+
             브랜치: ${{ github.ref_name }}
             커밋: ${{ github.sha }}
             실행자: ${{ github.actor }}
-          attachments: app/build/outputs/apk/debug/app-debug.apk
