@@ -127,8 +127,9 @@ class StartDestinationViewModel @Inject constructor(
         _pendingNicknameSession.value = null
     }
 
-    fun logout() {
+    fun logout(skipOnboardingSplash: Boolean = true) {
         pendingChallengeResultStore.clear()
+        if (skipOnboardingSplash) onboardingLocalStore.markSkipNextSplash()
         viewModelScope.launch { authRepository.clearSession() }
     }
 }

@@ -848,7 +848,7 @@ fun NoActiveChallengeSection(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
     ) {
         Column(
             modifier = Modifier

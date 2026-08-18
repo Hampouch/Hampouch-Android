@@ -63,6 +63,7 @@ import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -300,7 +301,7 @@ private fun ChallengeStatusHeroCard(state: ChallengeResultUiState) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(30.dp))
-            .background(HPSub4)
+            .background(HPSub3)
     ) {
         Box(
             modifier = Modifier

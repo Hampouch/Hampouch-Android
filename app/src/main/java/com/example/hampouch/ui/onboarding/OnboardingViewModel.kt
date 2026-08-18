@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.onboarding
 
 import androidx.lifecycle.ViewModel
+import com.example.hampouch.data.repository.OnboardingLocalStore
 import com.example.hampouch.domain.model.ChallengePeriod
 import com.example.hampouch.domain.model.OnboardingRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +20,18 @@ data class OnboardingFlowUiState(
 )
 
 @HiltViewModel
-class OnboardingViewModel @Inject constructor() : ViewModel() {
-    private val _uiState = MutableStateFlow(OnboardingFlowUiState())
+class OnboardingViewModel @Inject constructor(
+    onboardingLocalStore: OnboardingLocalStore
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(
+        OnboardingFlowUiState(
+            step = if (onboardingLocalStore.consumeSkipNextSplash()) {
+                OnboardingStep.EXPENSE_DIAGNOSIS
+            } else {
+                OnboardingStep.SPLASH
+            }
+        )
+    )
     val uiState: StateFlow<OnboardingFlowUiState> = _uiState.asStateFlow()
 
     fun finishSplash() = updateStep(OnboardingStep.EXPENSE_DIAGNOSIS)

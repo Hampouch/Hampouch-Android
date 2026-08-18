@@ -41,6 +41,7 @@ import com.example.hampouch.R
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.HamBattleChallenge
+import com.example.hampouch.domain.model.BattleRecruitInfo
 import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipPostDetail
@@ -150,15 +151,8 @@ fun HamTipsBattleDetailScreen(
     sessionViewModel: SessionViewModel = hiltViewModel(),
     viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
-    var showPostMenu by remember { mutableStateOf(false) }
-    var showJoinConfirm by remember { mutableStateOf(false) }
     var showRoomFull by remember { mutableStateOf(false) }
-    var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
-    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
-    var replyTarget by remember { mutableStateOf<TipComment?>(null) }
-    var commentInput by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
     LaunchedEffect(viewModel) {
@@ -182,7 +176,6 @@ fun HamTipsBattleDetailScreen(
     val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
     val isAuthor = post.authorId == currentUser.id
     val canDeletePost = viewModel.canDeletePost(post)
-    val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInfo = post.battleInfo
     val linkedBattleCode = battleInfo?.link?.let(::extractBattleCode)
@@ -196,6 +189,95 @@ fun HamTipsBattleDetailScreen(
         linkedChallenge?.totalCount ?: battleInfo?.capacity ?: 0
     )
     val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel, linkedChallenge)
+    val isBattleFull = linkedChallenge?.isFull ?: battleInfo?.isFull ?: false
+
+    HamTipsBattleDetailContent(
+        post = post,
+        onBackClick = onBackClick,
+        onEditClick = onEditClick,
+        modifier = modifier,
+        isAuthor = isAuthor,
+        canDeletePost = canDeletePost,
+        battleInfo = battleInfo,
+        summaryRequest = summaryRequest,
+        isBattleFull = isBattleFull,
+        onLikeClick = { viewModel.toggleLike(post.id) },
+        onScrapClick = { viewModel.toggleSave(post.id) },
+        onDeletePost = { viewModel.deletePost(post.id) },
+        onSubmitComment = { replyTarget, content -> submitHamTipsComment(viewModel, post, replyTarget, content) },
+        canDeleteComment = { comment -> viewModel.canDeleteComment(post, comment) },
+        onDeleteComment = { comment -> viewModel.deleteComment(post.id, comment.id) },
+        canDeleteReply = { reply -> viewModel.canDeleteReply(post, reply) },
+        onDeleteReply = { comment, reply -> viewModel.deleteReply(post.id, comment.id, reply.id) },
+        showRoomFull = showRoomFull,
+        onRoomFullDismiss = { showRoomFull = false },
+        onJoinConfirm = {
+            if (battleInfo != null) {
+                if (BattleConfig.USE_SERVER_BATTLE) {
+                    viewModel.joinServerBattle(post.id, battleInfo.link)
+                } else {
+                    val battleCode = extractBattleCode(battleInfo.link)
+                    if (battleCode == null) {
+                        Toast.makeText(
+                            context,
+                            "올바르지 않은 햄배틀 링크입니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
+                            authorName = post.authorName,
+                            title = post.title,
+                            penalty = battleInfo.penalty,
+                            battleCode = battleCode,
+                            totalCount = battleInfo.capacity
+                        )
+                        if (joinedChallenge == null) {
+                            showRoomFull = true
+                        } else {
+                            viewModel.joinBattle(post.id)
+                            if (joinedChallenge.isFull) {
+                                onNavigateToHamBattleTab()
+                            } else {
+                                onNavigateToBattleLink(joinedChallenge.id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun HamTipsBattleDetailContent(
+    post: TipPost,
+    onBackClick: () -> Unit,
+    onEditClick: (TipPost) -> Unit,
+    modifier: Modifier,
+    isAuthor: Boolean,
+    canDeletePost: Boolean,
+    battleInfo: BattleRecruitInfo?,
+    summaryRequest: HamBattleChallengeRequest,
+    isBattleFull: Boolean,
+    onLikeClick: () -> Unit,
+    onScrapClick: () -> Unit,
+    onDeletePost: () -> Unit,
+    onSubmitComment: (TipComment?, String) -> Unit,
+    canDeleteComment: (TipComment) -> Boolean,
+    onDeleteComment: (TipComment) -> Unit,
+    canDeleteReply: (TipReply) -> Boolean,
+    onDeleteReply: (TipComment, TipReply) -> Unit,
+    showRoomFull: Boolean,
+    onRoomFullDismiss: () -> Unit,
+    onJoinConfirm: () -> Unit
+) {
+    var showPostMenu by remember { mutableStateOf(false) }
+    var showJoinConfirm by remember { mutableStateOf(false) }
+    var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
+    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
+    var replyTarget by remember { mutableStateOf<TipComment?>(null) }
+    var commentInput by remember { mutableStateOf("") }
+    val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
 
     Scaffold(
         modifier = modifier,
@@ -218,7 +300,7 @@ fun HamTipsBattleDetailScreen(
                     val submittedReplyTarget = replyTarget
                     commentInput = ""
                     replyTarget = null
-                    submitHamTipsComment(viewModel, post, submittedReplyTarget, submittedInput)
+                    onSubmitComment(submittedReplyTarget, submittedInput)
                 }
             )
         }
@@ -241,15 +323,15 @@ fun HamTipsBattleDetailScreen(
                     HamTipsBattleInfoCard(
                         summaryRequest = summaryRequest,
                         showActionButton = !isAuthor,
-                        isFull = linkedChallenge?.isFull ?: battleInfo.isFull,
+                        isFull = isBattleFull,
                         onActionClick = { showJoinConfirm = true }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                 }
                 HamTipsEngagementRow(
                     post = post,
-                    onLikeClick = { viewModel.toggleLike(post.id) },
-                    onScrapClick = { viewModel.toggleSave(post.id) }
+                    onLikeClick = onLikeClick,
+                    onScrapClick = onScrapClick
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -264,14 +346,16 @@ fun HamTipsBattleDetailScreen(
     }
 
     HamTipsCommentMoreMenuHost(
-        post = post,
         target = commentMenuTarget,
+        canDelete = canDeleteComment,
+        onDelete = onDeleteComment,
         onDismiss = { commentMenuTarget = null }
     )
 
     HamTipsReplyMoreMenuHost(
-        post = post,
         target = replyMenuTarget,
+        canDelete = canDeleteReply,
+        onDelete = onDeleteReply,
         onDismiss = { replyMenuTarget = null }
     )
 
@@ -285,7 +369,7 @@ fun HamTipsBattleDetailScreen(
                             isDestructive = true,
                             onClick = {
                                 showPostMenu = false
-                                viewModel.deletePost(post.id)
+                                onDeletePost()
                             }
                         )
                     )
@@ -319,36 +403,7 @@ fun HamTipsBattleDetailScreen(
                 onCancel = { showJoinConfirm = false },
                 onConfirm = {
                     showJoinConfirm = false
-                    if (BattleConfig.USE_SERVER_BATTLE) {
-                        viewModel.joinServerBattle(post.id, battleInfo.link)
-                    } else {
-                        val battleCode = extractBattleCode(battleInfo.link)
-                        if (battleCode == null) {
-                            Toast.makeText(
-                                context,
-                                "올바르지 않은 햄배틀 링크입니다.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
-                                authorName = post.authorName,
-                                title = post.title,
-                                penalty = battleInfo.penalty,
-                                battleCode = battleCode,
-                                totalCount = battleInfo.capacity
-                            )
-                            if (joinedChallenge == null) {
-                                showRoomFull = true
-                            } else {
-                                viewModel.joinBattle(post.id)
-                                if (joinedChallenge.isFull) {
-                                    onNavigateToHamBattleTab()
-                                } else {
-                                    onNavigateToBattleLink(joinedChallenge.id)
-                                }
-                            }
-                        }
-                    }
+                    onJoinConfirm()
                 }
             )
         }
@@ -357,7 +412,7 @@ fun HamTipsBattleDetailScreen(
     if (showRoomFull) {
         HamBattleRoomFullDialog(
             challengeTitle = summaryRequest.challengeName,
-            onConfirmClick = { showRoomFull = false }
+            onConfirmClick = onRoomFullDismiss
         )
     }
 }
@@ -389,13 +444,33 @@ private fun HamTipsBattleJoinConfirmContent(
 @Composable
 private fun HamTipsBattleDetailScreenJoinablePreview() {
     HampouchTheme {
-        HamTipsBattleDetailScreen(
-            post = HamTipsMockData.allPosts().first { it.id == "hamtip_13" },
+        val previewPost = HamTipsMockData.allPosts().first { it.id == "hamtip_13" }
+        val info = requireNotNull(previewPost.battleInfo)
+        HamTipsBattleDetailContent(
+            post = previewPost,
             onBackClick = {},
-            onDeleted = {},
-            onNavigateToHamBattleTab = {},
             onEditClick = {},
-            onNavigateToBattleLink = {}
+            modifier = Modifier,
+            isAuthor = false,
+            canDeletePost = false,
+            battleInfo = info,
+            summaryRequest = battleChallengeRequestFrom(
+                previewPost,
+                stringResource(R.string.hamtips_battle_days_format, info.durationDays),
+                stringResource(R.string.hamtips_battle_capacity_format, info.capacity)
+            ),
+            isBattleFull = info.isFull,
+            onLikeClick = {},
+            onScrapClick = {},
+            onDeletePost = {},
+            onSubmitComment = { _, _ -> },
+            canDeleteComment = { false },
+            onDeleteComment = {},
+            canDeleteReply = { false },
+            onDeleteReply = { _, _ -> },
+            showRoomFull = false,
+            onRoomFullDismiss = {},
+            onJoinConfirm = {}
         )
     }
 }
@@ -430,13 +505,32 @@ private fun HamTipsBattleDetailScreenFullPreview() {
                 )
             )
         }
-        HamTipsBattleDetailScreen(
+        val fullInfo = requireNotNull(fullPost.battleInfo)
+        HamTipsBattleDetailContent(
             post = fullPost,
             onBackClick = {},
-            onDeleted = {},
-            onNavigateToHamBattleTab = {},
             onEditClick = {},
-            onNavigateToBattleLink = {}
+            modifier = Modifier,
+            isAuthor = false,
+            canDeletePost = false,
+            battleInfo = fullInfo,
+            summaryRequest = battleChallengeRequestFrom(
+                fullPost,
+                stringResource(R.string.hamtips_battle_days_format, fullInfo.durationDays),
+                stringResource(R.string.hamtips_battle_capacity_format, fullInfo.capacity)
+            ),
+            isBattleFull = fullInfo.isFull,
+            onLikeClick = {},
+            onScrapClick = {},
+            onDeletePost = {},
+            onSubmitComment = { _, _ -> },
+            canDeleteComment = { false },
+            onDeleteComment = {},
+            canDeleteReply = { false },
+            onDeleteReply = { _, _ -> },
+            showRoomFull = false,
+            onRoomFullDismiss = {},
+            onJoinConfirm = {}
         )
     }
 }

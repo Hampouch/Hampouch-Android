@@ -24,7 +24,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,11 +46,11 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private const val DefaultTakeABreakTotalDays = 14
@@ -63,14 +62,6 @@ fun NextChallengeTakeABreakRoute(
     modifier: Modifier = Modifier,
     viewModel: NextChallengeViewModel = hiltViewModel()
 ) {
-    var periodEnabled by remember { mutableStateOf(false) }
-    var periodDays by remember { mutableStateOf<Int?>(null) }
-    var customPeriodDays by remember { mutableStateOf<Int?>(null) }
-    var dateFixed by remember { mutableStateOf(false) }
-    var startDate by remember { mutableStateOf<LocalDate?>(null) }
-    var targetAmount by remember { mutableStateOf<Int?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -81,7 +72,28 @@ fun NextChallengeTakeABreakRoute(
             }
         }
     }
-    val coroutineScope = rememberCoroutineScope()
+
+    NextChallengeTakeABreakContent(
+        onBackClick = onBackClick,
+        modifier = modifier,
+        onStartNewChallenge = viewModel::startNewChallenge
+    )
+}
+
+@Composable
+private fun NextChallengeTakeABreakContent(
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onStartNewChallenge: (OnboardingRequest) -> Unit
+) {
+    var periodEnabled by remember { mutableStateOf(false) }
+    var periodDays by remember { mutableStateOf<Int?>(null) }
+    var customPeriodDays by remember { mutableStateOf<Int?>(null) }
+    var dateFixed by remember { mutableStateOf(false) }
+    var startDate by remember { mutableStateOf<LocalDate?>(null) }
+    var targetAmount by remember { mutableStateOf<Int?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showStartConfirmDialog by remember { mutableStateOf(false) }
 
     val explicitPeriodDays = customPeriodDays?.takeIf { it > 0 } ?: periodDays?.takeIf { it > 0 }
     val effectivePeriodDays = explicitPeriodDays ?: DefaultTakeABreakTotalDays
@@ -166,7 +178,7 @@ fun NextChallengeTakeABreakRoute(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(HPSub4)
+                        .background(HPSub3)
                         .padding(horizontal = 15.dp, vertical = 20.dp)
                 ) {
                     Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
@@ -249,7 +261,7 @@ fun NextChallengeTakeABreakRoute(
                     dailyTargetAmount = (targetAmount ?: 0) / effectivePeriodDays,
                     totalTargetAmount = targetAmount ?: 0
                 )
-                viewModel.startNewChallenge(request)
+                onStartNewChallenge(request)
             }
         )
     }
@@ -259,9 +271,9 @@ fun NextChallengeTakeABreakRoute(
 @Composable
 private fun NextChallengeTakeABreakRoutePreview() {
     HampouchTheme {
-        NextChallengeTakeABreakRoute(
+        NextChallengeTakeABreakContent(
             onBackClick = {},
-            onStartChallengeClick = {}
+            onStartNewChallenge = {}
         )
     }
 }

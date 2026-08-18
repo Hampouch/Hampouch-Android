@@ -61,6 +61,7 @@ import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -80,6 +81,21 @@ fun HamBattleChallengesPodiumResultScreen(
     onStartNewChallengeClick: () -> Unit,
     viewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    HamBattleChallengesPodiumResultContent(
+        challenge = challenge,
+        onBackClick = onBackClick,
+        onStartNewChallengeClick = onStartNewChallengeClick,
+        participantsForToday = { c -> viewModel.participantsForToday(c) }
+    )
+}
+
+@Composable
+internal fun HamBattleChallengesPodiumResultContent(
+    challenge: HamBattleChallenge,
+    onBackClick: () -> Unit,
+    onStartNewChallengeClick: () -> Unit,
+    participantsForToday: (HamBattleChallenge) -> List<HamBattleParticipantSpending> = { it.participants }
+) {
     var selectedTab by remember { mutableStateOf(ResultTab.TODAY) }
     val ranked = remember(challenge, selectedTab) {
         val participants = if (selectedTab == ResultTab.TODAY) {
@@ -88,7 +104,7 @@ fun HamBattleChallengesPodiumResultScreen(
                     it.copy(amount = it.todayAmount ?: it.amount, rank = null)
                 }
             } else {
-                viewModel.participantsForToday(challenge)
+                participantsForToday(challenge)
             }
         } else {
             challenge.participants
@@ -106,7 +122,7 @@ fun HamBattleChallengesPodiumResultScreen(
 
     Scaffold(
         topBar = { ResultTopBar(title = challenge.title, onBackClick = onBackClick) },
-        containerColor = HPSub4
+        containerColor = HPSub3
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -182,7 +198,7 @@ private fun ResultTopBar(title: String, onBackClick: () -> Unit) {
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPSub4)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = HPSub3)
     )
 }
 
@@ -332,7 +348,7 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
 @Composable
 private fun PodiumColumnPreview() {
     HampouchTheme {
-        Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
+        Box(modifier = Modifier.padding(20.dp).background(HPSub3)) {
             PodiumColumn(
                 rank = 1,
                 participant = HamBattleParticipantSpending(name = "김철수", amount = 15000L)
@@ -523,7 +539,7 @@ private fun ResultTabTogglePreview() {
 @Composable
 private fun PodiumChartPreview() {
     HampouchTheme {
-        Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
+        Box(modifier = Modifier.padding(20.dp).background(HPSub3)) {
             PodiumChart(ranked = HamBattleMockFixtures.activeChallenges()[1].participants)
         }
     }
@@ -533,7 +549,7 @@ private fun PodiumChartPreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[0], onBackClick = {}, onStartNewChallengeClick = {})
+        HamBattleChallengesPodiumResultContent(challenge = HamBattleMockFixtures.activeChallenges()[0], onBackClick = {}, onStartNewChallengeClick = {})
     }
 }
 
@@ -541,6 +557,6 @@ private fun HambattleChallengesPodiumResultScreenOneVsOnePreview() {
 @Composable
 private fun HambattleChallengesPodiumResultScreenGroupPreview() {
     HampouchTheme {
-        HamBattleChallengesPodiumResultScreen(challenge = HamBattleMockFixtures.activeChallenges()[1], onBackClick = {}, onStartNewChallengeClick = {})
+        HamBattleChallengesPodiumResultContent(challenge = HamBattleMockFixtures.activeChallenges()[1], onBackClick = {}, onStartNewChallengeClick = {})
     }
 }

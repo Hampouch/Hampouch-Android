@@ -115,56 +115,25 @@ fun HamBattleScreen(
             Toast.makeText(context, "햄배틀을 새로고침했어요.", Toast.LENGTH_SHORT).show()
         }
     }
-    Scaffold(
+
+    HamBattleContent(
+        selectedBottomTab = selectedBottomTab,
+        onItemSelected = onItemSelected,
+        onAddClick = onAddClick,
         modifier = modifier,
-        containerColor = HPWhite,
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
-        bottomBar = {
-            BottomNavBar(
-                selectedItem = selectedBottomTab,
-                onItemSelected = onItemSelected,
-                onAddClick = onAddClick
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            HamBattleMainTopBar(
-                onNotificationClick = onNotificationClick,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = {
-                    refreshRequestedByGesture = true
-                    viewModel.refreshMyBattles()
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
-                    HamBattleEmptyContent(
-                        modifier = Modifier.fillMaxSize(),
-                        onStartNewChallengeClick = onStartNewChallengeClick
-                    )
-                } else {
-                    HamBattleChallengeListContent(
-                        modifier = Modifier.fillMaxSize(),
-                        activeChallenges = activeChallenges,
-                        waitingChallenges = waitingChallenges,
-                        onStartNewChallengeClick = onStartNewChallengeClick,
-                        onViewEndedChallengesClick = onViewEndedChallengesClick,
-                        onChallengeClick = onChallengeClick,
-                        onWaitingChallengeClick = onWaitingChallengeClick
-                    )
-                }
-            }
-        }
-    }
+        activeChallenges = activeChallenges,
+        waitingChallenges = waitingChallenges,
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            refreshRequestedByGesture = true
+            viewModel.refreshMyBattles()
+        },
+        onStartNewChallengeClick = onStartNewChallengeClick,
+        onNotificationClick = onNotificationClick,
+        onViewEndedChallengesClick = onViewEndedChallengesClick,
+        onChallengeClick = onChallengeClick,
+        onWaitingChallengeClick = onWaitingChallengeClick
+    )
 
     if (!BattleConfig.USE_SERVER_BATTLE) {
         val expiredWaitingChallenge = remember(waitingChallenges) {
@@ -251,6 +220,71 @@ fun HamBattleScreen(
                     viewModel.markMissedWarningShown(missedWarningChallenge.id)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun HamBattleContent(
+    selectedBottomTab: BottomNavItem,
+    onItemSelected: (BottomNavItem) -> Unit,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    activeChallenges: List<HamBattleChallenge>,
+    waitingChallenges: List<HamBattleChallenge>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onStartNewChallengeClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onViewEndedChallengesClick: () -> Unit,
+    onChallengeClick: (String) -> Unit,
+    onWaitingChallengeClick: (String) -> Unit
+) {
+    Scaffold(
+        modifier = modifier,
+        containerColor = HPWhite,
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.statusBars),
+        bottomBar = {
+            BottomNavBar(
+                selectedItem = selectedBottomTab,
+                onItemSelected = onItemSelected,
+                onAddClick = onAddClick
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            HamBattleMainTopBar(
+                onNotificationClick = onNotificationClick,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
+                    HamBattleEmptyContent(
+                        modifier = Modifier.fillMaxSize(),
+                        onStartNewChallengeClick = onStartNewChallengeClick
+                    )
+                } else {
+                    HamBattleChallengeListContent(
+                        modifier = Modifier.fillMaxSize(),
+                        activeChallenges = activeChallenges,
+                        waitingChallenges = waitingChallenges,
+                        onStartNewChallengeClick = onStartNewChallengeClick,
+                        onViewEndedChallengesClick = onViewEndedChallengesClick,
+                        onChallengeClick = onChallengeClick,
+                        onWaitingChallengeClick = onWaitingChallengeClick
+                    )
+                }
+            }
         }
     }
 }
@@ -682,14 +716,16 @@ private fun EmptyAvatarSlot(size: Dp) {
 @Composable
 fun HamBattleScreenPreview() {
     HampouchTheme {
-        HamBattleScreen(
+        HamBattleContent(
             selectedBottomTab = BottomNavItem.HAM_BATTLE,
             onItemSelected = {},
             onAddClick = {},
             activeChallenges = HamBattleMockFixtures.activeChallenges(),
             waitingChallenges = HamBattleMockFixtures.waitingChallenges(),
+            isRefreshing = false,
+            onRefresh = {},
             onStartNewChallengeClick = {}, onNotificationClick = {}, onViewEndedChallengesClick = {},
-            onChallengeClick = {}, onWaitingChallengeClick = {}, onViewEndedChallengeDetailClick = {}
+            onChallengeClick = {}, onWaitingChallengeClick = {}
         )
     }
 }

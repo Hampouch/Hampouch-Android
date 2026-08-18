@@ -45,6 +45,7 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import com.example.hampouch.domain.model.MiniChallengeDuration
 import com.example.hampouch.domain.model.miniChallengeDuration
+import com.example.hampouch.ui.theme.HPSub3
 
 @Composable
 fun MiniChallengeCreateScreen(
@@ -146,7 +147,7 @@ fun MiniChallengeCreateScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
-                    .background(HPSub4)
+                    .background(HPSub3)
                     .padding(horizontal = 12.dp, vertical = 20.dp)
             ) {
                 Text(

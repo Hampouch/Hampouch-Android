@@ -73,6 +73,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray1
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -278,7 +279,7 @@ private fun ChallengeDetailsCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(horizontal = 15.dp, vertical = 20.dp)
     ) {
         OptionPillGroup(

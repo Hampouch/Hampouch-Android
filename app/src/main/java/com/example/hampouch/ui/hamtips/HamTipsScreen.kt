@@ -582,11 +582,24 @@ private fun HamTipsScreenPreviewScaffold(content: @Composable (androidx.compose.
 @Composable
 private fun HamTipsMainScreenPreview() {
     HampouchTheme {
-        HamTipsScreen(
-            selectedBottomTab = BottomNavItem.COMMUNITY, onItemSelected = {}, onAddClick = {},
-            onNavigateToHamBattleLink = {}, onNavigateToHamBattleTab = {}, onNotificationClick = {},
-            onExitWriteBattle = {}
-        )
+        HamTipsScreenPreviewScaffold { innerPadding ->
+            HamTipsMainContent(
+                query = "",
+                onQueryChange = {},
+                selectedCategoryTab = HamTipsCategoryTab.ALL,
+                onCategoryTabSelected = {},
+                popularPosts = HamTipsMockData.popularPosts(),
+                pochipickPosts = HamTipsMockData.pochipickPosts(),
+                allPosts = HamTipsMockData.allPosts(),
+                sortOrder = HamTipsSortOrder.LATEST,
+                onSortOrderChange = {},
+                onNotificationClick = {},
+                onPopularViewAllClick = {},
+                onPochipickViewAllClick = {},
+                onPostClick = {},
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
 

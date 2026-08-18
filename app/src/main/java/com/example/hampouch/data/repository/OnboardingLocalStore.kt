@@ -30,6 +30,7 @@ class OnboardingLocalStore @Inject constructor(
 
     private val reservedByEmail = mutableMapOf<String, OnboardingRequest>()
     private var restoredFromPrefs = false
+    private var skipNextSplash = false
 
     private fun prefs() =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -99,4 +100,14 @@ class OnboardingLocalStore @Inject constructor(
     }
 
     fun takeReservedRequest(email: String): OnboardingRequest? = reservedByEmail.remove(email)
+
+    fun markSkipNextSplash() {
+        skipNextSplash = true
+    }
+
+    fun consumeSkipNextSplash(): Boolean {
+        val value = skipNextSplash
+        skipNextSplash = false
+        return value
+    }
 }

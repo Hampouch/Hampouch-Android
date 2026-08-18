@@ -73,6 +73,7 @@ import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPStar
 import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -179,7 +180,7 @@ private fun MenuDetailCard(post: TipPost, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(16.dp)
     ) {
         MenuInfoRow(stringResource(R.string.hamtips_detail_menu_name_row), post.menuName)
@@ -349,20 +350,20 @@ internal fun HamTipsCommentListColumn(
 
 @Composable
 internal fun HamTipsCommentMoreMenuHost(
-    post: TipPost,
     target: TipComment?,
-    onDismiss: () -> Unit,
-    viewModel: HamTipsDetailViewModel = hiltViewModel()
+    canDelete: (TipComment) -> Boolean,
+    onDelete: (TipComment) -> Unit,
+    onDismiss: () -> Unit
 ) {
     target?.let { comment ->
         val items = buildList {
-            if (viewModel.canDeleteComment(post, comment)) {
+            if (canDelete(comment)) {
                 add(
                     HamTipsMenuSheetItem(
                         label = stringResource(R.string.hamtips_more_menu_delete),
                         isDestructive = true,
                         onClick = {
-                            viewModel.deleteComment(post.id, comment.id)
+                            onDelete(comment)
                             onDismiss()
                         }
                     )
@@ -381,20 +382,20 @@ internal fun HamTipsCommentMoreMenuHost(
 
 @Composable
 internal fun HamTipsReplyMoreMenuHost(
-    post: TipPost,
     target: Pair<TipComment, TipReply>?,
-    onDismiss: () -> Unit,
-    viewModel: HamTipsDetailViewModel = hiltViewModel()
+    canDelete: (TipReply) -> Boolean,
+    onDelete: (TipComment, TipReply) -> Unit,
+    onDismiss: () -> Unit
 ) {
     target?.let { (comment, reply) ->
         val items = buildList {
-            if (viewModel.canDeleteReply(post, reply)) {
+            if (canDelete(reply)) {
                 add(
                     HamTipsMenuSheetItem(
                         label = stringResource(R.string.hamtips_more_menu_delete),
                         isDestructive = true,
                         onClick = {
-                            viewModel.deleteReply(post.id, comment.id, reply.id)
+                            onDelete(comment, reply)
                             onDismiss()
                         }
                     )
@@ -422,24 +423,7 @@ fun HamTipsDetailScreen(
     sessionViewModel: SessionViewModel = hiltViewModel(),
     viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
-    var showPostMenu by remember { mutableStateOf(false) }
-    var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
-    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
-    var replyTarget by remember { mutableStateOf<TipComment?>(null) }
-    var commentInput by remember { mutableStateOf("") }
-    val scrollState = rememberScrollState()
-    var commentsSectionOffset by remember { mutableStateOf<Int?>(null) }
-    var hasScrolledToComments by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(scrollToComments, commentsSectionOffset) {
-        val offset = commentsSectionOffset
-        if (scrollToComments && !hasScrolledToComments && offset != null) {
-            hasScrolledToComments = true
-            scrollState.animateScrollTo(offset)
-        }
-    }
 
     LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
     LaunchedEffect(viewModel) {
@@ -460,6 +444,61 @@ fun HamTipsDetailScreen(
     val currentUser by sessionViewModel.currentUser.collectAsStateWithLifecycle()
     val isAuthor = post.authorId == currentUser.id
     val canDeletePost = viewModel.canDeletePost(post)
+
+    HamTipsDetailContent(
+        post = post,
+        onBackClick = onBackClick,
+        onEditClick = onEditClick,
+        scrollToComments = scrollToComments,
+        modifier = modifier,
+        isAuthor = isAuthor,
+        canDeletePost = canDeletePost,
+        onLikeClick = { viewModel.toggleLike(post.id) },
+        onScrapClick = { viewModel.toggleSave(post.id) },
+        onDeletePost = { viewModel.deletePost(post.id) },
+        onSubmitComment = { replyTarget, content -> submitHamTipsComment(viewModel, post, replyTarget, content) },
+        canDeleteComment = { comment -> viewModel.canDeleteComment(post, comment) },
+        onDeleteComment = { comment -> viewModel.deleteComment(post.id, comment.id) },
+        canDeleteReply = { reply -> viewModel.canDeleteReply(post, reply) },
+        onDeleteReply = { comment, reply -> viewModel.deleteReply(post.id, comment.id, reply.id) }
+    )
+}
+
+@Composable
+private fun HamTipsDetailContent(
+    post: TipPost,
+    onBackClick: () -> Unit,
+    onEditClick: (TipPost) -> Unit,
+    scrollToComments: Boolean,
+    modifier: Modifier,
+    isAuthor: Boolean,
+    canDeletePost: Boolean,
+    onLikeClick: () -> Unit,
+    onScrapClick: () -> Unit,
+    onDeletePost: () -> Unit,
+    onSubmitComment: (TipComment?, String) -> Unit,
+    canDeleteComment: (TipComment) -> Boolean,
+    onDeleteComment: (TipComment) -> Unit,
+    canDeleteReply: (TipReply) -> Boolean,
+    onDeleteReply: (TipComment, TipReply) -> Unit
+) {
+    var showPostMenu by remember { mutableStateOf(false) }
+    var commentMenuTarget by remember { mutableStateOf<TipComment?>(null) }
+    var replyMenuTarget by remember { mutableStateOf<Pair<TipComment, TipReply>?>(null) }
+    var replyTarget by remember { mutableStateOf<TipComment?>(null) }
+    var commentInput by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    var commentsSectionOffset by remember { mutableStateOf<Int?>(null) }
+    var hasScrolledToComments by remember { mutableStateOf(false) }
+
+    LaunchedEffect(scrollToComments, commentsSectionOffset) {
+        val offset = commentsSectionOffset
+        if (scrollToComments && !hasScrolledToComments && offset != null) {
+            hasScrolledToComments = true
+            scrollState.animateScrollTo(offset)
+        }
+    }
+
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
 
     Scaffold(
@@ -483,7 +522,7 @@ fun HamTipsDetailScreen(
                     val submittedReplyTarget = replyTarget
                     commentInput = ""
                     replyTarget = null
-                    submitHamTipsComment(viewModel, post, submittedReplyTarget, submittedInput)
+                    onSubmitComment(submittedReplyTarget, submittedInput)
                 }
             )
         }
@@ -512,8 +551,8 @@ fun HamTipsDetailScreen(
                 }
                 HamTipsEngagementRow(
                     post = post,
-                    onLikeClick = { viewModel.toggleLike(post.id) },
-                    onScrapClick = { viewModel.toggleSave(post.id) }
+                    onLikeClick = onLikeClick,
+                    onScrapClick = onScrapClick
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -540,7 +579,7 @@ fun HamTipsDetailScreen(
                             isDestructive = true,
                             onClick = {
                                 showPostMenu = false
-                                viewModel.deletePost(post.id)
+                                onDeletePost()
                             }
                         )
                     )
@@ -568,14 +607,16 @@ fun HamTipsDetailScreen(
     }
 
     HamTipsCommentMoreMenuHost(
-        post = post,
         target = commentMenuTarget,
+        canDelete = canDeleteComment,
+        onDelete = onDeleteComment,
         onDismiss = { commentMenuTarget = null }
     )
 
     HamTipsReplyMoreMenuHost(
-        post = post,
         target = replyMenuTarget,
+        canDelete = canDeleteReply,
+        onDelete = onDeleteReply,
         onDismiss = { replyMenuTarget = null }
     )
 }
@@ -584,11 +625,22 @@ fun HamTipsDetailScreen(
 @Composable
 private fun HamTipsDetailScreenPochipickPreview() {
     HampouchTheme {
-        HamTipsDetailScreen(
+        HamTipsDetailContent(
             post = HamTipsMockData.allPosts().first { it.id == "hamtip_1" },
             onBackClick = {},
             onEditClick = {},
-            onDeleted = {}
+            scrollToComments = false,
+            modifier = Modifier,
+            isAuthor = false,
+            canDeletePost = false,
+            onLikeClick = {},
+            onScrapClick = {},
+            onDeletePost = {},
+            onSubmitComment = { _, _ -> },
+            canDeleteComment = { false },
+            onDeleteComment = {},
+            canDeleteReply = { false },
+            onDeleteReply = { _, _ -> }
         )
     }
 }
@@ -597,11 +649,22 @@ private fun HamTipsDetailScreenPochipickPreview() {
 @Composable
 private fun HamTipsDetailScreenMenuPreview() {
     HampouchTheme {
-        HamTipsDetailScreen(
+        HamTipsDetailContent(
             post = HamTipsMockData.allPosts().first { it.id == "hamtip_14" },
             onBackClick = {},
             onEditClick = {},
-            onDeleted = {}
+            scrollToComments = false,
+            modifier = Modifier,
+            isAuthor = false,
+            canDeletePost = false,
+            onLikeClick = {},
+            onScrapClick = {},
+            onDeletePost = {},
+            onSubmitComment = { _, _ -> },
+            canDeleteComment = { false },
+            onDeleteComment = {},
+            canDeleteReply = { false },
+            onDeleteReply = { _, _ -> }
         )
     }
 }

@@ -78,6 +78,7 @@ import com.example.hampouch.domain.model.HamBattleStatus
 import com.example.hampouch.domain.model.isMissingReminderDue
 import com.example.hampouch.ui.mypage.RecordAlarmViewModel
 import com.example.hampouch.ui.theme.HPGray2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.launch
@@ -125,7 +126,7 @@ fun HomeScreen(
     onNavigateToAmountAdjustment: () -> Unit,
     onNavigateToYesterdayExpenseInput: () -> Unit,
     onNotificationClick: () -> Unit,
-    onLoggedOut: () -> Unit,
+    onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     onChallengeEndedFinishClick: () -> Unit,
     onFixedDateChallengeDue: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -476,7 +477,7 @@ private fun HomeContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(HPSub4)
+                                .background(HPSub3)
                                 .clickable(onClick = onChallengeSummaryClick)
                                 .padding(horizontal = 15.dp, vertical = 13.dp)
                         ) {

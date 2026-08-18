@@ -3,6 +3,7 @@ package com.example.hampouch.ui.mypage
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,6 +44,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -133,6 +135,24 @@ fun ProfileEditScreen(
             ) {
                 Box(contentAlignment = Alignment.BottomEnd) {
                     ProfileAvatar(avatarUri = avatarUri, size = 96.dp)
+                    if (avatarUri != null) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(HPWhite)
+                                .border(1.dp, HPGray4, CircleShape)
+                                .clickable { avatarUri = null },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.profile_delete),
+                                contentDescription = stringResource(R.string.profile_edit_cd_delete_photo),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .size(32.dp)

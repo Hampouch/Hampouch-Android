@@ -26,7 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -96,7 +95,6 @@ import com.example.hampouch.ui.notification.NotificationScreen
 import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
-import com.example.hampouch.ui.onboarding.steps.SplashStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
 import com.example.hampouch.ui.signup.SignUpScreen
 import java.time.LocalDate
@@ -149,16 +147,13 @@ private fun rememberHamBattleChallenge(
 private data class StartupGateState(
     val resolvedStartDestination: String?,
     val startupErrorMessage: String?,
-    val isResolving: Boolean,
-    val showAppSplash: Boolean,
-    val isOnboardingDestination: Boolean
+    val isResolving: Boolean
 )
 
 @Composable
 private fun StartupGate(
     state: StartupGateState,
     onRetry: () -> Unit,
-    onSplashTimeout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when {
@@ -167,13 +162,6 @@ private fun StartupGate(
                 message = state.startupErrorMessage,
                 isRetrying = state.isResolving,
                 onRetry = onRetry,
-                modifier = modifier
-            )
-        }
-        state.showAppSplash && !state.isOnboardingDestination -> {
-            SplashStep(
-                keepVisible = state.resolvedStartDestination == null,
-                onTimeout = onSplashTimeout,
                 modifier = modifier
             )
         }
@@ -235,24 +223,19 @@ fun AppNavHost(
     var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
-    var showAppSplash by rememberSaveable { mutableStateOf(true) }
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
     val resolvedStartDestination = startDestination
-    val isOnboardingDestination = resolvedStartDestination == Screen.Onboarding.route
 
-    if (resolvedStartDestination == null || (showAppSplash && !isOnboardingDestination)) {
+    if (resolvedStartDestination == null) {
         StartupGate(
             state = StartupGateState(
                 resolvedStartDestination = resolvedStartDestination,
                 startupErrorMessage = startupErrorMessage,
-                isResolving = isResolving,
-                showAppSplash = showAppSplash,
-                isOnboardingDestination = isOnboardingDestination
+                isResolving = isResolving
             ),
             onRetry = startDestinationViewModel::retry,
-            onSplashTimeout = { showAppSplash = false },
             modifier = modifier
         )
         return
@@ -533,8 +516,8 @@ fun AppNavHost(
                     navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now().minusDays(1)))
                 },
                 onNotificationClick = { navController.navigate(Screen.Notification.route) },
-                onLoggedOut = {
-                    startDestinationViewModel.logout()
+                onLoggedOut = { isWithdrawal ->
+                    startDestinationViewModel.logout(skipOnboardingSplash = !isWithdrawal)
                     navController.navigate(Screen.Onboarding.route) {
                         popUpTo(0) { inclusive = true }
                     }

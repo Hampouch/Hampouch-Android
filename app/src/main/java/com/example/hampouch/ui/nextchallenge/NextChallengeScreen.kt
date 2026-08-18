@@ -55,7 +55,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -194,18 +193,6 @@ fun NextChallengeRoute(
 ) {
     val activity = LocalContext.current as? Activity
     BackHandler { activity?.finish() }
-    var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
-    var periodDays by remember(previousResult, fixedDateDraft) {
-        mutableStateOf<Int?>(if (fixedDateDraft == null) previousResult.totalDays else null)
-    }
-    var customPeriodDays by remember(previousResult) { mutableStateOf<Int?>(null) }
-    var dateFixed by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft != null) }
-    var startDate by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft?.nextStartDate) }
-    var targetAmount by remember(suggestedTargetAmount, fixedDateDraft) {
-        mutableStateOf<Int?>(fixedDateDraft?.budgetTotal ?: suggestedTargetAmount)
-    }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showStartConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -219,13 +206,47 @@ fun NextChallengeRoute(
     LaunchedEffect(viewModel, fixedDateDraft) {
         if (fixedDateDraft == null) viewModel.loadRecommendation()
     }
-    val coroutineScope = rememberCoroutineScope()
 
     val serverRecommendationMessage by viewModel.recommendationMessage.collectAsStateWithLifecycle()
     val recommendationMessage = remember(previousResult, suggestedTargetAmount, serverRecommendationMessage) {
         serverRecommendationMessage?.let { AnnotatedString(it) }
             ?: buildRecommendationMessage(previousResult, suggestedTargetAmount)
     }
+
+    NextChallengeContent(
+        previousResult = previousResult,
+        suggestedTargetAmount = suggestedTargetAmount,
+        fixedDateDraft = fixedDateDraft,
+        recommendationMessage = recommendationMessage,
+        modifier = modifier,
+        onStartFixedDateChallenge = viewModel::startFixedDateChallenge,
+        onStartNewChallenge = viewModel::startNewChallenge
+    )
+}
+
+@Composable
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
+private fun NextChallengeContent(
+    previousResult: ChallengeResultUiState,
+    suggestedTargetAmount: Int,
+    fixedDateDraft: FixedDateChallengeDraft?,
+    recommendationMessage: AnnotatedString,
+    modifier: Modifier = Modifier,
+    onStartFixedDateChallenge: (draft: FixedDateChallengeDraft, startDate: LocalDate, budgetTotal: Int) -> Unit,
+    onStartNewChallenge: (OnboardingRequest) -> Unit
+) {
+    var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
+    var periodDays by remember(previousResult, fixedDateDraft) {
+        mutableStateOf<Int?>(if (fixedDateDraft == null) previousResult.totalDays else null)
+    }
+    var customPeriodDays by remember(previousResult) { mutableStateOf<Int?>(null) }
+    var dateFixed by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft != null) }
+    var startDate by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft?.nextStartDate) }
+    var targetAmount by remember(suggestedTargetAmount, fixedDateDraft) {
+        mutableStateOf<Int?>(fixedDateDraft?.budgetTotal ?: suggestedTargetAmount)
+    }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showStartConfirmDialog by remember { mutableStateOf(false) }
     val effectivePeriodDays = (customPeriodDays?.takeIf { it > 0 }
         ?: periodDays?.takeIf { it > 0 }
         ?: previousResult.totalDays).coerceAtLeast(1)
@@ -415,13 +436,13 @@ fun NextChallengeRoute(
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount
                 )
                 if (fixedDateDraft != null && dateFixed) {
-                    viewModel.startFixedDateChallenge(
-                        draft = fixedDateDraft,
-                        startDate = requireNotNull(startDate),
-                        budgetTotal = targetAmount ?: fixedDateDraft.budgetTotal
+                    onStartFixedDateChallenge(
+                        fixedDateDraft,
+                        requireNotNull(startDate),
+                        targetAmount ?: fixedDateDraft.budgetTotal
                     )
                 } else {
-                    viewModel.startNewChallenge(request)
+                    onStartNewChallenge(request)
                 }
             }
         )
@@ -452,7 +473,7 @@ internal fun NextChallengeHeroCard(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
-    backgroundColor: androidx.compose.ui.graphics.Color = HPSub4
+    backgroundColor: androidx.compose.ui.graphics.Color = HPSub3
 ) {
     val heroCircleDiameter = 180.dp
     val heroCircleColor = HPSub2.copy(alpha = 0.10f)
@@ -614,7 +635,7 @@ private fun PochiRecommendationCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(horizontal = 20.dp, vertical = 15.dp)
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
@@ -780,7 +801,7 @@ internal fun ChallengeSettingsSection(
     onDateFixedChange: (Boolean) -> Unit,
     startDateText: String,
     onStartDateClick: () -> Unit,
-    containerColor: androidx.compose.ui.graphics.Color = HPSub4,
+    containerColor: androidx.compose.ui.graphics.Color = HPSub3,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -952,10 +973,13 @@ private val PreviewFailResult = ChallengeResultUiState(
 @Composable
 private fun NextChallengeRouteCompletePreview() {
     HampouchTheme {
-        NextChallengeRoute(
+        NextChallengeContent(
             previousResult = PreviewCompleteResult,
             suggestedTargetAmount = 350_000,
-            onStartChallengeClick = {}
+            fixedDateDraft = null,
+            recommendationMessage = buildRecommendationMessage(PreviewCompleteResult, 350_000),
+            onStartFixedDateChallenge = { _, _, _ -> },
+            onStartNewChallenge = {}
         )
     }
 }
@@ -964,10 +988,13 @@ private fun NextChallengeRouteCompletePreview() {
 @Composable
 private fun NextChallengeRouteFailPreview() {
     HampouchTheme {
-        NextChallengeRoute(
+        NextChallengeContent(
             previousResult = PreviewFailResult,
             suggestedTargetAmount = 440_000,
-            onStartChallengeClick = {}
+            fixedDateDraft = null,
+            recommendationMessage = buildRecommendationMessage(PreviewFailResult, 440_000),
+            onStartFixedDateChallenge = { _, _, _ -> },
+            onStartNewChallenge = {}
         )
     }
 }

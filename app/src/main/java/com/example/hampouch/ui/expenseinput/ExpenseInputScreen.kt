@@ -57,6 +57,8 @@ import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -139,7 +141,7 @@ fun ExpenseInputRoute(
             ExpenseInputTopBar(
                 title = stringResource(R.string.expenseinput_title),
                 onBackClick = { if (step > 1) onStepChanged(step - 1) else onBackClick() },
-                containerColor = if (step == 1) HPSub4 else HPWhite
+                containerColor = if (step == 1) HPSub3 else HPWhite
             )
         },
         containerColor = HPWhite
@@ -339,7 +341,7 @@ private fun ExpenseInputAmountStep(
     primaryButton: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.background(HPSub4)) {
+    Column(modifier = modifier.background(HPSub3)) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
