@@ -255,7 +255,9 @@ private fun RankRowPreview() {
         Box(modifier = Modifier.padding(16.dp)) {
             RankRow(
                 rank = 1,
-                participant = HamBattleParticipantSpending("나", 15000, HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS),
+                participant = HamBattleParticipantSpending(
+                    "나", 15000, HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
+                ),
                 highlighted = true
             )
         }

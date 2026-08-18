@@ -464,7 +464,11 @@ private fun EndedDisqualifiedRow(participant: HamBattleParticipantSpending) {
 private fun EndedDisqualifiedRowPreview() {
     HampouchTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            EndedDisqualifiedRow(participant = HamBattleParticipantSpending("친구3", 0, status = HamBattleParticipantStatus.DISQUALIFIED))
+            EndedDisqualifiedRow(
+                participant = HamBattleParticipantSpending(
+                    "친구3", 0, status = HamBattleParticipantStatus.DISQUALIFIED
+                )
+            )
         }
     }
 }
