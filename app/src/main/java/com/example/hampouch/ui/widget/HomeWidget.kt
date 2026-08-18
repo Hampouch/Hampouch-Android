@@ -14,6 +14,7 @@ import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.LinearProgressIndicator
@@ -121,6 +122,37 @@ internal fun HomeWidgetContent(state: HomeWidgetState) {
                 subtitle = context.getString(R.string.home_no_challenge_subtitle),
                 cta = context.getString(R.string.home_no_challenge_cta),
                 scale = scale
+            )
+        }
+        WidgetSyncButton(scale)
+    }
+}
+
+@Composable
+private fun WidgetSyncButton(scale: WidgetScale) {
+    val context = LocalContext.current
+    Row(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .padding(
+                top = 8.dp.scaled(scale.height),
+                end = 8.dp.scaled(scale.width)
+            ),
+        horizontalAlignment = Alignment.Horizontal.End,
+        verticalAlignment = Alignment.Vertical.Top
+    ) {
+        Box(
+            modifier = GlanceModifier
+                .size(34.dp.scaled(scale.text))
+                .background(ColorProvider(HPWhite))
+                .cornerRadius(17.dp.scaled(scale.text))
+                .clickable(actionRunCallback<HomeWidgetSyncAction>()),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_widget_sync),
+                contentDescription = context.getString(R.string.cd_widget_sync),
+                modifier = GlanceModifier.size(20.dp.scaled(scale.text))
             )
         }
     }
