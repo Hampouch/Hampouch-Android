@@ -185,8 +185,9 @@ fun HamTipsBattleDetailScreen(
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInfo = post.battleInfo
-    val linkedChallenge = battleInfo?.link?.let { link ->
-        battleViewModel.mockChallenges.value.find { it.battleCode == link }
+    val linkedBattleCode = battleInfo?.link?.let(::extractBattleCode)
+    val linkedChallenge = linkedBattleCode?.let { battleCode ->
+        battleViewModel.mockChallenges.value.find { it.battleCode == battleCode }
     }
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
@@ -321,21 +322,30 @@ fun HamTipsBattleDetailScreen(
                     if (BattleConfig.USE_SERVER_BATTLE) {
                         viewModel.joinServerBattle(post.id, battleInfo.link)
                     } else {
-                        val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
-                            authorName = post.authorName,
-                            title = post.title,
-                            penalty = battleInfo.penalty,
-                            battleCode = battleInfo.link,
-                            totalCount = battleInfo.capacity
-                        )
-                        if (joinedChallenge == null) {
-                            showRoomFull = true
+                        val battleCode = extractBattleCode(battleInfo.link)
+                        if (battleCode == null) {
+                            Toast.makeText(
+                                context,
+                                "올바르지 않은 햄배틀 링크입니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
-                            viewModel.joinBattle(post.id)
-                            if (joinedChallenge.isFull) {
-                                onNavigateToHamBattleTab()
+                            val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
+                                authorName = post.authorName,
+                                title = post.title,
+                                penalty = battleInfo.penalty,
+                                battleCode = battleCode,
+                                totalCount = battleInfo.capacity
+                            )
+                            if (joinedChallenge == null) {
+                                showRoomFull = true
                             } else {
-                                onNavigateToBattleLink(joinedChallenge.id)
+                                viewModel.joinBattle(post.id)
+                                if (joinedChallenge.isFull) {
+                                    onNavigateToHamBattleTab()
+                                } else {
+                                    onNavigateToBattleLink(joinedChallenge.id)
+                                }
                             }
                         }
                     }

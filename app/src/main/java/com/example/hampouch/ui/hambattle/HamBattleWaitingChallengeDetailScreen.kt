@@ -98,16 +98,17 @@ fun HamBattleWaitingChallengeDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
             val battleCode = challenge.battleCode
+            val inviteUrl = battleCode?.let(::buildBattleInviteUrl)
             Button(
                 onClick = {
-                    if (battleCode.isNullOrBlank()) {
+                    if (inviteUrl == null) {
                         Toast.makeText(context, "초대 코드를 아직 받지 못했어요.", Toast.LENGTH_SHORT).show()
                     } else {
-                        clipboardManager.setText(AnnotatedString(battleCode))
-                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                        clipboardManager.setText(AnnotatedString(inviteUrl))
+                        Toast.makeText(context, "초대 링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
                     }
                 },
-                enabled = !battleCode.isNullOrBlank(),
+                enabled = inviteUrl != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

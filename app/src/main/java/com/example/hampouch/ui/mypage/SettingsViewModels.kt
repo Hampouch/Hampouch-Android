@@ -9,6 +9,7 @@ import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.repository.MyPageProfileRepository
+import com.example.hampouch.domain.repository.BattleRepository
 import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.UsersRepository
@@ -92,7 +93,8 @@ sealed interface MyPageProfileEvent {
 class MyPageProfileViewModel @Inject constructor(
     private val myPageProfileRepository: MyPageProfileRepository,
     private val authRepository: AuthRepository,
-    private val usersRepository: UsersRepository
+    private val usersRepository: UsersRepository,
+    private val battleRepository: BattleRepository
 ) : ViewModel() {
 
     val profile: StateFlow<MyPageProfile?> = myPageProfileRepository.profile
@@ -118,13 +120,19 @@ class MyPageProfileViewModel @Inject constructor(
             }
             when {
                 avatarUri != null && avatarUri != previous.avatarUri ->
-                    usersRepository.uploadProfilePhoto(avatarUri).onFailure { error ->
-                        _events.send(MyPageProfileEvent.ShowMessage(error.toUserMessage("프로필 사진 변경에 실패했습니다.")))
-                    }
+                    usersRepository.uploadProfilePhoto(avatarUri)
+                        .onSuccess {
+                            battleRepository.updateMyAvatar(myPageProfileRepository.profile.value?.avatarUri)
+                        }
+                        .onFailure { error ->
+                            _events.send(MyPageProfileEvent.ShowMessage(error.toUserMessage("프로필 사진 변경에 실패했습니다.")))
+                        }
                 avatarUri == null && previous.avatarUri != null ->
-                    usersRepository.resetProfilePhoto().onFailure { error ->
-                        _events.send(MyPageProfileEvent.ShowMessage(error.toUserMessage("프로필 사진 변경에 실패했습니다.")))
-                    }
+                    usersRepository.resetProfilePhoto()
+                        .onSuccess { battleRepository.updateMyAvatar(null) }
+                        .onFailure { error ->
+                            _events.send(MyPageProfileEvent.ShowMessage(error.toUserMessage("프로필 사진 변경에 실패했습니다.")))
+                        }
             }
         }
     }

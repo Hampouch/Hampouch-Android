@@ -9,4 +9,4 @@
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/home_widget_loading"
     android:description="@string/widget_home_description"
-    android:previewLayout="@layout/home_widget_loading" />
+    android:previewLayout="@layout/home_widget_preview" />

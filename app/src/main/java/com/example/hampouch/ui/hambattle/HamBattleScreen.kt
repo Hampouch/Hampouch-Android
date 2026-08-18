@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -104,7 +105,16 @@ fun HamBattleScreen(
     onViewEndedChallengeDetailClick: (String) -> Unit,
     viewModel: HamBattleViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val mockChallenges by viewModel.mockChallenges.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    var refreshRequestedByGesture by remember { mutableStateOf(false) }
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing && refreshRequestedByGesture) {
+            refreshRequestedByGesture = false
+            Toast.makeText(context, "햄배틀을 새로고침했어요.", Toast.LENGTH_SHORT).show()
+        }
+    }
     Scaffold(
         modifier = modifier,
         containerColor = HPWhite,
@@ -126,21 +136,32 @@ fun HamBattleScreen(
                 onNotificationClick = onNotificationClick,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
-            if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
-                HamBattleEmptyContent(
-                    modifier = Modifier.weight(1f),
-                    onStartNewChallengeClick = onStartNewChallengeClick
-                )
-            } else {
-                HamBattleChallengeListContent(
-                    modifier = Modifier.weight(1f),
-                    activeChallenges = activeChallenges,
-                    waitingChallenges = waitingChallenges,
-                    onStartNewChallengeClick = onStartNewChallengeClick,
-                    onViewEndedChallengesClick = onViewEndedChallengesClick,
-                    onChallengeClick = onChallengeClick,
-                    onWaitingChallengeClick = onWaitingChallengeClick
-                )
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                    refreshRequestedByGesture = true
+                    viewModel.refreshMyBattles()
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                if (activeChallenges.isEmpty() && waitingChallenges.isEmpty()) {
+                    HamBattleEmptyContent(
+                        modifier = Modifier.fillMaxSize(),
+                        onStartNewChallengeClick = onStartNewChallengeClick
+                    )
+                } else {
+                    HamBattleChallengeListContent(
+                        modifier = Modifier.fillMaxSize(),
+                        activeChallenges = activeChallenges,
+                        waitingChallenges = waitingChallenges,
+                        onStartNewChallengeClick = onStartNewChallengeClick,
+                        onViewEndedChallengesClick = onViewEndedChallengesClick,
+                        onChallengeClick = onChallengeClick,
+                        onWaitingChallengeClick = onWaitingChallengeClick
+                    )
+                }
             }
         }
     }
@@ -267,24 +288,25 @@ private fun HamBattleEmptyContent(
     modifier: Modifier = Modifier,
     onStartNewChallengeClick: () -> Unit
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        StartNewChallengeButton(onClick = onStartNewChallengeClick)
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "진행중인 챌린지가 없어요.\n새 챌린지를 시작해봐요.",
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = HPText
-        )
+        item {
+            StartNewChallengeButton(onClick = onStartNewChallengeClick)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "진행중인 챌린지가 없어요.\n새 챌린지를 시작해봐요.",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = HPText
+            )
+        }
     }
 }
 
@@ -605,17 +627,18 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
                 color = HPMain
             )
             val battleCode = challenge.battleCode
+            val inviteUrl = battleCode?.let(::buildBattleInviteUrl)
             TextButton(
-                enabled = !battleCode.isNullOrBlank(),
+                enabled = inviteUrl != null,
                 onClick = {
-                    if (battleCode != null) {
-                        clipboardManager.setText(AnnotatedString(battleCode))
-                        Toast.makeText(context, "초대 코드가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                    if (inviteUrl != null) {
+                        clipboardManager.setText(AnnotatedString(inviteUrl))
+                        Toast.makeText(context, "초대 링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
                     }
                 }
             ) {
                 Text(
-                    "코드 다시 복사",
+                    "링크 다시 복사",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = StatusWhoWonText
