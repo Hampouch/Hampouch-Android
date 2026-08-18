@@ -145,6 +145,14 @@ private fun WaitingDetailTopBar(title: String, onBackClick: () -> Unit) {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun WaitingDetailTopBarPreview() {
+    HampouchTheme {
+        WaitingDetailTopBar(title = "저녁값 아끼기", onBackClick = {})
+    }
+}
+
 @Composable
 private fun WaitingInfoCard(challenge: HamBattleChallenge) {
     Column(
@@ -223,6 +231,16 @@ private fun WaitingParticipantRow(participant: HamBattleParticipantSpending, isM
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun WaitingParticipantRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingParticipantRow(participant = HamBattleParticipantSpending("나", 0), isMe = true)
+        }
+    }
+}
+
 @Composable
 private fun WaitingEmptySlotRow() {
     Row(
@@ -242,6 +260,16 @@ private fun WaitingEmptySlotRow() {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun WaitingEmptySlotRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingEmptySlotRow()
+        }
+    }
+}
+
 @Composable
 private fun WaitingPenaltyBox(penalty: String) {
     Column(
@@ -258,6 +286,16 @@ private fun WaitingPenaltyBox(penalty: String) {
             style = MaterialTheme.typography.bodyMedium,
             color = HPBlack
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WaitingPenaltyBoxPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            WaitingPenaltyBox(penalty = "커피 사기")
+        }
     }
 }
 

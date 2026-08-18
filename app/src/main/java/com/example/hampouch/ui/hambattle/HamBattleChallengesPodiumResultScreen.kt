@@ -186,6 +186,14 @@ private fun ResultTopBar(title: String, onBackClick: () -> Unit) {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ResultTopBarPreview() {
+    HampouchTheme {
+        ResultTopBar(title = "다이어트 대결", onBackClick = {})
+    }
+}
+
 @Composable
 private fun ResultTabToggle(
     selectedTab: ResultTab,
@@ -218,6 +226,17 @@ private fun ResultTabItem(label: String, selected: Boolean, onClick: () -> Unit)
             fontWeight = FontWeight.Bold,
             color = if (selected) HPWhite else HPText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ResultTabItemPreview() {
+    HampouchTheme {
+        Row(modifier = Modifier.padding(20.dp)) {
+            ResultTabItem(label = "Today", selected = true, onClick = {})
+            ResultTabItem(label = "Total", selected = false, onClick = {})
+        }
     }
 }
 
@@ -309,6 +328,19 @@ private fun PodiumColumn(rank: Int, participant: HamBattleParticipantSpending) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PodiumColumnPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp).background(HPSub4)) {
+            PodiumColumn(
+                rank = 1,
+                participant = HamBattleParticipantSpending(name = "김철수", amount = 15000L)
+            )
+        }
+    }
+}
+
 private val ResultBottomSheetPenaltyContentMinHeight = 182.dp
 
 @Composable
@@ -369,6 +401,21 @@ private fun ResultBottomSheet(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ResultBottomSheetPreview() {
+    HampouchTheme {
+        ResultBottomSheet(
+            extraRanked = HamBattleMockFixtures.activeChallenges()[1].participants.drop(3).take(3),
+            penalty = "치킨 쏘기",
+            lastPlaceName = "김철수",
+            showPenaltyBox = true,
+            onStartNewChallengeClick = {},
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
 @Composable
 private fun ExtraRankRow(rank: Int, participant: HamBattleParticipantSpending) {
     Row(
@@ -395,6 +442,19 @@ private fun ExtraRankRow(rank: Int, participant: HamBattleParticipantSpending) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ExtraRankRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            ExtraRankRow(
+                rank = 4,
+                participant = HamBattleParticipantSpending(name = "이영희", amount = 20000L)
+            )
+        }
+    }
+}
+
 @Composable
 private fun PenaltyBox(penalty: String, lastPlaceName: String, modifier: Modifier = Modifier) {
     Column(
@@ -412,6 +472,18 @@ private fun PenaltyBox(penalty: String, lastPlaceName: String, modifier: Modifie
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PenaltyBoxPreview() {
+    HampouchTheme {
+        PenaltyBox(
+            penalty = "치킨 쏘기",
+            lastPlaceName = "김철수",
+            modifier = Modifier.padding(20.dp)
+        )
+    }
+}
+
 @Composable
 private fun StartNewChallengeButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
@@ -423,6 +495,16 @@ private fun StartNewChallengeButton(onClick: () -> Unit, modifier: Modifier = Mo
         colors = ButtonDefaults.buttonColors(containerColor = HPMain)
     ) {
         Text("새 햄배틀 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StartNewChallengeButtonPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            StartNewChallengeButton(onClick = {})
+        }
     }
 }
 

@@ -103,6 +103,14 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun EndedChallengesTopBarPreview() {
+    HampouchTheme {
+        EndedChallengesTopBar(onBackClick = {}, onNotificationClick = {})
+    }
+}
+
 @Composable
 private fun EndedChallengeCard(challenge: HamBattleChallenge, onClick: () -> Unit) {
     val ranked = remember(challenge) { challenge.participants.sortedBy { it.amount } }
