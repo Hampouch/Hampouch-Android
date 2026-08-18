@@ -466,13 +466,11 @@ private fun StartDatePickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (Long?) -> Unit
 ) {
-    val todayStartOfDayMillis =
-        LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = initialDateMillis,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= todayStartOfDayMillis
+                return isBattleStartDateSelectable(utcTimeMillis)
             }
         }
     )
@@ -515,6 +513,18 @@ private fun StartDatePickerDialog(
     ) {
         DatePicker(state = datePickerState, colors = datePickerColors)
     }
+}
+
+internal fun isBattleStartDateSelectable(
+    utcTimeMillis: Long,
+    referenceToday: LocalDate = LocalDate.now()
+): Boolean {
+    val earliestStartDateMillis = referenceToday
+        .plusDays(1)
+        .atStartOfDay(ZoneOffset.UTC)
+        .toInstant()
+        .toEpochMilli()
+    return utcTimeMillis >= earliestStartDateMillis
 }
 
 @Preview(showBackground = true)
