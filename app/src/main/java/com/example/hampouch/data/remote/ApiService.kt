@@ -231,7 +231,9 @@ interface CommunityApi {
 
     @GET("api/community/posts/{postId}")
     suspend fun getCommunityPostDetail(
-        @Path("postId") postId: Long
+        @Path("postId") postId: Long,
+        @Query("commentPage") commentPage: Int,
+        @Query("commentSize") commentSize: Int
     ): Response<ApiResponse<CommunityPostDetailData>>
 
     @DELETE("api/community/posts/{postId}")
@@ -296,14 +298,14 @@ interface CommunityApi {
     @GET("api/community/me/posts")
     suspend fun getMyCommunityPosts(
         @Query("sortType") sortType: String,
-        @Query("cursor") cursor: Int,
+        @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
 
     @GET("api/community/me/bookmarks")
     suspend fun getMyCommunityBookmarks(
         @Query("sortType") sortType: String,
-        @Query("cursor") cursor: Int,
+        @Query("page") page: Int,
         @Query("size") size: Int
     ): Response<ApiResponse<CommunityPostPageData<CommunityPostSummaryData>>>
 

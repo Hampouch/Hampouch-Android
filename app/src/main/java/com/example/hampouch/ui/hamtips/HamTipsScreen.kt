@@ -533,7 +533,6 @@ private fun HamTipsFeedRouteContent(
             .onGloballyPositioned { coordinates -> containerRootY = coordinates.positionInRoot().y }
     ) {
         HamTipsDetailTopBar(title = title, onBackClick = onBackClick, onNotificationClick = onNotificationClick)
-        Spacer(modifier = Modifier.height(12.dp))
         HamTipsSearchBar(query = query, onQueryChange = onQueryChange)
         Spacer(modifier = Modifier.height(16.dp))
         HamTipsCategoryTabRow(selectedTab = selectedCategoryTab, onTabSelected = onCategoryTabSelected)

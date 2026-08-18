@@ -72,7 +72,9 @@ data class CommunityCommentData(
     val isDeleted: Boolean,
     val isMine: Boolean,
     val createdAt: String,
-    val replies: List<CommunityCommentData> = emptyList()
+    val replies: List<CommunityCommentData> = emptyList(),
+    val replyCount: Int = 0,
+    val hasMoreReplies: Boolean = false
 )
 
 data class CommunityPostDetailData(
@@ -93,7 +95,7 @@ data class CommunityPostDetailData(
     val isLiked: Boolean,
     val isBookmarked: Boolean,
     val isMine: Boolean,
-    val comments: List<CommunityCommentData>
+    val comments: CommunityPostPageData<CommunityCommentData>
 )
 
 data class CommunityPostIdData(val postId: Long)

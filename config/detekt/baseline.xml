@@ -23,8 +23,6 @@
     <ID>CyclomaticComplexMethod:SignUpScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun SignUpScreen( onSignUpSuccess: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: SignUpViewModel = hiltViewModel() )</ID>
     <ID>ForEachOnRange:HamTipsWriteComponents.kt$1..5</ID>
     <ID>LargeClass:HamTipsRepositoryImpl.kt$HamTipsRepositoryImpl : HamTipsRepositoryAccountScopedState</ID>
-    <ID>LongMethod:AccountSettingsScreen.kt$@Composable fun AccountSettingsScreen( profile: MyPageProfile, onBackClick: () -&gt; Unit, onProfileEditClick: () -&gt; Unit, onChangePasswordClick: () -&gt; Unit, onLoggedOut: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: AccountSettingsViewModel = hiltViewModel() )</ID>
-    <ID>LongMethod:AllSettingsScreen.kt$@Composable fun AllSettingsScreen( onBackClick: () -&gt; Unit, onRecordAlarmClick: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: AllSettingsViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:AmountAdjustmentScreen.kt$@Composable fun AmountAdjustmentRoute( challenge: AmountAdjustmentChallenge, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onChallengeAbandoned: (challengeId: String, suggestedTargetAmount: Int) -&gt; Unit, onGoalAmountUpdated: () -&gt; Unit, viewModel: AmountAdjustmentViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:AmountAdjustmentScreen.kt$@Composable private fun ChallengeInfoCard(challenge: AmountAdjustmentChallenge, modifier: Modifier = Modifier)</ID>
     <ID>LongMethod:AppNavHost.kt$@Composable fun AppNavHost( modifier: Modifier = Modifier, navController: NavHostController = rememberNavController(), pendingNotificationId: String? = null, onPendingNotificationConsumed: () -&gt; Unit )</ID>
@@ -67,6 +65,7 @@
     <ID>LongMethod:HamBattleWaitingChallengeDetailScreen.kt$@Composable fun HamBattleWaitingChallengeDetailScreen( challenge: HamBattleChallenge, onBackClick: () -&gt; Unit, onShareToCommunityClick: () -&gt; Unit )</ID>
     <ID>LongMethod:HamBattleWaitingChallengeExpiredDialog.kt$@Composable private fun HamBattleWaitingChallengeExpiredDialogCard( challengeTitle: String, onRecreateClick: () -&gt; Unit, onConfirmClick: () -&gt; Unit )</ID>
     <ID>LongMethod:HamTipsBattleDetailScreen.kt$@Composable fun HamTipsBattleDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onDeleted: () -&gt; Unit, onNavigateToBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
+    <ID>LongMethod:HamTipsCommentComponents.kt$@Composable fun HamTipsCommentRow( comment: TipComment, showAuthorTag: Boolean, onReplyClick: () -&gt; Unit, onMoreClick: () -&gt; Unit, onReplyMoreClick: (TipReply) -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>LongMethod:HamTipsDetailScreen.kt$@Composable fun HamTipsDetailScreen( post: TipPost, onBackClick: () -&gt; Unit, onEditClick: (TipPost) -&gt; Unit, onDeleted: () -&gt; Unit, scrollToComments: Boolean = false, modifier: Modifier = Modifier, sessionViewModel: SessionViewModel = hiltViewModel(), viewModel: HamTipsDetailViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:HamTipsMockData.kt$HamTipsMockData$fun allPosts(): List&lt;TipPost&gt;</ID>
     <ID>LongMethod:HamTipsScreen.kt$@Composable fun HamTipsScreen( selectedBottomTab: BottomNavItem, onItemSelected: (BottomNavItem) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier, onNavigateToHamBattleLink: (String) -&gt; Unit, onNavigateToHamBattleTab: () -&gt; Unit, onNotificationClick: () -&gt; Unit, openWriteBattleOnStart: Boolean = false, initialWriteBattleLink: String = "", onExitWriteBattle: () -&gt; Unit, initialPopularPostId: String? = null, viewModel: HamTipsViewModel = hiltViewModel() )</ID>
@@ -93,7 +92,6 @@
     <ID>LongMethod:OnboardingScreen.kt$@Composable fun OnboardingScreen( flowState: OnboardingFlowUiState, onNavigateToLogin: () -&gt; Unit, onFinishSplash: () -&gt; Unit, onExpenseChange: (Int) -&gt; Unit, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (java.time.LocalDate) -&gt; Unit, onTotalTargetChange: (Int) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onShowSkip: () -&gt; Unit, onDismissSkip: () -&gt; Unit, onShowExistingLogin: () -&gt; Unit = onNavigateToLogin, onDismissExistingLogin: () -&gt; Unit = {}, onSubmit: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>LongMethod:PeriodStep.kt$@Composable fun PeriodStep( state: OnboardingUiState, onPeriodEnabledChange: (Boolean) -&gt; Unit, onPeriodChange: (Int) -&gt; Unit, onDateFixedChange: (Boolean) -&gt; Unit, onStartDateChange: (LocalDate) -&gt; Unit, onNext: () -&gt; Unit, onBack: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
     <ID>LongMethod:ProfileEditScreen.kt$@Composable fun ProfileEditScreen( currentName: String, currentAvatarUri: String?, onValidateNickname: suspend (String) -&gt; Result&lt;Boolean&gt;, onBackClick: () -&gt; Unit, onSubmit: (newName: String, newAvatarUri: String?) -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit )</ID>
-    <ID>LongMethod:RecordAlarmScreen.kt$@Composable fun RecordAlarmScreen( onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, onNotificationClick: () -&gt; Unit, viewModel: RecordAlarmViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:ResetPasswordScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun ResetPasswordScreen( onResetSuccess: () -&gt; Unit, onNavigateToSignUp: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: ResetPasswordViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:SignUpScreen.kt$@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter") @Composable fun SignUpScreen( onSignUpSuccess: () -&gt; Unit, onNavigateToLogin: () -&gt; Unit, viewModel: SignUpViewModel = hiltViewModel() )</ID>
     <ID>LongMethod:SocialSignUpNicknameDialog.kt$@Composable private fun SocialSignUpNicknameDialogCard( nickname: String, onNicknameChange: (String) -&gt; Unit, onCheckNickname: () -&gt; Unit, nicknameCheckMessage: String?, isSignUpEnabled: Boolean, onSignUp: () -&gt; Unit, onBack: () -&gt; Unit )</ID>
@@ -580,7 +578,6 @@
     <ID>MaxLineLength:OnboardingComponents.kt$keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)</ID>
     <ID>MaxLineLength:ProfileEditScreen.kt$photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))</ID>
     <ID>MaxLineLength:ProfileEditScreen.kt$val finalName = if (isEditingName &amp;&amp; nicknameInput.trim().isNotEmpty()) nicknameInput.trim() else currentName</ID>
-    <ID>MaxLineLength:RecordAlarmScreen.kt$viewModel.update { it.copy(dayMode = ReminderDayMode.CUSTOM, selectedDays = updated) }</ID>
     <ID>MaxLineLength:ResetPasswordScreen.kt$contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password"</ID>
     <ID>MaxLineLength:Screen.kt$Screen.ExpenseAnalysisChallenge$data</ID>
     <ID>MaxLineLength:SignUpScreen.kt$contentDescription = if (uiState.isPasswordVisible) "Hide password" else "Show password"</ID>
@@ -635,9 +632,11 @@
     <ID>TooManyFunctions:HamBattleChallengesPodiumResultScreen.kt$com.example.hampouch.ui.hambattle.HamBattleChallengesPodiumResultScreen.kt</ID>
     <ID>TooManyFunctions:HamBattleChallengesResultScreen.kt$com.example.hampouch.ui.hambattle.HamBattleChallengesResultScreen.kt</ID>
     <ID>TooManyFunctions:HamBattleComponents.kt$com.example.hampouch.ui.hambattle.HamBattleComponents.kt</ID>
+    <ID>TooManyFunctions:HamBattleEndedChallengesDetailScreen.kt$com.example.hampouch.ui.hambattle.HamBattleEndedChallengesDetailScreen.kt</ID>
     <ID>TooManyFunctions:HamBattleMockStore.kt$HamBattleMockStore : AccountScopedState</ID>
     <ID>TooManyFunctions:HamBattleScreen.kt$com.example.hampouch.ui.hambattle.HamBattleScreen.kt</ID>
     <ID>TooManyFunctions:HamBattleViewModel.kt$HamBattleViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:HamBattleWaitingChallengeDetailScreen.kt$com.example.hampouch.ui.hambattle.HamBattleWaitingChallengeDetailScreen.kt</ID>
     <ID>TooManyFunctions:HamTipsCommentComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsCommentComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsComponents.kt$com.example.hampouch.ui.hamtips.components.HamTipsComponents.kt</ID>
     <ID>TooManyFunctions:HamTipsDetailScreen.kt$com.example.hampouch.ui.hamtips.HamTipsDetailScreen.kt</ID>

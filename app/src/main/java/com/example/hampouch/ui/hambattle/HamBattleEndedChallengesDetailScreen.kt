@@ -273,6 +273,14 @@ private fun EndedDetailTopBar(title: String, onBackClick: () -> Unit) {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun EndedDetailTopBarPreview() {
+    HampouchTheme {
+        EndedDetailTopBar(title = "점심값 아끼기", onBackClick = {})
+    }
+}
+
 @Composable
 private fun SummaryCard(
     title: String,
@@ -451,6 +459,20 @@ private fun EndedDisqualifiedRow(participant: HamBattleParticipantSpending) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun EndedDisqualifiedRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            EndedDisqualifiedRow(
+                participant = HamBattleParticipantSpending(
+                    "친구3", 0, status = HamBattleParticipantStatus.DISQUALIFIED
+                )
+            )
+        }
+    }
+}
+
 @Composable
 private fun LastPlaceBadge() {
     Box(
@@ -465,6 +487,16 @@ private fun LastPlaceBadge() {
             fontWeight = FontWeight.Bold,
             color = LastPlaceBadgeText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LastPlaceBadgePreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            LastPlaceBadge()
+        }
     }
 }
 
@@ -504,6 +536,16 @@ private fun EndedPenaltyBox(penalty: String, penaltyTargetName: String) {
             )
         }
 
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EndedPenaltyBoxPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            EndedPenaltyBox(penalty = "커피 사기", penaltyTargetName = "친구2")
+        }
     }
 }
 

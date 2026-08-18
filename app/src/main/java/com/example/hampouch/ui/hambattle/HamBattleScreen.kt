@@ -275,6 +275,14 @@ private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modif
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun HamBattleMainTopBarPreview() {
+    HampouchTheme {
+        HamBattleMainTopBar(onNotificationClick = {})
+    }
+}
+
 @Composable
 private fun HamBattleEmptyContent(
     modifier: Modifier = Modifier,
@@ -315,7 +323,7 @@ private fun HamBattleChallengeListContent(
     LazyColumn(
         modifier = modifier
             .fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 5.dp)
     ) {
         item(contentType = "action") {
             StartNewChallengeButton(onClick = onStartNewChallengeClick)
@@ -373,6 +381,19 @@ private fun HamBattleChallengeListContent(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun HamBattleChallengeListContentPreview() {
+    HampouchTheme {
+        HamBattleChallengeListContent(
+            activeChallenges = HamBattleMockFixtures.activeChallenges(),
+            waitingChallenges = HamBattleMockFixtures.waitingChallenges(),
+            onStartNewChallengeClick = {}, onViewEndedChallengesClick = {},
+            onChallengeClick = {}, onWaitingChallengeClick = {}
+        )
+    }
+}
+
 @Composable
 private fun StartNewChallengeButton(onClick: () -> Unit) {
     Button(
@@ -384,6 +405,16 @@ private fun StartNewChallengeButton(onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = HPMain)
     ) {
         Text("새 햄배틀 시작하기", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StartNewChallengeButtonPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            StartNewChallengeButton(onClick = {})
+        }
     }
 }
 
@@ -484,6 +515,16 @@ private fun RankingToggleButton(expanded: Boolean, onClick: () -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             color = HPText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RankingToggleButtonPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            RankingToggleButton(expanded = false, onClick = {})
+        }
     }
 }
 

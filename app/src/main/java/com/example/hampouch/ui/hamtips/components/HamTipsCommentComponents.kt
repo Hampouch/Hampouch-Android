@@ -264,6 +264,14 @@ fun HamTipsCommentRow(
         comment.replies.forEach { reply ->
             HamTipsReplyRow(reply = reply, onMoreClick = { onReplyMoreClick(reply) })
         }
+        if (comment.hasMoreReplies) {
+            Text(
+                text = stringResource(R.string.hamtips_reply_more_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = HPText,
+                modifier = Modifier.padding(start = 46.dp, top = 8.dp)
+            )
+        }
     }
 }
 

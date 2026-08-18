@@ -133,6 +133,14 @@ private fun OneVsOneTopBar(title: String, onBackClick: () -> Unit) {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun OneVsOneTopBarPreview() {
+    HampouchTheme {
+        OneVsOneTopBar(title = "다이어트 대결", onBackClick = {})
+    }
+}
+
 @Composable
 private fun RankingCard(
     type: String,
@@ -240,6 +248,22 @@ private fun RankRow(rank: Int, participant: HamBattleParticipantSpending, highli
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun RankRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            RankRow(
+                rank = 1,
+                participant = HamBattleParticipantSpending(
+                    "나", 15000, HamBattleParticipantStatus.MISSED_CONSECUTIVE_LOGS
+                ),
+                highlighted = true
+            )
+        }
+    }
+}
+
 @Composable
 private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
     Row(
@@ -271,6 +295,18 @@ private fun DisqualifiedRow(participant: HamBattleParticipantSpending) {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun DisqualifiedRowPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            DisqualifiedRow(
+                participant = HamBattleParticipantSpending("친구2", 50000, HamBattleParticipantStatus.DISQUALIFIED)
+            )
+        }
+    }
+}
+
 @Composable
 private fun MissedLogBadge() {
     Box(
@@ -289,6 +325,16 @@ private fun MissedLogBadge() {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun MissedLogBadgePreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            MissedLogBadge()
+        }
+    }
+}
+
 @Composable
 private fun StatusBadge(text: String) {
     Box(
@@ -303,6 +349,16 @@ private fun StatusBadge(text: String) {
             fontWeight = FontWeight.Bold,
             color = StatusBadgeText
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StatusBadgePreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            StatusBadge(text = "진행중")
+        }
     }
 }
 

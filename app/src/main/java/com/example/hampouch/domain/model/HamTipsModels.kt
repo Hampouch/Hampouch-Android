@@ -46,6 +46,10 @@ data class MenuRatingInfo(
     val average: Float get() = (taste + costEffectiveness + mood) / 3f
 }
 
+/** 서버가 요구하는 햄배틀 초대 URL 형식(https://invite.hampouch.com/battles/invite/{battleCode})으로 변환합니다. */
+fun communityBattleInviteUrl(battleCode: String): String =
+    "https://invite.hampouch.com/battles/invite/$battleCode"
+
 data class BattleRecruitInfo(
     val link: String,
     val durationDays: Int,
@@ -74,7 +78,9 @@ data class TipComment(
     val content: String,
     val timeLabel: String,
     val isDeleted: Boolean = false,
-    val replies: List<TipReply> = emptyList()
+    val replies: List<TipReply> = emptyList(),
+    val replyCount: Int = 0,
+    val hasMoreReplies: Boolean = false
 )
 
 data class TipPost(

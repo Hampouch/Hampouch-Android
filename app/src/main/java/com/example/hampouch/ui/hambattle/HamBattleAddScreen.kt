@@ -219,6 +219,14 @@ private fun HamBattleAddTopBar(onBackClick: () -> Unit) {
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun HamBattleAddTopBarPreview() {
+    HampouchTheme {
+        HamBattleAddTopBar(onBackClick = {})
+    }
+}
+
 @Composable
 private fun ChallengeIntroSection() {
     Text("NEW CHALLENGE", style = Body16Bold, color = HPMain)
@@ -301,6 +309,26 @@ private fun ChallengeDetailsCard(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun ChallengeDetailsCardPreview() {
+    HampouchTheme {
+        ChallengeDetailsCard(
+            selectedParticipantCount = HamBattleParticipantOptions[1],
+            onParticipantCountSelect = {},
+            selectedDuration = HamBattleDurationOptions[1],
+            onDurationSelect = {},
+            startDateMillis = null,
+            onStartDateClick = {},
+            penaltyOptions = HamBattleDefaultPenaltyOptions,
+            selectedPenalty = HamBattleDefaultPenaltyOptions.first(),
+            onPenaltySelect = {},
+            customPenaltyInputState = rememberTextFieldState(),
+            onAddCustomPenalty = {}
+        )
+    }
+}
+
 @Composable
 private fun OptionPillGroup(
     title: String,
@@ -319,6 +347,21 @@ private fun OptionPillGroup(
                 text = option,
                 selected = option == selected,
                 onClick = { onSelect(option) }
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OptionPillGroupPreview() {
+    HampouchTheme {
+        Column(modifier = Modifier.padding(20.dp)) {
+            OptionPillGroup(
+                title = "기간",
+                options = HamBattleDurationOptions,
+                selected = HamBattleDurationOptions[1],
+                onSelect = {}
             )
         }
     }
@@ -371,6 +414,22 @@ private fun PenaltySection(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PenaltySectionPreview() {
+    HampouchTheme {
+        Column(modifier = Modifier.padding(20.dp)) {
+            PenaltySection(
+                options = HamBattleDefaultPenaltyOptions,
+                selected = HamBattleDefaultPenaltyOptions.first(),
+                onSelect = {},
+                inputState = rememberTextFieldState(),
+                onAddCustomPenalty = {}
+            )
+        }
+    }
+}
+
 @Composable
 private fun StartChallengeButton(enabled: Boolean, onClick: () -> Unit) {
     Button(
@@ -387,6 +446,16 @@ private fun StartChallengeButton(enabled: Boolean, onClick: () -> Unit) {
         )
     ) {
         Text("햄배틀 시작", style = MaterialTheme.typography.bodyLarge, color = HPWhite)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StartChallengeButtonPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            StartChallengeButton(enabled = true, onClick = {})
+        }
     }
 }
 
@@ -448,6 +517,14 @@ private fun StartDatePickerDialog(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun StartDatePickerDialogPreview() {
+    HampouchTheme {
+        StartDatePickerDialog(initialDateMillis = null, onDismiss = {}, onConfirm = {})
+    }
+}
+
 @Composable
 private fun SelectablePill(
     text: String,
@@ -500,6 +577,16 @@ private fun StartDateField(dateMillis: Long?, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = if (dateText != null) HPMain else HPGray5
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StartDateFieldPreview() {
+    HampouchTheme {
+        Box(modifier = Modifier.padding(20.dp)) {
+            StartDateField(dateMillis = System.currentTimeMillis(), onClick = {})
+        }
     }
 }
 
