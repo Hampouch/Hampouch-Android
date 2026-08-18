@@ -24,7 +24,9 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
     val uiState: StateFlow<OnboardingFlowUiState> = _uiState.asStateFlow()
 
     fun finishSplash() = updateStep(OnboardingStep.EXPENSE_DIAGNOSIS)
-    fun changeExpense(value: Int?) = updateDraft { copy(lastMonthFoodExpense = value) }
+    fun changeExpense(value: Int?) = updateDraft {
+        copy(lastMonthFoodExpense = value?.takeIf { it > 0 })
+    }
     fun changePeriodEnabled(enabled: Boolean) = updateDraft {
         copy(periodEnabled = enabled, dateFixed = if (enabled) false else dateFixed)
     }

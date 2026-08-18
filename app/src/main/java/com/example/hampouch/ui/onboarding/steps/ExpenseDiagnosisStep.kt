@@ -96,6 +96,7 @@ fun ExpenseDiagnosisStep(
                     label = stringResource(R.string.onboarding_last_month_expense_label),
                     value = state.lastMonthFoodExpense,
                     onValueChange = onExpenseChange,
+                    onValueCleared = { onExpenseChange(0) },
                     placeholder = stringResource(R.string.onboarding_direct_input),
                     suffix = wonSuffix,
                     maxValue = MaxLastMonthFoodExpense,
