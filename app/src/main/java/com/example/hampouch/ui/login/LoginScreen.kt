@@ -74,9 +74,11 @@ private fun socialSignInErrorMessage(error: Throwable, fallback: String): String
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Suppress("LongMethod", "LongParameterList")
 @Composable
 fun LoginScreen(
     completeDialogMessage: String? = null,
+    onCompleteDialogDismissed: () -> Unit = {},
     pendingNicknameSession: AuthSession? = null,
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
@@ -91,6 +93,11 @@ fun LoginScreen(
     LaunchedEffect(pendingNicknameSession) {
         viewModel.restorePendingSocialSignUp(pendingNicknameSession)
     }
+    LaunchedEffect(completeDialogMessage) {
+        if (completeDialogMessage != null) {
+            visibleCompleteDialogMessage = completeDialogMessage
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -102,7 +109,10 @@ fun LoginScreen(
     visibleCompleteDialogMessage?.let { message ->
         CompleteDialog(
             message = message,
-            onDismiss = { visibleCompleteDialogMessage = null }
+            onDismiss = {
+                visibleCompleteDialogMessage = null
+                onCompleteDialogDismissed()
+            }
         )
     }
 

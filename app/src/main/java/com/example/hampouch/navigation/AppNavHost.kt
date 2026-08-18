@@ -199,6 +199,7 @@ fun AppNavHost(
     val battleState by battleViewModel.state.collectAsStateWithLifecycle()
     val pendingBattleInviteCode by battleInviteViewModel.pendingBattleCode.collectAsStateWithLifecycle()
     var externalJoinCodeInFlight by remember { mutableStateOf<String?>(null) }
+    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     LaunchedEffect(battleViewModel) {
         battleViewModel.events.collect { event ->
             when (event) {
@@ -206,7 +207,9 @@ fun AppNavHost(
                 is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
                     externalJoinCodeInFlight = null
                     battleInviteViewModel.consume(code)
-                    navController.navigate(Screen.HamBattle.route) {
+                    pendingHomeTab = BottomNavItem.HAM_BATTLE
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -215,7 +218,9 @@ fun AppNavHost(
                     externalJoinCodeInFlight?.let { code ->
                         externalJoinCodeInFlight = null
                         battleInviteViewModel.consume(code)
-                        navController.navigate(Screen.HamBattle.route) {
+                        pendingHomeTab = BottomNavItem.HAM_BATTLE
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -232,7 +237,6 @@ fun AppNavHost(
     val pendingNicknameSession by startDestinationViewModel.pendingNicknameSession.collectAsStateWithLifecycle()
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
-    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
     var showAppSplash by rememberSaveable { mutableStateOf(true) }
@@ -383,13 +387,9 @@ fun AppNavHost(
 
         composable(Screen.Login.route) {
             val message = completeDialogMessage
-            LaunchedEffect(message) {
-                if (message != null) {
-                    completeDialogMessage = null
-                }
-            }
             LoginScreen(
                 completeDialogMessage = message,
+                onCompleteDialogDismissed = { completeDialogMessage = null },
                 pendingNicknameSession = pendingNicknameSession,
                 onLoginSuccess = {
                     startDestinationViewModel.consumePendingNicknameSession()
