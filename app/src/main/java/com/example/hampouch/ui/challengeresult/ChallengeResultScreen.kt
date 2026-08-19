@@ -154,10 +154,19 @@ fun ChallengeResultScreen(
                         if (!isFinished) {
                             GoalAmountAdjustmentLinkButton(onClick = onAdjustGoalClick, enabled = state.isEditable)
                         }
-                        ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
-                        SpendingEmotionAnalysis(stats = state.emotionStats)
                     }
                 }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+                ExpenseAnalysisLinkButton(onClick = onExpenseAnalysisClick)
+                SpendingEmotionAnalysis(stats = state.emotionStats)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
