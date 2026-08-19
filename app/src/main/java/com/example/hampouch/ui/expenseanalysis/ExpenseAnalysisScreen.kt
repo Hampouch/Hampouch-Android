@@ -130,6 +130,50 @@ fun ExpenseAnalysisRoute(
     val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(periodStart, periodEnd) { viewModel.loadSummary(periodStart, periodEnd) }
 
+    ExpenseAnalysisContent(
+        headerMode = headerMode,
+        displayedMonth = displayedMonth,
+        onPreviousMonth = { displayedMonth = displayedMonth.minusMonths(1) },
+        onNextMonth = { displayedMonth = displayedMonth.plusMonths(1) },
+        summary = summary,
+        loadState = loadState,
+        onBackClick = onBackClick,
+        modifier = modifier,
+        onMonthlyViewClick = onMonthlyViewClick,
+        onCategoryDetailClick = onCategoryDetailClick,
+        onReasonDetailClick = onReasonDetailClick,
+        onRetry = viewModel::retry
+    )
+}
+
+@Composable
+private fun ExpenseAnalysisContent(
+    headerMode: ExpenseAnalysisHeaderMode,
+    displayedMonth: YearMonth,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    summary: ExpenseAnalysisSummary?,
+    loadState: LoadState,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onMonthlyViewClick: () -> Unit,
+    onCategoryDetailClick: (LocalDate, LocalDate) -> Unit,
+    onReasonDetailClick: (LocalDate, LocalDate) -> Unit,
+    onRetry: () -> Unit
+) {
+    val periodStart: LocalDate
+    val periodEnd: LocalDate
+    when (headerMode) {
+        is ExpenseAnalysisHeaderMode.Month -> {
+            periodStart = displayedMonth.atDay(1)
+            periodEnd = displayedMonth.atEndOfMonth()
+        }
+        is ExpenseAnalysisHeaderMode.Challenge -> {
+            periodStart = headerMode.periodStart
+            periodEnd = headerMode.periodEnd
+        }
+    }
+
     val totalAmount = summary?.totalAmount ?: 0
     val categoryItems = summary?.categoryBreakdown.orEmpty()
     val reasonItemsSorted = summary?.reasonBreakdown?.sortedByDescending { it.amount }.orEmpty()
@@ -159,7 +203,7 @@ fun ExpenseAnalysisRoute(
         if (loadState is LoadState.Failure && summary == null) {
             FullScreenLoadError(
                 message = (loadState as LoadState.Failure).message,
-                onRetry = viewModel::retry,
+                onRetry = onRetry,
                 modifier = Modifier.padding(innerPadding)
             )
             return@Scaffold
@@ -180,7 +224,7 @@ fun ExpenseAnalysisRoute(
             if (loadState is LoadState.Failure && summary != null) {
                 StaleDataRefreshBanner(
                     message = (loadState as LoadState.Failure).message,
-                    onRetry = viewModel::retry
+                    onRetry = onRetry
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -198,8 +242,8 @@ fun ExpenseAnalysisRoute(
                 MonthHeaderCard(
                     month = displayedMonth,
                     totalAmount = totalAmount,
-                    onPrevious = { displayedMonth = displayedMonth.minusMonths(1) },
-                    onNext = { displayedMonth = displayedMonth.plusMonths(1) }
+                    onPrevious = onPreviousMonth,
+                    onNext = onNextMonth
                 )
             } else if (headerMode is ExpenseAnalysisHeaderMode.Challenge) {
                 ChallengeHeaderCard(
@@ -470,6 +514,26 @@ fun MonthlyExpenseRoute(
     val trend by viewModel.trend.collectAsStateWithLifecycle()
     val loadState by viewModel.loadState.collectAsStateWithLifecycle()
     LaunchedEffect(currentMonth) { viewModel.loadTrend(currentMonth) }
+
+    MonthlyExpenseContent(
+        currentMonth = currentMonth,
+        trend = trend,
+        loadState = loadState,
+        onBackClick = onBackClick,
+        modifier = modifier,
+        onRetry = viewModel::retry
+    )
+}
+
+@Composable
+private fun MonthlyExpenseContent(
+    currentMonth: YearMonth,
+    trend: ExpenseTrendResult?,
+    loadState: LoadState,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onRetry: () -> Unit
+) {
     val totals = trend?.trend.orEmpty()
     val currentTotal = trend?.totalAmount ?: 0
     val average = trend?.monthlyAverage ?: 0
@@ -484,7 +548,7 @@ fun MonthlyExpenseRoute(
         if (loadState is LoadState.Failure && trend == null) {
             FullScreenLoadError(
                 message = (loadState as LoadState.Failure).message,
-                onRetry = viewModel::retry,
+                onRetry = onRetry,
                 modifier = Modifier.padding(innerPadding)
             )
             return@Scaffold
@@ -504,7 +568,7 @@ fun MonthlyExpenseRoute(
             if (loadState is LoadState.Failure && trend != null) {
                 StaleDataRefreshBanner(
                     message = (loadState as LoadState.Failure).message,
-                    onRetry = viewModel::retry
+                    onRetry = onRetry
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -658,6 +722,28 @@ fun CategoryDetailRoute(
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         viewModel.loadCategoryAnalysis(selectedId, periodStart, periodEnd)
     }
+
+    CategoryDetailContent(
+        selectedId = selectedId,
+        onSelectId = { selectedId = it },
+        tagResult = tagResult,
+        loadState = loadState,
+        onBackClick = onBackClick,
+        modifier = modifier,
+        onRetry = viewModel::retry
+    )
+}
+
+@Composable
+private fun CategoryDetailContent(
+    selectedId: String,
+    onSelectId: (String) -> Unit,
+    tagResult: ExpenseTagAnalysisResult?,
+    loadState: LoadState,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onRetry: () -> Unit
+) {
     val selectedAmount = tagResult?.totalAmount ?: 0
     val selectedPercent = tagResult?.percent ?: 0
     val records = tagResult?.records.orEmpty()
@@ -670,7 +756,7 @@ fun CategoryDetailRoute(
         if (loadState is LoadState.Failure && tagResult == null) {
             FullScreenLoadError(
                 message = (loadState as LoadState.Failure).message,
-                onRetry = viewModel::retry,
+                onRetry = onRetry,
                 modifier = Modifier.padding(innerPadding)
             )
             return@Scaffold
@@ -689,14 +775,14 @@ fun CategoryDetailRoute(
             if (loadState is LoadState.Failure && tagResult != null) {
                 StaleDataRefreshBanner(
                     message = (loadState as LoadState.Failure).message,
-                    onRetry = viewModel::retry
+                    onRetry = onRetry
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
             AnalysisTabRow(
                 tabs = ExpenseAnalysisCategoryTabOrder.map { it to analysisCategoryLabel(it) },
                 selectedId = selectedId,
-                onSelect = { selectedId = it }
+                onSelect = onSelectId
             )
             Spacer(modifier = Modifier.height(16.dp))
             DetailSpentSummaryCard(
@@ -739,6 +825,28 @@ fun ReasonDetailRoute(
     LaunchedEffect(selectedId, periodStart, periodEnd) {
         viewModel.loadEmotionAnalysis(selectedId, periodStart, periodEnd)
     }
+
+    ReasonDetailContent(
+        selectedId = selectedId,
+        onSelectId = { selectedId = it },
+        tagResult = tagResult,
+        loadState = loadState,
+        onBackClick = onBackClick,
+        modifier = modifier,
+        onRetry = viewModel::retry
+    )
+}
+
+@Composable
+private fun ReasonDetailContent(
+    selectedId: String,
+    onSelectId: (String) -> Unit,
+    tagResult: ExpenseTagAnalysisResult?,
+    loadState: LoadState,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onRetry: () -> Unit
+) {
     val selectedAmount = tagResult?.totalAmount ?: 0
     val selectedPercent = tagResult?.percent ?: 0
     val records = tagResult?.records.orEmpty()
@@ -751,7 +859,7 @@ fun ReasonDetailRoute(
         if (loadState is LoadState.Failure && tagResult == null) {
             FullScreenLoadError(
                 message = (loadState as LoadState.Failure).message,
-                onRetry = viewModel::retry,
+                onRetry = onRetry,
                 modifier = Modifier.padding(innerPadding)
             )
             return@Scaffold
@@ -770,14 +878,14 @@ fun ReasonDetailRoute(
             if (loadState is LoadState.Failure && tagResult != null) {
                 StaleDataRefreshBanner(
                     message = (loadState as LoadState.Failure).message,
-                    onRetry = viewModel::retry
+                    onRetry = onRetry
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
             AnalysisTabRow(
                 tabs = ExpenseAnalysisReasonTabOrder.map { it to analysisReasonTabLabel(it) },
                 selectedId = selectedId,
-                onSelect = { selectedId = it }
+                onSelect = onSelectId
             )
             Spacer(modifier = Modifier.height(16.dp))
             DetailSpentSummaryCard(
@@ -822,18 +930,101 @@ private fun DetailTopBar(title: String, onBackClick: () -> Unit, modifier: Modif
     )
 }
 
+private fun previewExpenseAnalysisSummary(): ExpenseAnalysisSummary = ExpenseAnalysisSummary(
+    periodStart = LocalDate.of(2026, 5, 1),
+    periodEnd = LocalDate.of(2026, 5, 31),
+    totalAmount = 312_000,
+    categoryBreakdown = listOf(
+        AmountBreakdownItem(id = "delivery", amount = 120_000, percent = 38),
+        AmountBreakdownItem(id = "dining_out", amount = 80_000, percent = 26),
+        AmountBreakdownItem(id = "cafe", amount = 62_000, percent = 20),
+        AmountBreakdownItem(id = ExpenseAnalysisEtcId, amount = 50_000, percent = 16)
+    ),
+    reasonBreakdown = listOf(
+        AmountBreakdownItem(id = "stress", amount = 150_000, percent = 48),
+        AmountBreakdownItem(id = "reward", amount = 90_000, percent = 29),
+        AmountBreakdownItem(id = "lazy", amount = 42_000, percent = 13),
+        AmountBreakdownItem(id = ExpenseAnalysisEtcId, amount = 30_000, percent = 10)
+    ),
+    weekdayBreakdown = listOf(
+        WeekdayAmount(DayOfWeek.MONDAY, 30_000),
+        WeekdayAmount(DayOfWeek.TUESDAY, 25_000),
+        WeekdayAmount(DayOfWeek.WEDNESDAY, 40_000),
+        WeekdayAmount(DayOfWeek.THURSDAY, 35_000),
+        WeekdayAmount(DayOfWeek.FRIDAY, 62_000),
+        WeekdayAmount(DayOfWeek.SATURDAY, 62_000),
+        WeekdayAmount(DayOfWeek.SUNDAY, 58_000)
+    ),
+    weekdayInsight = null,
+    pouchInsight = "이번 달은 배달 지출이 가장 컸어요. 스트레스로 인한 지출이 많으니 다른 방식으로 풀어보는 건 어떨까요?"
+)
+
+private fun previewExpenseAnalysisRecords(): List<ExpenseRecord> = listOf(
+    ExpenseRecord(
+        id = "preview1",
+        date = LocalDate.of(2026, 5, 20),
+        amount = 20_000,
+        categoryId = "delivery",
+        expenseName = "배달의민족",
+        reasonId = "stress"
+    ),
+    ExpenseRecord(
+        id = "preview2",
+        date = LocalDate.of(2026, 5, 18),
+        amount = 15_000,
+        categoryId = "dining_out",
+        expenseName = "한신 포차",
+        reasonId = "reward"
+    ),
+    ExpenseRecord(
+        id = "preview3",
+        date = LocalDate.of(2026, 5, 12),
+        amount = 8_000,
+        customCategoryName = "자취 생활비",
+        reasonId = "lazy"
+    )
+)
+
+private fun previewExpenseTrendResult(): ExpenseTrendResult = ExpenseTrendResult(
+    month = YearMonth.of(2026, 5),
+    totalAmount = 312_000,
+    monthlyAverage = 280_000,
+    diffRateFromLastMonth = 12,
+    trend = listOf(
+        MonthlyTotal(YearMonth.of(2025, 12), 210_000),
+        MonthlyTotal(YearMonth.of(2026, 1), 260_000),
+        MonthlyTotal(YearMonth.of(2026, 2), 240_000),
+        MonthlyTotal(YearMonth.of(2026, 3), 290_000),
+        MonthlyTotal(YearMonth.of(2026, 4), 278_000),
+        MonthlyTotal(YearMonth.of(2026, 5), 312_000)
+    ),
+    trendInsight = null
+)
+
+private fun previewExpenseTagResult(id: String): ExpenseTagAnalysisResult = ExpenseTagAnalysisResult(
+    id = id,
+    totalAmount = 120_000,
+    count = 3,
+    percent = 38,
+    records = previewExpenseAnalysisRecords()
+)
+
 @Preview(showBackground = true, name = "1. 식비 지출 분석 (월별)")
 @Composable
 private fun ExpenseAnalysisMonthPreview() {
-    val referenceToday = LocalDate.of(2026, 5, 31)
     HampouchTheme {
-        ExpenseAnalysisRoute(
+        ExpenseAnalysisContent(
             headerMode = ExpenseAnalysisHeaderMode.Month(YearMonth.of(2026, 5)),
+            displayedMonth = YearMonth.of(2026, 5),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            summary = previewExpenseAnalysisSummary(),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
             onMonthlyViewClick = {},
             onCategoryDetailClick = { _, _ -> },
             onReasonDetailClick = { _, _ -> },
-            referenceToday = referenceToday
+            onRetry = {}
         )
     }
 }
@@ -841,19 +1032,23 @@ private fun ExpenseAnalysisMonthPreview() {
 @Preview(showBackground = true, name = "7. 식비 지출 분석 (챌린지 기간)")
 @Composable
 private fun ExpenseAnalysisChallengePreview() {
-    val referenceToday = LocalDate.of(2026, 5, 31)
     HampouchTheme {
-        ExpenseAnalysisRoute(
+        ExpenseAnalysisContent(
             headerMode = ExpenseAnalysisHeaderMode.Challenge(
                 totalDays = 14,
                 periodStart = LocalDate.of(2026, 5, 1),
                 periodEnd = LocalDate.of(2026, 5, 14)
             ),
+            displayedMonth = YearMonth.of(2026, 5),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            summary = previewExpenseAnalysisSummary(),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
             onMonthlyViewClick = {},
             onCategoryDetailClick = { _, _ -> },
             onReasonDetailClick = { _, _ -> },
-            referenceToday = referenceToday
+            onRetry = {}
         )
     }
 }
@@ -862,7 +1057,13 @@ private fun ExpenseAnalysisChallengePreview() {
 @Composable
 private fun MonthlyExpensePreview() {
     HampouchTheme {
-        MonthlyExpenseRoute(onBackClick = {}, referenceToday = LocalDate.of(2026, 5, 31))
+        MonthlyExpenseContent(
+            currentMonth = YearMonth.of(2026, 5),
+            trend = previewExpenseTrendResult(),
+            loadState = LoadState.Content(isEmpty = false),
+            onBackClick = {},
+            onRetry = {}
+        )
     }
 }
 
@@ -870,12 +1071,13 @@ private fun MonthlyExpensePreview() {
 @Composable
 private fun CategoryDetailDeliveryPreview() {
     HampouchTheme {
-        CategoryDetailRoute(
-            periodStart = LocalDate.of(2026, 5, 1),
-            periodEnd = LocalDate.of(2026, 5, 31),
-            initialCategoryId = "delivery",
+        CategoryDetailContent(
+            selectedId = "delivery",
+            onSelectId = {},
+            tagResult = previewExpenseTagResult("delivery"),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
-            referenceToday = LocalDate.of(2026, 5, 31)
+            onRetry = {}
         )
     }
 }
@@ -884,12 +1086,13 @@ private fun CategoryDetailDeliveryPreview() {
 @Composable
 private fun CategoryDetailEtcPreview() {
     HampouchTheme {
-        CategoryDetailRoute(
-            periodStart = LocalDate.of(2026, 5, 1),
-            periodEnd = LocalDate.of(2026, 5, 31),
-            initialCategoryId = ExpenseAnalysisEtcId,
+        CategoryDetailContent(
+            selectedId = ExpenseAnalysisEtcId,
+            onSelectId = {},
+            tagResult = previewExpenseTagResult(ExpenseAnalysisEtcId),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
-            referenceToday = LocalDate.of(2026, 5, 31)
+            onRetry = {}
         )
     }
 }
@@ -898,12 +1101,13 @@ private fun CategoryDetailEtcPreview() {
 @Composable
 private fun ReasonDetailStressPreview() {
     HampouchTheme {
-        ReasonDetailRoute(
-            periodStart = LocalDate.of(2026, 5, 1),
-            periodEnd = LocalDate.of(2026, 5, 31),
-            initialReasonId = "stress",
+        ReasonDetailContent(
+            selectedId = "stress",
+            onSelectId = {},
+            tagResult = previewExpenseTagResult("stress"),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
-            referenceToday = LocalDate.of(2026, 5, 31)
+            onRetry = {}
         )
     }
 }
@@ -912,12 +1116,13 @@ private fun ReasonDetailStressPreview() {
 @Composable
 private fun ReasonDetailEtcPreview() {
     HampouchTheme {
-        ReasonDetailRoute(
-            periodStart = LocalDate.of(2026, 5, 1),
-            periodEnd = LocalDate.of(2026, 5, 31),
-            initialReasonId = ExpenseAnalysisEtcId,
+        ReasonDetailContent(
+            selectedId = ExpenseAnalysisEtcId,
+            onSelectId = {},
+            tagResult = previewExpenseTagResult(ExpenseAnalysisEtcId),
+            loadState = LoadState.Content(isEmpty = false),
             onBackClick = {},
-            referenceToday = LocalDate.of(2026, 5, 31)
+            onRetry = {}
         )
     }
 }

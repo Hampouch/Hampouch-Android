@@ -106,9 +106,39 @@ private fun ResultPageIndicatorPreview() {
 @Composable
 private fun HamBattleChallengesResultPagerScreenPreview() {
     HampouchTheme {
-        HamBattleChallengesResultPagerScreen(
-            challenge = HamBattleMockFixtures.activeChallenges().first(),
-            onBackClick = {}, onStartNewChallengeClick = {}
-        )
+        val challenge = HamBattleMockFixtures.activeChallenges().first()
+        val pagerState = rememberPagerState(initialPage = PAGE_PODIUM) { PAGE_COUNT }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) { page ->
+                when (page) {
+                    PAGE_PODIUM -> HamBattleChallengesPodiumResultContent(
+                        challenge = challenge,
+                        onBackClick = {},
+                        onStartNewChallengeClick = {}
+                    )
+
+                    else -> HamBattleChallengesResultScreen(
+                        challenge = challenge,
+                        onBackClick = {},
+                        onStartNewChallengeClick = {}
+                    )
+                }
+            }
+
+            ResultPageIndicator(
+                pageCount = PAGE_COUNT,
+                currentPage = pagerState.currentPage,
+                modifier = Modifier.padding(vertical = 6.dp)
+            )
+        }
     }
 }

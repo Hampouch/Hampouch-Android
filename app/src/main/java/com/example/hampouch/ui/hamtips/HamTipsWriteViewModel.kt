@@ -247,7 +247,7 @@ class HamTipsWriteViewModel @Inject constructor(
         content: String,
         photoUris: List<String>,
         photoKeys: List<String>
-    ) = submit {
+    ) = submit(onSuccess = ::resetTipForm) {
         if (editingPost != null) {
             hamTipsRepository.updateTipPost(editingPost.id, category, title, content, photoUris, photoKeys)
         } else {
@@ -265,7 +265,7 @@ class HamTipsWriteViewModel @Inject constructor(
         comment: String,
         photoUris: List<String>,
         photoKeys: List<String>
-    ) = submit {
+    ) = submit(onSuccess = ::resetMenuForm) {
         if (editingPost != null) {
             hamTipsRepository.updateMenuPost(
                 postId = editingPost.id, title = title, menuName = menuName, place = place,
@@ -280,20 +280,52 @@ class HamTipsWriteViewModel @Inject constructor(
         }
     }
 
-    fun submitBattle(editingPost: TipPost?, title: String, content: String, link: String) = submit {
-        if (editingPost != null) {
-            hamTipsRepository.updateBattlePost(editingPost.id, title, content, link)
-        } else {
-            hamTipsRepository.createBattlePost(title, content, link)
+    fun submitBattle(editingPost: TipPost?, title: String, content: String, link: String) =
+        submit(onSuccess = ::resetBattleForm) {
+            if (editingPost != null) {
+                hamTipsRepository.updateBattlePost(editingPost.id, title, content, link)
+            } else {
+                hamTipsRepository.createBattlePost(title, content, link)
+            }
         }
+
+    private fun resetTipForm() {
+        tipFormInitialized = false
+        _tipForm.value = TipFormState()
+        savedStateHandle[KeyTipCategory] = null
+        savedStateHandle[KeyTipTitle] = null
+        savedStateHandle[KeyTipContent] = null
     }
 
-    private fun submit(block: suspend () -> Result<TipPost>) {
+    private fun resetMenuForm() {
+        menuFormInitialized = false
+        _menuForm.value = MenuFormState()
+        savedStateHandle[KeyMenuName] = null
+        savedStateHandle[KeyMenuPlace] = null
+        savedStateHandle[KeyMenuPrice] = null
+        savedStateHandle[KeyMenuTaste] = null
+        savedStateHandle[KeyMenuCost] = null
+        savedStateHandle[KeyMenuMood] = null
+        savedStateHandle[KeyMenuComment] = null
+    }
+
+    private fun resetBattleForm() {
+        battleFormInitialized = false
+        _battleForm.value = BattleFormState()
+        savedStateHandle[KeyBattleTitle] = null
+        savedStateHandle[KeyBattleContent] = null
+        savedStateHandle[KeyBattleLink] = null
+    }
+
+    private fun submit(onSuccess: () -> Unit, block: suspend () -> Result<TipPost>) {
         if (_isSubmitting.value) return
         _isSubmitting.value = true
         viewModelScope.launch {
             block()
-                .onSuccess { _events.send(HamTipsWriteEvent.Submitted) }
+                .onSuccess {
+                    onSuccess()
+                    _events.send(HamTipsWriteEvent.Submitted)
+                }
                 .onFailure {
                     _events.send(HamTipsWriteEvent.ShowMessage(it.toUserMessage("글 등록에 실패했습니다.")))
                 }

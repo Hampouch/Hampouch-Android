@@ -153,7 +153,7 @@ private fun RankingCard(
         modifier = Modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

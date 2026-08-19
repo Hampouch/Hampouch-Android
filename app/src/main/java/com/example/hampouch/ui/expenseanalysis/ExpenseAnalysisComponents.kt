@@ -578,7 +578,7 @@ fun DetailSpentSummaryCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -770,7 +770,7 @@ fun PochiAnalysisCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(18.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

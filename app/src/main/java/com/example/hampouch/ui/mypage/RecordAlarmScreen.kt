@@ -43,6 +43,7 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.hampouch.ui.theme.HPSub3
 
 private fun daysForMode(mode: ReminderDayMode): Set<DayOfWeekLabel> = when (mode) {
     ReminderDayMode.WEEKDAY -> setOf(
@@ -255,7 +256,7 @@ private fun RecordAlarmTimeRow(state: RecordAlarmSettingsState, onTimeClick: () 
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

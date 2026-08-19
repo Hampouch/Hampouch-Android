@@ -130,7 +130,7 @@ fun GoalSummaryCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(horizontal = 30.dp, vertical = 10.dp)
     ) {
         Text(label, style = Body16Bold, color = HPBlack)
@@ -377,7 +377,7 @@ fun DailyRecordCalendar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(16.dp)
     ) {
         Row(

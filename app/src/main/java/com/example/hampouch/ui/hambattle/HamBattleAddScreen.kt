@@ -53,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -73,6 +72,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray1
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -252,7 +252,7 @@ private fun ChallengeNameField(value: String, onValueChange: (String) -> Unit) {
         singleLine = true,
         shape = RoundedCornerShape(10.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = HPGray5,
             focusedBorderColor = HPMain,
             unfocusedContainerColor = HPWhite,
             focusedContainerColor = HPWhite
@@ -278,7 +278,7 @@ private fun ChallengeDetailsCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(horizontal = 15.dp, vertical = 20.dp)
     ) {
         OptionPillGroup(

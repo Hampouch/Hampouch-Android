@@ -77,6 +77,7 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPSub
+import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -293,7 +294,7 @@ private fun SummaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -366,7 +367,7 @@ private fun EndedRankRow(
     isLastPlace: Boolean
 ) {
     val backgroundColor = when {
-        isWinner -> HPSub3
+        isWinner -> HPSub4
         isMe -> HPSub2.copy(alpha = 0.4f)
         else -> HPWhite
     }

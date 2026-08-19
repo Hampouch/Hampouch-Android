@@ -79,6 +79,44 @@ fun SignUpScreen(
             }
         }
     }
+
+    SignUpContent(
+        uiState = uiState,
+        onEmailChange = viewModel::changeEmail,
+        onSendEmailCode = viewModel::sendEmailCode,
+        onResetEmailVerification = viewModel::resetEmailVerification,
+        onEmailCodeChange = viewModel::changeEmailCode,
+        onVerifyEmailCode = viewModel::verifyEmailCode,
+        onPasswordChange = viewModel::changePassword,
+        onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
+        onNicknameChange = viewModel::changeNickname,
+        onCheckNickname = viewModel::checkNickname,
+        onTermsCheckedChange = viewModel::setTermsChecked,
+        onPrivacyCheckedChange = viewModel::setPrivacyChecked,
+        onMarketingCheckedChange = viewModel::setMarketingChecked,
+        onSignUpClick = viewModel::signUp,
+        onNavigateToLogin = onNavigateToLogin
+    )
+}
+
+@Composable
+private fun SignUpContent(
+    uiState: SignUpUiState,
+    onEmailChange: (String) -> Unit,
+    onSendEmailCode: () -> Unit,
+    onResetEmailVerification: () -> Unit,
+    onEmailCodeChange: (String) -> Unit,
+    onVerifyEmailCode: () -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onNicknameChange: (String) -> Unit,
+    onCheckNickname: () -> Unit,
+    onTermsCheckedChange: (Boolean) -> Unit,
+    onPrivacyCheckedChange: (Boolean) -> Unit,
+    onMarketingCheckedChange: (Boolean) -> Unit,
+    onSignUpClick: () -> Unit,
+    onNavigateToLogin: () -> Unit
+) {
     val emailCodeRemainingSeconds = rememberCountdownSeconds(uiState.emailCodeExpiresAtMillis)
     val isEmailCodeExpired = emailCodeRemainingSeconds == 0
     val isEmailFieldEnabled =
@@ -115,19 +153,19 @@ fun SignUpScreen(
                 LoginTextField(
                     label = "이메일",
                     value = uiState.email,
-                    onValueChange = viewModel::changeEmail,
+                    onValueChange = onEmailChange,
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = viewModel::sendEmailCode,
+                    onCheckClick = onSendEmailCode,
                     isCheckEnabled = isEmailFieldEnabled,
                     enabled = isEmailFieldEnabled
                 )
                 uiState.emailSendMessage?.let { FieldMessage(it) }
                 if (uiState.hasSentEmailCode && !uiState.isEmailVerified) {
-                    FieldLinkMessage("이메일을 잘못 입력하셨나요?", viewModel::resetEmailVerification)
+                    FieldLinkMessage("이메일을 잘못 입력하셨나요?", onResetEmailVerification)
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 LoginTextField(
@@ -137,13 +175,13 @@ fun SignUpScreen(
                         "인증번호"
                     },
                     value = uiState.emailCode,
-                    onValueChange = viewModel::changeEmailCode,
+                    onValueChange = onEmailCodeChange,
                     placeholder = "인증번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     ),
-                    onCheckClick = viewModel::verifyEmailCode,
+                    onCheckClick = onVerifyEmailCode,
                     isCheckEnabled = isCodeFieldEnabled,
                     enabled = isCodeFieldEnabled
                 )
@@ -156,7 +194,7 @@ fun SignUpScreen(
                 LoginTextField(
                     label = "비밀번호",
                     value = uiState.password,
-                    onValueChange = viewModel::changePassword,
+                    onValueChange = onPasswordChange,
                     placeholder = "8자 이상, 영문 + 숫자 조합",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
@@ -169,7 +207,7 @@ fun SignUpScreen(
                         PasswordVisualTransformation()
                     },
                     trailingIcon = {
-                        IconButton(onClick = viewModel::togglePasswordVisibility) {
+                        IconButton(onClick = onTogglePasswordVisibility) {
                             Image(
                                 modifier = Modifier.size(20.dp),
                                 painter = painterResource(
@@ -191,24 +229,24 @@ fun SignUpScreen(
                 LoginTextField(
                     label = "닉네임",
                     value = uiState.nickname,
-                    onValueChange = viewModel::changeNickname,
+                    onValueChange = onNicknameChange,
                     placeholder = "닉네임을 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
-                    onCheckClick = viewModel::checkNickname
+                    onCheckClick = onCheckNickname
                 )
                 uiState.nicknameCheckMessage?.let { FieldMessage(it) }
 
                 Spacer(modifier = Modifier.size(30.dp))
                 TermsAgreementSection(
                     isTermsChecked = uiState.isTermsChecked,
-                    onTermsCheckedChange = viewModel::setTermsChecked,
+                    onTermsCheckedChange = onTermsCheckedChange,
                     isPrivacyChecked = uiState.isPrivacyChecked,
-                    onPrivacyCheckedChange = viewModel::setPrivacyChecked,
+                    onPrivacyCheckedChange = onPrivacyCheckedChange,
                     isMarketingChecked = uiState.isMarketingChecked,
-                    onMarketingCheckedChange = viewModel::setMarketingChecked
+                    onMarketingCheckedChange = onMarketingCheckedChange
                 )
             }
 
@@ -216,7 +254,7 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.size(30.dp))
             Button(
-                onClick = viewModel::signUp,
+                onClick = onSignUpClick,
                 enabled = uiState.isSignUpEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -331,6 +369,41 @@ private fun TermsCheckIcon(checked: Boolean) {
 @Composable
 fun SignUpScreenPreview() {
     HampouchTheme {
-        SignUpScreen(onSignUpSuccess = {}, onNavigateToLogin = {})
+        SignUpContent(
+            uiState = SignUpUiState(
+                email = "hampouch@example.com",
+                emailCode = "123456",
+                password = "password123",
+                nickname = "hampouch",
+                isPasswordVisible = false,
+                emailSendMessage = null,
+                emailVerifyMessage = null,
+                isEmailVerified = false,
+                isSendingEmailCode = false,
+                hasSentEmailCode = false,
+                isVerifyingEmailCode = false,
+                emailCodeExpiresAtMillis = null,
+                nicknameCheckMessage = null,
+                isNicknameAvailable = false,
+                isTermsChecked = false,
+                isPrivacyChecked = false,
+                isMarketingChecked = false,
+                signUpErrorMessage = null
+            ),
+            onEmailChange = {},
+            onSendEmailCode = {},
+            onResetEmailVerification = {},
+            onEmailCodeChange = {},
+            onVerifyEmailCode = {},
+            onPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onNicknameChange = {},
+            onCheckNickname = {},
+            onTermsCheckedChange = {},
+            onPrivacyCheckedChange = {},
+            onMarketingCheckedChange = {},
+            onSignUpClick = {},
+            onNavigateToLogin = {}
+        )
     }
 }

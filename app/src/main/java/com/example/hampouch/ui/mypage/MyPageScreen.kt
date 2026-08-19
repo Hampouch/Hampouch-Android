@@ -81,7 +81,7 @@ fun MyPageScreen(
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit,
     onNotificationClick: () -> Unit,
-    onLoggedOut: () -> Unit,
+    onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit,
     onNavigateToAmountAdjustment: () -> Unit,
     onNavigateToTakeABreak: () -> Unit,
@@ -100,7 +100,7 @@ fun MyPageScreen(
     LaunchedEffect(accountViewModel) {
         accountViewModel.events.collect { event ->
             when (event) {
-                AccountSettingsEvent.LoggedOut -> onLoggedOut()
+                is AccountSettingsEvent.LoggedOut -> onLoggedOut(event.isWithdrawal)
                 is AccountSettingsEvent.ShowMessage ->
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }
@@ -212,7 +212,7 @@ fun MyPageScreen(
                         message = stringResource(R.string.change_password_success_message),
                         onDismiss = {
                             showPasswordChangedDialog = false
-                            route = MyPageRoute.MAIN
+                            accountViewModel.logout()
                         }
                     )
                 }
@@ -431,7 +431,7 @@ private fun MyPageMainContent(
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             ProfileCard(
                 name = profile.name,
-                handle = profile.handle,
+                email = profile.email,
                 avatarUri = profile.avatarUri,
                 onClick = onProfileCardClick
             )

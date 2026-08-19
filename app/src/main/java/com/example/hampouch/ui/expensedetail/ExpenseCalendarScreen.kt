@@ -37,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +55,7 @@ import com.example.hampouch.R
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
+import com.example.hampouch.domain.model.DailyAmount
 import com.example.hampouch.domain.model.ExpensePeriodSummary
 import com.example.hampouch.domain.model.ExpenseCalendarViewMode
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
@@ -146,6 +146,75 @@ fun ExpenseCalendarRoute(
     LaunchedEffect(displayedWeekStart) { viewModel.loadWeekSummary(displayedWeekStart) }
     LaunchedEffect(selectedDate) { viewModel.loadDay(selectedDate) }
 
+    ExpenseCalendarContent(
+        referenceToday = referenceToday,
+        effectiveChallengePeriod = effectiveChallengePeriod,
+        restrictToChallengePeriod = restrictToChallengePeriod,
+        viewMode = viewMode,
+        onViewModeChange = { viewMode = it },
+        selectedDate = selectedDate,
+        onDateSelected = { selectedDate = it },
+        displayedMonth = displayedMonth,
+        onPreviousMonth = {
+            displayedMonth = displayedMonth.minusMonths(1)
+            selectedDate = displayedMonth
+        },
+        onNextMonth = {
+            displayedMonth = displayedMonth.plusMonths(1)
+            selectedDate = displayedMonth
+        },
+        displayedWeekStart = displayedWeekStart,
+        onPreviousWeek = { displayedWeekStart = displayedWeekStart.minusWeeks(1) },
+        onNextWeek = { displayedWeekStart = displayedWeekStart.plusWeeks(1) },
+        records = records,
+        monthSummary = monthSummary,
+        weekSummary = weekSummary,
+        monthLoadState = monthLoadState,
+        weekLoadState = weekLoadState,
+        dayLoadState = dayLoadState,
+        isResting = restState.isResting,
+        onBackClick = onBackClick,
+        onExpenseClick = onExpenseClick,
+        onExpenseAnalysisClick = onExpenseAnalysisClick,
+        onAddExpenseClick = onAddExpenseClick,
+        onRetryMonth = viewModel::retryMonth,
+        onRetryWeek = viewModel::retryWeek,
+        onRetryDay = viewModel::retryDay,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ExpenseCalendarContent(
+    referenceToday: LocalDate,
+    effectiveChallengePeriod: ExpenseChallengePeriod?,
+    restrictToChallengePeriod: Boolean,
+    viewMode: ExpenseCalendarViewMode,
+    onViewModeChange: (ExpenseCalendarViewMode) -> Unit,
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    displayedMonth: LocalDate,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    displayedWeekStart: LocalDate,
+    onPreviousWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    records: Map<String, ExpenseRecord>,
+    monthSummary: ExpensePeriodSummary?,
+    weekSummary: ExpensePeriodSummary?,
+    monthLoadState: LoadState,
+    weekLoadState: LoadState,
+    dayLoadState: LoadState,
+    isResting: Boolean,
+    onBackClick: () -> Unit,
+    onExpenseClick: (String) -> Unit,
+    onExpenseAnalysisClick: () -> Unit,
+    onAddExpenseClick: (LocalDate) -> Unit,
+    onRetryMonth: () -> Unit,
+    onRetryWeek: () -> Unit,
+    onRetryDay: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val activeCalendarLoadState = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekLoadState else monthLoadState
     val activeCalendarHasData = if (viewMode == ExpenseCalendarViewMode.WEEKLY) weekSummary != null else monthSummary != null
 
@@ -157,9 +226,9 @@ fun ExpenseCalendarRoute(
         referenceToday,
         selectedDate,
         restrictToChallengePeriod,
-        restState.isResting
+        isResting
     )
-    val challengeEnded = !restState.isResting &&
+    val challengeEnded = !isResting &&
         effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
     val editableRange = effectiveChallengePeriod.takeIf { restrictToChallengePeriod }
 
@@ -182,14 +251,8 @@ fun ExpenseCalendarRoute(
                 ),
                 onBackClick = onBackClick,
                 onAnalysisClick = onExpenseAnalysisClick,
-                onPreviousMonth = {
-                    displayedMonth = displayedMonth.minusMonths(1)
-                    selectedDate = displayedMonth
-                },
-                onNextMonth = {
-                    displayedMonth = displayedMonth.plusMonths(1)
-                    selectedDate = displayedMonth
-                },
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
                 monthNavEnabled = viewMode == ExpenseCalendarViewMode.MONTHLY,
                 showAnalysisAction = !restrictToChallengePeriod
             )
@@ -215,7 +278,7 @@ fun ExpenseCalendarRoute(
                 if (!restrictToChallengePeriod) {
                     CalendarViewModeToggle(
                         viewMode = viewMode,
-                        onViewModeChange = { viewMode = it }
+                        onViewModeChange = onViewModeChange
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -226,14 +289,14 @@ fun ExpenseCalendarRoute(
                 if (calendarStaleFailureMessage != null) {
                     StaleDataRefreshBanner(
                         message = calendarStaleFailureMessage,
-                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) viewModel.retryWeek() else viewModel.retryMonth() }
+                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) onRetryWeek() else onRetryMonth() }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                 }
                 if (calendarFailedWithNoData) {
                     InlineLoadErrorCard(
                         message = (activeCalendarLoadState as LoadState.Failure).message,
-                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) viewModel.retryWeek() else viewModel.retryMonth() }
+                        onRetry = { if (viewMode == ExpenseCalendarViewMode.WEEKLY) onRetryWeek() else onRetryMonth() }
                     )
                 } else if (viewMode == ExpenseCalendarViewMode.MONTHLY) {
                     CalendarStatCard(
@@ -251,7 +314,7 @@ fun ExpenseCalendarRoute(
                         referenceToday = referenceToday,
                         selectedDate = selectedDate,
                         summaryByDate = summaryByDate,
-                        onDateSelected = { selectedDate = it },
+                        onDateSelected = onDateSelected,
                         editableRange = editableRange
                     )
                 } else {
@@ -275,8 +338,8 @@ fun ExpenseCalendarRoute(
                     Spacer(modifier = Modifier.height(16.dp))
                     WeekNavigator(
                         weekStart = displayedWeekStart,
-                        onPreviousWeek = { displayedWeekStart = displayedWeekStart.minusWeeks(1) },
-                        onNextWeek = { displayedWeekStart = displayedWeekStart.plusWeeks(1) }
+                        onPreviousWeek = onPreviousWeek,
+                        onNextWeek = onNextWeek
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     WeekCalendarRow(
@@ -284,7 +347,7 @@ fun ExpenseCalendarRoute(
                         referenceToday = referenceToday,
                         selectedDate = selectedDate,
                         summaryByDate = summaryByDate,
-                        onDateSelected = { selectedDate = it }
+                        onDateSelected = onDateSelected
                     )
                 }
                 }
@@ -299,7 +362,7 @@ fun ExpenseCalendarRoute(
                 item(contentType = "load_state") {
                     StaleDataRefreshBanner(
                         message = dayStaleFailureMessage,
-                        onRetry = viewModel::retryDay,
+                        onRetry = onRetryDay,
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
                 }
@@ -308,7 +371,7 @@ fun ExpenseCalendarRoute(
                 item(contentType = "load_state") {
                     InlineLoadErrorCard(
                         message = (dayLoadState as LoadState.Failure).message,
-                        onRetry = viewModel::retryDay
+                        onRetry = onRetryDay
                     )
                 }
             } else if (dayLoadingWithNoData) {
@@ -788,25 +851,134 @@ private fun ExpenseCalendarListItem(record: ExpenseRecord, onClick: () -> Unit, 
     }
 }
 
+private val PreviewCalendarReferenceToday: LocalDate = LocalDate.of(2026, 5, 20)
+
+private fun previewCalendarRecords(referenceToday: LocalDate): Map<String, ExpenseRecord> = listOf(
+    ExpenseRecord(
+        id = "cal1",
+        date = referenceToday,
+        amount = 12_000,
+        categoryId = "delivery",
+        expenseName = "배달의민족",
+        reasonId = "stress"
+    ),
+    ExpenseRecord(
+        id = "cal2",
+        date = referenceToday,
+        amount = 4_500,
+        categoryId = "cafe",
+        expenseName = "스타벅스"
+    ),
+    ExpenseRecord(
+        id = "cal3",
+        date = referenceToday.minusDays(3),
+        amount = 9_000,
+        categoryId = "convenience",
+        expenseName = "CU"
+    )
+).associateBy { it.id }
+
+private fun previewMonthSummary(referenceToday: LocalDate): ExpensePeriodSummary {
+    val monthStart = referenceToday.withDayOfMonth(1)
+    val monthEnd = YearMonth.from(referenceToday).atEndOfMonth()
+    return ExpensePeriodSummary(
+        periodStart = monthStart,
+        periodEnd = monthEnd,
+        totalAmount = 185_000,
+        dailyAverage = 12_300,
+        dailyBreakdown = listOf(
+            DailyAmount(referenceToday, 16_500),
+            DailyAmount(referenceToday.minusDays(3), 9_000),
+            DailyAmount(referenceToday.minusDays(6), 22_000)
+        )
+    )
+}
+
+private fun previewWeekSummary(referenceToday: LocalDate): ExpensePeriodSummary {
+    val weekStart = weekGridStart(referenceToday)
+    return ExpensePeriodSummary(
+        periodStart = weekStart,
+        periodEnd = weekStart.plusDays(6),
+        totalAmount = 45_000,
+        dailyAverage = 6_400,
+        dailyBreakdown = listOf(
+            DailyAmount(referenceToday, 16_500),
+            DailyAmount(referenceToday.minusDays(3), 9_000)
+        )
+    )
+}
+
 @Preview(showBackground = true, name = "8. 지출 캘린더 (월간)")
 @Composable
 private fun ExpenseCalendarMonthlyPreview() {
+    val referenceToday = PreviewCalendarReferenceToday
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
+        ExpenseCalendarContent(
+            referenceToday = referenceToday,
+            effectiveChallengePeriod = null,
+            restrictToChallengePeriod = false,
+            viewMode = ExpenseCalendarViewMode.MONTHLY,
+            onViewModeChange = {},
+            selectedDate = referenceToday,
+            onDateSelected = {},
+            displayedMonth = referenceToday.withDayOfMonth(1),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            displayedWeekStart = weekGridStart(referenceToday),
+            onPreviousWeek = {},
+            onNextWeek = {},
+            records = previewCalendarRecords(referenceToday),
+            monthSummary = previewMonthSummary(referenceToday),
+            weekSummary = previewWeekSummary(referenceToday),
+            monthLoadState = LoadState.Content(isEmpty = false),
+            weekLoadState = LoadState.Content(isEmpty = false),
+            dayLoadState = LoadState.Content(isEmpty = false),
+            isResting = false,
+            onBackClick = {},
+            onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
+            onRetryMonth = {},
+            onRetryWeek = {},
+            onRetryDay = {}
+        )
     }
 }
 
 @Preview(showBackground = true, name = "9. 지출 캘린더 (지출 없는 날)")
 @Composable
 private fun ExpenseCalendarEmptyDayPreview() {
-    val today = LocalDate.now()
+    val referenceToday = PreviewCalendarReferenceToday
+    val emptyDay = referenceToday.minusDays(1)
     HampouchTheme {
-        ExpenseCalendarRoute(
+        ExpenseCalendarContent(
+            referenceToday = referenceToday,
+            effectiveChallengePeriod = null,
+            restrictToChallengePeriod = false,
+            viewMode = ExpenseCalendarViewMode.MONTHLY,
+            onViewModeChange = {},
+            selectedDate = emptyDay,
+            onDateSelected = {},
+            displayedMonth = referenceToday.withDayOfMonth(1),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            displayedWeekStart = weekGridStart(referenceToday),
+            onPreviousWeek = {},
+            onNextWeek = {},
+            records = previewCalendarRecords(referenceToday),
+            monthSummary = previewMonthSummary(referenceToday),
+            weekSummary = previewWeekSummary(referenceToday),
+            monthLoadState = LoadState.Content(isEmpty = false),
+            weekLoadState = LoadState.Content(isEmpty = false),
+            dayLoadState = LoadState.Content(isEmpty = true),
+            isResting = false,
             onBackClick = {},
             onExpenseClick = {},
             onExpenseAnalysisClick = {},
             onAddExpenseClick = {},
-            referenceToday = today
+            onRetryMonth = {},
+            onRetryWeek = {},
+            onRetryDay = {}
         )
     }
 }
@@ -814,15 +986,37 @@ private fun ExpenseCalendarEmptyDayPreview() {
 @Preview(showBackground = true, name = "10. 지출 캘린더 (챌린지 종료)")
 @Composable
 private fun ExpenseCalendarChallengeEndedPreview() {
-    val today = remember { LocalDate.now() }
+    val referenceToday = PreviewCalendarReferenceToday
+    val challengePeriod = ExpenseDetailMockData.endedChallengePeriod(referenceToday)
     HampouchTheme {
-        ExpenseCalendarRoute(
+        ExpenseCalendarContent(
+            referenceToday = referenceToday,
+            effectiveChallengePeriod = challengePeriod,
+            restrictToChallengePeriod = false,
+            viewMode = ExpenseCalendarViewMode.MONTHLY,
+            onViewModeChange = {},
+            selectedDate = referenceToday,
+            onDateSelected = {},
+            displayedMonth = referenceToday.withDayOfMonth(1),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            displayedWeekStart = weekGridStart(referenceToday),
+            onPreviousWeek = {},
+            onNextWeek = {},
+            records = previewCalendarRecords(referenceToday),
+            monthSummary = previewMonthSummary(referenceToday),
+            weekSummary = previewWeekSummary(referenceToday),
+            monthLoadState = LoadState.Content(isEmpty = false),
+            weekLoadState = LoadState.Content(isEmpty = false),
+            dayLoadState = LoadState.Content(isEmpty = false),
+            isResting = false,
             onBackClick = {},
             onExpenseClick = {},
             onExpenseAnalysisClick = {},
             onAddExpenseClick = {},
-            referenceToday = today,
-            challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today)
+            onRetryMonth = {},
+            onRetryWeek = {},
+            onRetryDay = {}
         )
     }
 }
@@ -830,24 +1024,74 @@ private fun ExpenseCalendarChallengeEndedPreview() {
 @Preview(showBackground = true, name = "11. 지출 캘린더 (주간)")
 @Composable
 private fun ExpenseCalendarWeeklyPreview() {
+    val referenceToday = PreviewCalendarReferenceToday
     HampouchTheme {
-        ExpenseCalendarRoute(onBackClick = {}, onExpenseClick = {}, onExpenseAnalysisClick = {}, onAddExpenseClick = {})
+        ExpenseCalendarContent(
+            referenceToday = referenceToday,
+            effectiveChallengePeriod = null,
+            restrictToChallengePeriod = false,
+            viewMode = ExpenseCalendarViewMode.WEEKLY,
+            onViewModeChange = {},
+            selectedDate = referenceToday,
+            onDateSelected = {},
+            displayedMonth = referenceToday.withDayOfMonth(1),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            displayedWeekStart = weekGridStart(referenceToday),
+            onPreviousWeek = {},
+            onNextWeek = {},
+            records = previewCalendarRecords(referenceToday),
+            monthSummary = previewMonthSummary(referenceToday),
+            weekSummary = previewWeekSummary(referenceToday),
+            monthLoadState = LoadState.Content(isEmpty = false),
+            weekLoadState = LoadState.Content(isEmpty = false),
+            dayLoadState = LoadState.Content(isEmpty = false),
+            isResting = false,
+            onBackClick = {},
+            onExpenseClick = {},
+            onExpenseAnalysisClick = {},
+            onAddExpenseClick = {},
+            onRetryMonth = {},
+            onRetryWeek = {},
+            onRetryDay = {}
+        )
     }
 }
 
 @Preview(showBackground = true, name = "12. 지출 캘린더 (챌린지 종료 후 수정 - 제한 모드)")
 @Composable
 private fun ExpenseCalendarChallengeEndEditPreview() {
-    val today = remember { LocalDate.now() }
+    val referenceToday = PreviewCalendarReferenceToday
+    val challengePeriod = ExpenseDetailMockData.endedChallengePeriod(referenceToday)
     HampouchTheme {
-        ExpenseCalendarRoute(
+        ExpenseCalendarContent(
+            referenceToday = referenceToday,
+            effectiveChallengePeriod = challengePeriod,
+            restrictToChallengePeriod = true,
+            viewMode = ExpenseCalendarViewMode.MONTHLY,
+            onViewModeChange = {},
+            selectedDate = challengePeriod.endDate,
+            onDateSelected = {},
+            displayedMonth = challengePeriod.endDate.withDayOfMonth(1),
+            onPreviousMonth = {},
+            onNextMonth = {},
+            displayedWeekStart = weekGridStart(referenceToday),
+            onPreviousWeek = {},
+            onNextWeek = {},
+            records = previewCalendarRecords(referenceToday),
+            monthSummary = previewMonthSummary(referenceToday),
+            weekSummary = previewWeekSummary(referenceToday),
+            monthLoadState = LoadState.Content(isEmpty = false),
+            weekLoadState = LoadState.Content(isEmpty = false),
+            dayLoadState = LoadState.Content(isEmpty = false),
+            isResting = false,
             onBackClick = {},
             onExpenseClick = {},
             onExpenseAnalysisClick = {},
             onAddExpenseClick = {},
-            referenceToday = today,
-            challengePeriod = ExpenseDetailMockData.endedChallengePeriod(today),
-            restrictToChallengePeriod = true
+            onRetryMonth = {},
+            onRetryWeek = {},
+            onRetryDay = {}
         )
     }
 }

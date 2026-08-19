@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface AccountSettingsEvent {
-    data object LoggedOut : AccountSettingsEvent
+    data class LoggedOut(val isWithdrawal: Boolean) : AccountSettingsEvent
 
     data class ShowMessage(val message: String) : AccountSettingsEvent
 }
@@ -40,7 +40,7 @@ class AccountSettingsViewModel @Inject constructor(
             authRepository.withdraw()
                 .onSuccess {
                     homeWidgetStatePublisher.publishLoggedOut()
-                    _events.send(AccountSettingsEvent.LoggedOut)
+                    _events.send(AccountSettingsEvent.LoggedOut(isWithdrawal = true))
                 }
                 .onFailure { error ->
                     _events.send(
@@ -59,7 +59,7 @@ class AccountSettingsViewModel @Inject constructor(
                     )
                 }
             homeWidgetStatePublisher.publishLoggedOut()
-            _events.send(AccountSettingsEvent.LoggedOut)
+            _events.send(AccountSettingsEvent.LoggedOut(isWithdrawal = false))
         }
     }
 }

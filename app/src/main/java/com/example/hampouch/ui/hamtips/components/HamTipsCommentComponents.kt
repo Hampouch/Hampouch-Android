@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.hamtips.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -21,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,11 +96,11 @@ fun HamTipsProfileAvatar(size: androidx.compose.ui.unit.Dp = 36.dp, modifier: Mo
             .background(HPGray5),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Filled.Person,
+        Image(
+            painter = painterResource(R.drawable.icon_normal_avatar),
             contentDescription = null,
-            tint = HPWhite,
-            modifier = Modifier.size(size / 2)
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
@@ -141,6 +144,7 @@ fun HamTipsReplyRow(
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Spacer(modifier = Modifier.height(5.dp))
     Row(
         modifier = modifier.fillMaxWidth().padding(start = 46.dp, top = 10.dp),
         verticalAlignment = Alignment.Top

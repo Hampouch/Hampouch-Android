@@ -24,6 +24,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -59,7 +60,7 @@ private fun HamBattleRoomFullDialogCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
-                .background(HPSub4)
+                .background(HPSub3)
                 .padding(horizontal = 24.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

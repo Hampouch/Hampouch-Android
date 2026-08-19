@@ -24,6 +24,7 @@
     <string name="profile_edit_complete">완료</string>
     <string name="profile_edit_success_message">프로필이 수정되었습니다.</string>
     <string name="profile_edit_cd_camera">프로필 사진 변경</string>
+    <string name="profile_edit_cd_delete_photo">프로필 사진 삭제</string>
 
     <string name="settings_title">전체 설정</string>
     <string name="settings_section_notification">알림 설정</string>

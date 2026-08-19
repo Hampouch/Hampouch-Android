@@ -35,6 +35,7 @@ import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.ui.common.ScreenCenteredTopBar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPTipDiscountText
@@ -107,7 +108,7 @@ fun NotificationListItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .then(if (!item.isRead) Modifier.background(HPSub4) else Modifier)
+            .then(if (!item.isRead) Modifier.background(HPSub3) else Modifier)
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {

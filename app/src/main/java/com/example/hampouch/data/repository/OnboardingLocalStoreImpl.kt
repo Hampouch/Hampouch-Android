@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.hampouch.domain.model.ChallengePeriodType
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.ChallengePeriod
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
@@ -22,22 +23,23 @@ private const val KEY_TOTAL_TARGET = "total_target"
 private const val KEY_CATEGORY_IDS = "category_ids"
 
 @Singleton
-class OnboardingLocalStore @Inject constructor(
+class OnboardingLocalStoreImpl @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : OnboardingLocalStore {
 
     private var pendingRequest: OnboardingRequest? = null
 
     private val reservedByEmail = mutableMapOf<String, OnboardingRequest>()
     private var restoredFromPrefs = false
+    private var skipNextSplash = false
 
     private fun prefs() =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun hasCompletedOnboarding(): Boolean =
+    override fun hasCompletedOnboarding(): Boolean =
         prefs().getBoolean(KEY_HAS_COMPLETED, false)
 
-    fun restorePendingIfNeeded() {
+    override fun restorePendingIfNeeded() {
         if (restoredFromPrefs) return
         restoredFromPrefs = true
         val p = prefs()
@@ -63,7 +65,7 @@ class OnboardingLocalStore @Inject constructor(
         )
     }
 
-    fun captureOnboardingComplete(request: OnboardingRequest) {
+    override fun captureOnboardingComplete(request: OnboardingRequest) {
         pendingRequest = request
         val editor = prefs().edit()
             .putBoolean(KEY_HAS_COMPLETED, true)
@@ -86,17 +88,27 @@ class OnboardingLocalStore @Inject constructor(
         editor.apply()
     }
 
-    fun resetOnboarding() {
+    override fun resetOnboarding() {
         pendingRequest = null
         prefs().edit().clear().apply()
     }
 
-    fun reserveForNewAccount(email: String) {
+    override fun reserveForNewAccount(email: String) {
         val pending = pendingRequest ?: return
         pendingRequest = null
         prefs().edit().putBoolean(KEY_HAS_PENDING, false).apply()
         reservedByEmail[email] = pending
     }
 
-    fun takeReservedRequest(email: String): OnboardingRequest? = reservedByEmail.remove(email)
+    override fun takeReservedRequest(email: String): OnboardingRequest? = reservedByEmail.remove(email)
+
+    override fun markSkipNextSplash() {
+        skipNextSplash = true
+    }
+
+    override fun consumeSkipNextSplash(): Boolean {
+        val value = skipNextSplash
+        skipNextSplash = false
+        return value
+    }
 }

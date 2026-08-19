@@ -3,9 +3,6 @@ package com.example.hampouch.ui.mypage
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -25,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,7 +51,6 @@ import com.example.hampouch.ui.common.OrDivider
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
-import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -319,18 +314,6 @@ private fun ChangePasswordSubmitButton(
 
 @Composable
 private fun ChangePasswordEmailField(email: String) {
-    var emailInput by rememberSaveable { mutableStateOf(email) }
-    var isEmailFieldTouched by rememberSaveable { mutableStateOf(false) }
-    val emailInteractionSource = remember { MutableInteractionSource() }
-    val isEmailFieldFocused by emailInteractionSource.collectIsFocusedAsState()
-
-    LaunchedEffect(isEmailFieldFocused) {
-        if (isEmailFieldFocused && !isEmailFieldTouched) {
-            emailInput = ""
-            isEmailFieldTouched = true
-        }
-    }
-
     Text(
         text = stringResource(R.string.change_password_email_label),
         style = MaterialTheme.typography.bodyMedium,
@@ -342,20 +325,14 @@ private fun ChangePasswordEmailField(email: String) {
             .height(48.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(HPWhite)
-            .border(1.dp, HPGray5, RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        BasicTextField(
-            value = emailInput,
-            onValueChange = { emailInput = it },
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = if (isEmailFieldTouched) HPBlack else HPText
-            ),
-            singleLine = true,
-            interactionSource = emailInteractionSource,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+        Text(
+            text = email,
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack,
+            fontWeight = FontWeight.Bold
         )
     }
 }

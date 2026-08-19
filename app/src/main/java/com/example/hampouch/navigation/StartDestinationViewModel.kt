@@ -3,7 +3,7 @@ package com.example.hampouch.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
-import com.example.hampouch.data.repository.OnboardingLocalStore
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.data.repository.PendingChallengeResultStore
 import com.example.hampouch.data.repository.SessionStatus
 import com.example.hampouch.domain.model.AuthSession
@@ -127,8 +127,9 @@ class StartDestinationViewModel @Inject constructor(
         _pendingNicknameSession.value = null
     }
 
-    fun logout() {
+    fun logout(skipOnboardingSplash: Boolean = true) {
         pendingChallengeResultStore.clear()
+        if (skipOnboardingSplash) onboardingLocalStore.markSkipNextSplash()
         viewModelScope.launch { authRepository.clearSession() }
     }
 }

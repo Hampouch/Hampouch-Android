@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -74,6 +74,7 @@ import com.example.hampouch.ui.theme.HPTipRecruitBg
 import com.example.hampouch.ui.theme.HPTipRecruitText
 import com.example.hampouch.ui.theme.HPWhite
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HampouchTheme
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
@@ -136,11 +137,11 @@ fun ProfileAvatar(avatarUri: String?, modifier: Modifier = Modifier, size: andro
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            Icon(
-                imageVector = Icons.Filled.Person,
+            Image(
+                painter = painterResource(R.drawable.icon_normal_avatar),
                 contentDescription = stringResource(R.string.mypage_cd_profile_image),
-                tint = HPGray5,
-                modifier = Modifier.size(size / 2)
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
@@ -157,7 +158,7 @@ private fun ProfileAvatarPreview() {
 @Composable
 fun ProfileCard(
     name: String,
-    handle: String,
+    email: String,
     avatarUri: String?,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
@@ -166,7 +167,7 @@ fun ProfileCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(HPSub4)
+            .background(HPSub3)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = 20.dp, horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -184,7 +185,7 @@ fun ProfileCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.mypage_handle_format, handle),
+                text = email,
                 style = MaterialTheme.typography.bodySmall,
                 color = HPText
             )
@@ -205,7 +206,7 @@ private fun ProfileCardPreview() {
     HampouchTheme {
         ProfileCard(
             name = "민준",
-            handle = "minjun123",
+            email = "minjun123@example.com",
             avatarUri = null,
             onClick = {},
             modifier = Modifier.padding(16.dp)

@@ -106,25 +106,86 @@ fun LoginScreen(
         }
     }
 
+    LoginContent(
+        uiState = uiState,
+        visibleCompleteDialogMessage = visibleCompleteDialogMessage,
+        onDismissCompleteDialog = {
+            visibleCompleteDialogMessage = null
+            onCompleteDialogDismissed()
+        },
+        onSocialNicknameChange = viewModel::changeSocialNickname,
+        onCheckSocialNickname = viewModel::checkSocialNickname,
+        onCancelSocialSignUp = viewModel::cancelSocialSignUp,
+        onCompleteSocialSignUp = viewModel::completeSocialSignUp,
+        onKakaoLoginClick = {
+            SocialAuthManager.signInWithKakao(context) { result ->
+                result
+                    .onSuccess { credential ->
+                        viewModel.loginWithSocial(credential, "카카오 로그인에 실패했습니다.")
+                    }
+                    .onFailure { error ->
+                        Log.e(TAG, "카카오 로그인 실패", error)
+                        socialSignInErrorMessage(error, "카카오 로그인에 실패했습니다.")
+                            ?.let(viewModel::showError)
+                    }
+            }
+        },
+        onGoogleLoginClick = {
+            coroutineScope.launch {
+                SocialAuthManager.signInWithGoogle(context)
+                    .onSuccess { credential ->
+                        viewModel.loginWithSocial(credential, "구글 로그인에 실패했습니다.")
+                    }
+                    .onFailure { error ->
+                        Log.e(TAG, "구글 로그인 실패", error)
+                        socialSignInErrorMessage(error, "구글 로그인에 실패했습니다.")
+                            ?.let(viewModel::showError)
+                    }
+            }
+        },
+        onEmailChange = viewModel::changeEmail,
+        onPasswordChange = viewModel::changePassword,
+        onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
+        onLoginClick = viewModel::login,
+        onNavigateToSignUp = onNavigateToSignUp,
+        onNavigateToResetPassword = onNavigateToResetPassword
+    )
+}
+
+@Composable
+private fun LoginContent(
+    uiState: LoginUiState,
+    visibleCompleteDialogMessage: String?,
+    onDismissCompleteDialog: () -> Unit,
+    onSocialNicknameChange: (String) -> Unit,
+    onCheckSocialNickname: () -> Unit,
+    onCancelSocialSignUp: () -> Unit,
+    onCompleteSocialSignUp: () -> Unit,
+    onKakaoLoginClick: () -> Unit,
+    onGoogleLoginClick: () -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onLoginClick: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToResetPassword: () -> Unit
+) {
     visibleCompleteDialogMessage?.let { message ->
         CompleteDialog(
             message = message,
-            onDismiss = {
-                visibleCompleteDialogMessage = null
-                onCompleteDialogDismissed()
-            }
+            onDismiss = onDismissCompleteDialog
         )
     }
 
     if (uiState.pendingSocialSignUp != null) {
         SocialSignUpNicknameDialog(
             nickname = uiState.socialNickname,
-            onNicknameChange = viewModel::changeSocialNickname,
-            onCheckNickname = viewModel::checkSocialNickname,
+            onNicknameChange = onSocialNicknameChange,
+            onCheckNickname = onCheckSocialNickname,
             nicknameCheckMessage = uiState.socialNicknameCheckMessage,
             isSignUpEnabled = uiState.isSocialNicknameAvailable,
-            onBack = viewModel::cancelSocialSignUp,
-            onSignUp = viewModel::completeSocialSignUp
+            onBack = onCancelSocialSignUp,
+            onSignUp = onCompleteSocialSignUp
         )
     }
 
@@ -155,38 +216,14 @@ fun LoginScreen(
                 iconRes = R.drawable.login_kakao,
                 iconDescription = "kakao_login",
                 label = "카카오로 계속하기",
-                onClick = {
-                    SocialAuthManager.signInWithKakao(context) { result ->
-                        result
-                            .onSuccess { credential ->
-                                viewModel.loginWithSocial(credential, "카카오 로그인에 실패했습니다.")
-                            }
-                            .onFailure { error ->
-                                Log.e(TAG, "카카오 로그인 실패", error)
-                                socialSignInErrorMessage(error, "카카오 로그인에 실패했습니다.")
-                                    ?.let(viewModel::showError)
-                            }
-                    }
-                }
+                onClick = onKakaoLoginClick
             )
             Spacer(modifier = Modifier.size(10.dp))
             SocialLoginButton(
                 iconRes = R.drawable.login_google,
                 iconDescription = "google_login",
                 label = "구글로 계속하기",
-                onClick = {
-                    coroutineScope.launch {
-                        SocialAuthManager.signInWithGoogle(context)
-                            .onSuccess { credential ->
-                                viewModel.loginWithSocial(credential, "구글 로그인에 실패했습니다.")
-                            }
-                            .onFailure { error ->
-                                Log.e(TAG, "구글 로그인 실패", error)
-                                socialSignInErrorMessage(error, "구글 로그인에 실패했습니다.")
-                                    ?.let(viewModel::showError)
-                            }
-                    }
-                }
+                onClick = onGoogleLoginClick
             )
 
             Spacer(modifier = Modifier.size(30.dp))
@@ -197,7 +234,7 @@ fun LoginScreen(
                 LoginTextField(
                     label = "이메일",
                     value = uiState.email,
-                    onValueChange = viewModel::changeEmail,
+                    onValueChange = onEmailChange,
                     placeholder = "hampouch@example.com",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -208,7 +245,7 @@ fun LoginScreen(
                 LoginTextField(
                     label = "비밀번호",
                     value = uiState.password,
-                    onValueChange = viewModel::changePassword,
+                    onValueChange = onPasswordChange,
                     placeholder = "비밀번호를 입력해주세요.",
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
@@ -220,7 +257,7 @@ fun LoginScreen(
                         PasswordVisualTransformation()
                     },
                     trailingIcon = {
-                        IconButton(onClick = viewModel::togglePasswordVisibility) {
+                        IconButton(onClick = onTogglePasswordVisibility) {
                             Image(
                                 modifier = Modifier.size(20.dp),
                                 painter = painterResource(
@@ -246,7 +283,7 @@ fun LoginScreen(
             }
             Spacer(modifier = Modifier.size(30.dp))
             Button(
-                onClick = viewModel::login,
+                onClick = onLoginClick,
                 enabled = !uiState.isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -308,6 +345,32 @@ private fun SocialLoginButton(
 @Composable
 fun LoginScreenPreview() {
     HampouchTheme {
-        LoginScreen(onLoginSuccess = {}, onNavigateToSignUp = {}, onNavigateToResetPassword = {})
+        LoginContent(
+            uiState = LoginUiState(
+                email = "hampouch@example.com",
+                password = "password123",
+                isPasswordVisible = false,
+                isSubmitting = false,
+                errorMessage = null,
+                pendingSocialSignUp = null,
+                socialNickname = "",
+                isSocialNicknameAvailable = false,
+                socialNicknameCheckMessage = null
+            ),
+            visibleCompleteDialogMessage = null,
+            onDismissCompleteDialog = {},
+            onSocialNicknameChange = {},
+            onCheckSocialNickname = {},
+            onCancelSocialSignUp = {},
+            onCompleteSocialSignUp = {},
+            onKakaoLoginClick = {},
+            onGoogleLoginClick = {},
+            onEmailChange = {},
+            onPasswordChange = {},
+            onTogglePasswordVisibility = {},
+            onLoginClick = {},
+            onNavigateToSignUp = {},
+            onNavigateToResetPassword = {}
+        )
     }
 }

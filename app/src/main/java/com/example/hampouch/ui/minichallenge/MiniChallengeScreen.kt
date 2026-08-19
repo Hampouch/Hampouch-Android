@@ -285,6 +285,18 @@ private fun MiniChallengeDashboardScreen(
 @Composable
 private fun MiniChallengeScreenPreview() {
     HampouchTheme {
-        MiniChallengeScreen(onBackClick = {}, onNotificationClick = {})
+        MiniChallengeDashboardScreen(
+            selectedDate = LocalDate.now(),
+            onDateSelected = {},
+            todayChallenges = emptyList(),
+            recommendedChallenges = emptyList(),
+            onToggleChallenge = {},
+            onDeleteChallenge = {},
+            onAddRecommendedChallenge = {},
+            onBackClick = {},
+            onNotificationClick = {},
+            onStartNewChallengeClick = {},
+            onViewAllRecommendedClick = {}
+        )
     }
 }

@@ -14,10 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +56,8 @@ import com.example.hampouch.ui.expensedetail.formatWon
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub2
+import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
@@ -134,12 +135,12 @@ fun ExpenseInputRoute(
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.imePadding(),
         topBar = {
             ExpenseInputTopBar(
                 title = stringResource(R.string.expenseinput_title),
                 onBackClick = { if (step > 1) onStepChanged(step - 1) else onBackClick() },
-                containerColor = if (step == 1) HPSub4 else HPWhite
+                containerColor = if (step == 1) HPSub3 else HPWhite
             )
         },
         containerColor = HPWhite
@@ -178,7 +179,7 @@ fun ExpenseInputRoute(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp)
             ) {
                 ExpenseInputDetailStep(
@@ -338,7 +339,7 @@ private fun ExpenseInputAmountStep(
     primaryButton: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.background(HPSub4)) {
+    Column(modifier = modifier.background(HPSub3)) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(

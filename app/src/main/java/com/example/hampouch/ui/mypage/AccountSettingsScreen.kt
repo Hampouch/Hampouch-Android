@@ -45,7 +45,7 @@ fun AccountSettingsScreen(
     onBackClick: () -> Unit,
     onProfileEditClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
-    onLoggedOut: () -> Unit,
+    onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onNotificationClick: () -> Unit,
     viewModel: AccountSettingsViewModel = hiltViewModel()
@@ -55,7 +55,7 @@ fun AccountSettingsScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                AccountSettingsEvent.LoggedOut -> onLoggedOut()
+                is AccountSettingsEvent.LoggedOut -> onLoggedOut(event.isWithdrawal)
                 is AccountSettingsEvent.ShowMessage ->
                     Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
             }
@@ -101,7 +101,7 @@ private fun AccountSettingsContent(
         ) {
             ProfileCard(
                 name = profile.name,
-                handle = profile.handle,
+                email = profile.email,
                 avatarUri = profile.avatarUri
             )
             Spacer(modifier = Modifier.height(20.dp))
