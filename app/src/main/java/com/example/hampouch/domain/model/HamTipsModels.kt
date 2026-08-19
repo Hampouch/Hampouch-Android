@@ -19,7 +19,6 @@ enum class TipPostType {
 sealed interface TipPostDetail {
     data object Tip : TipPostDetail
 
-    /** 목록 API에는 subtype 상세가 없으므로 종류만 보존하고, 상세 조회 결과와 혼동하지 않는다. */
     data class Summary(val type: TipPostType) : TipPostDetail
 
     data class Menu(
@@ -46,7 +45,6 @@ data class MenuRatingInfo(
     val average: Float get() = (taste + costEffectiveness + mood) / 3f
 }
 
-/** 서버가 요구하는 햄배틀 초대 URL 형식(https://invite.hampouch.com/battles/invite/{battleCode})으로 변환합니다. */
 fun communityBattleInviteUrl(battleCode: String): String =
     "https://invite.hampouch.com/battles/invite/$battleCode"
 

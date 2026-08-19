@@ -22,8 +22,6 @@ val hasGoogleServicesConfig = file("google-services.json").isFile ||
     file("src/debug/google-services.json").isFile ||
     file("src/release/google-services.json").isFile
 
-// Firebase Analytics를 실제로 사용할 로컬/배포 환경에서만 설정 파일을 처리한다.
-// CI와 새 checkout의 컴파일·lint·unit test는 비밀 설정 파일 없이도 실행할 수 있다.
 if (!skipGoogleServices && hasGoogleServicesConfig) {
     apply(plugin = "com.google.gms.google-services")
 }

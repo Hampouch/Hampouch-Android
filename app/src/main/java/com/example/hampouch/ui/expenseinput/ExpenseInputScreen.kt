@@ -213,7 +213,6 @@ fun ExpenseInputRoute(
             ) {
                 ExpenseInputPrimaryButton(
                     label = stringResource(R.string.expenseinput_next_button),
-                    // 모든 입력이 선택 사항이라 항상 저장할 수 있다.
                     enabled = true,
                     onClick = { showSaveConfirmDialog = true }
                 )
@@ -265,7 +264,6 @@ fun ExpenseInputRoute(
             onCancel = { showSkipPromptDialog = false },
             onSkip = {
                 showSkipPromptDialog = false
-                // 0원 지출을 만드는 게 아니라 no_spend_day 기록이라 상세 입력 단계로 가지 않는다.
                 onNoSpendingToday()
             }
         )

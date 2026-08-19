@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
 import com.example.hampouch.ui.theme.HPStar
+import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
@@ -215,24 +217,51 @@ private fun HamTipsWriteTextFieldPreview() {
     }
 }
 
+private fun Modifier.dashedBorder(
+    color: Color,
+    cornerRadius: androidx.compose.ui.unit.Dp,
+    strokeWidth: androidx.compose.ui.unit.Dp = 1.dp,
+    dashWidth: androidx.compose.ui.unit.Dp = 6.dp,
+    gapWidth: androidx.compose.ui.unit.Dp = 4.dp
+): Modifier = drawWithContent {
+    drawContent()
+    drawRoundRect(
+        color = color,
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx()),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = strokeWidth.toPx(),
+            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                floatArrayOf(dashWidth.toPx(), gapWidth.toPx())
+            )
+        )
+    )
+}
+
 @Composable
 fun HamTipsTitlePreviewBox(previewText: String, modifier: Modifier = Modifier) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(HPWhite)
-            .border(1.dp, HPMain, RoundedCornerShape(12.dp))
+            .background(HPSub4)
+            .dashedBorder(color = HPSub2, cornerRadius = 12.dp)
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
+        Text(
+            text = stringResource(R.string.hamtips_write_menu_title_preview_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         if (previewText.isEmpty()) {
             Text(
                 text = stringResource(R.string.hamtips_write_menu_title_preview_placeholder),
                 style = MaterialTheme.typography.bodyMedium,
-                color = HPGray5
+                color = HPText
             )
         } else {
-            Text(text = previewText, style = MaterialTheme.typography.bodyMedium, color = HPMain, fontWeight = FontWeight.Bold)
+            Text(text = previewText, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
         }
     }
 }
@@ -242,6 +271,14 @@ fun HamTipsTitlePreviewBox(previewText: String, modifier: Modifier = Modifier) {
 private fun HamTipsTitlePreviewBoxPreview() {
     HampouchTheme {
         HamTipsTitlePreviewBox(previewText = "편의점 1+1 활용 꿀팁", modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Preview(showBackground = true, name = "햄팁 제목 미리보기 박스 (빈 값)")
+@Composable
+private fun HamTipsTitlePreviewBoxEmptyPreview() {
+    HampouchTheme {
+        HamTipsTitlePreviewBox(previewText = "", modifier = Modifier.padding(16.dp))
     }
 }
 

@@ -70,7 +70,6 @@ class ChallengeResultMockDataTest {
             streakDays = 0,
             editCount = 0,
             abandonedDate = today,
-            // 서버가 "포기" 상태를 SUCCESS/FAIL이 아닌 별도 문자열로 내려주는 경우를 가정.
             remoteStatus = "GIVEN_UP"
         )
         val active = ActiveChallenge(
@@ -84,7 +83,6 @@ class ChallengeResultMockDataTest {
             streakDays = 0,
             editCount = 0
         )
-        // upsertChallenge와 동일하게 periodStart 오름차순, 포기된 챌린지가 먼저 들어간 상태를 재현한다.
         val state = ChallengeState(challenges = listOf(abandoned, active))
 
         val abandonedResult = ChallengeResultMockData.forChallenge(
@@ -109,9 +107,6 @@ class ChallengeResultMockDataTest {
     @Test
     fun `세션이 바뀌어 로컬 포기 기록이 없어도 서버가 FAIL을 내려주면 실패로 표시된다`() {
         val today = LocalDate.of(2026, 8, 16)
-        // abandonedDate가 세팅되지 않은 상태(= 앱을 재시작해 로컬 포기 기록이 사라진 상황)를 재현한다.
-        // 아직 원래 종료일(오늘+6일) 전이라 날짜만 보면 "진행중"처럼 보이지만,
-        // 서버는 이미 FAIL(포기 처리)로 응답한다.
         val challenge = ActiveChallenge(
             id = "old",
             totalDays = 7,

@@ -153,6 +153,15 @@ class UsersRepositoryImpl @Inject constructor(
         )
     }
 
+    private fun resolveDayMode(days: Set<DayOfWeekLabel>): ReminderDayMode = when (days) {
+        setOf(
+            DayOfWeekLabel.MON, DayOfWeekLabel.TUE, DayOfWeekLabel.WED, DayOfWeekLabel.THU, DayOfWeekLabel.FRI
+        ) -> ReminderDayMode.WEEKDAY
+        setOf(DayOfWeekLabel.SAT, DayOfWeekLabel.SUN) -> ReminderDayMode.WEEKEND
+        DayOfWeekLabel.entries.toSet() -> ReminderDayMode.DAILY
+        else -> ReminderDayMode.CUSTOM
+    }
+
     private fun applyScheduleData(data: UsersNotificationScheduleData) {
         recordAlarmRepository.update { current ->
             val days = data.recordAlert.missingInput.days
@@ -163,7 +172,7 @@ class UsersRepositoryImpl @Inject constructor(
             val minute = timeParts.getOrNull(1)?.toIntOrNull() ?: current.minute
             current.copy(
                 missingReminderEnabled = data.recordAlert.missingInput.enabled,
-                dayMode = ReminderDayMode.CUSTOM,
+                dayMode = resolveDayMode(days),
                 selectedDays = days,
                 hour = hour,
                 minute = minute

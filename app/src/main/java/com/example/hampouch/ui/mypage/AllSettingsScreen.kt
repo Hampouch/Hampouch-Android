@@ -86,6 +86,7 @@ private fun AllSettingsContent(
     modifier: Modifier = Modifier
 ) {
     var showComingSoonDialog by remember { mutableStateOf(false) }
+    var marketingAlarmEnabled by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -102,7 +103,15 @@ private fun AllSettingsContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            AllSettingsNotificationSection(recordAlarmState = recordAlarmState, actions = actions)
+            AllSettingsNotificationSection(
+                recordAlarmState = recordAlarmState,
+                actions = actions,
+                marketingAlarmEnabled = marketingAlarmEnabled,
+                onMarketingAlarmToggle = {
+                    marketingAlarmEnabled = true
+                    showComingSoonDialog = true
+                }
+            )
             Spacer(modifier = Modifier.height(24.dp))
             AllSettingsDataAndSupportSection(onComingSoonClick = { showComingSoonDialog = true })
             Spacer(modifier = Modifier.height(24.dp))
@@ -111,9 +120,17 @@ private fun AllSettingsContent(
 
     if (showComingSoonDialog) {
         AlertDialog(
-            onDismissRequest = { showComingSoonDialog = false },
+            onDismissRequest = {
+                showComingSoonDialog = false
+                marketingAlarmEnabled = false
+            },
             confirmButton = {
-                TextButton(onClick = { showComingSoonDialog = false }) {
+                TextButton(
+                    onClick = {
+                        showComingSoonDialog = false
+                        marketingAlarmEnabled = false
+                    }
+                ) {
                     Text(stringResource(R.string.common_confirm))
                 }
             },
@@ -125,7 +142,9 @@ private fun AllSettingsContent(
 @Composable
 private fun AllSettingsNotificationSection(
     recordAlarmState: RecordAlarmSettingsState,
-    actions: AllSettingsActions
+    actions: AllSettingsActions,
+    marketingAlarmEnabled: Boolean,
+    onMarketingAlarmToggle: () -> Unit
 ) {
     val context = LocalContext.current
     val timePickerDialog = remember(recordAlarmState.hour, recordAlarmState.minute) {
@@ -170,9 +189,9 @@ private fun AllSettingsNotificationSection(
         SettingsToggleCard(
             title = stringResource(R.string.settings_marketing_alarm_title),
             subtitle = stringResource(R.string.settings_marketing_alarm_subtitle),
-            checked = false,
-            onCheckedChange = {},
-            onRowClick = null
+            checked = marketingAlarmEnabled,
+            onCheckedChange = { checked -> if (checked) onMarketingAlarmToggle() },
+            onRowClick = { if (!marketingAlarmEnabled) onMarketingAlarmToggle() }
         )
     }
 }

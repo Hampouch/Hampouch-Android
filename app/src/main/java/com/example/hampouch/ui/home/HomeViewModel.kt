@@ -50,7 +50,6 @@ class HomeViewModel @Inject constructor(
 
     val records: StateFlow<Map<String, ExpenseRecord>> = expenseRepository.records
 
-    /** 지출이 있거나 "오늘은 안 썼어요"를 누른 날짜들. */
     val daysWithRecord: StateFlow<Set<LocalDate>> = expenseRepository.daysWithRecord
 
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)

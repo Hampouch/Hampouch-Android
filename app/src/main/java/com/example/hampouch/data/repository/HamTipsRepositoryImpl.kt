@@ -72,7 +72,9 @@ class HamTipsRepositoryImpl @Inject constructor(
     private val activeUserId: String get() = authRepository.currentUser.value.id
     private val activeUserName: String get() = authRepository.currentUser.value.name
 
-    private val _posts = MutableStateFlow(mockDataSource.allPosts())
+    private val _posts = MutableStateFlow(
+        if (CommunityConfig.USE_SERVER_COMMUNITY) emptyList() else mockDataSource.allPosts()
+    )
     override val posts: StateFlow<List<TipPost>> = _posts.asStateFlow()
 
     private var nextId = 1000
@@ -133,15 +135,12 @@ class HamTipsRepositoryImpl @Inject constructor(
     }
 
     private fun parseCreatedAt(createdAt: String): LocalDateTime? = try {
-        // Plain "yyyy-MM-ddTHH:mm:ss[.SSS]" (no zone/offset), the common Spring LocalDateTime serialization.
         LocalDateTime.parse(createdAt)
     } catch (e: DateTimeParseException) {
         try {
-            // "yyyy-MM-ddTHH:mm:ss+09:00" style offsets.
             OffsetDateTime.parse(createdAt).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
         } catch (e2: DateTimeParseException) {
             try {
-                // "yyyy-MM-ddTHH:mm:ssZ" UTC instants.
                 Instant.parse(createdAt).atZone(ZoneId.systemDefault()).toLocalDateTime()
             } catch (e3: DateTimeParseException) {
                 Log.w(TAG, "Failed to parse createdAt=$createdAt", e3)

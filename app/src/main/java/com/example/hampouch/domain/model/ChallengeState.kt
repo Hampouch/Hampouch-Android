@@ -9,13 +9,6 @@ data class ChallengeState(
     val noRecordDates: Set<LocalDate> = emptySet()
 ) {
 
-    // 리스트의 마지막 요소를 그대로 쓰면 안 된다: challenges는 periodStart 기준으로 정렬되는데,
-    // 포기 후 같은 날 새 챌린지를 만들면 periodStart가 같아지고, 그 상태에서 리스트에 항목이
-    // 쌓인 순서(어떤 API 응답이 먼저 들어왔는지)에 따라 이미 포기/실패한 챌린지가 마지막에 남을
-    // 수 있다. 그래서 끝나지 않은(isTerminal == false) 챌린지 중 가장 최근에 시작한 것을
-    // "현재 챌린지"로 판단한다. isTerminal은 로컬 abandonedDate뿐 아니라 서버가 내려준
-    // remoteStatus == "FAIL"도 함께 보므로, 앱 재시작 후 서버 히스토리로만 상태를 알게 된
-    // 챌린지도 정상적으로 걸러진다.
     val activeChallenge: ActiveChallenge?
         get() = challenges.filterNot { it.isTerminal }.maxByOrNull { it.periodStart }
 

@@ -270,7 +270,6 @@ fun ChallengeBanner(
     }
 }
 
-// 홈 화면 위젯(ui/widget)에서도 동일한 캐릭터 매핑을 재사용한다.
 private val PreviewHomeChallenge = HomeChallenge(
     totalDays = 14,
     dDay = 7,
@@ -548,7 +547,6 @@ fun ExpenseItemCard(entry: ExpenseEntry, onClick: () -> Unit, modifier: Modifier
     val category = HomeCategoryCatalog.byId(entry.categoryId)
     val icon = category?.icon ?: HomeCategoryCatalog.defaultIcon
     val accentColor = category?.accentColor ?: HomeCategoryCatalog.defaultColor
-    // 카테고리를 고르지 않았으면 줄 자체를 그리지 않는다. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
     val categoryLabel = entry.customCategoryName
         ?: category?.let { stringResource(it.labelResId) }
 
@@ -820,42 +818,34 @@ private fun ExpenseItemCardBranchPreview() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 이름 + 카테고리 + 이유
             ExpenseItemCard(
                 ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
                 onClick = {}
             )
-            // 이유 없음
             ExpenseItemCard(
                 ExpenseEntry(id = "2", categoryId = "cafe", name = "스타벅스", amount = 4_500),
                 onClick = {}
             )
-            // 카테고리 미선택
             ExpenseItemCard(
                 ExpenseEntry(id = "3", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
                 onClick = {}
             )
-            // '기타'를 명시적으로 선택
             ExpenseItemCard(
                 ExpenseEntry(id = "4", categoryId = "etc", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
                 onClick = {}
             )
-            // 이름 없음
             ExpenseItemCard(
                 ExpenseEntry(id = "5", categoryId = "cafe", reasonTag = "스트레스", amount = 4_500),
                 onClick = {}
             )
-            // 이름·카테고리 없음
             ExpenseItemCard(
                 ExpenseEntry(id = "6", reasonTag = "스트레스", amount = 4_500),
                 onClick = {}
             )
-            // 전부 없음
             ExpenseItemCard(
                 ExpenseEntry(id = "7", amount = 4_500),
                 onClick = {}
             )
-            // 직접 입력 카테고리 + 직접 입력 이유
             ExpenseItemCard(
                 ExpenseEntry(id = "8", customCategoryName = "직접입력한카테고리", name = "지출내역", reasonTag = "감정태깅", amount = 0),
                 onClick = {}

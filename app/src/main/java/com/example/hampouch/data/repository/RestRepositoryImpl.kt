@@ -81,7 +81,6 @@ class RestRepositoryImpl @Inject constructor(
         }
     }
 
-    /** 휴식 종료 알림에서 "더 쉬기"를 골랐을 때 — 이미 휴식 중이므로 시작이 아니라 연장(resume EXTEND)을 호출한다. */
     override suspend fun extendBreak(period: RestPeriod): Result<Unit> {
         if (!RestConfig.USE_SERVER_REST) {
             val days = resolveRestDays(period).toLong()

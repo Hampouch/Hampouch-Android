@@ -77,7 +77,6 @@ fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).forma
 
 internal const val FocusHandoffDelayMillis: Long = 60L
 
-/** Int로 안전하게 변환 가능한 자리수 상한(최대 999,999,999 < Int.MAX_VALUE)으로, 오버플로로 인한 서식·값 갱신 중단을 막는다. */
 private const val MaxAmountInputDigits = 9
 
 @Composable

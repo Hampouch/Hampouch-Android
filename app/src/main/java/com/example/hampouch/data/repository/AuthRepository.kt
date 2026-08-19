@@ -97,7 +97,6 @@ internal fun Response<ApiResponse<AuthMeData>>.toSessionStatus(): SessionStatus 
 class AuthRepository @Inject constructor(
     @AuthDataStore private val authDataStore: DataStore<Preferences>,
     private val apiService: AuthApi,
-    /** [AccountDataCoordinator]가 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
     private val accountDataCoordinator: Provider<AccountDataCoordinator>,
     private val onboardingLocalStore: OnboardingLocalStore
 ) : AuthTokenProvider {

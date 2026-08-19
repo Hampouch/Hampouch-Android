@@ -355,7 +355,7 @@ fun AppNavHost(
             LoadingStep(
                 onTimeout = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Loading.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -1074,8 +1074,6 @@ fun AppNavHost(
             SideEffect {
                 if (currentChallenge != null) retainedChallenge = currentChallenge
             }
-            // 포기 성공으로 activeChallenge가 사라져도 완료 이벤트를 수신해 결과 화면으로
-            // 이동할 때까지 기존 화면과 이벤트 collector를 유지한다.
             val adjustmentChallenge = currentChallenge ?: retainedChallenge ?: return@composable
             AmountAdjustmentRoute(
                 challenge = adjustmentChallenge,

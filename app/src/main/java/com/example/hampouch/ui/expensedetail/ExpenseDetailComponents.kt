@@ -109,10 +109,6 @@ fun resolveCategoryLabel(categoryId: String?, customCategoryName: String?): Stri
     resolveCategoryLabelOrNull(categoryId, customCategoryName)
         ?: stringResource(R.string.category_etc)
 
-/**
- * 카테고리를 고르지 않았으면 null. "기타"는 사용자가 명시적으로 고른 경우에만 나온다.
- * 라벨을 생략할 수 있는 화면(홈 카드, 저장 확인)에서 쓴다.
- */
 @Composable
 fun resolveCategoryLabelOrNull(categoryId: String?, customCategoryName: String?): String? =
     customCategoryName ?: HomeCategoryCatalog.byId(categoryId)?.let { stringResource(it.labelResId) }

@@ -50,4 +50,3 @@ data class ExpenseEntry(
     val reasonTag: String? = null,
     val amount: Int
 )
-

@@ -44,7 +44,6 @@ class HamBattleViewModel @Inject constructor(
 
     fun retry() = retryAction?.invoke()
 
-    /** 목데이터 모드 전용 상태. 서버 모드에서는 항상 빈 목록이다. */
     val mockChallenges: StateFlow<List<HamBattleChallenge>> = mockStore.challenges
 
     fun mockChallengesWith(status: HamBattleStatus, referenceToday: LocalDate = LocalDate.now()) =

@@ -260,7 +260,6 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding)
                 )
 
-                // "오늘은 안 썼어요"는 지출 목록에 안 잡히므로 서버의 hasRecord도 함께 본다.
                 val hasExpenseToday = recordsForDate(referenceToday).isNotEmpty() ||
                     referenceToday in daysWithRecord
                 when {

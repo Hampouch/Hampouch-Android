@@ -97,7 +97,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         setChallengesForDate(date, challengesFor(date).filterNot { it.id == id })
     }
 
-    /** 중복 이름이면 추가하지 않고 false. */
     private fun addLocal(date: LocalDate, name: String, duration: MiniChallengeDuration): Boolean {
         val trimmedName = validMiniChallengeNameOrNull(name) ?: return false
         if (_state.value.isNameTaken(date, trimmedName)) return false
@@ -145,14 +144,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추천 목록 조회") }
     }
 
-    /**
-     * 추천 카탈로그의 [recommended]를 내 미니 챌린지로 추가한다.
-     *
-     * 서버(/api/mini-challenges) 요청에는 날짜 필드가 없으므로 [date](화면에서 보고 있던 탭)는 실제 생성
-     * 결과와 무관하다. 서버 모드에서는 생성 응답의 startDate를 반환한다. 성공 시 반환되는 날짜가 실제로
-     * 새 항목이 추가된 날짜이므로, 호출한 화면은 그 날짜로 선택 탭을 옮겨야 방금 추가한 항목을 바로 볼 수 있다.
-     * 중복 이름 등으로 추가되지 않으면 실패 [Result]를 반환한다.
-     */
     override suspend fun addRecommended(date: LocalDate, recommended: RecommendedMiniChallenge): Result<LocalDate> {
         if (!MiniChallengeConfig.USE_SERVER_MINI_CHALLENGE) {
             val added = addRecommendedLocal(date, recommended)
@@ -180,9 +171,6 @@ class MiniChallengeRepositoryImpl @Inject constructor(
         }.onFailure { rethrowIfCancelled(it, "미니 챌린지 추가(추천)") }
     }
 
-    /**
-     * 커스텀 미니 챌린지를 새로 만든다. [addRecommended]와 동일하게 서버 생성 응답의 startDate를 반환한다.
-     */
     override suspend fun addCustom(
         date: LocalDate,
         name: String,
