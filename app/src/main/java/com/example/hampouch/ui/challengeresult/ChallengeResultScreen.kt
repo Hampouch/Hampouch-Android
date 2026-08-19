@@ -73,12 +73,14 @@ import kotlinx.coroutines.launch
 
 private fun formatPeriodDate(date: LocalDate): String = "${date.monthValue}월 ${date.dayOfMonth}일"
 
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun ChallengeResultScreen(
     state: ChallengeResultUiState = ChallengeResultMockData.inProgress(previewChallengeState(), recordsForDate = { emptyList() }),
     onBackClick: () -> Unit,
     showBackButton: Boolean = true,
     showFollowUpActions: Boolean = true,
+    showShareAction: Boolean = showFollowUpActions,
     onExpenseAnalysisClick: () -> Unit,
     onAdjustGoalClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -189,7 +191,7 @@ fun ChallengeResultScreen(
                 )
             }
 
-            if (isFinished && showFollowUpActions) {
+            if (isFinished && (showShareAction || showFollowUpActions)) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Column(
                     modifier = Modifier
@@ -197,6 +199,8 @@ fun ChallengeResultScreen(
                         .padding(horizontal = 20.dp)
                 ) {
                     ChallengeResultBottomActions(
+                        showShareAction = showShareAction,
+                        showFollowUpActions = showFollowUpActions,
                         onShareClick = { showShareOptionsDialog = true },
                         onStartNewChallengeClick = {
                             if (state.status == ChallengeResultStatus.FAIL) {
