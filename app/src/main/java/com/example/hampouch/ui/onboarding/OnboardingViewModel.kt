@@ -7,7 +7,6 @@ import com.example.hampouch.domain.model.OnboardingRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,11 +100,14 @@ class OnboardingViewModel @Inject constructor(
         val days = OnboardingCalculations.impliedPeriodDays(draft) ?: return null
         val recommended = OnboardingCalculations.recommendedTotalTarget(draft.lastMonthFoodExpense, days)
         val total = (draft.totalTargetAmount ?: recommended)?.takeIf { it > 0 } ?: return null
+        val dailyTarget = OnboardingCalculations.dailyTarget(draft, total, days)
         return OnboardingRequest(
             lastMonthFoodExpense = draft.lastMonthFoodExpense,
             period = period,
-            dailyTargetAmount = (total.toDouble() / days).roundToInt(),
-            totalTargetAmount = total
+            dailyTargetAmount = dailyTarget,
+            // For a fixed-date gap challenge, "total" is the full monthly goal — the actual
+            // budget for this shorter first challenge is the daily rate times its own day count.
+            totalTargetAmount = if (draft.dateFixed) dailyTarget * days else total
         )
     }
 

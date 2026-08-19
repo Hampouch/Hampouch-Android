@@ -226,7 +226,7 @@ private fun NextChallengeTakeABreakContent(
                 )
             ) {
                 Text(
-                    "챌린지 시작하기",
+                    if (dateFixed) "챌린지 참가하기" else "챌린지 시작하기",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = HPWhite

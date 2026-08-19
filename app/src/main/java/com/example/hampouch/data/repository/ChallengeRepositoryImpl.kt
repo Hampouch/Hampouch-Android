@@ -563,10 +563,25 @@ class ChallengeRepositoryImpl @Inject constructor(
                 )
                 upsertChallenge(challenge)
                 _fixedDateDraft.value = null
+                markSkippedDaysAsNoRecord(challenge.periodStart)
                 Result.success(challenge)
             } else {
                 Result.failure(startResponse.toApiException("다음 챌린지 시작에 실패했습니다."))
             }
+        }
+    }
+
+    /**
+     * If the fixed-date cycle's start date has already passed by the time the user actually
+     * starts it (e.g. the fixed day was 8/20 but the user didn't open the app until 8/22), the
+     * days in between were never visited and can't have an expense record — mark them as
+     * "지출 미입력" instead of leaving them ambiguous.
+     */
+    private fun markSkippedDaysAsNoRecord(periodStart: LocalDate, referenceToday: LocalDate = LocalDate.now()) {
+        var date = periodStart
+        while (date.isBefore(referenceToday)) {
+            markNoRecord(date)
+            date = date.plusDays(1)
         }
     }
 

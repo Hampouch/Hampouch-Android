@@ -78,6 +78,7 @@ import com.example.hampouch.ui.theme.HPGray2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -86,6 +87,7 @@ import kotlinx.coroutines.launch
 
 private const val MOCK_USER_NAME = "민준"
 private const val MAX_HOME_EXPENSE_ITEMS = 4
+private const val ReminderTimeCheckIntervalMillis = 30_000L
 
 internal fun recentHomeExpenses(expenses: List<ExpenseEntry>): List<ExpenseEntry> =
     expenses.take(MAX_HOME_EXPENSE_ITEMS)
@@ -132,6 +134,13 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val referenceToday = remember { LocalDate.now() }
+    var currentTime by remember { mutableStateOf(LocalTime.now()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(ReminderTimeCheckIntervalMillis)
+            currentTime = LocalTime.now()
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val restState by viewModel.restState.collectAsStateWithLifecycle()
     var selectedBottomTab by rememberSaveable { mutableStateOf(initialBottomTab) }
@@ -158,6 +167,7 @@ fun HomeScreen(
     val recordAlarmViewModel: RecordAlarmViewModel = hiltViewModel()
     val recordAlarmState by recordAlarmViewModel.state.collectAsStateWithLifecycle()
     val reminderDismissedDate by recordAlarmViewModel.dismissedDate.collectAsStateWithLifecycle()
+    val todayRecordsLoaded by viewModel.todayRecordsLoaded.collectAsStateWithLifecycle()
     val battleState by battleViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(selectedDate) { miniChallengeViewModel.loadChallenges(selectedDate) }
     LaunchedEffect(miniChallengeViewModel) {
@@ -276,10 +286,13 @@ fun HomeScreen(
                         onFinishChallengeClick = viewModel::acknowledgeChallengeEnd
                     )
 
-                    recordAlarmState.isMissingReminderDue(
+                    // Gate on todayRecordsLoaded so this isn't evaluated before today's records
+                    // have finished loading (otherwise hasExpenseToday is briefly a stale false on
+                    // app restart, flashing the reminder even when today is already logged).
+                    todayRecordsLoaded && recordAlarmState.isMissingReminderDue(
                         dismissedDate = reminderDismissedDate,
                         referenceToday = referenceToday,
-                        currentTime = LocalTime.now(),
+                        currentTime = currentTime,
                         hasExpenseToday = hasExpenseToday
                     ) ->
                         MissingExpenseReminderDialog(

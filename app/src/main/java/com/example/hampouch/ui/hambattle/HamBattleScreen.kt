@@ -292,7 +292,6 @@ private fun HamBattleMainTopBar(modifier: Modifier = Modifier) {
             .height(64.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(modifier = Modifier.width(48.dp))
         Text(
             text = "햄배틀",
             style = MaterialTheme.typography.titleSmall,

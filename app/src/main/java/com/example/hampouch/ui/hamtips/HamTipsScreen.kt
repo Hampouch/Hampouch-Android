@@ -276,12 +276,12 @@ fun HamTipsScreen(
                     onRefresh = {
                         refreshRequestedByGesture = true
                         when (currentRoute) {
-                            HamTipsRoute.MAIN -> viewModel.loadHome(sortOrder)
+                            HamTipsRoute.MAIN -> viewModel.loadHome(sortOrder, isUserInitiated = true)
                             HamTipsRoute.CATEGORY -> selectedCategoryTab.category?.let {
-                                viewModel.loadCategoryPosts(it, sortOrder)
+                                viewModel.loadCategoryPosts(it, sortOrder, isUserInitiated = true)
                             }
-                            HamTipsRoute.POPULAR_ALL -> viewModel.loadPopularPosts(sortOrder)
-                            HamTipsRoute.POCHIPICK_ALL -> viewModel.loadPochipickPosts(sortOrder)
+                            HamTipsRoute.POPULAR_ALL -> viewModel.loadPopularPosts(sortOrder, isUserInitiated = true)
+                            HamTipsRoute.POCHIPICK_ALL -> viewModel.loadPochipickPosts(sortOrder, isUserInitiated = true)
                             else -> Unit
                         }
                     },

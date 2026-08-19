@@ -12,6 +12,7 @@ import com.example.hampouch.domain.repository.BattleRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.UsersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -32,13 +33,17 @@ class AllSettingsViewModel @Inject constructor(
 
     val recordAlarmState: StateFlow<RecordAlarmSettingsState> = recordAlarmRepository.state
 
+    private var scheduleUpdateJob: Job? = null
+
     init {
         viewModelScope.launch { usersRepository.fetchNotificationSchedule() }
     }
 
     fun updateRecordAlarm(transform: (RecordAlarmSettingsState) -> RecordAlarmSettingsState) {
         recordAlarmRepository.update(transform)
-        viewModelScope.launch { usersRepository.updateNotificationSchedule() }
+        recordAlarmRepository.clearDismissal()
+        scheduleUpdateJob?.cancel()
+        scheduleUpdateJob = viewModelScope.launch { usersRepository.updateNotificationSchedule() }
     }
 }
 
@@ -51,13 +56,16 @@ class RecordAlarmViewModel @Inject constructor(
     val state: StateFlow<RecordAlarmSettingsState> = recordAlarmRepository.state
     val dismissedDate: StateFlow<LocalDate?> = recordAlarmRepository.dismissedDate
 
+    private var scheduleUpdateJob: Job? = null
+
     init {
         viewModelScope.launch { usersRepository.fetchNotificationSchedule() }
     }
 
     fun update(transform: (RecordAlarmSettingsState) -> RecordAlarmSettingsState) {
         recordAlarmRepository.update(transform)
-        viewModelScope.launch { usersRepository.updateNotificationSchedule() }
+        scheduleUpdateJob?.cancel()
+        scheduleUpdateJob = viewModelScope.launch { usersRepository.updateNotificationSchedule() }
     }
 
     fun dismissForToday(referenceToday: LocalDate) {

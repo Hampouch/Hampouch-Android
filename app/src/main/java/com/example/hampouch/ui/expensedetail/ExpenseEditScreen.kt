@@ -42,7 +42,6 @@ import com.example.hampouch.ui.common.ChipGrid
 import com.example.hampouch.ui.dialog.ExpenseEditConfirmDialog
 import com.example.hampouch.ui.home.HomeCategoryCatalog
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.Instant
@@ -116,14 +115,14 @@ fun ExpenseEditRoute(
     Scaffold(
         modifier = modifier.imePadding(),
         topBar = { ExpenseDetailTopBar(onBackClick = onBackClick) },
-        containerColor = HPSub4
+        containerColor = HPWhite
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 5.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             Column(

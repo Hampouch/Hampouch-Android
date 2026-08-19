@@ -35,22 +35,25 @@ class HamTipsViewModel @Inject constructor(
     private val _messages = Channel<String>(Channel.BUFFERED)
     val messages = _messages.receiveAsFlow()
 
-    fun loadHome(sortOrder: HamTipsSortOrder) = load("커뮤니티 글을 불러오지 못했습니다.") {
-        hamTipsRepository.loadHome(sortOrder)
-    }
+    fun loadHome(sortOrder: HamTipsSortOrder, isUserInitiated: Boolean = false) =
+        load("커뮤니티 글을 불러오지 못했습니다.", isUserInitiated) {
+            hamTipsRepository.loadHome(sortOrder)
+        }
 
-    fun loadCategoryPosts(category: TipCategory, sortOrder: HamTipsSortOrder) =
-        load("커뮤니티 글을 불러오지 못했습니다.") {
+    fun loadCategoryPosts(category: TipCategory, sortOrder: HamTipsSortOrder, isUserInitiated: Boolean = false) =
+        load("커뮤니티 글을 불러오지 못했습니다.", isUserInitiated) {
             hamTipsRepository.loadCategoryPosts(category, sortOrder)
         }
 
-    fun loadPopularPosts(sortOrder: HamTipsSortOrder) = load("인기 글을 불러오지 못했습니다.") {
-        hamTipsRepository.loadPopularPosts(sortOrder)
-    }
+    fun loadPopularPosts(sortOrder: HamTipsSortOrder, isUserInitiated: Boolean = false) =
+        load("인기 글을 불러오지 못했습니다.", isUserInitiated) {
+            hamTipsRepository.loadPopularPosts(sortOrder)
+        }
 
-    fun loadPochipickPosts(sortOrder: HamTipsSortOrder) = load("포치픽을 불러오지 못했습니다.") {
-        hamTipsRepository.loadPochipickPosts(sortOrder)
-    }
+    fun loadPochipickPosts(sortOrder: HamTipsSortOrder, isUserInitiated: Boolean = false) =
+        load("포치픽을 불러오지 못했습니다.", isUserInitiated) {
+            hamTipsRepository.loadPochipickPosts(sortOrder)
+        }
 
     fun loadMyPosts(sortOrder: HamTipsSortOrder = HamTipsSortOrder.LATEST) =
         load("내가 쓴 글을 불러오지 못했습니다.") { hamTipsRepository.loadMyPosts(sortOrder) }
@@ -58,11 +61,11 @@ class HamTipsViewModel @Inject constructor(
     fun loadSavedPosts(sortOrder: HamTipsSortOrder = HamTipsSortOrder.LATEST) =
         load("저장한 글을 불러오지 못했습니다.") { hamTipsRepository.loadSavedPosts(sortOrder) }
 
-    private fun load(fallback: String, block: suspend () -> Result<Unit>) {
+    private fun load(fallback: String, isUserInitiated: Boolean = true, block: suspend () -> Result<Unit>) {
         if (_isRefreshing.value) return
-        retryAction = { load(fallback, block) }
+        retryAction = { load(fallback, isUserInitiated, block) }
         _loadState.value = LoadState.Loading
-        _isRefreshing.value = true
+        if (isUserInitiated) _isRefreshing.value = true
         viewModelScope.launch {
             try {
                 block()

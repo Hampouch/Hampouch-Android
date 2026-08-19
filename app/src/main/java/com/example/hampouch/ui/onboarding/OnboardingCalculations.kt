@@ -2,9 +2,24 @@ package com.example.hampouch.ui.onboarding
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
+private const val FIXED_DATE_DAILY_TARGET_DIVISOR = 30
+
 object OnboardingCalculations {
+
+    /**
+     * The daily food-spending goal. For "날짜 고정" (fixed date) mode this is always the total
+     * goal divided by 30, regardless of the actual gap-period day count, since the total goal
+     * represents a full monthly cycle. For period mode it's the total divided by the chosen
+     * period length.
+     */
+    fun dailyTarget(state: OnboardingUiState, effectiveTotal: Int, periodDays: Int): Int = if (state.dateFixed) {
+        (effectiveTotal.toDouble() / FIXED_DATE_DAILY_TARGET_DIVISOR).roundToInt()
+    } else {
+        (effectiveTotal.toDouble() / periodDays).roundToInt()
+    }
 
     fun impliedPeriodDays(state: OnboardingUiState, referenceToday: LocalDate = LocalDate.now()): Int? = when {
         state.periodEnabled -> state.challengePeriodDays

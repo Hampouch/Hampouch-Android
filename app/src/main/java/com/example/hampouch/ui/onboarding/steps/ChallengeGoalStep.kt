@@ -38,7 +38,6 @@ import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlin.math.roundToInt
 
 @Composable
 fun ChallengeGoalStep(
@@ -54,7 +53,7 @@ fun ChallengeGoalStep(
     val recommendedTotalTarget = OnboardingCalculations.recommendedTotalTarget(state.lastMonthFoodExpense, impliedPeriodDays)
     val effectiveTotalTarget = state.totalTargetAmount ?: recommendedTotalTarget
     val dailyTarget = impliedPeriodDays?.takeIf { it > 0 }?.let { period ->
-        effectiveTotalTarget?.let { total -> (total.toDouble() / period).roundToInt() }
+        effectiveTotalTarget?.let { total -> OnboardingCalculations.dailyTarget(state, total, period) }
     } ?: 0
 
     Scaffold(

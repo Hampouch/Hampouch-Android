@@ -14,6 +14,8 @@ interface RecordAlarmRepository {
     fun update(transform: (RecordAlarmSettingsState) -> RecordAlarmSettingsState)
 
     fun dismissForToday(referenceToday: LocalDate)
+
+    fun clearDismissal()
 }
 
 interface MyPageProfileRepository {

@@ -78,11 +78,11 @@ class HamBattleViewModel @Inject constructor(
     private val _events = Channel<HamBattleEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    fun loadMyBattles() {
+    fun loadMyBattles(isUserInitiated: Boolean = false) {
         if (_isRefreshing.value) return
         retryAction = ::loadMyBattles
         _loadState.value = LoadState.Loading
-        _isRefreshing.value = true
+        if (isUserInitiated) _isRefreshing.value = true
         viewModelScope.launch {
             try {
                 battleRepository.loadMyBattles()
@@ -104,7 +104,7 @@ class HamBattleViewModel @Inject constructor(
         }
     }
 
-    fun refreshMyBattles() = loadMyBattles()
+    fun refreshMyBattles() = loadMyBattles(isUserInitiated = true)
 
     fun loadBattleDetail(battleId: Long) {
         retryAction = { loadBattleDetail(battleId) }

@@ -42,6 +42,11 @@ class RecordAlarmRepositoryImpl @Inject constructor(
         prefs().edit().putLong(KEY_DISMISSED_DATE_EPOCH_DAY, referenceToday.toEpochDay()).apply()
     }
 
+    override fun clearDismissal() {
+        _dismissedDate.value = null
+        prefs().edit().remove(KEY_DISMISSED_DATE_EPOCH_DAY).apply()
+    }
+
     override fun resetForAccount() {
         _state.value = RecordAlarmSettingsState()
         _dismissedDate.value = null

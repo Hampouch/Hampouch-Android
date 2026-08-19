@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -135,13 +136,31 @@ fun ExpenseInputRoute(
     }
 
     Scaffold(
-        modifier = modifier.imePadding(),
+        modifier = modifier,
         topBar = {
             ExpenseInputTopBar(
                 title = stringResource(R.string.expenseinput_title),
                 onBackClick = { if (step > 1) onStepChanged(step - 1) else onBackClick() },
                 containerColor = if (step == 1) HPSub3 else HPWhite
             )
+        },
+        bottomBar = {
+            if (step != 1) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(HPWhite)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(horizontal = 20.dp)
+                ) {
+                    ExpenseInputPrimaryButton(
+                        label = stringResource(R.string.expenseinput_next_button),
+                        enabled = true,
+                        onClick = { showSaveConfirmDialog = true }
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+            }
         },
         containerColor = HPWhite
     ) { innerPadding ->
@@ -170,54 +189,35 @@ fun ExpenseInputRoute(
             return@Scaffold
         }
 
-        Box(
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(horizontal = 20.dp)
-            ) {
-                ExpenseInputDetailStep(
-                    expenseName = form.expenseName,
-                    onExpenseNameChange = onExpenseNameChange,
-                    categoryId = form.categoryId,
-                    isCustomCategory = form.isCustomCategory,
-                    customCategoryText = form.customCategoryText,
-                    onCategorySelected = onCategorySelected,
-                    onCustomCategoryClick = { showCategoryCustomDialog = true },
-                    reasonId = form.reasonId,
-                    isCustomReason = form.isCustomReason,
-                    customReasonText = form.customReasonText,
-                    onReasonSelected = onReasonSelected,
-                    onCustomReasonClick = { showReasonCustomDialog = true },
-                    memo = form.memo,
-                    onMemoChange = onMemoChange,
-                    photoUris = form.photoUris,
-                    onPhotosAdded = onPhotosAdded,
-                    onPhotosRemoved = onPhotosRemoved,
-                    onPhotoReplaced = onPhotoReplaced
-                )
-                Spacer(modifier = Modifier.height(120.dp))
-            }
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(HPWhite)
-                    .padding(horizontal = 20.dp)
-            ) {
-                ExpenseInputPrimaryButton(
-                    label = stringResource(R.string.expenseinput_next_button),
-                    enabled = true,
-                    onClick = { showSaveConfirmDialog = true }
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-            }
+            ExpenseInputDetailStep(
+                expenseName = form.expenseName,
+                onExpenseNameChange = onExpenseNameChange,
+                categoryId = form.categoryId,
+                isCustomCategory = form.isCustomCategory,
+                customCategoryText = form.customCategoryText,
+                onCategorySelected = onCategorySelected,
+                onCustomCategoryClick = { showCategoryCustomDialog = true },
+                reasonId = form.reasonId,
+                isCustomReason = form.isCustomReason,
+                customReasonText = form.customReasonText,
+                onReasonSelected = onReasonSelected,
+                onCustomReasonClick = { showReasonCustomDialog = true },
+                memo = form.memo,
+                onMemoChange = onMemoChange,
+                photoUris = form.photoUris,
+                onPhotosAdded = onPhotosAdded,
+                onPhotosRemoved = onPhotosRemoved,
+                onPhotoReplaced = onPhotoReplaced
+            )
         }
     }
 

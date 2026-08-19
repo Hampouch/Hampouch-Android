@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -82,7 +85,7 @@ private fun ChallengeGoalAdjustmentCard(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(HPSub3)
-            .padding(horizontal = 25.dp, vertical = 40.dp),
+            .padding(horizontal = 20.dp, vertical = 30.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -101,7 +104,9 @@ private fun ChallengeGoalAdjustmentCard(
 
         Spacer(modifier = Modifier.height(20.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             GoalAdjustmentOption.entries.forEach { option ->
@@ -111,7 +116,9 @@ private fun ChallengeGoalAdjustmentCard(
                     value = formatWon(amount),
                     selected = option == selectedOption,
                     onClick = { selectedOption = option },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
         }
@@ -169,8 +176,9 @@ private fun GoalOptionCard(
                 color = HPMain,
                 shape = RoundedCornerShape(10.dp)
             )
-            .padding(15.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 5.dp, vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             label,
@@ -182,8 +190,8 @@ private fun GoalOptionCard(
             value,
             style = Body16Bold,
             fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            maxLines = 1,
+            maxLines = 2,
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = 15.sp),
             color = if (selected) HPWhite else HPBlack
         )
     }

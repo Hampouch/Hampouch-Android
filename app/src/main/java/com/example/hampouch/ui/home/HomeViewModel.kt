@@ -59,6 +59,11 @@ class HomeViewModel @Inject constructor(
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
     private var retryAction: (() -> Unit)? = null
 
+    private val _todayRecordsLoaded = MutableStateFlow(false)
+
+    /** True once today's expense records have finished loading at least once this session. */
+    val todayRecordsLoaded: StateFlow<Boolean> = _todayRecordsLoaded.asStateFlow()
+
     fun retry() = retryAction?.invoke()
 
     init {
@@ -127,12 +132,16 @@ class HomeViewModel @Inject constructor(
                     _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty())
                     if (date == LocalDate.now()) {
                         homeWidgetStatePublisher.publishAfterHomeSync(forceWidgetUpdate = true)
+                        _todayRecordsLoaded.value = true
                     }
                 }
                 .onFailure { error ->
                     val message = error.toUserMessage("지출 내역 조회에 실패했습니다.")
                     _loadState.value = LoadState.Failure(message)
                     _events.send(HomeEvent.ShowMessage(message))
+                    if (date == LocalDate.now()) {
+                        _todayRecordsLoaded.value = true
+                    }
                 }
         }
     }
