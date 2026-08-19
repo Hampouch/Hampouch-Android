@@ -77,7 +77,7 @@ fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).forma
 
 internal const val FocusHandoffDelayMillis: Long = 60L
 
-private const val MaxAmountInputDigits = 9
+private const val MAX_AMOUNT_INPUT_DIGITS = 9
 
 @Composable
 fun OnboardingTopBar(
@@ -458,7 +458,7 @@ fun EditableAmountRow(
                             val allDigits = newValue.text.filter(Char::isDigit)
                             val normalizedInputDigits = allDigits.trimStart('0')
                                 .ifEmpty { if (allDigits.isEmpty()) "" else "0" }
-                            val digitsOnly = allDigits.take(MaxAmountInputDigits)
+                            val digitsOnly = allDigits.take(MAX_AMOUNT_INPUT_DIGITS)
                             val normalizedDigitsRaw = digitsOnly.trimStart('0')
                                 .ifEmpty { if (digitsOnly.isEmpty()) "" else "0" }
                             val exceedsMax = exceedsAmountMax(normalizedInputDigits, maxValue)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -24,20 +26,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,7 +62,6 @@ import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HampouchTheme
-import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -117,6 +116,7 @@ private fun SignUpContent(
     onSignUpClick: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    var selectedAgreement by rememberSaveable { mutableStateOf<SignUpAgreementDocument?>(null) }
     val emailCodeRemainingSeconds = rememberCountdownSeconds(uiState.emailCodeExpiresAtMillis)
     val isEmailCodeExpired = emailCodeRemainingSeconds == 0
     val isEmailFieldEnabled =
@@ -241,12 +241,11 @@ private fun SignUpContent(
 
                 Spacer(modifier = Modifier.size(30.dp))
                 TermsAgreementSection(
-                    isTermsChecked = uiState.isTermsChecked,
+                    uiState = uiState,
                     onTermsCheckedChange = onTermsCheckedChange,
-                    isPrivacyChecked = uiState.isPrivacyChecked,
                     onPrivacyCheckedChange = onPrivacyCheckedChange,
-                    isMarketingChecked = uiState.isMarketingChecked,
-                    onMarketingCheckedChange = onMarketingCheckedChange
+                    onMarketingCheckedChange = onMarketingCheckedChange,
+                    onAgreementClick = { selectedAgreement = it }
                 )
             }
 
@@ -273,17 +272,34 @@ private fun SignUpContent(
             )
         }
     }
+
+    selectedAgreement?.let { agreement ->
+        SignUpAgreementDialog(
+            agreement = agreement,
+            onDismiss = { selectedAgreement = null },
+            onConfirm = {
+                when (agreement) {
+                    SignUpAgreementDocument.TERMS -> onTermsCheckedChange(true)
+                    SignUpAgreementDocument.PRIVACY -> onPrivacyCheckedChange(true)
+                    SignUpAgreementDocument.MARKETING -> onMarketingCheckedChange(true)
+                }
+                selectedAgreement = null
+            }
+        )
+    }
 }
 
 @Composable
 private fun TermsAgreementSection(
-    isTermsChecked: Boolean,
+    uiState: SignUpUiState,
     onTermsCheckedChange: (Boolean) -> Unit,
-    isPrivacyChecked: Boolean,
     onPrivacyCheckedChange: (Boolean) -> Unit,
-    isMarketingChecked: Boolean,
-    onMarketingCheckedChange: (Boolean) -> Unit
+    onMarketingCheckedChange: (Boolean) -> Unit,
+    onAgreementClick: (SignUpAgreementDocument) -> Unit
 ) {
+    val isTermsChecked = uiState.isTermsChecked
+    val isPrivacyChecked = uiState.isPrivacyChecked
+    val isMarketingChecked = uiState.isMarketingChecked
     val isAllChecked = isTermsChecked && isPrivacyChecked && isMarketingChecked
     val onToggleAll: () -> Unit = {
         val next = !isAllChecked
@@ -312,46 +328,126 @@ private fun TermsAgreementSection(
         Spacer(modifier = Modifier.size(12.dp))
         HorizontalDivider(color = HPBlack, thickness = 1.dp)
         Spacer(modifier = Modifier.size(12.dp))
-        TermsCheckItem(
-            checked = isTermsChecked,
-            onCheckedChange = onTermsCheckedChange,
-            prefix = "[필수]",
-            label = "서비스 이용 약관"
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        TermsCheckItem(
-            checked = isPrivacyChecked,
-            onCheckedChange = onPrivacyCheckedChange,
-            prefix = "[필수]",
-            label = "개인정보 처리방침"
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        TermsCheckItem(
-            checked = isMarketingChecked,
-            onCheckedChange = onMarketingCheckedChange,
-            prefix = "[선택]",
-            label = "마케팅 정보 수신 동의"
+        TermsAgreementItems(
+            uiState = uiState,
+            onTermsCheckedChange = onTermsCheckedChange,
+            onPrivacyCheckedChange = onPrivacyCheckedChange,
+            onMarketingCheckedChange = onMarketingCheckedChange,
+            onAgreementClick = onAgreementClick
         )
     }
 }
 
 @Composable
-private fun TermsCheckItem(
+private fun TermsAgreementItems(
+    uiState: SignUpUiState,
+    onTermsCheckedChange: (Boolean) -> Unit,
+    onPrivacyCheckedChange: (Boolean) -> Unit,
+    onMarketingCheckedChange: (Boolean) -> Unit,
+    onAgreementClick: (SignUpAgreementDocument) -> Unit
+) {
+    TermsCheckItem(
+        checked = uiState.isTermsChecked,
+        onClick = agreementItemClick(
+            uiState.isTermsChecked,
+            onTermsCheckedChange,
+            SignUpAgreementDocument.TERMS,
+            onAgreementClick
+        ),
+        prefix = "[필수]",
+        label = "서비스 이용 약관"
+    )
+    Spacer(modifier = Modifier.size(8.dp))
+    TermsCheckItem(
+        checked = uiState.isPrivacyChecked,
+        onClick = agreementItemClick(
+            uiState.isPrivacyChecked,
+            onPrivacyCheckedChange,
+            SignUpAgreementDocument.PRIVACY,
+            onAgreementClick
+        ),
+        prefix = "[필수]",
+        label = "개인정보 처리방침"
+    )
+    Spacer(modifier = Modifier.size(8.dp))
+    TermsCheckItem(
+        checked = uiState.isMarketingChecked,
+        onClick = agreementItemClick(
+            uiState.isMarketingChecked,
+            onMarketingCheckedChange,
+            SignUpAgreementDocument.MARKETING,
+            onAgreementClick
+        ),
+        prefix = "[선택]",
+        label = "마케팅 정보 수신 동의"
+    )
+}
+
+private fun agreementItemClick(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    agreement: SignUpAgreementDocument,
+    onAgreementClick: (SignUpAgreementDocument) -> Unit
+): () -> Unit = {
+    if (checked) onCheckedChange(false) else onAgreementClick(agreement)
+}
+
+@Composable
+private fun TermsCheckItem(
+    checked: Boolean,
+    onClick: () -> Unit,
     prefix: String,
     label: String
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) },
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TermsCheckIcon(checked = checked)
         Spacer(modifier = Modifier.size(10.dp))
         Text("$prefix $label", style = MaterialTheme.typography.bodyMedium, color = HPText)
     }
+}
+
+@Composable
+private fun SignUpAgreementDialog(
+    agreement: SignUpAgreementDocument,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = agreement.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = HPBlack
+            )
+        },
+        text = {
+            Text(
+                text = agreement.content,
+                modifier = Modifier
+                    .heightIn(max = 440.dp)
+                    .verticalScroll(rememberScrollState()),
+                style = MaterialTheme.typography.bodySmall,
+                color = HPText
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("닫기", color = HPText)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("확인", color = HPMain)
+            }
+        },
+        containerColor = HPSub3
+    )
 }
 
 @Composable

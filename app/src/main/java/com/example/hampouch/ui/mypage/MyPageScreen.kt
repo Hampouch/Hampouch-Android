@@ -116,7 +116,9 @@ fun MyPageScreen(
         }
     }
     val storedProfile by profileViewModel.profile.collectAsStateWithLifecycle()
-    val profile = profileViewModel.profileFor(currentUser, storedProfile)
+    val profile = profileViewModel.profileFor(currentUser, storedProfile).let { resolvedProfile ->
+        resolvedProfile.copy(email = currentUser.email.ifBlank { resolvedProfile.email })
+    }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showPasswordChangedDialog by remember { mutableStateOf(false) }
     var selectedPostId by rememberSaveable { mutableStateOf(initialTipDetailPostId) }

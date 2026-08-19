@@ -2,6 +2,7 @@ package com.example.hampouch.ui.hamtips
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hampouch.domain.model.BattleInvitationPreview
 import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.model.TipReply
@@ -45,6 +46,10 @@ class HamTipsDetailViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _battleInvitationPreview = MutableStateFlow<BattleInvitationPreview?>(null)
+    val battleInvitationPreview: StateFlow<BattleInvitationPreview?> = _battleInvitationPreview.asStateFlow()
+    private var requestedBattleCode: String? = null
+
     private val _events = Channel<HamTipsDetailEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -66,6 +71,26 @@ class HamTipsDetailViewModel @Inject constructor(
             } finally {
                 _isRefreshing.value = false
             }
+        }
+    }
+
+    fun loadBattleInvitationPreview(battleUrl: String) {
+        val battleCode = extractBattleCode(battleUrl) ?: return
+        if (requestedBattleCode == battleCode) return
+        requestedBattleCode = battleCode
+        _battleInvitationPreview.value = null
+        viewModelScope.launch {
+            battleRepository.loadInvitationPreview(battleCode)
+                .onSuccess { preview ->
+                    if (requestedBattleCode == battleCode) {
+                        _battleInvitationPreview.value = preview
+                    }
+                }
+                .onFailure { error ->
+                    if (requestedBattleCode == battleCode) {
+                        notify(error, "햄배틀 정보를 불러오지 못했습니다.")
+                    }
+                }
         }
     }
 
