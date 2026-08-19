@@ -500,6 +500,9 @@ private fun HomeContent(
 
                 Spacer(modifier = Modifier.height(15.dp))
                 TodayExpenseSection(
+                    title = stringResource(
+                        homeExpenseTitleRes(animatedUiState.selectedDate, referenceToday)
+                    ),
                     expenses = recentHomeExpenses(animatedUiState.expenses),
                     onViewAllClick = onViewAllExpensesClick,
                     onAddExpenseClick = onAddExpenseClick,
