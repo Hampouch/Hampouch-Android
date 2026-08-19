@@ -141,16 +141,16 @@ private fun WidgetSyncButton(scale: WidgetScale) {
     ) {
         Box(
             modifier = GlanceModifier
-                .size(34.dp.scaled(scale.text))
+                .size(38.dp.scaled(scale.text))
                 .background(ColorProvider(HPWhite))
-                .cornerRadius(17.dp.scaled(scale.text))
+                .cornerRadius(19.dp.scaled(scale.text))
                 .clickable(actionRunCallback<HomeWidgetSyncAction>()),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_sync),
                 contentDescription = context.getString(R.string.cd_widget_sync),
-                modifier = GlanceModifier.size(20.dp.scaled(scale.text))
+                modifier = GlanceModifier.size(22.dp.scaled(scale.text))
             )
         }
     }

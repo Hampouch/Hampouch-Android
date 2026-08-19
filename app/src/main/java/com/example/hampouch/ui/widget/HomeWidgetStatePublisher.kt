@@ -3,6 +3,7 @@ package com.example.hampouch.ui.widget
 import android.content.Context
 import android.util.Log
 import com.example.hampouch.data.repository.AuthRepository
+import com.example.hampouch.core.config.ChallengeConfig
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.RestState
@@ -13,10 +14,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -26,10 +25,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "HomeWidgetPublisher"
-private const val STATE_PUBLISH_DEBOUNCE_MILLIS = 300L
 
 fun interface HomeWidgetRefreshRequester {
-    fun refreshAfterExpenseChange()
+    fun refreshAfterConfirmedStateChange()
 }
 
 @Singleton
@@ -48,7 +46,6 @@ class HomeWidgetStatePublisher @Inject constructor(
     private var observedAccount: String? = null
     private var hadActiveChallenge = false
 
-    @OptIn(FlowPreview::class)
     fun start() {
         if (started) return
         started = true
@@ -57,10 +54,17 @@ class HomeWidgetStatePublisher @Inject constructor(
                 authRepository.userSession,
                 challengeRepository.state,
                 expenseRepository.records,
+                expenseRepository.daysWithRecord,
                 restRepository.restState
-            ) { session, challengeState, records, restState ->
-                WidgetSourceState(session?.userId?.toString(), challengeState, records.values, restState)
-            }.debounce(STATE_PUBLISH_DEBOUNCE_MILLIS).collect { source ->
+            ) { session, challengeState, records, daysWithRecord, restState ->
+                WidgetSourceState(
+                    accountKey = session?.userId?.toString(),
+                    challengeState = challengeState,
+                    records = records.values,
+                    daysWithRecord = daysWithRecord,
+                    restState = restState
+                )
+            }.collect { source ->
                 val error = runCatching { publish(source) }.exceptionOrNull() ?: return@collect
                 if (error is CancellationException) throw error
                 Log.e(TAG, "위젯 상태 갱신에 실패했습니다.", error)
@@ -88,8 +92,13 @@ class HomeWidgetStatePublisher @Inject constructor(
         }
     }
 
-    override fun refreshAfterExpenseChange() {
-        scope.launch { requestImmediateSync() }
+    override fun refreshAfterConfirmedStateChange() {
+        scope.launch {
+            publishAfterHomeSync(
+                noActiveConfirmed = true,
+                forceWidgetUpdate = true
+            )
+        }
     }
 
     internal suspend fun syncFromServer(forceWidgetUpdate: Boolean = false): Boolean = serverSyncMutex.withLock {
@@ -131,6 +140,7 @@ class HomeWidgetStatePublisher @Inject constructor(
                 accountKey = session?.userId?.toString(),
                 challengeState = challengeRepository.state.value,
                 records = expenseRepository.records.value.values,
+                daysWithRecord = expenseRepository.daysWithRecord.value,
                 restState = restRepository.restState.value
             ),
             noActiveConfirmed = noActiveConfirmed,
@@ -189,7 +199,25 @@ class HomeWidgetStatePublisher @Inject constructor(
         if (challenge != null) {
             hadActiveChallenge = true
             val todaySpent = source.records.filter { it.date == today }.sumOf { it.amount }
-            snapshotStore.publishChallenge(accountKey, challenge, todaySpent, forceWidgetUpdate)
+            val widgetChallenge = if (ChallengeConfig.USE_SERVER_CHALLENGE) {
+                challenge
+            } else {
+                val progress = source.challengeState.computeProgress(
+                    referenceToday = today,
+                    challenge = challenge,
+                    hasRecordOnDate = { date ->
+                        source.records.any { it.date == date } || date in source.daysWithRecord
+                    },
+                    spentOnDate = { date ->
+                        source.records.filter { it.date == date }.sumOf { it.amount }
+                    }
+                )
+                challenge.copy(
+                    savedAmount = progress.savedAmount,
+                    streakDays = progress.streakDays
+                )
+            }
+            snapshotStore.publishChallenge(accountKey, widgetChallenge, todaySpent, forceWidgetUpdate)
         } else if (hadActiveChallenge || noActiveConfirmed) {
             hadActiveChallenge = false
             snapshotStore.publishNoActive(accountKey, forceWidgetUpdate)
@@ -201,5 +229,6 @@ private data class WidgetSourceState(
     val accountKey: String?,
     val challengeState: ChallengeState,
     val records: Collection<ExpenseRecord>,
+    val daysWithRecord: Set<LocalDate>,
     val restState: RestState
 )

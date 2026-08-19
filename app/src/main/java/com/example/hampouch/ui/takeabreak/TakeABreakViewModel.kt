@@ -7,6 +7,7 @@ import com.example.hampouch.domain.model.MAX_REST_DAYS
 import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.RestRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,8 @@ sealed interface TakeABreakEvent {
 
 @HiltViewModel
 class TakeABreakViewModel @Inject constructor(
-    private val restRepository: RestRepository
+    private val restRepository: RestRepository,
+    private val homeWidgetRefreshRequester: HomeWidgetRefreshRequester
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TakeABreakUiState())
@@ -86,6 +88,7 @@ class TakeABreakViewModel @Inject constructor(
             result
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isSubmitting = false, errorMessage = null)
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(TakeABreakEvent.BreakStarted)
                 }
                 .onFailure { error ->

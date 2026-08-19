@@ -12,6 +12,7 @@ import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.model.recommendedTightenedTarget
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +38,8 @@ class AmountAdjustmentViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository,
     private val expenseRepository: ExpenseRepository,
     private val authRepository: AuthRepository,
-    private val pendingChallengeResultStore: PendingChallengeResultStore
+    private val pendingChallengeResultStore: PendingChallengeResultStore,
+    private val homeWidgetRefreshRequester: HomeWidgetRefreshRequester
 ) : ViewModel() {
 
     val challengeState: StateFlow<ChallengeState> = challengeRepository.state
@@ -55,7 +57,10 @@ class AmountAdjustmentViewModel @Inject constructor(
     fun updateTargetAmount(newTargetAmount: Int) {
         viewModelScope.launch {
             challengeRepository.updateTargetAmount(newTargetAmount)
-                .onSuccess { _events.send(AmountAdjustmentEvent.GoalAmountUpdated) }
+                .onSuccess {
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
+                    _events.send(AmountAdjustmentEvent.GoalAmountUpdated)
+                }
                 .onFailure { error ->
                     _events.send(
                         AmountAdjustmentEvent.ShowMessage(error.toUserMessage("목표 금액 조정에 실패했습니다."))
@@ -97,6 +102,7 @@ class AmountAdjustmentViewModel @Inject constructor(
                             )
                         )
                     }
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(AmountAdjustmentEvent.ChallengeAbandoned(challengeId, suggested))
                 }
                 .onFailure { error ->
