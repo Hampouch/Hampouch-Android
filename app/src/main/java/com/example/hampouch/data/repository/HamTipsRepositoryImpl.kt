@@ -45,7 +45,10 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 
@@ -129,10 +132,27 @@ class HamTipsRepositoryImpl @Inject constructor(
         else -> TipPostType.TIP
     }
 
-    private fun minutesAgoFrom(createdAt: String): Int = try {
-        ChronoUnit.MINUTES.between(LocalDateTime.parse(createdAt), LocalDateTime.now()).toInt().coerceAtLeast(0)
+    private fun parseCreatedAt(createdAt: String): LocalDateTime? = try {
+        // Plain "yyyy-MM-ddTHH:mm:ss[.SSS]" (no zone/offset), the common Spring LocalDateTime serialization.
+        LocalDateTime.parse(createdAt)
     } catch (e: DateTimeParseException) {
-        0
+        try {
+            // "yyyy-MM-ddTHH:mm:ss+09:00" style offsets.
+            OffsetDateTime.parse(createdAt).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
+        } catch (e2: DateTimeParseException) {
+            try {
+                // "yyyy-MM-ddTHH:mm:ssZ" UTC instants.
+                Instant.parse(createdAt).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            } catch (e3: DateTimeParseException) {
+                Log.w(TAG, "Failed to parse createdAt=$createdAt", e3)
+                null
+            }
+        }
+    }
+
+    private fun minutesAgoFrom(createdAt: String): Int {
+        val parsed = parseCreatedAt(createdAt) ?: return 0
+        return ChronoUnit.MINUTES.between(parsed, LocalDateTime.now()).toInt().coerceAtLeast(0)
     }
 
     private fun CommunityPostSummaryData.toTipPost(isEditorAuthor: Boolean? = null): TipPost = TipPost(
