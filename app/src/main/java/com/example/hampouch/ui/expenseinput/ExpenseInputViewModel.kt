@@ -3,6 +3,7 @@ package com.example.hampouch.ui.expenseinput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
@@ -16,6 +17,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+
+internal const val EXPENSE_DATE_LOCKED_MESSAGE = "이 날짜의 지출기록은 지금 변경할 수 없습니다."
+
+internal fun ChallengeState.canChangeExpenseOn(date: LocalDate): Boolean =
+    challengeFor(date) != null
 
 data class ExpenseInputUiState(
     val dailyLimit: Int = 0,
@@ -111,7 +117,28 @@ class ExpenseInputViewModel @Inject constructor(
 
     fun changeDate(date: LocalDate) = updateForm { it.copy(date = date.coerceAtMost(LocalDate.now())) }
 
-    fun changeStep(step: Int) = updateForm { it.copy(step = step.coerceAtLeast(1)) }
+    fun changeStep(step: Int) {
+        val targetStep = step.coerceAtLeast(1)
+        if (_uiState.value.form.step == 1 && targetStep > 1) {
+            proceedToDetails()
+            return
+        }
+        setStep(targetStep)
+    }
+
+    private fun proceedToDetails() {
+        val form = _uiState.value.form
+        if (form.amount <= 0) return
+        if (!challengeRepository.state.value.canChangeExpenseOn(form.date)) {
+            viewModelScope.launch {
+                _events.send(ExpenseInputEvent.ShowMessage(EXPENSE_DATE_LOCKED_MESSAGE))
+            }
+            return
+        }
+        setStep(2)
+    }
+
+    private fun setStep(step: Int) = updateForm { it.copy(step = step) }
 
     fun changeExpenseName(name: String) = updateForm { it.copy(expenseName = name) }
 

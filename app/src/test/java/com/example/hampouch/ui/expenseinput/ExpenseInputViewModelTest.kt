@@ -1,6 +1,7 @@
 package com.example.hampouch.ui.expenseinput
 
 import androidx.lifecycle.SavedStateHandle
+import com.example.hampouch.MainDispatcherRule
 import com.example.hampouch.domain.model.ActiveChallenge
 import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseAnalysisSummary
@@ -14,14 +15,24 @@ import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ExpenseInputViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `SavedStateHandle은 작성 중인 작은 폼 입력을 복원한다`() {
@@ -79,10 +90,58 @@ class ExpenseInputViewModelTest {
         assertFalse(savedStateHandle.keys().any { it.startsWith("expenseInput.") })
     }
 
-    private fun createViewModel(savedStateHandle: SavedStateHandle) = ExpenseInputViewModel(
+    @Test
+    fun `선택 날짜의 지출을 변경할 수 없으면 첫 단계에서 메시지를 표시한다`() = runTest {
+        val viewModel = createViewModel(
+            savedStateHandle = SavedStateHandle(),
+            challengeRepository = FakeChallengeRepository(ChallengeState())
+        )
+        viewModel.appendAmountDigit("1")
+        val event = async { viewModel.events.first() }
+
+        viewModel.changeStep(2)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.form.step)
+        assertEquals(
+            ExpenseInputEvent.ShowMessage(EXPENSE_DATE_LOCKED_MESSAGE),
+            event.await()
+        )
+    }
+
+    @Test
+    fun `선택 날짜의 지출을 변경할 수 있으면 상세 단계로 이동한다`() {
+        val viewModel = createViewModel(SavedStateHandle())
+        viewModel.appendAmountDigit("1")
+
+        viewModel.changeStep(2)
+
+        assertEquals(2, viewModel.uiState.value.form.step)
+    }
+
+    private fun createViewModel(
+        savedStateHandle: SavedStateHandle,
+        challengeRepository: ChallengeRepository = FakeChallengeRepository(editableChallengeState())
+    ) = ExpenseInputViewModel(
         expenseRepository = FakeExpenseRepository(),
-        challengeRepository = FakeChallengeRepository(),
+        challengeRepository = challengeRepository,
         savedStateHandle = savedStateHandle
+    )
+
+    private fun editableChallengeState(): ChallengeState = ChallengeState(
+        challenges = listOf(
+            ActiveChallenge(
+                id = "editable",
+                totalDays = 100_000,
+                periodStart = LocalDate.of(1970, 1, 1),
+                periodEnd = LocalDate.of(2100, 1, 1),
+                dailyLimit = 10_000,
+                targetAmount = 1_000_000,
+                savedAmount = 0,
+                streakDays = 0,
+                editCount = 0
+            )
+        )
     )
 
     private class FakeExpenseRepository : ExpenseRepository {
@@ -105,8 +164,8 @@ class ExpenseInputViewModelTest {
         override fun resetForAccount() = Unit
     }
 
-    private class FakeChallengeRepository : ChallengeRepository {
-        override val state: StateFlow<ChallengeState> = MutableStateFlow(ChallengeState())
+    private class FakeChallengeRepository(initialState: ChallengeState) : ChallengeRepository {
+        override val state: StateFlow<ChallengeState> = MutableStateFlow(initialState)
         override val fixedDateDraft: StateFlow<FixedDateChallengeDraft?> = MutableStateFlow(null)
         override suspend fun loadCurrentChallenge(): Result<Unit> = Result.success(Unit)
         override suspend fun loadHistory(): Result<Unit> = Result.success(Unit)
