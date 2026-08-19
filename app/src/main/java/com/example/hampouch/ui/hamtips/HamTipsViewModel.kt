@@ -26,6 +26,8 @@ class HamTipsViewModel @Inject constructor(
 
     private val _loadState = MutableStateFlow<LoadState>(LoadState.Idle)
     val loadState: StateFlow<LoadState> = _loadState.asStateFlow()
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
     private var retryAction: (() -> Unit)? = null
 
     fun retry() = retryAction?.invoke()
@@ -57,16 +59,22 @@ class HamTipsViewModel @Inject constructor(
         load("저장한 글을 불러오지 못했습니다.") { hamTipsRepository.loadSavedPosts(sortOrder) }
 
     private fun load(fallback: String, block: suspend () -> Result<Unit>) {
+        if (_isRefreshing.value) return
         retryAction = { load(fallback, block) }
         _loadState.value = LoadState.Loading
+        _isRefreshing.value = true
         viewModelScope.launch {
-            block()
-                .onSuccess { _loadState.value = LoadState.Content(posts.value.isEmpty()) }
-                .onFailure {
-                    val message = it.toUserMessage(fallback)
-                    _loadState.value = LoadState.Failure(message)
-                    _messages.send(message)
-                }
+            try {
+                block()
+                    .onSuccess { _loadState.value = LoadState.Content(posts.value.isEmpty()) }
+                    .onFailure {
+                        val message = it.toUserMessage(fallback)
+                        _loadState.value = LoadState.Failure(message)
+                        _messages.send(message)
+                    }
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 }

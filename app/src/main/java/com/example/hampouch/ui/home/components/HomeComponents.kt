@@ -488,14 +488,14 @@ private fun SectionHeaderPreview() {
 
 @Composable
 fun TodayExpenseSection(
+    title: String,
     expenses: List<ExpenseEntry>,
     onViewAllClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
-    modifier: Modifier = Modifier,
     onExpenseClick: (String) -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader(title = stringResource(R.string.home_today_expense_title), onViewAllClick = onViewAllClick)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SectionHeader(title = title, onViewAllClick = onViewAllClick)
         if (expenses.isEmpty()) {
             EmptyStateBlock(
                 title = stringResource(R.string.home_expense_empty_title),
@@ -525,14 +525,14 @@ fun TodayExpenseSection(
 private fun TodayExpenseSectionPreview() {
     HampouchTheme {
         TodayExpenseSection(
+            title = stringResource(R.string.home_today_expense_title),
             expenses = listOf(
                 ExpenseEntry(id = "1", categoryId = "cafe", name = "스타벅스", reasonTag = "스트레스", amount = 4_500),
                 ExpenseEntry(id = "2", categoryId = "convenience", name = "세븐일레븐", amount = 3_200)
             ),
             onViewAllClick = {},
             onAddExpenseClick = {},
-            onExpenseClick = {},
-            modifier = Modifier.padding(16.dp)
+            onExpenseClick = {}
         )
     }
 }
@@ -542,11 +542,11 @@ private fun TodayExpenseSectionPreview() {
 private fun TodayExpenseSectionEmptyPreview() {
     HampouchTheme {
         TodayExpenseSection(
+            title = stringResource(R.string.home_today_expense_title),
             expenses = emptyList(),
             onViewAllClick = {},
             onAddExpenseClick = {},
-            onExpenseClick = {},
-            modifier = Modifier.padding(16.dp)
+            onExpenseClick = {}
         )
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -187,6 +188,7 @@ fun AppNavHost(
     val battleState by battleViewModel.state.collectAsStateWithLifecycle()
     val pendingBattleInviteCode by battleInviteViewModel.pendingBattleCode.collectAsStateWithLifecycle()
     var externalJoinCodeInFlight by remember { mutableStateOf<String?>(null) }
+    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     LaunchedEffect(battleViewModel) {
         battleViewModel.events.collect { event ->
             when (event) {
@@ -194,7 +196,9 @@ fun AppNavHost(
                 is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
                     externalJoinCodeInFlight = null
                     battleInviteViewModel.consume(code)
-                    navController.navigate(Screen.HamBattle.route) {
+                    pendingHomeTab = BottomNavItem.HAM_BATTLE
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -203,7 +207,9 @@ fun AppNavHost(
                     externalJoinCodeInFlight?.let { code ->
                         externalJoinCodeInFlight = null
                         battleInviteViewModel.consume(code)
-                        navController.navigate(Screen.HamBattle.route) {
+                        pendingHomeTab = BottomNavItem.HAM_BATTLE
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -220,7 +226,6 @@ fun AppNavHost(
     val pendingNicknameSession by startDestinationViewModel.pendingNicknameSession.collectAsStateWithLifecycle()
     var openCommunityWriteBattle by remember { mutableStateOf(false) }
     var pendingWriteBattleLink by remember { mutableStateOf("") }
-    var pendingHomeTab by remember { mutableStateOf<BottomNavItem?>(null) }
     var pendingMyTipDetail by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var pendingCommunityPopularPostId by remember { mutableStateOf<String?>(null) }
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -366,13 +371,9 @@ fun AppNavHost(
 
         composable(Screen.Login.route) {
             val message = completeDialogMessage
-            LaunchedEffect(message) {
-                if (message != null) {
-                    completeDialogMessage = null
-                }
-            }
             LoginScreen(
                 completeDialogMessage = message,
+                onCompleteDialogDismissed = { completeDialogMessage = null },
                 pendingNicknameSession = pendingNicknameSession,
                 onLoginSuccess = {
                     startDestinationViewModel.consumePendingNicknameSession()
@@ -1130,13 +1131,18 @@ fun AppNavHost(
         composable(Screen.AmountAdjustment.route) {
             val expenseLookup: ExpenseLookupViewModel = hiltViewModel()
             val challengeState by expenseLookup.challengeState.collectAsStateWithLifecycle()
-            // 포기 처리 성공 직후, NextChallenge 화면으로 내비게이션이 실제로 반영되기 전
-            // 잠깐 이 화면이 새 challengeState로 재구성될 수 있다. 이때는 activeChallenge가
-            // 없어질 수 있으므로(방금 포기한 챌린지가 더 이상 진행중이 아니게 됨),
-            // AmountAdjustmentMockData.challenge()의 requireNotNull이 던지기 전에 여기서 막는다.
-            if (challengeState.activeChallenge == null) return@composable
+            val currentChallenge = challengeState.activeChallenge?.let {
+                AmountAdjustmentMockData.challenge(challengeState, expenseLookup::spentOnDate)
+            }
+            var retainedChallenge by remember { mutableStateOf(currentChallenge) }
+            SideEffect {
+                if (currentChallenge != null) retainedChallenge = currentChallenge
+            }
+            // 포기 성공으로 activeChallenge가 사라져도 완료 이벤트를 수신해 결과 화면으로
+            // 이동할 때까지 기존 화면과 이벤트 collector를 유지한다.
+            val adjustmentChallenge = currentChallenge ?: retainedChallenge ?: return@composable
             AmountAdjustmentRoute(
-                challenge = AmountAdjustmentMockData.challenge(challengeState, expenseLookup::spentOnDate),
+                challenge = adjustmentChallenge,
                 onBackClick = { navController.popBackStack() },
                 onChallengeAbandoned = { challengeId, _ ->
                     navController.navigate(Screen.ChallengeSummary.createRoute(challengeId, locked = true)) {

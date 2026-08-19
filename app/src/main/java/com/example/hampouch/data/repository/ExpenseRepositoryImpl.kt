@@ -60,6 +60,30 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "ExpenseRepository"
+private const val ETC_CATEGORY_LABEL = "기타"
+
+private val localCategoryToServer: Map<String, String> = mapOf(
+    "delivery" to "DELIVERY",
+    "dining_out" to "DINING_OUT",
+    "convenience" to "CONVENIENCE_STORE",
+    "cafe" to "CAFE",
+    "mart" to "GROCERY",
+    "snack" to "DESSERT",
+    "drink" to "DRINKING"
+)
+
+internal fun expenseCategoryRequestFields(
+    categoryId: String?,
+    customCategoryName: String?
+): Pair<String?, String?> {
+    val custom = customCategoryName?.takeIf { it.isNotBlank() }
+    return when {
+        custom != null -> "ETC" to custom
+        categoryId == null -> null to null
+        categoryId == ExpenseAnalysisEtcId -> "ETC" to ETC_CATEGORY_LABEL
+        else -> localCategoryToServer[categoryId] to null
+    }
+}
 
 internal fun expenseDayResponseError(): ApiException =
     ApiException(code = "NETWORK_ERROR", message = "인터넷 연결을 확인해주세요.")
@@ -129,19 +153,6 @@ class ExpenseRepositoryImpl @Inject constructor(
         _daysWithRecord.value = emptySet()
     }
 
-
-    /** "기타" 칩을 서버에 실어 보낼 때 쓰는 customCategory 값. 읽을 때 다시 칩으로 되돌린다. */
-    private val EtcCategoryLabel = "기타"
-
-    private val localCategoryToServer: Map<String, String> = mapOf(
-        "delivery" to "DELIVERY",
-        "dining_out" to "DINING_OUT",
-        "convenience" to "CONVENIENCE_STORE",
-        "cafe" to "CAFE",
-        "mart" to "GROCERY",
-        "snack" to "DESSERT",
-        "drink" to "DRINKING"
-    )
     private val serverCategoryToLocal: Map<String, String> =
         localCategoryToServer.entries.associate { (local, server) -> server to local }
 
@@ -156,16 +167,11 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     /**
      * 서버는 `category == ETC`와 `customCategory != null`을 함께 요구한다(categoryConsistent).
-     * 그래서 "기타" 칩은 ETC + [EtcCategoryLabel]로 보내 제약을 만족시키면서
+     * 그래서 "기타" 칩은 ETC + [ETC_CATEGORY_LABEL]로 보내 제약을 만족시키면서
      * 건너뛰기(둘 다 null)와 구분되게 한다.
      */
-    private fun categoryRequestPair(record: ExpenseRecord): Pair<String?, String?> {
-        val custom = record.customCategoryName?.takeIf { it.isNotBlank() }
-        if (custom != null) return "ETC" to custom
-        val id = record.categoryId ?: return null to null
-        if (id == ExpenseAnalysisEtcId) return "ETC" to EtcCategoryLabel
-        return localCategoryToServer[id] to null
-    }
+    private fun categoryRequestPair(record: ExpenseRecord): Pair<String?, String?> =
+        expenseCategoryRequestFields(record.categoryId, record.customCategoryName)
 
     /** [categoryRequestPair]와 같은 규칙. */
     private fun emotionRequestPair(record: ExpenseRecord): Pair<String?, String?> {
@@ -177,7 +183,7 @@ class ExpenseRepositoryImpl @Inject constructor(
     /** [categoryRequestPair]의 역변환. ETC + "기타"는 칩 선택으로 되돌린다. */
     private fun categoryFieldsFromServer(category: String?, customCategory: String?): Pair<String?, String?> = when {
         category != null && category != "ETC" -> serverCategoryToLocal[category] to null
-        customCategory == EtcCategoryLabel -> ExpenseAnalysisEtcId to null
+        customCategory == ETC_CATEGORY_LABEL -> ExpenseAnalysisEtcId to null
         else -> null to customCategory
     }
 
@@ -557,7 +563,11 @@ class ExpenseRepositoryImpl @Inject constructor(
                 localTagResult(categoryId, periodStart, periodEnd) { it.recordsForCategory(categoryId) }
             )
         }
-        val serverCategory = if (categoryId == ExpenseAnalysisEtcId) "ETC" else (localCategoryToServer[categoryId] ?: "ETC")
+        val serverCategory = if (categoryId == ExpenseAnalysisEtcId) {
+            "ETC"
+        } else {
+            localCategoryToServer[categoryId] ?: "ETC"
+        }
         if (authRepository.currentAuthHeader() == null) return Result.failure(unauthorized())
         return runCatchingNetwork(TAG) {
             val response = apiService.getExpenseCategoryAnalysis(

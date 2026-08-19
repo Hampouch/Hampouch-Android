@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +41,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +79,22 @@ import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import kotlinx.coroutines.launch
+
+@Composable
+internal fun HamTipsRefreshCompletionToast(
+    isRefreshing: Boolean,
+    requestedByGesture: Boolean,
+    message: String,
+    onConsumed: () -> Unit
+) {
+    val context = LocalContext.current
+    LaunchedEffect(isRefreshing) {
+        if (!isRefreshing && requestedByGesture) {
+            onConsumed()
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+}
 
 @Composable
 fun HamTipsPostDetailTopBar(
@@ -424,6 +440,14 @@ fun HamTipsDetailScreen(
     viewModel: HamTipsDetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    var refreshRequestedByGesture by remember { mutableStateOf(false) }
+    HamTipsRefreshCompletionToast(
+        isRefreshing = isRefreshing,
+        requestedByGesture = refreshRequestedByGesture,
+        message = "게시글을 새로고침했어요.",
+        onConsumed = { refreshRequestedByGesture = false }
+    )
 
     LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
     LaunchedEffect(viewModel) {
@@ -453,6 +477,11 @@ fun HamTipsDetailScreen(
         modifier = modifier,
         isAuthor = isAuthor,
         canDeletePost = canDeletePost,
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            refreshRequestedByGesture = true
+            viewModel.loadDetail(post.id)
+        },
         onLikeClick = { viewModel.toggleLike(post.id) },
         onScrapClick = { viewModel.toggleSave(post.id) },
         onDeletePost = { viewModel.deletePost(post.id) },
@@ -473,6 +502,8 @@ private fun HamTipsDetailContent(
     modifier: Modifier,
     isAuthor: Boolean,
     canDeletePost: Boolean,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onLikeClick: () -> Unit,
     onScrapClick: () -> Unit,
     onDeletePost: () -> Unit,
@@ -527,45 +558,52 @@ private fun HamTipsDetailContent(
             )
         }
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(scrollState)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Spacer(modifier = Modifier.height(4.dp))
-                HamTipsPostHeader(post = post)
-                Spacer(modifier = Modifier.height(16.dp))
-                if (post.type == TipPostType.MENU) {
-                    MenuDetailCard(post = post)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    HamTipsPostHeader(post = post)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (post.type == TipPostType.MENU) {
+                        MenuDetailCard(post = post)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    if (post.content.isNotBlank()) {
+                        Text(text = post.content, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    if (post.imageUris.isNotEmpty()) {
+                        HamTipsPhotoCarousel(photoUris = post.imageUris)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    HamTipsEngagementRow(
+                        post = post,
+                        onLikeClick = onLikeClick,
+                        onScrapClick = onScrapClick
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                if (post.content.isNotBlank()) {
-                    Text(text = post.content, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                if (post.imageUris.isNotEmpty()) {
-                    HamTipsPhotoCarousel(photoUris = post.imageUris)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                HamTipsEngagementRow(
+                HamTipsCommentListColumn(
                     post = post,
-                    onLikeClick = onLikeClick,
-                    onScrapClick = onScrapClick
+                    onReplyClick = { replyTarget = it },
+                    onMoreClick = { commentMenuTarget = it },
+                    onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        commentsSectionOffset = coordinates.positionInParent().y.toInt()
+                    }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            HamTipsCommentListColumn(
-                post = post,
-                onReplyClick = { replyTarget = it },
-                onMoreClick = { commentMenuTarget = it },
-                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply },
-                modifier = Modifier.onGloballyPositioned { coordinates ->
-                    commentsSectionOffset = coordinates.positionInParent().y.toInt()
-                }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
@@ -633,6 +671,8 @@ private fun HamTipsDetailScreenPochipickPreview() {
             modifier = Modifier,
             isAuthor = false,
             canDeletePost = false,
+            isRefreshing = false,
+            onRefresh = {},
             onLikeClick = {},
             onScrapClick = {},
             onDeletePost = {},
@@ -657,6 +697,8 @@ private fun HamTipsDetailScreenMenuPreview() {
             modifier = Modifier,
             isAuthor = false,
             canDeletePost = false,
+            isRefreshing = false,
+            onRefresh = {},
             onLikeClick = {},
             onScrapClick = {},
             onDeletePost = {},

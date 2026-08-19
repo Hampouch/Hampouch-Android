@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ sealed interface FixedDateNextChallengeEvent {
 
 @HiltViewModel
 class FixedDateNextChallengeViewModel @Inject constructor(
-    private val challengeRepository: ChallengeRepository
+    private val challengeRepository: ChallengeRepository,
+    private val homeWidgetStatePublisher: HomeWidgetStatePublisher
 ) : ViewModel() {
 
     val draft: StateFlow<FixedDateChallengeDraft?> = challengeRepository.fixedDateDraft
@@ -55,6 +57,7 @@ class FixedDateNextChallengeViewModel @Inject constructor(
                 budgetTotal = draft.budgetTotal,
                 fixedDay = draft.fixedDay
             ).onSuccess {
+                homeWidgetStatePublisher.publishAfterHomeSync()
                 _events.send(FixedDateNextChallengeEvent.Started)
             }.onFailure { error ->
                 _events.send(

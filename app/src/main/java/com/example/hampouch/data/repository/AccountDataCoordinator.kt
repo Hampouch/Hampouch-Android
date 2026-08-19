@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.domain.repository.RestRepository
 import javax.inject.Inject
 import javax.inject.Singleton

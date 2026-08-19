@@ -1,7 +1,7 @@
 package com.example.hampouch.ui.onboarding
 
 import androidx.lifecycle.ViewModel
-import com.example.hampouch.data.repository.OnboardingLocalStore
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.domain.model.ChallengePeriod
 import com.example.hampouch.domain.model.OnboardingRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,13 +35,25 @@ class OnboardingViewModel @Inject constructor(
     val uiState: StateFlow<OnboardingFlowUiState> = _uiState.asStateFlow()
 
     fun finishSplash() = updateStep(OnboardingStep.EXPENSE_DIAGNOSIS)
-    fun changeExpense(value: Int?) = updateDraft { copy(lastMonthFoodExpense = value) }
-    fun changePeriodEnabled(enabled: Boolean) = updateDraft {
-        copy(periodEnabled = enabled, dateFixed = if (enabled) false else dateFixed)
+    fun changeExpense(value: Int?) = updateDraft {
+        copy(lastMonthFoodExpense = value?.takeIf { it > 0 })
     }
-    fun changePeriod(days: Int?) = updateDraft { copy(challengePeriodDays = days) }
+    fun changePeriodEnabled(enabled: Boolean) = updateDraft {
+        copy(
+            periodEnabled = enabled,
+            dateFixed = if (enabled) false else dateFixed,
+            startDate = if (enabled) null else startDate
+        )
+    }
+    fun changePeriod(days: Int?) = updateDraft {
+        copy(challengePeriodDays = days?.takeIf { it > 0 })
+    }
     fun changeDateFixed(enabled: Boolean) = updateDraft {
-        copy(dateFixed = enabled, periodEnabled = if (enabled) false else periodEnabled)
+        copy(
+            dateFixed = enabled,
+            periodEnabled = if (enabled) false else periodEnabled,
+            challengePeriodDays = if (enabled) null else challengePeriodDays
+        )
     }
     fun changeStartDate(date: LocalDate?) = updateDraft { copy(startDate = date) }
     fun changeTotalTarget(value: Int?) = updateDraft { copy(totalTargetAmount = value) }

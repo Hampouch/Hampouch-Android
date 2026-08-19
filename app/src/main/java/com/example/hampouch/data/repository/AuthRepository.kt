@@ -13,6 +13,7 @@ import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
 import com.example.hampouch.domain.repository.NotificationRepository
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.data.remote.AuthApi
 import com.example.hampouch.data.remote.toApiException
 import com.example.hampouch.data.remote.toApiResult

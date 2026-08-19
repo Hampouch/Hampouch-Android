@@ -75,7 +75,7 @@ class HomeViewModel @Inject constructor(
             challengeRepository.loadCurrentChallenge()
                 .onSuccess {
                     _loadState.value = LoadState.Content(challengeState.value.activeChallenge == null)
-                    homeWidgetStatePublisher.publishAfterHomeSync()
+                    homeWidgetStatePublisher.publishAfterHomeSync(forceWidgetUpdate = true)
                     challengeRepository.loadFixedDateDraft().onSuccess { draft ->
                         val hasUnacknowledgedEnd = challengeState.value.isChallengeJustEnded(LocalDate.now())
                         if (draft?.isDue == true && !hasUnacknowledgedEnd) {
@@ -124,7 +124,12 @@ class HomeViewModel @Inject constructor(
         _loadState.value = LoadState.Loading
         viewModelScope.launch {
             expenseRepository.loadDay(date)
-                .onSuccess { _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty()) }
+                .onSuccess {
+                    _loadState.value = LoadState.Content(expenseRepository.recordsForDate(date).isEmpty())
+                    if (date == LocalDate.now()) {
+                        homeWidgetStatePublisher.publishAfterHomeSync(forceWidgetUpdate = true)
+                    }
+                }
                 .onFailure { error ->
                     val message = error.toUserMessage("지출 내역 조회에 실패했습니다.")
                     _loadState.value = LoadState.Failure(message)
@@ -135,11 +140,13 @@ class HomeViewModel @Inject constructor(
 
     fun markNoSpending(date: LocalDate) {
         viewModelScope.launch {
-            expenseRepository.markNoSpend(date).onFailure { error ->
-                _events.send(
-                    HomeEvent.ShowMessage(error.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
-                )
-            }
+            expenseRepository.markNoSpend(date)
+                .onSuccess { homeWidgetStatePublisher.refreshAfterExpenseChange() }
+                .onFailure { error ->
+                    _events.send(
+                        HomeEvent.ShowMessage(error.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
+                    )
+                }
         }
     }
 

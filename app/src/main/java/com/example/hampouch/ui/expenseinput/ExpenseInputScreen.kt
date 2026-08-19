@@ -209,7 +209,6 @@ fun ExpenseInputRoute(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(HPWhite)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp)
             ) {
                 ExpenseInputPrimaryButton(

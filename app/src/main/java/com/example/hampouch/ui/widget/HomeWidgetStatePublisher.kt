@@ -1,5 +1,6 @@
 package com.example.hampouch.ui.widget
 
+import android.content.Context
 import android.util.Log
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.ChallengeState
@@ -8,11 +9,14 @@ import com.example.hampouch.domain.model.RestState
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.domain.repository.RestRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -22,22 +26,30 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "HomeWidgetPublisher"
+private const val STATE_PUBLISH_DEBOUNCE_MILLIS = 300L
+
+fun interface HomeWidgetRefreshRequester {
+    fun refreshAfterExpenseChange()
+}
 
 /** 앱 상태 변경을 감지해 주기적인 네트워크 조회 없이 위젯 스냅샷을 갱신한다. */
 @Singleton
 class HomeWidgetStatePublisher @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val authRepository: AuthRepository,
     private val challengeRepository: ChallengeRepository,
     private val expenseRepository: ExpenseRepository,
     private val restRepository: RestRepository,
     private val snapshotStore: HomeWidgetSnapshotStore
-) {
+) : HomeWidgetRefreshRequester {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val publishMutex = Mutex()
+    private val serverSyncMutex = Mutex()
     private var started = false
     private var observedAccount: String? = null
     private var hadActiveChallenge = false
 
+    @OptIn(FlowPreview::class)
     fun start() {
         if (started) return
         started = true
@@ -49,7 +61,7 @@ class HomeWidgetStatePublisher @Inject constructor(
                 restRepository.restState
             ) { session, challengeState, records, restState ->
                 WidgetSourceState(session?.userId?.toString(), challengeState, records.values, restState)
-            }.collect { source ->
+            }.debounce(STATE_PUBLISH_DEBOUNCE_MILLIS).collect { source ->
                 val error = runCatching { publish(source) }.exceptionOrNull() ?: return@collect
                 if (error is CancellationException) throw error
                 Log.e(TAG, "위젯 상태 갱신에 실패했습니다.", error)
@@ -58,19 +70,62 @@ class HomeWidgetStatePublisher @Inject constructor(
     }
 
     suspend fun publishSessionStarted() {
+        val accountKey = authRepository.userSession.first()?.userId?.toString()
+        if (accountKey == null) {
+            publishLoggedOut()
+            return
+        }
         publishMutex.withLock {
-            val accountKey = authRepository.userSession.first()?.userId?.toString()
-            if (accountKey == null) {
-                publishLoggedOutLocked()
-                return@withLock
-            }
             snapshotStore.markSession(accountKey)
             observedAccount = accountKey
             hadActiveChallenge = false
         }
+        HomeWidgetSyncScheduler.enqueueNow(context)
     }
 
-    suspend fun publishAfterHomeSync() {
+    suspend fun requestImmediateSync() {
+        if (!syncFromServer(forceWidgetUpdate = true)) {
+            Log.w(TAG, "수동 위젯 동기화 중 일부 서버 조회에 실패했습니다.")
+        }
+    }
+
+    override fun refreshAfterExpenseChange() {
+        scope.launch { requestImmediateSync() }
+    }
+
+    internal suspend fun syncFromServer(forceWidgetUpdate: Boolean = false): Boolean = serverSyncMutex.withLock {
+        if (authRepository.userSession.first() == null) {
+            publishLoggedOut(forceWidgetUpdate)
+            return@withLock true
+        }
+
+        val result = runCatching {
+            val restResult = restRepository.syncStatus()
+            val challengeResult = challengeRepository.loadCurrentChallenge()
+            val expenseResult = expenseRepository.loadDay(LocalDate.now())
+            if (authRepository.userSession.first() == null) {
+                publishLoggedOut(forceWidgetUpdate)
+                true
+            } else {
+                publishAfterHomeSync(
+                    noActiveConfirmed = challengeResult.isSuccess,
+                    forceWidgetUpdate = forceWidgetUpdate
+                )
+                restResult.isSuccess && challengeResult.isSuccess && expenseResult.isSuccess
+            }
+        }
+        val error = result.exceptionOrNull()
+        if (error is CancellationException) throw error
+        if (error != null) {
+            Log.e(TAG, "위젯 서버 동기화에 실패했습니다.", error)
+        }
+        result.getOrDefault(false)
+    }
+
+    suspend fun publishAfterHomeSync(
+        noActiveConfirmed: Boolean = true,
+        forceWidgetUpdate: Boolean = false
+    ) {
         val session = authRepository.userSession.first()
         publish(
             source = WidgetSourceState(
@@ -79,34 +134,43 @@ class HomeWidgetStatePublisher @Inject constructor(
                 records = expenseRepository.records.value.values,
                 restState = restRepository.restState.value
             ),
-            noActiveConfirmed = true
+            noActiveConfirmed = noActiveConfirmed,
+            forceWidgetUpdate = forceWidgetUpdate
         )
     }
 
-    suspend fun publishLoggedOut() {
+    suspend fun publishLoggedOut(forceWidgetUpdate: Boolean = false) {
         publishMutex.withLock {
             if (authRepository.userSession.first() != null) return@withLock
-            publishLoggedOutLocked()
+            publishLoggedOutLocked(forceWidgetUpdate)
         }
     }
 
-    private suspend fun publishLoggedOutLocked() {
+    private suspend fun publishLoggedOutLocked(forceWidgetUpdate: Boolean = false) {
         observedAccount = null
         hadActiveChallenge = false
-        snapshotStore.publishLoggedOut()
+        snapshotStore.publishLoggedOut(forceWidgetUpdate)
     }
 
-    private suspend fun publish(source: WidgetSourceState, noActiveConfirmed: Boolean = false) =
+    private suspend fun publish(
+        source: WidgetSourceState,
+        noActiveConfirmed: Boolean = false,
+        forceWidgetUpdate: Boolean = false
+    ) =
         publishMutex.withLock {
             val currentAccount = authRepository.userSession.first()?.userId?.toString()
             if (source.accountKey != currentAccount) return@withLock
-            publishLocked(source, noActiveConfirmed)
+            publishLocked(source, noActiveConfirmed, forceWidgetUpdate)
         }
 
-    private suspend fun publishLocked(source: WidgetSourceState, noActiveConfirmed: Boolean) {
+    private suspend fun publishLocked(
+        source: WidgetSourceState,
+        noActiveConfirmed: Boolean,
+        forceWidgetUpdate: Boolean
+    ) {
         val accountKey = source.accountKey
         if (accountKey == null) {
-            publishLoggedOutLocked()
+            publishLoggedOutLocked(forceWidgetUpdate)
             return
         }
         if (observedAccount != accountKey) {
@@ -117,7 +181,7 @@ class HomeWidgetStatePublisher @Inject constructor(
 
         val resting = source.restState as? RestState.Resting
         if (resting != null) {
-            snapshotStore.publishResting(accountKey, resting.plannedResumeDate)
+            snapshotStore.publishResting(accountKey, resting.plannedResumeDate, forceWidgetUpdate)
             return
         }
 
@@ -126,10 +190,10 @@ class HomeWidgetStatePublisher @Inject constructor(
         if (challenge != null) {
             hadActiveChallenge = true
             val todaySpent = source.records.filter { it.date == today }.sumOf { it.amount }
-            snapshotStore.publishChallenge(accountKey, challenge, todaySpent)
+            snapshotStore.publishChallenge(accountKey, challenge, todaySpent, forceWidgetUpdate)
         } else if (hadActiveChallenge || noActiveConfirmed) {
             hadActiveChallenge = false
-            snapshotStore.publishNoActive(accountKey)
+            snapshotStore.publishNoActive(accountKey, forceWidgetUpdate)
         }
     }
 }

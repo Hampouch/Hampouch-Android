@@ -12,7 +12,9 @@ import com.example.hampouch.domain.repository.HamTipsRepository
 import com.example.hampouch.ui.hambattle.extractBattleCodeFromInviteValue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,6 +42,8 @@ class HamTipsDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     val posts: StateFlow<List<TipPost>> = hamTipsRepository.posts
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _events = Channel<HamTipsDetailEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
@@ -52,8 +56,17 @@ class HamTipsDetailViewModel @Inject constructor(
     fun canDeleteReply(post: TipPost, reply: TipReply): Boolean =
         hamTipsRepository.canDeleteReply(post, reply)
 
-    fun loadDetail(postId: String) = run("글을 불러오지 못했습니다.") {
-        hamTipsRepository.loadPostDetail(postId).map { }
+    fun loadDetail(postId: String) {
+        if (_isRefreshing.value) return
+        _isRefreshing.value = true
+        viewModelScope.launch {
+            try {
+                hamTipsRepository.loadPostDetail(postId)
+                    .onFailure { notify(it, "글을 불러오지 못했습니다.") }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 
     fun toggleLike(postId: String) = run("좋아요 처리에 실패했습니다.") {

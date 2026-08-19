@@ -8,6 +8,7 @@ import com.example.hampouch.data.repository.MiniChallengeRepositoryImpl
 import com.example.hampouch.data.repository.MyPageProfileRepositoryImpl
 import com.example.hampouch.data.repository.NotificationRepositoryImpl
 import com.example.hampouch.data.repository.NotificationSettingsRepositoryImpl
+import com.example.hampouch.data.repository.OnboardingLocalStoreImpl
 import com.example.hampouch.data.repository.RecordAlarmRepositoryImpl
 import com.example.hampouch.data.repository.RestRepositoryImpl
 import com.example.hampouch.data.repository.UsersRepositoryImpl
@@ -21,9 +22,12 @@ import com.example.hampouch.domain.repository.MiniChallengeRepository
 import com.example.hampouch.domain.repository.MyPageProfileRepository
 import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.domain.repository.NotificationSettingsRepository
+import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.RestRepository
 import com.example.hampouch.domain.repository.UsersRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -85,4 +89,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUsersRepository(impl: UsersRepositoryImpl): UsersRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHomeWidgetRefreshRequester(
+        impl: HomeWidgetStatePublisher
+    ): HomeWidgetRefreshRequester
+
+    @Binds
+    @Singleton
+    abstract fun bindOnboardingLocalStore(impl: OnboardingLocalStoreImpl): OnboardingLocalStore
 }

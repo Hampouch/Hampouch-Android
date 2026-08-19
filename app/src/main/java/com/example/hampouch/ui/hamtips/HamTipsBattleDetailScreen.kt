@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -153,6 +154,14 @@ fun HamTipsBattleDetailScreen(
 ) {
     var showRoomFull by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    var refreshRequestedByGesture by remember { mutableStateOf(false) }
+    HamTipsRefreshCompletionToast(
+        isRefreshing = isRefreshing,
+        requestedByGesture = refreshRequestedByGesture,
+        message = "게시글을 새로고침했어요.",
+        onConsumed = { refreshRequestedByGesture = false }
+    )
 
     LaunchedEffect(post.id) { viewModel.loadDetail(post.id) }
     LaunchedEffect(viewModel) {
@@ -201,6 +210,11 @@ fun HamTipsBattleDetailScreen(
         battleInfo = battleInfo,
         summaryRequest = summaryRequest,
         isBattleFull = isBattleFull,
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            refreshRequestedByGesture = true
+            viewModel.loadDetail(post.id)
+        },
         onLikeClick = { viewModel.toggleLike(post.id) },
         onScrapClick = { viewModel.toggleSave(post.id) },
         onDeletePost = { viewModel.deletePost(post.id) },
@@ -259,6 +273,8 @@ private fun HamTipsBattleDetailContent(
     battleInfo: BattleRecruitInfo?,
     summaryRequest: HamBattleChallengeRequest,
     isBattleFull: Boolean,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onLikeClick: () -> Unit,
     onScrapClick: () -> Unit,
     onDeletePost: () -> Unit,
@@ -305,43 +321,50 @@ private fun HamTipsBattleDetailContent(
             )
         }
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
         ) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Spacer(modifier = Modifier.height(4.dp))
-                HamTipsPostHeader(post = post)
-                Spacer(modifier = Modifier.height(16.dp))
-                if (post.content.isNotBlank()) {
-                    Text(text = post.content, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    HamTipsPostHeader(post = post)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (post.content.isNotBlank()) {
+                        Text(text = post.content, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    if (battleInfo != null) {
+                        HamTipsBattleInfoCard(
+                            summaryRequest = summaryRequest,
+                            showActionButton = !isAuthor,
+                            isFull = isBattleFull,
+                            onActionClick = { showJoinConfirm = true }
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+                    HamTipsEngagementRow(
+                        post = post,
+                        onLikeClick = onLikeClick,
+                        onScrapClick = onScrapClick
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                if (battleInfo != null) {
-                    HamTipsBattleInfoCard(
-                        summaryRequest = summaryRequest,
-                        showActionButton = !isAuthor,
-                        isFull = isBattleFull,
-                        onActionClick = { showJoinConfirm = true }
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-                HamTipsEngagementRow(
+                HamTipsCommentListColumn(
                     post = post,
-                    onLikeClick = onLikeClick,
-                    onScrapClick = onScrapClick
+                    onReplyClick = { replyTarget = it },
+                    onMoreClick = { commentMenuTarget = it },
+                    onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            HamTipsCommentListColumn(
-                post = post,
-                onReplyClick = { replyTarget = it },
-                onMoreClick = { commentMenuTarget = it },
-                onReplyMoreClick = { comment, reply -> replyMenuTarget = comment to reply }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
@@ -460,6 +483,8 @@ private fun HamTipsBattleDetailScreenJoinablePreview() {
                 stringResource(R.string.hamtips_battle_capacity_format, info.capacity)
             ),
             isBattleFull = info.isFull,
+            isRefreshing = false,
+            onRefresh = {},
             onLikeClick = {},
             onScrapClick = {},
             onDeletePost = {},
@@ -520,6 +545,8 @@ private fun HamTipsBattleDetailScreenFullPreview() {
                 stringResource(R.string.hamtips_battle_capacity_format, fullInfo.capacity)
             ),
             isBattleFull = fullInfo.isFull,
+            isRefreshing = false,
+            onRefresh = {},
             onLikeClick = {},
             onScrapClick = {},
             onDeletePost = {},
