@@ -11,6 +11,10 @@ interface NotificationSettingsRepository {
     val state: StateFlow<NotificationSettingsState>
 
     fun update(transform: (NotificationSettingsState) -> NotificationSettingsState)
+
+    fun reserveMarketingConsent(email: String, enabled: Boolean)
+
+    fun activateAccount(accountId: String, email: String?)
 }
 
 interface RecordAlarmRepository {

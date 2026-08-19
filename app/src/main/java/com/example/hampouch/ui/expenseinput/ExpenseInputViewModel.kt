@@ -21,8 +21,21 @@ import javax.inject.Inject
 
 internal const val EXPENSE_DATE_LOCKED_MESSAGE = "이 날짜의 지출기록은 지금 변경할 수 없습니다."
 
-internal fun ChallengeState.canChangeExpenseOn(date: LocalDate): Boolean =
-    challengeFor(date) != null
+internal fun ChallengeState.canChangeExpenseOn(
+    date: LocalDate,
+    referenceToday: LocalDate = LocalDate.now()
+): Boolean {
+    val recordBasedChallenges = challenges.filter { challenge ->
+        challenge.abandonedDate == null &&
+            !date.isBefore(challenge.periodStart) &&
+            !date.isAfter(challenge.periodEnd)
+    }
+    return when {
+        recordBasedChallenges.any { it.expenseLockedAt != null } -> false
+        recordBasedChallenges.isNotEmpty() -> true
+        else -> !date.isBefore(referenceToday.minusDays(1)) && !date.isAfter(referenceToday)
+    }
+}
 
 data class ExpenseInputUiState(
     val dailyLimit: Int = 0,

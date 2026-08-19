@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.model.EmailVerificationPurpose
 import com.example.hampouch.domain.model.toUserMessage
+import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,8 @@ sealed interface SignUpEvent {
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val notificationSettingsRepository: NotificationSettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignUpUiState())
@@ -178,6 +180,10 @@ class SignUpViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.signUp(state.email, state.password, state.nickname)
                 .onSuccess {
+                    notificationSettingsRepository.reserveMarketingConsent(
+                        email = state.email,
+                        enabled = state.isMarketingChecked
+                    )
                     update { copy(signUpErrorMessage = null) }
                     _events.send(SignUpEvent.SignedUp)
                 }

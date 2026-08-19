@@ -27,7 +27,8 @@ data class AllSettingsActions(
     val onNotificationClick: () -> Unit,
     val onChallengeAlarmChange: (Boolean) -> Unit,
     val onHamBattleAlarmChange: (Boolean) -> Unit,
-    val onCommunityAlarmChange: (Boolean) -> Unit
+    val onCommunityAlarmChange: (Boolean) -> Unit,
+    val onMarketingInformationChange: (Boolean) -> Unit
 )
 
 @HiltViewModel
@@ -55,6 +56,10 @@ class AllSettingsViewModel @Inject constructor(
     fun setCommunityAlarmEnabled(enabled: Boolean) {
         notificationSettingsRepository.update { it.copy(communityAlarmEnabled = enabled) }
         syncSchedule()
+    }
+
+    fun setMarketingInformationEnabled(enabled: Boolean) {
+        notificationSettingsRepository.update { it.copy(marketingInformationEnabled = enabled) }
     }
 
     private fun syncSchedule() {
