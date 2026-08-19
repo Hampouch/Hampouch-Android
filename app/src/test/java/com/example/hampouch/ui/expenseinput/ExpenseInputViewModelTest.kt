@@ -77,6 +77,22 @@ class ExpenseInputViewModelTest {
     }
 
     @Test
+    fun `빈 직접입력을 확인해도 기존 카테고리와 지출 이유 선택을 유지한다`() {
+        val viewModel = createViewModel(SavedStateHandle())
+        viewModel.selectCategory("dining_out")
+        viewModel.selectReason("stress")
+
+        viewModel.confirmCustomCategory()
+        viewModel.confirmCustomReason()
+
+        val form = viewModel.uiState.value.form
+        assertEquals("dining_out", form.categoryId)
+        assertFalse(form.isCustomCategory)
+        assertEquals("stress", form.reasonId)
+        assertFalse(form.isCustomReason)
+    }
+
+    @Test
     fun `초안을 취소하면 SavedStateHandle의 복원값을 정리한다`() {
         val savedStateHandle = SavedStateHandle()
         val viewModel = createViewModel(savedStateHandle)
