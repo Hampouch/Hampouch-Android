@@ -105,7 +105,6 @@ fun HamTipsScreen(
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit,
     onNavigateToHamBattleTab: () -> Unit,
-    onNotificationClick: () -> Unit,
     openWriteBattleOnStart: Boolean = false,
     initialWriteBattleLink: String = "",
     onExitWriteBattle: () -> Unit,
@@ -301,7 +300,6 @@ fun HamTipsScreen(
                             allPosts = filteredSortedPosts(allPosts, null, searchQuery, sortOrder),
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
-                            onNotificationClick = onNotificationClick,
                             onPopularViewAllClick = { route = HamTipsRoute.POPULAR_ALL },
                             onPochipickViewAllClick = { route = HamTipsRoute.POCHIPICK_ALL },
                             onPostClick = onPostClick,
@@ -327,7 +325,6 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             loadState = loadState,
                             onRetry = viewModel::retry,
@@ -348,7 +345,6 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             scrollToPostId = initialPopularPostId,
                             loadState = loadState,
@@ -370,7 +366,6 @@ fun HamTipsScreen(
                             sortOrder = sortOrder,
                             onSortOrderChange = { sortOrder = it },
                             onBackClick = onBackToMain,
-                            onNotificationClick = onNotificationClick,
                             onPostClick = onPostClick,
                             loadState = loadState,
                             onRetry = viewModel::retry,
@@ -465,7 +460,6 @@ private fun HamTipsMainContent(
     allPosts: List<TipPost>,
     sortOrder: HamTipsSortOrder,
     onSortOrderChange: (HamTipsSortOrder) -> Unit,
-    onNotificationClick: () -> Unit,
     onPopularViewAllClick: () -> Unit,
     onPochipickViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -481,7 +475,7 @@ private fun HamTipsMainContent(
             .imePadding()
             .padding(horizontal = 20.dp)
     ) {
-        HamTipsMainTopBar(onNotificationClick = onNotificationClick)
+        HamTipsMainTopBar()
         Spacer(modifier = Modifier.height(12.dp))
         HamTipsSearchBar(query = query, onQueryChange = onQueryChange)
         Spacer(modifier = Modifier.height(16.dp))
@@ -540,7 +534,6 @@ private fun HamTipsFeedRouteContent(
     sortOrder: HamTipsSortOrder,
     onSortOrderChange: (HamTipsSortOrder) -> Unit,
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
     initialSortExpanded: Boolean = false,
     onPostClick: (TipPost) -> Unit,
@@ -558,7 +551,7 @@ private fun HamTipsFeedRouteContent(
             .padding(horizontal = 20.dp)
             .onGloballyPositioned { coordinates -> containerRootY = coordinates.positionInRoot().y }
     ) {
-        HamTipsDetailTopBar(title = title, onBackClick = onBackClick, onNotificationClick = onNotificationClick)
+        HamTipsDetailTopBar(title = title, onBackClick = onBackClick)
         HamTipsSearchBar(query = query, onQueryChange = onQueryChange)
         Spacer(modifier = Modifier.height(16.dp))
         HamTipsCategoryTabRow(selectedTab = selectedCategoryTab, onTabSelected = onCategoryTabSelected)
@@ -619,7 +612,6 @@ private fun HamTipsMainScreenPreview() {
                 allPosts = HamTipsMockData.allPosts(),
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
-                onNotificationClick = {},
                 onPopularViewAllClick = {},
                 onPochipickViewAllClick = {},
                 onPostClick = {},
@@ -644,7 +636,6 @@ private fun HamTipsCategoryScreenPreview() {
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},
-                onNotificationClick = {},
                 onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
@@ -667,7 +658,6 @@ private fun HamTipsWhatToEatCategoryScreenPreview() {
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},
-                onNotificationClick = {},
                 onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
@@ -690,7 +680,6 @@ private fun HamTipsPopularAllScreenPreview() {
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},
-                onNotificationClick = {},
                 onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
@@ -713,7 +702,6 @@ private fun HamTipsPochipickAllScreenPreview() {
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},
-                onNotificationClick = {},
                 onPostClick = {},
                 modifier = Modifier.padding(innerPadding)
             )
@@ -737,8 +725,7 @@ private fun HamTipsFabMenuEffectPreview() {
                     allPosts = HamTipsMockData.allPosts(),
                     sortOrder = HamTipsSortOrder.LATEST,
                     onSortOrderChange = {},
-                    onNotificationClick = {},
-                    onPopularViewAllClick = {},
+                        onPopularViewAllClick = {},
                     onPochipickViewAllClick = {},
                     onPostClick = {},
                     modifier = Modifier.padding(innerPadding)
@@ -774,7 +761,6 @@ private fun HamTipsSortDropdownPreview() {
                 sortOrder = HamTipsSortOrder.LATEST,
                 onSortOrderChange = {},
                 onBackClick = {},
-                onNotificationClick = {},
                 onPostClick = {},
                 modifier = Modifier.padding(innerPadding),
                 initialSortExpanded = true

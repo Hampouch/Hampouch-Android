@@ -49,13 +49,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.domain.model.CharacterState
 import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.HomeChallenge
-import com.example.hampouch.domain.model.HomeWarning
-import com.example.hampouch.domain.model.HomeWarningType
-import com.example.hampouch.domain.model.HomeWarningVariant
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.miniChallengeDuration
 import com.example.hampouch.ui.common.ReasonTagAndAmountColumn
@@ -64,9 +60,7 @@ import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
 import com.example.hampouch.ui.theme.HPGray5
 import com.example.hampouch.ui.theme.HPMain
-import com.example.hampouch.ui.theme.HPStatusSuccessBg
 import com.example.hampouch.ui.theme.HPSub
-import com.example.hampouch.ui.theme.HPSub1
 import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub3
 import com.example.hampouch.ui.theme.HPSub4
@@ -83,7 +77,6 @@ internal fun formatWon(amount: Int): String = "%,d".format(amount)
 fun HomeHeader(
     userName: String,
     onCalendarClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -105,7 +98,6 @@ fun HomeHeader(
                 tint = HPBlack
             )
         }
-        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -113,7 +105,7 @@ fun HomeHeader(
 @Composable
 private fun HomeHeaderPreview() {
     HampouchTheme {
-        HomeHeader(userName = "민준", onCalendarClick = {}, onNotificationClick = {})
+        HomeHeader(userName = "민준", onCalendarClick = {})
     }
 }
 
@@ -711,124 +703,6 @@ fun EmptyStateBlock(title: String, subtitle: String? = null, modifier: Modifier 
         if (subtitle != null) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = HPText)
-        }
-    }
-}
-
-@Composable
-private fun HomeWarning.resolveTitle(): String = when (type) {
-    HomeWarningType.LOW_DAILY_BUDGET -> stringResource(R.string.home_warning_low_daily_budget_title)
-    HomeWarningType.CHALLENGE_BUDGET_EXCEEDED -> stringResource(R.string.home_warning_challenge_budget_exceeded_title)
-    HomeWarningType.CATEGORY_OVERSPEND -> stringResource(
-        R.string.home_warning_category_overspend_title_format,
-        categoryId?.let { id -> HomeCategoryCatalog.byId(id)?.let { stringResource(it.labelResId) } }
-            ?: stringResource(R.string.category_etc)
-    )
-    HomeWarningType.REASON_OVERSPEND -> stringResource(
-        R.string.home_warning_reason_overspend_title_format,
-        reasonLabel.orEmpty()
-    )
-    HomeWarningType.LARGE_SINGLE_EXPENSE -> stringResource(R.string.home_warning_large_single_expense_title)
-    HomeWarningType.MISSED_YESTERDAY_RECORD -> stringResource(R.string.home_warning_missed_yesterday_title)
-}
-
-@Composable
-private fun HomeWarning.resolveMessage(): String = when (type) {
-    HomeWarningType.LOW_DAILY_BUDGET -> stringResource(R.string.home_warning_low_daily_budget_message)
-    HomeWarningType.CHALLENGE_BUDGET_EXCEEDED -> stringResource(R.string.home_warning_challenge_budget_exceeded_message)
-    HomeWarningType.CATEGORY_OVERSPEND -> stringResource(
-        R.string.home_warning_category_overspend_message_format,
-        categoryId?.let { id -> HomeCategoryCatalog.byId(id)?.let { stringResource(it.labelResId) } }
-            ?: stringResource(R.string.category_etc),
-        formatWon(categorySpentAmount ?: 0)
-    )
-    HomeWarningType.REASON_OVERSPEND -> stringResource(R.string.home_warning_reason_overspend_message)
-    HomeWarningType.LARGE_SINGLE_EXPENSE -> stringResource(R.string.home_warning_large_single_expense_message)
-    HomeWarningType.MISSED_YESTERDAY_RECORD -> stringResource(R.string.home_warning_missed_yesterday_message)
-}
-
-@Preview(showBackground = true, name = "경고 배너 목록")
-@Composable
-private fun WarningBannerListPreview() {
-    HampouchTheme {
-        WarningBannerList(
-            warnings = listOf(
-                HomeWarning(id = "w1", type = HomeWarningType.LOW_DAILY_BUDGET),
-                HomeWarning(
-                    id = "w2",
-                    type = HomeWarningType.CATEGORY_OVERSPEND,
-                    categoryId = "delivery",
-                    categorySpentAmount = 18_000
-                ),
-                HomeWarning(id = "w3", type = HomeWarningType.MISSED_YESTERDAY_RECORD)
-            ),
-            onReminderClick = {},
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-
-@Composable
-fun WarningBannerList(
-    warnings: List<HomeWarning>,
-    onReminderClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        warnings.forEach { warning ->
-            WarningBannerCard(
-                warning = warning,
-                onClick = onReminderClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun WarningBannerCard(
-    warning: HomeWarning,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val isReminder = warning.type.variant == HomeWarningVariant.REMINDER
-    val cardBackground = if (isReminder) HPSub3.copy(alpha = 0.8f) else HPStatusSuccessBg.copy(alpha = 0.8f)
-    val borderColor = if (isReminder) HPSub1 else HPSub
-    val titleColor = if (isReminder) HPBlack else HPSub
-    val messageColor = HPSub1
-    val iconTint = if (isReminder) HPSub1 else HPSub
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(cardBackground)
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(20.dp))
-            .then(if (isReminder) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_warning_circle),
-            contentDescription = stringResource(R.string.cd_warning_alert_icon),
-            tint = iconTint,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = warning.resolveTitle(),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = titleColor
-            )
-            Text(text = warning.resolveMessage(), style = MaterialTheme.typography.bodySmall, color = messageColor)
-        }
-        if (isReminder) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = HPBlack
-            )
         }
     }
 }

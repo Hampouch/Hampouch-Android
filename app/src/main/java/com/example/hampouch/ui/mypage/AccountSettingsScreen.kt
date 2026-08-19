@@ -47,7 +47,6 @@ fun AccountSettingsScreen(
     onChangePasswordClick: () -> Unit,
     onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit,
     viewModel: AccountSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -68,7 +67,6 @@ fun AccountSettingsScreen(
             onBackClick = onBackClick,
             onProfileEditClick = onProfileEditClick,
             onChangePasswordClick = onChangePasswordClick,
-            onNotificationClick = onNotificationClick,
             onWithdraw = viewModel::withdraw
         ),
         modifier = modifier
@@ -90,8 +88,7 @@ private fun AccountSettingsContent(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.account_settings_title),
-            onBackClick = actions.onBackClick,
-            onNotificationClick = actions.onNotificationClick
+            onBackClick = actions.onBackClick
         )
         Column(
             modifier = Modifier
@@ -169,7 +166,6 @@ private fun AccountSettingsScreenPreview() {
                 onBackClick = {},
                 onProfileEditClick = {},
                 onChangePasswordClick = {},
-                onNotificationClick = {},
                 onWithdraw = {}
             )
         )

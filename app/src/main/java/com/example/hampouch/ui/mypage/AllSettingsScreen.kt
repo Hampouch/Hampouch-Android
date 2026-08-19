@@ -1,15 +1,21 @@
 package com.example.hampouch.ui.mypage
 
+import android.app.TimePickerDialog
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,42 +23,57 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.domain.model.NotificationSettingsState
+import com.example.hampouch.domain.model.DayOfWeekLabel
+import com.example.hampouch.domain.model.RecordAlarmSettingsState
+import com.example.hampouch.domain.model.ReminderDayMode
+import com.example.hampouch.ui.mypage.components.DayOfWeekChipsRow
 import com.example.hampouch.ui.mypage.components.MyPageMainTopBar
+import com.example.hampouch.ui.mypage.components.ReminderModeSegmentedRow
 import com.example.hampouch.ui.mypage.components.SectionLabel
 import com.example.hampouch.ui.mypage.components.SettingsMenuCard
 import com.example.hampouch.ui.mypage.components.SettingsMenuDivider
 import com.example.hampouch.ui.mypage.components.SettingsMenuRow
-import com.example.hampouch.ui.mypage.components.SettingsNavigateCard
 import com.example.hampouch.ui.mypage.components.SettingsToggleCard
+import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray2
+import com.example.hampouch.ui.theme.HPMain
+import com.example.hampouch.ui.theme.HPSub3
+import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+private fun daysForMode(mode: ReminderDayMode): Set<DayOfWeekLabel> = when (mode) {
+    ReminderDayMode.WEEKDAY -> setOf(
+        DayOfWeekLabel.MON, DayOfWeekLabel.TUE, DayOfWeekLabel.WED, DayOfWeekLabel.THU, DayOfWeekLabel.FRI
+    )
+    ReminderDayMode.WEEKEND -> setOf(DayOfWeekLabel.SAT, DayOfWeekLabel.SUN)
+    ReminderDayMode.DAILY -> DayOfWeekLabel.entries.toSet()
+    ReminderDayMode.CUSTOM -> emptySet()
+}
+
+private fun formatTime(hour: Int, minute: Int): String = "%02d:%02d".format(hour, minute)
+
 @Composable
 fun AllSettingsScreen(
     onBackClick: () -> Unit,
-    onRecordAlarmClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit,
     viewModel: AllSettingsViewModel = hiltViewModel()
 ) {
-    val notificationState by viewModel.state.collectAsStateWithLifecycle()
+    val recordAlarmState by viewModel.recordAlarmState.collectAsStateWithLifecycle()
     AllSettingsContent(
-        notificationState = notificationState,
+        recordAlarmState = recordAlarmState,
         actions = AllSettingsActions(
             onBackClick = onBackClick,
-            onRecordAlarmClick = onRecordAlarmClick,
-            onNotificationClick = onNotificationClick,
-            onChallengeAlarmChange = viewModel::setChallengeAlarmEnabled,
-            onHamBattleAlarmChange = viewModel::setHamBattleAlarmEnabled,
-            onCommunityAlarmChange = viewModel::setCommunityAlarmEnabled
+            onUpdateRecordAlarm = viewModel::updateRecordAlarm
         ),
         modifier = modifier
     )
@@ -60,7 +81,7 @@ fun AllSettingsScreen(
 
 @Composable
 private fun AllSettingsContent(
-    notificationState: NotificationSettingsState,
+    recordAlarmState: RecordAlarmSettingsState,
     actions: AllSettingsActions,
     modifier: Modifier = Modifier
 ) {
@@ -73,8 +94,7 @@ private fun AllSettingsContent(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.settings_title),
-            onBackClick = actions.onBackClick,
-            onNotificationClick = actions.onNotificationClick
+            onBackClick = actions.onBackClick
         )
         Column(
             modifier = Modifier
@@ -82,7 +102,7 @@ private fun AllSettingsContent(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            AllSettingsNotificationSection(notificationState = notificationState, actions = actions)
+            AllSettingsNotificationSection(recordAlarmState = recordAlarmState, actions = actions)
             Spacer(modifier = Modifier.height(24.dp))
             AllSettingsDataAndSupportSection(onComingSoonClick = { showComingSoonDialog = true })
             Spacer(modifier = Modifier.height(24.dp))
@@ -103,35 +123,128 @@ private fun AllSettingsContent(
 }
 
 @Composable
-private fun AllSettingsNotificationSection(notificationState: NotificationSettingsState, actions: AllSettingsActions) {
+private fun AllSettingsNotificationSection(
+    recordAlarmState: RecordAlarmSettingsState,
+    actions: AllSettingsActions
+) {
+    val context = LocalContext.current
+    val timePickerDialog = remember(recordAlarmState.hour, recordAlarmState.minute) {
+        TimePickerDialog(
+            context,
+            R.style.Theme_Hampouch_SpinnerTimePicker,
+            { _, hourOfDay, minute -> actions.onUpdateRecordAlarm { it.copy(hour = hourOfDay, minute = minute) } },
+            recordAlarmState.hour,
+            recordAlarmState.minute,
+            false
+        )
+    }
+
+    fun onMissingReminderToggle(enabled: Boolean) {
+        actions.onUpdateRecordAlarm { it.copy(missingReminderEnabled = enabled) }
+    }
+
     SectionLabel(text = stringResource(R.string.settings_section_notification))
     Spacer(modifier = Modifier.height(8.dp))
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SettingsNavigateCard(
-            title = stringResource(R.string.settings_record_alarm_title),
-            subtitle = stringResource(R.string.settings_record_alarm_subtitle),
-            onClick = actions.onRecordAlarmClick
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(HPWhite)
+        ) {
+            SettingsToggleCard(
+                title = stringResource(R.string.record_alarm_missing_reminder_title),
+                subtitle = stringResource(R.string.record_alarm_missing_reminder_subtitle),
+                checked = recordAlarmState.missingReminderEnabled,
+                onCheckedChange = ::onMissingReminderToggle,
+                onRowClick = { onMissingReminderToggle(!recordAlarmState.missingReminderEnabled) }
+            )
+            if (recordAlarmState.missingReminderEnabled) {
+                RecordAlarmMissingReminderDetail(
+                    state = recordAlarmState,
+                    onUpdate = actions.onUpdateRecordAlarm,
+                    onTimeClick = { timePickerDialog.show() }
+                )
+            }
+        }
         SettingsToggleCard(
-            title = stringResource(R.string.settings_challenge_alarm_title),
-            subtitle = stringResource(R.string.settings_challenge_alarm_subtitle),
-            checked = notificationState.challengeAlarmEnabled,
-            onCheckedChange = actions.onChallengeAlarmChange,
-            onRowClick = { actions.onChallengeAlarmChange(!notificationState.challengeAlarmEnabled) }
+            title = stringResource(R.string.settings_marketing_alarm_title),
+            subtitle = stringResource(R.string.settings_marketing_alarm_subtitle),
+            checked = false,
+            onCheckedChange = {},
+            onRowClick = null
         )
-        SettingsToggleCard(
-            title = stringResource(R.string.settings_hambattle_alarm_title),
-            subtitle = stringResource(R.string.settings_hambattle_alarm_subtitle),
-            checked = notificationState.hamBattleAlarmEnabled,
-            onCheckedChange = actions.onHamBattleAlarmChange,
-            onRowClick = { actions.onHamBattleAlarmChange(!notificationState.hamBattleAlarmEnabled) }
+    }
+}
+
+@Composable
+private fun RecordAlarmMissingReminderDetail(
+    state: RecordAlarmSettingsState,
+    onUpdate: ((RecordAlarmSettingsState) -> RecordAlarmSettingsState) -> Unit,
+    onTimeClick: () -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+        ReminderModeSegmentedRow(
+            selectedMode = state.dayMode,
+            onModeSelected = { mode ->
+                onUpdate { it.copy(dayMode = mode, selectedDays = daysForMode(mode)) }
+            }
         )
-        SettingsToggleCard(
-            title = stringResource(R.string.settings_community_alarm_title),
-            subtitle = stringResource(R.string.settings_community_alarm_subtitle),
-            checked = notificationState.communityAlarmEnabled,
-            onCheckedChange = actions.onCommunityAlarmChange,
-            onRowClick = { actions.onCommunityAlarmChange(!notificationState.communityAlarmEnabled) }
+        Spacer(modifier = Modifier.height(10.dp))
+        DayOfWeekChipsRow(
+            selectedDays = state.selectedDays,
+            onDayToggle = { day ->
+                val updated = if (day in state.selectedDays) {
+                    state.selectedDays - day
+                } else {
+                    state.selectedDays + day
+                }
+                onUpdate { it.copy(dayMode = ReminderDayMode.CUSTOM, selectedDays = updated) }
+            }
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        RecordAlarmTimeRow(state = state, onTimeClick = onTimeClick)
+    }
+}
+
+@Composable
+private fun RecordAlarmTimeRow(state: RecordAlarmSettingsState, onTimeClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onTimeClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.record_alarm_time_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPBlack
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = formatTime(state.hour, state.minute),
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPMain
+        )
+    }
+    Spacer(modifier = Modifier.height(14.dp))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(HPSub3)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(
+                R.string.record_alarm_summary_format,
+                stringResource(state.dayMode.labelResId),
+                formatTime(state.hour, state.minute)
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = HPBlack
         )
     }
 }
@@ -171,14 +284,10 @@ private fun AllSettingsDataAndSupportSection(onComingSoonClick: () -> Unit) {
 private fun AllSettingsScreenPreview() {
     HampouchTheme {
         AllSettingsContent(
-            notificationState = NotificationSettingsState(),
+            recordAlarmState = RecordAlarmSettingsState(),
             actions = AllSettingsActions(
                 onBackClick = {},
-                onRecordAlarmClick = {},
-                onNotificationClick = {},
-                onChallengeAlarmChange = {},
-                onHamBattleAlarmChange = {},
-                onCommunityAlarmChange = {}
+                onUpdateRecordAlarm = {}
             )
         )
     }

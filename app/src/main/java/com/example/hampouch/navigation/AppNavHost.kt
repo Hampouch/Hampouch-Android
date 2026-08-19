@@ -62,7 +62,6 @@ import com.example.hampouch.ui.hambattle.buildBattleInviteUrl
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.core.config.ExpenseConfig
 import com.example.hampouch.domain.model.ExpenseChallengePeriod
-import com.example.hampouch.domain.model.NotificationTarget
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentMockData
 import com.example.hampouch.ui.amountadjustment.AmountAdjustmentRoute
 import com.example.hampouch.ui.challengeresult.ChallengeResultMockData
@@ -92,8 +91,6 @@ import com.example.hampouch.ui.minichallenge.MiniChallengeScreen
 import com.example.hampouch.ui.nextchallenge.NextChallengeRoute
 import com.example.hampouch.ui.nextchallenge.NextChallengeTakeABreakRoute
 import com.example.hampouch.ui.nextchallenge.FixedDateNextChallengeRoute
-import com.example.hampouch.ui.notification.NotificationScreen
-import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.onboarding.OnboardingRoute
 import com.example.hampouch.ui.onboarding.steps.LoadingStep
 import com.example.hampouch.ui.signup.ResetPasswordScreen
@@ -175,9 +172,7 @@ private fun StartupGate(
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    pendingNotificationId: String? = null,
-    onPendingNotificationConsumed: () -> Unit
+    navController: NavHostController = rememberNavController()
 ) {
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
@@ -218,7 +213,6 @@ fun AppNavHost(
         }
     }
     val coroutineScope = rememberCoroutineScope()
-    val notificationViewModel: NotificationViewModel = hiltViewModel()
     val startDestination by startDestinationViewModel.startDestination.collectAsStateWithLifecycle()
     val pendingChallengeResult by startDestinationViewModel.pendingChallengeResult.collectAsStateWithLifecycle()
     val startupErrorMessage by startDestinationViewModel.startupErrorMessage.collectAsStateWithLifecycle()
@@ -270,60 +264,6 @@ fun AppNavHost(
         navController.navigate(Screen.Home.route) {
             popUpTo(Screen.Home.route) { inclusive = true }
         }
-    }
-
-    val handleNotificationTarget: (NotificationTarget) -> Unit = { target ->
-        when (target) {
-            is NotificationTarget.Home -> {
-                pendingHomeTab = BottomNavItem.HOME
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) { inclusive = true }
-                }
-            }
-            is NotificationTarget.ExpenseInput -> {
-                navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
-            }
-            is NotificationTarget.AmountAdjustment -> {
-                navController.navigate(Screen.AmountAdjustment.route)
-            }
-            is NotificationTarget.ChallengeSummary -> {
-                navController.navigate(Screen.ChallengeSummary.createRoute(target.challengeId))
-            }
-            is NotificationTarget.HamBattleDetail -> {
-                navController.navigate(Screen.ChallengeResult.createRoute(target.challengeId))
-            }
-            is NotificationTarget.HamBattleEndedDetail -> {
-                navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(target.challengeId))
-            }
-            is NotificationTarget.HamBattleWaitingDetail -> {
-                navController.navigate(Screen.HamBattleWaitingChallengeDetail.createRoute(target.challengeId))
-            }
-            is NotificationTarget.MyTipDetail -> {
-                pendingMyTipDetail = target.postId to target.scrollToComments
-                pendingHomeTab = BottomNavItem.MY_PAGE
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) { inclusive = true }
-                }
-            }
-            is NotificationTarget.CommunityPopularPost -> {
-                pendingCommunityPopularPostId = target.postId
-                pendingHomeTab = BottomNavItem.COMMUNITY
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) { inclusive = true }
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(pendingNotificationId) {
-        val id = pendingNotificationId ?: return@LaunchedEffect
-        notificationViewModel.refresh()
-        val item = notificationViewModel.findById(id)
-        if (item != null) {
-            notificationViewModel.markRead(item.id)
-            handleNotificationTarget(item.target)
-        }
-        onPendingNotificationConsumed()
     }
 
     val onBottomNavAddClick: () -> Unit = {
@@ -516,7 +456,6 @@ fun AppNavHost(
                 onNavigateToYesterdayExpenseInput = {
                     navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now().minusDays(1)))
                 },
-                onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onLoggedOut = { isWithdrawal ->
                     startDestinationViewModel.logout(skipOnboardingSplash = !isWithdrawal)
                     navController.navigate(Screen.Onboarding.route) {
@@ -793,8 +732,7 @@ fun AppNavHost(
             val epochDay = backStackEntry.arguments?.getLong("initialDateEpochDay") ?: LocalDate.now().toEpochDay()
             MiniChallengeScreen(
                 initialDate = LocalDate.ofEpochDay(epochDay),
-                onBackClick = { navController.popBackStack() },
-                onNotificationClick = { navController.navigate(Screen.Notification.route) }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -828,7 +766,6 @@ fun AppNavHost(
                         )
                     )
                 },
-                onNotificationClick = { navController.navigate(Screen.Notification.route) },
                 onViewEndedChallengeDetailClick = { challengeId ->
                     navController.navigate(Screen.HamBattleEndedChallengeDetail.createRoute(challengeId))
                 },
@@ -881,7 +818,6 @@ fun AppNavHost(
                         battleViewModel.mockChallengesWith(HamBattleStatus.ENDED)
                     },
                     onBackClick = { navController.popBackStack() },
-                    onNotificationClick = { navController.navigate(Screen.Notification.route) },
                     onChallengeClick = { challengeId ->
                         navController.navigate(
                             Screen.HamBattleEndedChallengeDetail.createRoute(challengeId)
@@ -1154,20 +1090,6 @@ fun AppNavHost(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                }
-            )
-        }
-
-        composable(Screen.Notification.route) {
-            val notifications by notificationViewModel.items.collectAsStateWithLifecycle()
-            LaunchedEffect(Unit) { notificationViewModel.refresh() }
-            NotificationScreen(
-                notifications = notifications,
-                onBackClick = { navController.popBackStack() },
-                onMarkAllReadClick = notificationViewModel::markAllRead,
-                onNotificationClick = { item ->
-                    notificationViewModel.markRead(item.id)
-                    handleNotificationTarget(item.target)
                 }
             )
         }

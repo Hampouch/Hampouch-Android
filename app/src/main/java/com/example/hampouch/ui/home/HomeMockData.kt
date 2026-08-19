@@ -17,8 +17,6 @@ import com.example.hampouch.domain.model.ExpenseEntry
 import com.example.hampouch.domain.model.HomeChallenge
 import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.ChallengeState
-import com.example.hampouch.domain.model.HomeWarning
-import com.example.hampouch.domain.model.HomeWarningType
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.MiniChallengeDuration
 import com.example.hampouch.domain.model.miniChallengeDuration
@@ -87,8 +85,7 @@ object HomeMockData {
             selectedDate = date,
             challenge = challenge?.let { buildChallenge(it, date, todayBalance = it.dailyLimitOn(date)) },
             expenses = emptyList(),
-            miniChallenges = MiniChallengeMockData.todayChallenges(),
-            warnings = emptyList()
+            miniChallenges = MiniChallengeMockData.todayChallenges()
         )
     }
 
@@ -108,17 +105,7 @@ object HomeMockData {
                 amount = 15_800
             )
         ),
-        miniChallenges = MiniChallengeMockData.yesterdayChallenges(),
-        warnings = listOf(
-            HomeWarning(id = "w1", type = HomeWarningType.LOW_DAILY_BUDGET),
-            HomeWarning(
-                id = "w2",
-                type = HomeWarningType.CATEGORY_OVERSPEND,
-                categoryId = "delivery",
-                categorySpentAmount = 18_000
-            ),
-            HomeWarning(id = "w3", type = HomeWarningType.MISSED_YESTERDAY_RECORD)
-        )
+        miniChallenges = MiniChallengeMockData.yesterdayChallenges()
     )
 
     fun noActiveChallengeState(userName: String, date: LocalDate): HomeUiState = HomeUiState(
@@ -148,8 +135,7 @@ object HomeMockData {
         miniChallenges = listOf(
             MiniChallengeEntry(id = "m1", name = "커피 사먹지 않기", duration = miniChallengeDuration(7), achievedDays = 4, isChecked = true),
             MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = false)
-        ),
-        warnings = emptyList()
+        )
     )
 
     fun decreasingBalanceState(challengeState: ChallengeState, userName: String, date: LocalDate): HomeUiState = HomeUiState(
@@ -166,7 +152,6 @@ object HomeMockData {
             MiniChallengeEntry(id = "m2", name = "배달 음식 참기", duration = MiniChallengeDuration.Today, achievedDays = 0, isChecked = true),
             MiniChallengeEntry(id = "m3", name = "물 많이 마시기", duration = miniChallengeDuration(7), achievedDays = 3, isChecked = true),
             MiniChallengeEntry(id = "m4", name = "계단 이용하기", duration = miniChallengeDuration(7), achievedDays = 0, isChecked = true)
-        ),
-        warnings = emptyList()
+        )
     )
 }

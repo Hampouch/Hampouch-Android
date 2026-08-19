@@ -45,10 +45,6 @@ data class ChallengeConsumptionDto(
     val alertLevel: String
 )
 
-data class ChallengeWarningCardDto(
-    val type: String? = null
-)
-
 data class ChallengeAdjustmentDto(
     val usedCount: Int,
     val maxCount: Int
@@ -63,7 +59,6 @@ data class ChallengeCurrentData(
     val challenge: ChallengeSummaryDto?,
     val progress: ChallengeProgressDto? = null,
     val consumption: ChallengeConsumptionDto? = null,
-    val warningCards: List<ChallengeWarningCardDto>? = null,
     val expenseInputState: String? = null,
     val adjustment: ChallengeAdjustmentDto? = null,
     val rest: ChallengeRestDto? = null

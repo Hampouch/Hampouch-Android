@@ -34,8 +34,7 @@ fun TipListScreen(
     tips: List<TipPost>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onTipClick: (TipPost) -> Unit,
-    onNotificationClick: () -> Unit
+    onTipClick: (TipPost) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -44,8 +43,7 @@ fun TipListScreen(
     ) {
         MyPageMainTopBar(
             title = title,
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = onBackClick
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -79,7 +77,7 @@ private fun MyTipsScreenFilledPreview() {
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
             tips = MyPageMockData.myTips(HamTipsMockData.allPosts(), AccountMockDataSource.normalUser.id),
-            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
+            onBackClick = {}, onTipClick = {}
         )
     }
 }
@@ -92,7 +90,7 @@ private fun MyTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_my_tips),
             emptyMessage = stringResource(R.string.my_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
+            onBackClick = {}, onTipClick = {}
         )
     }
 }
@@ -105,7 +103,7 @@ private fun SavedTipsScreenFilledPreview() {
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
             tips = MyPageMockData.savedTips(HamTipsMockData.allPosts()),
-            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
+            onBackClick = {}, onTipClick = {}
         )
     }
 }
@@ -118,7 +116,7 @@ private fun SavedTipsScreenEmptyPreview() {
             title = stringResource(R.string.mypage_menu_saved_tips),
             emptyMessage = stringResource(R.string.saved_tips_empty_message),
             tips = MyPageMockData.emptyTips(),
-            onBackClick = {}, onTipClick = {}, onNotificationClick = {}
+            onBackClick = {}, onTipClick = {}
         )
     }
 }

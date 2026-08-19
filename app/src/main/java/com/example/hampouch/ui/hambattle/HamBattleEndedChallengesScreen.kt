@@ -35,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HPBlack
 import com.example.hampouch.ui.theme.HPGray4
@@ -48,12 +47,11 @@ import com.example.hampouch.ui.theme.HampouchTheme
 fun HamBattleEndedChallengesScreen(
     endedChallenges: List<HamBattleChallenge> = emptyList(),
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     onChallengeClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
-            EndedChallengesTopBar(onBackClick = onBackClick, onNotificationClick = onNotificationClick)
+            EndedChallengesTopBar(onBackClick = onBackClick)
         },
         containerColor = HPWhite
     ) { innerPadding ->
@@ -80,7 +78,7 @@ fun HamBattleEndedChallengesScreen(
 }
 
 @Composable
-private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: () -> Unit) {
+private fun EndedChallengesTopBar(onBackClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -99,7 +97,6 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -107,7 +104,7 @@ private fun EndedChallengesTopBar(onBackClick: () -> Unit, onNotificationClick: 
 @Composable
 private fun EndedChallengesTopBarPreview() {
     HampouchTheme {
-        EndedChallengesTopBar(onBackClick = {}, onNotificationClick = {})
+        EndedChallengesTopBar(onBackClick = {})
     }
 }
 
@@ -182,7 +179,7 @@ private fun HamBattleEndedChallengesScreenPreview() {
     HampouchTheme {
         HamBattleEndedChallengesScreen(
             endedChallenges = HamBattleMockFixtures.endedChallenges(),
-            onBackClick = {}, onNotificationClick = {}, onChallengeClick = {}
+            onBackClick = {}, onChallengeClick = {}
         )
     }
 }

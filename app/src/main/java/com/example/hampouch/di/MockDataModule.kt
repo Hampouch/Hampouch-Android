@@ -5,19 +5,16 @@ import com.example.hampouch.data.local.ExpenseMockDataSource
 import java.time.LocalDate
 import com.example.hampouch.data.local.HamTipsMockDataSource
 import com.example.hampouch.data.local.MiniChallengeMockDataSource
-import com.example.hampouch.data.local.NotificationMockDataSource
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleChallengeRequest
 import com.example.hampouch.domain.model.MiniChallengeState
-import com.example.hampouch.domain.model.NotificationItem
 import com.example.hampouch.domain.model.TipPost
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.ui.expensedetail.ExpenseDetailMockData
 import com.example.hampouch.data.local.HamBattleMockStore
 import com.example.hampouch.ui.hamtips.HamTipsMockData
 import com.example.hampouch.ui.minichallenge.MiniChallengeMockData
-import com.example.hampouch.ui.notification.NotificationMockData
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,13 +51,6 @@ object MockDataModule {
                 ),
                 recommendedChallenges = MiniChallengeMockData.recommendedChallenges()
             )
-        }
-
-    @Provides
-    @Singleton
-    fun provideNotificationMockDataSource(): NotificationMockDataSource =
-        object : NotificationMockDataSource {
-            override fun populated(): List<NotificationItem> = NotificationMockData.populated()
         }
 
     @Provides

@@ -22,7 +22,6 @@ data class AccountSettingsActions(
     val onBackClick: () -> Unit,
     val onProfileEditClick: () -> Unit,
     val onChangePasswordClick: () -> Unit,
-    val onNotificationClick: () -> Unit,
     val onWithdraw: () -> Unit
 )
 

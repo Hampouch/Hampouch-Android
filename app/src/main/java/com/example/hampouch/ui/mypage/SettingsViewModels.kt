@@ -3,14 +3,12 @@ package com.example.hampouch.ui.mypage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hampouch.domain.model.MyPageProfile
-import com.example.hampouch.domain.model.NotificationSettingsState
 import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import com.example.hampouch.domain.model.User
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.data.repository.AuthRepository
 import com.example.hampouch.domain.repository.MyPageProfileRepository
 import com.example.hampouch.domain.repository.BattleRepository
-import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.UsersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,41 +21,23 @@ import javax.inject.Inject
 
 data class AllSettingsActions(
     val onBackClick: () -> Unit,
-    val onRecordAlarmClick: () -> Unit,
-    val onNotificationClick: () -> Unit,
-    val onChallengeAlarmChange: (Boolean) -> Unit,
-    val onHamBattleAlarmChange: (Boolean) -> Unit,
-    val onCommunityAlarmChange: (Boolean) -> Unit
+    val onUpdateRecordAlarm: ((RecordAlarmSettingsState) -> RecordAlarmSettingsState) -> Unit
 )
 
 @HiltViewModel
 class AllSettingsViewModel @Inject constructor(
-    private val notificationSettingsRepository: NotificationSettingsRepository,
+    private val recordAlarmRepository: RecordAlarmRepository,
     private val usersRepository: UsersRepository
 ) : ViewModel() {
 
-    val state: StateFlow<NotificationSettingsState> = notificationSettingsRepository.state
+    val recordAlarmState: StateFlow<RecordAlarmSettingsState> = recordAlarmRepository.state
 
     init {
         viewModelScope.launch { usersRepository.fetchNotificationSchedule() }
     }
 
-    fun setChallengeAlarmEnabled(enabled: Boolean) {
-        notificationSettingsRepository.update { it.copy(challengeAlarmEnabled = enabled) }
-        syncSchedule()
-    }
-
-    fun setHamBattleAlarmEnabled(enabled: Boolean) {
-        notificationSettingsRepository.update { it.copy(hamBattleAlarmEnabled = enabled) }
-        syncSchedule()
-    }
-
-    fun setCommunityAlarmEnabled(enabled: Boolean) {
-        notificationSettingsRepository.update { it.copy(communityAlarmEnabled = enabled) }
-        syncSchedule()
-    }
-
-    private fun syncSchedule() {
+    fun updateRecordAlarm(transform: (RecordAlarmSettingsState) -> RecordAlarmSettingsState) {
+        recordAlarmRepository.update(transform)
         viewModelScope.launch { usersRepository.updateNotificationSchedule() }
     }
 }

@@ -36,7 +36,6 @@ fun MiniChallengeRecommendedListScreen(
     modifier: Modifier = Modifier,
     existingNames: List<String> = emptyList(),
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     onAddChallenge: (RecommendedMiniChallenge) -> Unit
 ) {
     val durationOptions = listOf(
@@ -62,8 +61,7 @@ fun MiniChallengeRecommendedListScreen(
         topBar = {
             MiniChallengeTopBar(
                 title = stringResource(R.string.minichallenge_recommended_title),
-                onBackClick = onBackClick,
-                onNotificationClick = onNotificationClick
+                onBackClick = onBackClick
             )
         }
     ) { innerPadding ->
@@ -126,7 +124,7 @@ private fun MiniChallengeRecommendedListScreenPreview() {
     HampouchTheme {
         MiniChallengeRecommendedListScreen(
             recommendedChallenges = MiniChallengeMockData.recommendedChallenges(),
-            onBackClick = {}, onNotificationClick = {}, onAddChallenge = {}
+            onBackClick = {}, onAddChallenge = {}
         )
     }
 }

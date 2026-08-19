@@ -31,8 +31,7 @@ fun ChallengeHistoryScreen(
     records: List<ChallengeRecord>,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onRecordClick: (ChallengeRecord) -> Unit,
-    onNotificationClick: () -> Unit
+    onRecordClick: (ChallengeRecord) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -41,8 +40,7 @@ fun ChallengeHistoryScreen(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.challenge_history_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = onBackClick
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -72,7 +70,7 @@ fun ChallengeHistoryScreen(
 @Composable
 private fun ChallengeHistoryScreenFilledPreview() {
     HampouchTheme {
-        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})
+        ChallengeHistoryScreen(records = MyPageMockData.challengeHistory(previewChallengeState(), spentOnDate = { 0 }), onBackClick = {}, onRecordClick = {})
     }
 }
 
@@ -80,6 +78,6 @@ private fun ChallengeHistoryScreenFilledPreview() {
 @Composable
 private fun ChallengeHistoryScreenEmptyPreview() {
     HampouchTheme {
-        ChallengeHistoryScreen(records = MyPageMockData.emptyChallengeHistory(), onBackClick = {}, onRecordClick = {}, onNotificationClick = {})
+        ChallengeHistoryScreen(records = MyPageMockData.emptyChallengeHistory(), onBackClick = {}, onRecordClick = {})
     }
 }
