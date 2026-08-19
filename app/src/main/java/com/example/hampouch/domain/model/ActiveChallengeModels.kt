@@ -25,8 +25,7 @@ data class ActiveChallenge(
     val expenseLockedAt: String? = null,
     val resultSummary: ChallengeResultSummary? = null,
     val emotionBreakdown: List<EmotionStat> = emptyList(),
-    val calendarDays: Map<LocalDate, DailyRecordStatus> = emptyMap(),
-    val warningCodes: List<String> = emptyList()
+    val calendarDays: Map<LocalDate, DailyRecordStatus> = emptyMap()
 ) {
     val maxEditCount: Int
         get() = if (totalDays >= 15) 2 else 1

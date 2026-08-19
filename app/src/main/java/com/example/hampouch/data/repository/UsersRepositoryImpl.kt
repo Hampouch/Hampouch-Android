@@ -20,11 +20,8 @@ import com.example.hampouch.data.remote.unauthorized
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.DayOfWeekLabel
 import com.example.hampouch.domain.model.MyPageProfile
-import com.example.hampouch.domain.model.NotificationSettingsState
-import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import com.example.hampouch.domain.model.ReminderDayMode
 import com.example.hampouch.domain.repository.MyPageProfileRepository
-import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.UsersRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,7 +42,6 @@ class UsersRepositoryImpl @Inject constructor(
     private val usersApi: UsersApi,
     private val authRepository: AuthRepository,
     private val myPageProfileRepository: MyPageProfileRepository,
-    private val notificationSettingsRepository: NotificationSettingsRepository,
     private val recordAlarmRepository: RecordAlarmRepository,
     private val okHttpClient: OkHttpClient
 ) : UsersRepository {
@@ -137,33 +133,27 @@ class UsersRepositoryImpl @Inject constructor(
         }
     }
 
+    // 챌린지/햄배틀/커뮤니티 알림과 한도초과 알림은 클라이언트에서 더 이상 다루지 않는 개념이지만,
+    // 서버 계약(UsersNotificationScheduleRequest)이 해당 필드를 필수로 요구하므로 비활성 기본값을 채워 보낸다.
     private fun buildScheduleRequest(): UsersNotificationScheduleRequest {
-        val notification = notificationSettingsRepository.state.value
         val record = recordAlarmRepository.state.value
         return UsersNotificationScheduleRequest(
-            challengeAlert = notification.challengeAlarmEnabled,
-            battleAlert = notification.hamBattleAlarmEnabled,
-            communityAlert = notification.communityAlarmEnabled,
+            challengeAlert = false,
+            battleAlert = false,
+            communityAlert = false,
             recordAlert = UsersRecordAlertData(
-                enabled = record.receiveEnabled,
+                enabled = record.missingReminderEnabled,
                 missingInput = UsersMissingInputScheduleData(
                     enabled = record.missingReminderEnabled,
                     days = record.selectedDays.map { it.name },
                     time = "%02d:%02d".format(record.hour, record.minute)
                 ),
-                limitExceeded = UsersLimitExceededScheduleData(enabled = record.limitOverEnabled)
+                limitExceeded = UsersLimitExceededScheduleData(enabled = false)
             )
         )
     }
 
     private fun applyScheduleData(data: UsersNotificationScheduleData) {
-        notificationSettingsRepository.update {
-            NotificationSettingsState(
-                challengeAlarmEnabled = data.challengeAlert,
-                hamBattleAlarmEnabled = data.battleAlert,
-                communityAlarmEnabled = data.communityAlert
-            )
-        }
         recordAlarmRepository.update { current ->
             val days = data.recordAlert.missingInput.days
                 .mapNotNull { runCatching { DayOfWeekLabel.valueOf(it) }.getOrNull() }
@@ -172,9 +162,7 @@ class UsersRepositoryImpl @Inject constructor(
             val hour = timeParts.getOrNull(0)?.toIntOrNull() ?: current.hour
             val minute = timeParts.getOrNull(1)?.toIntOrNull() ?: current.minute
             current.copy(
-                receiveEnabled = data.recordAlert.enabled,
                 missingReminderEnabled = data.recordAlert.missingInput.enabled,
-                limitOverEnabled = data.recordAlert.limitExceeded.enabled,
                 dayMode = ReminderDayMode.CUSTOM,
                 selectedDays = days,
                 hour = hour,

@@ -49,8 +49,6 @@ import com.example.hampouch.ui.home.HomeUiState
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.core.config.BattleConfig
 import com.example.hampouch.core.config.ChallengeConfig
-import com.example.hampouch.domain.model.HomeWarning
-import com.example.hampouch.domain.model.HomeWarningType
 import com.example.hampouch.navigation.BottomNavBar
 import com.example.hampouch.navigation.BottomNavItem
 import com.example.hampouch.ui.common.previewChallengeState
@@ -70,7 +68,6 @@ import com.example.hampouch.ui.home.components.NoActiveChallengeSection
 import com.example.hampouch.ui.home.components.ReturnToTodayButton
 import com.example.hampouch.ui.home.components.SavingsStreakRow
 import com.example.hampouch.ui.home.components.TodayExpenseSection
-import com.example.hampouch.ui.home.components.WarningBannerList
 import com.example.hampouch.ui.minichallenge.MiniChallengeEvent
 import com.example.hampouch.ui.minichallenge.MiniChallengeViewModel
 import com.example.hampouch.ui.mypage.MyPageScreen
@@ -129,7 +126,6 @@ fun HomeScreen(
     onAddExpenseClick: () -> Unit,
     onNavigateToAmountAdjustment: () -> Unit,
     onNavigateToYesterdayExpenseInput: () -> Unit,
-    onNotificationClick: () -> Unit,
     onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     onChallengeEndedFinishClick: () -> Unit,
     onFixedDateChallengeDue: () -> Unit,
@@ -221,31 +217,9 @@ fun HomeScreen(
             useServerChallenge = ChallengeConfig.USE_SERVER_CHALLENGE
         )
     }
-    val yesterday = referenceToday.minusDays(1)
-    val yesterdayHasRecord = recordsForDate(yesterday).isNotEmpty() || yesterday in daysWithRecord
-    val warnings = remember(
-        liveChallenge, resolvedChallenge, challengeState, uiState.expenses, records, yesterdayHasRecord
-    ) {
-        if (ChallengeConfig.USE_SERVER_CHALLENGE) {
-            resolvedChallenge?.warningCodes.orEmpty()
-                .mapNotNull { code -> HomeWarningType.fromServerCode(code) }
-                .map { type -> HomeWarning(id = type.serverCode, type = type) }
-        } else {
-            HomeWarningMockData.compute(
-                challenge = liveChallenge,
-                resolvedChallenge = resolvedChallenge,
-                challengeState = challengeState,
-                referenceToday = referenceToday,
-                todaysExpenses = uiState.expenses,
-                recordsForDate = recordsForDate,
-                yesterdayHasRecord = yesterdayHasRecord
-            )
-        }
-    }
     val displayedUiState = uiState.copy(
         challenge = liveChallenge,
         miniChallenges = miniChallengeState.challengesFor(selectedDate),
-        warnings = warnings,
         pastChallengeEnded = isChallengeOverByToday
     )
 
@@ -283,7 +257,6 @@ fun HomeScreen(
                     onExpenseClick = onNavigateToExpenseDetail,
                     onViewAllExpensesClick = onNavigateToExpenseCalendar,
                     onAddExpenseClick = onAddExpenseClick,
-                    onNotificationClick = onNotificationClick,
                     modifier = Modifier.padding(innerPadding)
                 )
 
@@ -343,7 +316,6 @@ fun HomeScreen(
                     battleViewModel.mockChallengesWith(HamBattleStatus.WAITING)
                 },
                 onStartNewChallengeClick = onHamBattleStartNewChallengeClick,
-                onNotificationClick = onNotificationClick,
                 onChallengeClick = onHamBattleChallengeClick,
                 onViewEndedChallengesClick = onHamBattleViewEndedChallengesClick,
                 onWaitingChallengeClick = onHamBattleWaitingChallengeClick,
@@ -357,7 +329,6 @@ fun HomeScreen(
                     onAddClick = onAddExpenseClick,
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleWaitingChallengeClick,
-                    onNotificationClick = onNotificationClick,
                     onLoggedOut = onLoggedOut,
                     onNavigateToChallengeExpenseAnalysis = onNavigateToChallengeExpenseAnalysis,
                     onNavigateToAmountAdjustment = onNavigateToAmountAdjustment,
@@ -377,7 +348,6 @@ fun HomeScreen(
                     modifier = Modifier.padding(innerPadding),
                     onNavigateToHamBattleLink = onHamBattleJoinedFromCommunityClick,
                     onNavigateToHamBattleTab = onHamBattleJoinedFullFromCommunityClick,
-                    onNotificationClick = onNotificationClick,
                     openWriteBattleOnStart = pendingOpenHamTipsWriteBattle,
                     initialWriteBattleLink = initialHamTipsWriteBattleLink,
                     onExitWriteBattle = onExitHamTipsWriteBattle,
@@ -414,7 +384,6 @@ private fun HomeContent(
     onExpenseClick: (String) -> Unit,
     onViewAllExpensesClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -425,8 +394,7 @@ private fun HomeContent(
     ) {
         HomeHeader(
             userName = uiState.userName,
-            onCalendarClick = onCalendarClick,
-            onNotificationClick = onNotificationClick
+            onCalendarClick = onCalendarClick
         )
         Spacer(modifier = Modifier.height(5.dp))
         DateSelectorRow(
@@ -491,11 +459,6 @@ private fun HomeContent(
                             Spacer(modifier = Modifier.height(12.dp))
                             SavingsStreakRow(savedAmount = challenge.savedAmount, streakDays = challenge.streakDays)
                         }
-
-                        if (animatedUiState.warnings.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            WarningBannerList(warnings = animatedUiState.warnings, onReminderClick = onReminderClick)
-                        }
                     }
                 }
 
@@ -543,7 +506,6 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
             onExpenseClick = {},
             onViewAllExpensesClick = {},
             onAddExpenseClick = {},
-            onNotificationClick = {},
             modifier = Modifier.padding(innerPadding)
         )
     }

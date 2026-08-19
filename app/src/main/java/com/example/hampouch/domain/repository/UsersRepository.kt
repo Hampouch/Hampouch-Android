@@ -11,8 +11,7 @@ interface UsersRepository {
     suspend fun fetchNotificationSchedule(): Result<Unit>
 
     /**
-     * [com.example.hampouch.domain.repository.NotificationSettingsRepository]와
-     * [RecordAlarmRepository]의 현재 상태를 합쳐 서버에 반영한다.
+     * [RecordAlarmRepository]의 현재 상태를 서버에 반영한다.
      */
     suspend fun updateNotificationSchedule(): Result<Unit>
 

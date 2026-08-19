@@ -63,7 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
 import com.example.hampouch.core.config.BattleConfig
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.data.local.HamBattleMockFixtures
 import com.example.hampouch.domain.model.HamBattleChallenge
 import com.example.hampouch.domain.model.HamBattleParticipantStatus
@@ -98,7 +97,6 @@ fun HamBattleScreen(
     activeChallenges: List<HamBattleChallenge> = emptyList(),
     waitingChallenges: List<HamBattleChallenge> = emptyList(),
     onStartNewChallengeClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     onViewEndedChallengesClick: () -> Unit,
     onChallengeClick: (String) -> Unit,
     onWaitingChallengeClick: (String) -> Unit,
@@ -129,7 +127,6 @@ fun HamBattleScreen(
             viewModel.refreshMyBattles()
         },
         onStartNewChallengeClick = onStartNewChallengeClick,
-        onNotificationClick = onNotificationClick,
         onViewEndedChallengesClick = onViewEndedChallengesClick,
         onChallengeClick = onChallengeClick,
         onWaitingChallengeClick = onWaitingChallengeClick
@@ -235,7 +232,6 @@ private fun HamBattleContent(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onStartNewChallengeClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     onViewEndedChallengesClick: () -> Unit,
     onChallengeClick: (String) -> Unit,
     onWaitingChallengeClick: (String) -> Unit
@@ -258,7 +254,6 @@ private fun HamBattleContent(
                 .fillMaxSize()
         ) {
             HamBattleMainTopBar(
-                onNotificationClick = onNotificationClick,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
             PullToRefreshBox(
@@ -290,7 +285,7 @@ private fun HamBattleContent(
 }
 
 @Composable
-private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun HamBattleMainTopBar(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -305,7 +300,6 @@ private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modif
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -313,7 +307,7 @@ private fun HamBattleMainTopBar(onNotificationClick: () -> Unit, modifier: Modif
 @Composable
 private fun HamBattleMainTopBarPreview() {
     HampouchTheme {
-        HamBattleMainTopBar(onNotificationClick = {})
+        HamBattleMainTopBar()
     }
 }
 
@@ -724,7 +718,7 @@ fun HamBattleScreenPreview() {
             waitingChallenges = HamBattleMockFixtures.waitingChallenges(),
             isRefreshing = false,
             onRefresh = {},
-            onStartNewChallengeClick = {}, onNotificationClick = {}, onViewEndedChallengesClick = {},
+            onStartNewChallengeClick = {}, onViewEndedChallengesClick = {},
             onChallengeClick = {}, onWaitingChallengeClick = {}
         )
     }

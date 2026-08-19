@@ -12,7 +12,6 @@ import com.example.hampouch.domain.model.AuthProvider
 import com.example.hampouch.domain.model.AuthSession
 import com.example.hampouch.domain.model.SocialCredential
 import com.example.hampouch.domain.model.SocialLoginOutcome
-import com.example.hampouch.domain.repository.NotificationRepository
 import com.example.hampouch.domain.repository.OnboardingLocalStore
 import com.example.hampouch.data.remote.AuthApi
 import com.example.hampouch.data.remote.toApiException
@@ -100,8 +99,6 @@ class AuthRepository @Inject constructor(
     private val apiService: AuthApi,
     /** [AccountDataCoordinator]가 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
     private val accountDataCoordinator: Provider<AccountDataCoordinator>,
-    /** [NotificationRepository] 구현체가 인증 가드를 위해 이 클래스에 의존해 순환이 생기므로 지연 조회한다. */
-    private val notificationRepository: Provider<NotificationRepository>,
     private val onboardingLocalStore: OnboardingLocalStore
 ) : AuthTokenProvider {
 
@@ -496,7 +493,6 @@ class AuthRepository @Inject constructor(
             return Result.success(Unit)
         }
         return try {
-            notificationRepository.get().unregisterCurrentDeviceToken()
             val response = apiService.logout(
                 request = LogoutRequest(refreshToken = session.refreshToken)
             )
@@ -662,7 +658,6 @@ class AuthRepository @Inject constructor(
         _currentUser.value = sessionToUser(session)
         _isLoggedIn.value = true
         accountDataCoordinator.get().syncIfNeeded(session.userId.toString(), session.email)
-        notificationRepository.get().syncDeviceToken()
     }
 
     private fun sessionToUser(session: AuthSession): User {

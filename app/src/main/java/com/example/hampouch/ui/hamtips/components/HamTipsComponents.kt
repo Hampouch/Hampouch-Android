@@ -61,7 +61,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.common.ScreenCenteredTopBar
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.domain.model.HamTipsCategoryTab
@@ -82,10 +81,9 @@ import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
 
 @Composable
-fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modifier) {
+fun HamTipsMainTopBar(modifier: Modifier = Modifier) {
     ScreenCenteredTopBar(
-        modifier = modifier,
-        trailing = { NotificationBellIcon(onClick = onNotificationClick) }
+        modifier = modifier
     ) {
         Text(
             text = stringResource(R.string.hamtips_title),
@@ -100,7 +98,7 @@ fun HamTipsMainTopBar(onNotificationClick: () -> Unit, modifier: Modifier = Modi
 @Composable
 private fun HamTipsMainTopBarPreview() {
     HampouchTheme {
-        HamTipsMainTopBar(onNotificationClick = {})
+        HamTipsMainTopBar()
     }
 }
 
@@ -108,7 +106,6 @@ private fun HamTipsMainTopBarPreview() {
 fun HamTipsDetailTopBar(
     title: String,
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ScreenCenteredTopBar(
@@ -121,8 +118,7 @@ fun HamTipsDetailTopBar(
                     tint = HPBlack
                 )
             }
-        },
-        trailing = { NotificationBellIcon(onClick = onNotificationClick) }
+        }
     ) {
         Text(
             text = title,
@@ -137,7 +133,7 @@ fun HamTipsDetailTopBar(
 @Composable
 private fun HamTipsDetailTopBarPreview() {
     HampouchTheme {
-        HamTipsDetailTopBar(title = "냉동 소분 꿀팁", onBackClick = {}, onNotificationClick = {})
+        HamTipsDetailTopBar(title = "냉동 소분 꿀팁", onBackClick = {})
     }
 }
 

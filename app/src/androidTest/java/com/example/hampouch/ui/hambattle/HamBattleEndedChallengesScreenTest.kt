@@ -47,7 +47,6 @@ class HamBattleEndedChallengesScreenTest {
                 HamBattleEndedChallengesScreen(
                     endedChallenges = challenges,
                     onBackClick = {},
-                    onNotificationClick = {},
                     onChallengeClick = {}
                 )
             }
