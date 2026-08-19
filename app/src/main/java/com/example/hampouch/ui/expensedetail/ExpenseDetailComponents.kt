@@ -484,8 +484,28 @@ private fun AmountTextFieldPreview() {
 }
 
 @Composable
+fun ExpenseFormSectionLabel(label: String, modifier: Modifier = Modifier) {
+    Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText, modifier = modifier)
+}
+
+@Composable
 fun ExpenseFormSection(
     label: String,
+    modifier: Modifier = Modifier,
+    trailingAction: @Composable () -> Unit = {},
+    content: @Composable () -> Unit
+) {
+    ExpenseFormSection(
+        label = { ExpenseFormSectionLabel(label) },
+        modifier = modifier,
+        trailingAction = trailingAction,
+        content = content
+    )
+}
+
+@Composable
+fun ExpenseFormSection(
+    label: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     trailingAction: @Composable () -> Unit = {},
     content: @Composable () -> Unit
@@ -495,7 +515,7 @@ fun ExpenseFormSection(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(label, style = MaterialTheme.typography.bodyMedium, color = HPText)
+            label()
             Spacer(modifier = Modifier.weight(1f))
             trailingAction()
         }
@@ -544,6 +564,9 @@ fun ExpensePhotoEditSection(
     onPhotosRemoved: (Set<Int>) -> Unit,
     onPhotoReplaced: (index: Int, newUri: String) -> Unit,
     modifier: Modifier = Modifier,
+    label: @Composable () -> Unit = {
+        ExpenseFormSectionLabel(stringResource(R.string.expensedetail_field_photo))
+    },
     maxCount: Int = ExpensePhotoMaxCount
 ) {
     var selectMode by remember { mutableStateOf(false) }
@@ -562,7 +585,7 @@ fun ExpensePhotoEditSection(
     )
 
     ExpenseFormSection(
-        label = stringResource(R.string.expensedetail_field_photo),
+        label = label,
         modifier = modifier,
         trailingAction = {
             if (photoUris.isEmpty()) {
