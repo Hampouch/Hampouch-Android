@@ -29,6 +29,9 @@ sealed interface AmountAdjustmentEvent {
     data class ShowMessage(val message: String) : AmountAdjustmentEvent
 }
 
+internal fun ChallengeState.challengeForAbandonResult(challengeId: String) =
+    challengeById(challengeId)
+
 @HiltViewModel
 class AmountAdjustmentViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository,
@@ -66,9 +69,11 @@ class AmountAdjustmentViewModel @Inject constructor(
             challengeRepository.abandonChallenge()
                 .onSuccess {
                     val state = challengeRepository.state.value
-                    val active = state.activeChallenge ?: return@onSuccess
+                    // 포기 성공 직후에는 해당 챌린지가 terminal 상태가 되어 activeChallenge에서
+                    // 제외된다. 전달받은 id로 포기된 챌린지를 다시 찾아 결과 화면 데이터를 만든다.
+                    val abandoned = state.challengeForAbandonResult(challengeId) ?: return@onSuccess
                     val result = ChallengeResultMockData.forChallenge(
-                        active,
+                        abandoned,
                         state,
                         ::recordsForDate,
                         ::hasRecordOnDate

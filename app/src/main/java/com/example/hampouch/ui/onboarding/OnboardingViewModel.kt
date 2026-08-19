@@ -28,11 +28,21 @@ class OnboardingViewModel @Inject constructor() : ViewModel() {
         copy(lastMonthFoodExpense = value?.takeIf { it > 0 })
     }
     fun changePeriodEnabled(enabled: Boolean) = updateDraft {
-        copy(periodEnabled = enabled, dateFixed = if (enabled) false else dateFixed)
+        copy(
+            periodEnabled = enabled,
+            dateFixed = if (enabled) false else dateFixed,
+            startDate = if (enabled) null else startDate
+        )
     }
-    fun changePeriod(days: Int?) = updateDraft { copy(challengePeriodDays = days) }
+    fun changePeriod(days: Int?) = updateDraft {
+        copy(challengePeriodDays = days?.takeIf { it > 0 })
+    }
     fun changeDateFixed(enabled: Boolean) = updateDraft {
-        copy(dateFixed = enabled, periodEnabled = if (enabled) false else periodEnabled)
+        copy(
+            dateFixed = enabled,
+            periodEnabled = if (enabled) false else periodEnabled,
+            challengePeriodDays = if (enabled) null else challengePeriodDays
+        )
     }
     fun changeStartDate(date: LocalDate?) = updateDraft { copy(startDate = date) }
     fun changeTotalTarget(value: Int?) = updateDraft { copy(totalTargetAmount = value) }

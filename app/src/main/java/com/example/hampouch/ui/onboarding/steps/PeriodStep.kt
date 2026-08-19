@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,6 +68,9 @@ private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone
 private const val MinPeriodDays = 1
 private const val MaxPeriodDays = 100
 
+internal fun directPeriodInputValue(periodDays: Int?, presetDays: Set<Int>): Int? =
+    periodDays?.takeUnless { it in presetDays }
+
 @Composable
 fun PeriodStep(
     state: OnboardingUiState,
@@ -80,6 +84,10 @@ fun PeriodStep(
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    var directInputResetKey by remember { mutableIntStateOf(0) }
+    var isDirectInputPending by remember { mutableStateOf(false) }
+    val presetDays = remember { OnboardingMockData.periodPresets.map { it.days }.toSet() }
+    val directInputValue = directPeriodInputValue(state.challengePeriodDays, presetDays)
     val daySuffix = stringResource(R.string.onboarding_day_suffix)
     val periodDaysOutOfRange = state.periodEnabled && state.challengePeriodDays != null &&
         (state.challengePeriodDays < MinPeriodDays || state.challengePeriodDays > MaxPeriodDays)
@@ -148,7 +156,10 @@ fun PeriodStep(
                         )
                         Switch(
                             checked = state.periodEnabled,
-                            onCheckedChange = onPeriodEnabledChange,
+                            onCheckedChange = { enabled ->
+                                isDirectInputPending = false
+                                onPeriodEnabledChange(enabled)
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = HPWhite,
                                 checkedTrackColor = HPMain,
@@ -161,15 +172,34 @@ fun PeriodStep(
                     if (state.periodEnabled) {
                         PeriodPresetRow(
                             options = OnboardingMockData.periodPresets.map { it.days to stringResource(it.labelResId) },
-                            selectedDays = state.challengePeriodDays,
-                            onSelect = onPeriodChange
+                            selectedDays = state.challengePeriodDays.takeUnless { isDirectInputPending },
+                            onSelect = { days ->
+                                isDirectInputPending = false
+                                directInputResetKey++
+                                onPeriodChange(days)
+                            }
                         )
                         EditableAmountRow(
                             label = null,
-                            value = state.challengePeriodDays,
-                            onValueChange = onPeriodChange,
+                            value = directInputValue,
+                            onValueChange = { days ->
+                                isDirectInputPending = true
+                                onPeriodChange(days)
+                            },
+                            onValueCleared = {
+                                isDirectInputPending = true
+                                onPeriodChange(0)
+                            },
                             placeholder = stringResource(R.string.onboarding_direct_input),
-                            suffix = daySuffix
+                            suffix = daySuffix,
+                            onDone = { days ->
+                                isDirectInputPending = false
+                                if (days != null) {
+                                    onPeriodChange(days)
+                                    if (days in presetDays) directInputResetKey++
+                                }
+                            },
+                            inputResetKey = directInputResetKey
                         )
                         if (periodDaysOutOfRange) {
                             Text(

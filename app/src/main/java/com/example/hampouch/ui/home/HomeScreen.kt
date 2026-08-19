@@ -87,6 +87,10 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 
 private const val MOCK_USER_NAME = "민준"
+private const val MAX_HOME_EXPENSE_ITEMS = 4
+
+internal fun recentHomeExpenses(expenses: List<ExpenseEntry>): List<ExpenseEntry> =
+    expenses.take(MAX_HOME_EXPENSE_ITEMS)
 
 private val LocalDateSaver: Saver<LocalDate, Long> = Saver(
     save = { it.toEpochDay() },
@@ -496,7 +500,7 @@ private fun HomeContent(
 
                 Spacer(modifier = Modifier.height(15.dp))
                 TodayExpenseSection(
-                    expenses = animatedUiState.expenses,
+                    expenses = recentHomeExpenses(animatedUiState.expenses),
                     onViewAllClick = onViewAllExpensesClick,
                     onAddExpenseClick = onAddExpenseClick,
                     onExpenseClick = onExpenseClick

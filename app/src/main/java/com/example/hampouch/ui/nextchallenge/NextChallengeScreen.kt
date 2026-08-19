@@ -134,6 +134,9 @@ internal const val MaxPeriodDays = 100
 internal val PeriodPresetDayOptions: List<Pair<Int, String>> =
     listOf(7 to "7일", 14 to "14일", 30 to "30일")
 
+internal fun matchingPeriodPreset(days: Int?): Int? =
+    days?.takeIf { candidate -> PeriodPresetDayOptions.any { (presetDays, _) -> presetDays == candidate } }
+
 internal fun LocalDate.toEpochMillisUtc(): Long =
     atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
@@ -648,11 +651,13 @@ internal fun switchColors(): SwitchColors = SwitchDefaults.colors(
 )
 
 @Composable
+@Suppress("LongMethod")
 internal fun CustomPeriodDaysInput(
     value: Int?,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    onStartEditing: () -> Unit
+    onStartEditing: () -> Unit,
+    onDone: (Int?) -> Unit
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var hasFocusedOnce by remember { mutableStateOf(false) }
@@ -744,6 +749,7 @@ internal fun CustomPeriodDaysInput(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(onDone = {
+                        onDone(textFieldValue.text.filter(Char::isDigit).toIntOrNull())
                         isEditing = false
                         keyboardController?.hide()
                     })
@@ -819,7 +825,8 @@ internal fun ChallengeSettingsSection(
             CustomPeriodDaysInput(
                 value = customPeriodDays,
                 onValueChange = onCustomPeriodDaysChange,
-                onStartEditing = onCustomPeriodEditingStart
+                onStartEditing = onCustomPeriodEditingStart,
+                onDone = { days -> matchingPeriodPreset(days)?.let(onPeriodDaysChange) }
             )
             if (customPeriodDaysOutOfRange) {
                 Text(

@@ -323,7 +323,12 @@ fun LabeledInputRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (icon != null) {
-                Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = HPMain,
+                    modifier = Modifier.size(18.dp)
+                )
             }
             Text(
                 text = valueText,
@@ -366,7 +371,9 @@ fun EditableAmountRow(
     valueColor: Color? = null,
     editSeedValue: Int? = value,
     maxValue: Int? = null,
-    maxValueErrorText: String? = null
+    maxValueErrorText: String? = null,
+    onDone: (Int?) -> Unit = {},
+    inputResetKey: Int = 0
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
@@ -379,7 +386,8 @@ fun EditableAmountRow(
     LaunchedEffect(isEditing) {
         if (isEditing) {
             val seedText = editSeedValue?.toWonText().orEmpty()
-            textFieldValue = TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
+            textFieldValue =
+                TextFieldValue(text = seedText, selection = TextRange(0, seedText.length))
             hasFocusedOnce = false
             showMaxValueError = false
             focusManager.clearFocus(force = true)
@@ -390,6 +398,11 @@ fun EditableAmountRow(
             keyboardController?.show()
         } else {
             showMaxValueError = false
+        }
+    }
+    LaunchedEffect(inputResetKey) {
+        if (inputResetKey > 0) {
+            textFieldValue = TextFieldValue("")
         }
     }
 
@@ -424,12 +437,21 @@ fun EditableAmountRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (icon != null) {
-                Icon(imageVector = icon, contentDescription = null, tint = HPMain, modifier = Modifier.size(18.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = HPMain,
+                    modifier = Modifier.size(18.dp)
+                )
             }
             if (isEditing) {
                 Box(modifier = Modifier.weight(1f)) {
                     if (textFieldValue.text.isEmpty()) {
-                        Text(text = placeholder, style = MaterialTheme.typography.bodyMedium, color = HPText)
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = HPText
+                        )
                     }
                     BasicTextField(
                         value = textFieldValue,
@@ -445,9 +467,12 @@ fun EditableAmountRow(
                             if (exceedsMax) return@amountChange
 
                             val normalizedDigits = normalizedDigitsRaw
-                            val strippedLeadingZeros = digitsOnly.length - normalizedDigitsRaw.length
-                            val digitsBeforeCursor = newValue.text.take(newValue.selection.end).count(Char::isDigit)
-                            val normalizedCursorDigits = (digitsBeforeCursor - strippedLeadingZeros).coerceAtLeast(0)
+                            val strippedLeadingZeros =
+                                digitsOnly.length - normalizedDigitsRaw.length
+                            val digitsBeforeCursor =
+                                newValue.text.take(newValue.selection.end).count(Char::isDigit)
+                            val normalizedCursorDigits =
+                                (digitsBeforeCursor - strippedLeadingZeros).coerceAtLeast(0)
                             val formattedText = normalizedDigits.toLongOrNull()
                                 ?.let { NumberFormat.getNumberInstance(Locale.KOREA).format(it) }
                                 ?: normalizedDigits
@@ -460,7 +485,10 @@ fun EditableAmountRow(
                                 }
                                 if (char.isDigit()) digitsSeen++
                             }
-                            textFieldValue = TextFieldValue(text = formattedText, selection = TextRange(cursorIndex))
+                            textFieldValue = TextFieldValue(
+                                text = formattedText,
+                                selection = TextRange(cursorIndex)
+                            )
                             if (normalizedDigits.isEmpty()) {
                                 onValueCleared()
                             } else {
@@ -480,8 +508,12 @@ fun EditableAmountRow(
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = HPSub1),
                         singleLine = true,
                         cursorBrush = SolidColor(HPMain),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
                         keyboardActions = KeyboardActions(onDone = {
+                            onDone(textFieldValue.text.filter(Char::isDigit).toIntOrNull())
                             keyboardController?.hide()
                             isEditing = false
                         })
@@ -512,7 +544,7 @@ fun EditableAmountRow(
 
 internal fun exceedsAmountMax(normalizedDigits: String, maxValue: Int?): Boolean =
     maxValue != null && normalizedDigits.isNotEmpty() &&
-        (normalizedDigits.toLongOrNull()?.let { it > maxValue } ?: true)
+            (normalizedDigits.toLongOrNull()?.let { it > maxValue } ?: true)
 
 @Preview(showBackground = true, name = "금액 입력 행")
 @Composable
@@ -576,7 +608,10 @@ fun OnboardingSecondaryButton(
             .height(56.dp),
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, HPMain),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = HPWhite, contentColor = HPMain)
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = HPWhite,
+            contentColor = HPMain
+        )
     ) {
         Text(text = text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
     }
@@ -709,7 +744,10 @@ fun CategoryChip(
 @Composable
 private fun CategoryChipPreview() {
     HampouchTheme {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
             CategoryChip(
                 label = "식비",
                 icon = Icons.Filled.ShoppingCart,

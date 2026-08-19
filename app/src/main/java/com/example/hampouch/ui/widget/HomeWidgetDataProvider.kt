@@ -48,17 +48,23 @@ class HomeWidgetSnapshotStore @Inject constructor(
         write(TYPE_LOADING, accountKey)
     }
 
-    suspend fun publishLoggedOut() = write(TYPE_LOGGED_OUT, accountKey = null)
+    suspend fun publishLoggedOut(forceUpdate: Boolean = false) =
+        write(TYPE_LOGGED_OUT, accountKey = null, forceUpdate = forceUpdate)
 
-    suspend fun publishNoActive(accountKey: String) = write(TYPE_NO_ACTIVE, accountKey)
+    suspend fun publishNoActive(accountKey: String, forceUpdate: Boolean = false) =
+        write(TYPE_NO_ACTIVE, accountKey, forceUpdate)
 
-    suspend fun publishResting(accountKey: String, plannedResumeDate: LocalDate) {
+    suspend fun publishResting(
+        accountKey: String,
+        plannedResumeDate: LocalDate,
+        forceUpdate: Boolean = false
+    ) {
         val resumeDateLabel = plannedResumeDate.format(periodLabelFormatter)
         if (preferences.getString(KEY_TYPE, null) == TYPE_RESTING &&
             preferences.getString(KEY_ACCOUNT, null) == accountKey &&
             preferences.getString(KEY_RESUME_DATE_LABEL, null) == resumeDateLabel
         ) {
-            HomeWidget().updateAll(context)
+            if (forceUpdate) HomeWidget().updateAll(context)
             return
         }
         preferences.edit(commit = true) {
@@ -70,7 +76,12 @@ class HomeWidgetSnapshotStore @Inject constructor(
         HomeWidget().updateAll(context)
     }
 
-    suspend fun publishChallenge(accountKey: String, challenge: ActiveChallenge, todaySpent: Int) {
+    suspend fun publishChallenge(
+        accountKey: String,
+        challenge: ActiveChallenge,
+        todaySpent: Int,
+        forceUpdate: Boolean = false
+    ) {
         val today = LocalDate.now()
         val dailyLimit = challenge.dailyLimitOn(today)
         val values = ChallengeSnapshot(
@@ -85,7 +96,7 @@ class HomeWidgetSnapshotStore @Inject constructor(
             streakDays = challenge.streakDays
         )
         if (matches(values)) {
-            HomeWidget().updateAll(context)
+            if (forceUpdate) HomeWidget().updateAll(context)
             return
         }
         preferences.edit(commit = true) {
@@ -104,11 +115,11 @@ class HomeWidgetSnapshotStore @Inject constructor(
         HomeWidget().updateAll(context)
     }
 
-    private suspend fun write(type: String, accountKey: String?) {
+    private suspend fun write(type: String, accountKey: String?, forceUpdate: Boolean = false) {
         if (preferences.getString(KEY_TYPE, null) == type &&
             preferences.getString(KEY_ACCOUNT, null) == accountKey
         ) {
-            HomeWidget().updateAll(context)
+            if (forceUpdate) HomeWidget().updateAll(context)
             return
         }
         preferences.edit(commit = true) {
