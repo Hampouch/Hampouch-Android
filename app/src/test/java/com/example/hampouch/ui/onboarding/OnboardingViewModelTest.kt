@@ -7,6 +7,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+private const val GAP_DAYS = 14
+
 class OnboardingViewModelTest {
 
     private fun newViewModel(skipNextSplash: Boolean = false) =
@@ -58,15 +60,18 @@ class OnboardingViewModelTest {
     @Test
     fun `검증된 draft만 non-null 제출 모델로 변환한다`() {
         val viewModel = newViewModel()
+        val startDate = LocalDate.now().plusDays(GAP_DAYS.toLong())
         viewModel.changeDateFixed(true)
-        viewModel.changeStartDate(LocalDate.of(2026, 8, 13))
+        viewModel.changeStartDate(startDate)
         viewModel.changeExpense(300_000)
         viewModel.changeTotalTarget(140_000)
 
         val request = requireNotNull(viewModel.buildRequest())
 
-        assertEquals(140_000, request.totalTargetAmount)
-        assertEquals(LocalDate.of(2026, 8, 13), request.startDate)
+        // 날짜 고정 모드에서는 일일 목표(월 30일 기준)에 시작일까지 남은 일수를 곱해 총 목표를 구한다.
+        assertEquals(startDate, request.startDate)
+        assertEquals(4_667, request.dailyTargetAmount)
+        assertEquals(4_667 * GAP_DAYS, request.totalTargetAmount)
     }
 
     @Test

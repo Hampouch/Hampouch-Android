@@ -87,7 +87,7 @@ import kotlinx.coroutines.launch
 
 private const val MOCK_USER_NAME = "민준"
 private const val MAX_HOME_EXPENSE_ITEMS = 4
-private const val ReminderTimeCheckIntervalMillis = 30_000L
+private const val REMINDER_TIME_CHECK_INTERVAL_MILLIS = 30_000L
 
 internal fun recentHomeExpenses(expenses: List<ExpenseEntry>): List<ExpenseEntry> =
     expenses.take(MAX_HOME_EXPENSE_ITEMS)
@@ -137,7 +137,7 @@ fun HomeScreen(
     var currentTime by remember { mutableStateOf(LocalTime.now()) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(ReminderTimeCheckIntervalMillis)
+            delay(REMINDER_TIME_CHECK_INTERVAL_MILLIS)
             currentTime = LocalTime.now()
         }
     }

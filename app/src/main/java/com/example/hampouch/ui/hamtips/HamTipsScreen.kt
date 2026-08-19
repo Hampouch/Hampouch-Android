@@ -281,7 +281,10 @@ fun HamTipsScreen(
                                 viewModel.loadCategoryPosts(it, sortOrder, isUserInitiated = true)
                             }
                             HamTipsRoute.POPULAR_ALL -> viewModel.loadPopularPosts(sortOrder, isUserInitiated = true)
-                            HamTipsRoute.POCHIPICK_ALL -> viewModel.loadPochipickPosts(sortOrder, isUserInitiated = true)
+                            HamTipsRoute.POCHIPICK_ALL -> viewModel.loadPochipickPosts(
+                                sortOrder,
+                                isUserInitiated = true
+                            )
                             else -> Unit
                         }
                     },
