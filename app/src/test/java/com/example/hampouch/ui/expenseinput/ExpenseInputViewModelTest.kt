@@ -190,7 +190,7 @@ class ExpenseInputViewModelTest {
     private class CountingWidgetRefreshRequester : HomeWidgetRefreshRequester {
         var requestCount = 0
 
-        override fun refreshAfterExpenseChange() {
+        override fun refreshAfterConfirmedStateChange() {
             requestCount++
         }
     }

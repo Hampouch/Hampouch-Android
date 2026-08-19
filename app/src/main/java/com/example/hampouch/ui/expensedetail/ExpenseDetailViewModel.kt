@@ -71,7 +71,7 @@ class ExpenseDetailViewModel @Inject constructor(
         viewModelScope.launch {
             expenseRepository.deleteExpense(expenseId)
                 .onSuccess {
-                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(ExpenseDetailEvent.Finished)
                 }
                 .onFailure {
@@ -87,7 +87,7 @@ class ExpenseDetailViewModel @Inject constructor(
         viewModelScope.launch {
             expenseRepository.updateExpense(updated)
                 .onSuccess {
-                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(ExpenseDetailEvent.Finished)
                 }
                 .onFailure {

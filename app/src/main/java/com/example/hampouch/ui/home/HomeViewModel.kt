@@ -99,7 +99,10 @@ class HomeViewModel @Inject constructor(
     fun acknowledgeChallengeEnd() {
         viewModelScope.launch {
             challengeRepository.acknowledgeChallengeEnd()
-                .onSuccess { _events.send(HomeEvent.ChallengeEndAcknowledged) }
+                .onSuccess {
+                    homeWidgetStatePublisher.refreshAfterConfirmedStateChange()
+                    _events.send(HomeEvent.ChallengeEndAcknowledged)
+                }
                 .onFailure { error ->
                     _events.send(HomeEvent.ShowMessage(error.toUserMessage("챌린지 종료 처리에 실패했습니다.")))
                 }
@@ -111,7 +114,10 @@ class HomeViewModel @Inject constructor(
     fun resumeNow() {
         viewModelScope.launch {
             restRepository.resumeNow()
-                .onSuccess { _events.send(HomeEvent.ResumedFromBreak) }
+                .onSuccess {
+                    homeWidgetStatePublisher.refreshAfterConfirmedStateChange()
+                    _events.send(HomeEvent.ResumedFromBreak)
+                }
                 .onFailure { error ->
                     _events.send(HomeEvent.ShowMessage(error.toUserMessage("휴식 복귀에 실패했습니다.")))
                 }
@@ -140,7 +146,7 @@ class HomeViewModel @Inject constructor(
     fun markNoSpending(date: LocalDate) {
         viewModelScope.launch {
             expenseRepository.markNoSpend(date)
-                .onSuccess { homeWidgetStatePublisher.refreshAfterExpenseChange() }
+                .onSuccess { homeWidgetStatePublisher.refreshAfterConfirmedStateChange() }
                 .onFailure { error ->
                     _events.send(
                         HomeEvent.ShowMessage(error.toUserMessage("오늘은 안 썼어요 기록에 실패했습니다."))
@@ -152,6 +158,7 @@ class HomeViewModel @Inject constructor(
     fun postponeOneDay() {
         viewModelScope.launch {
             restRepository.postponeOneDay()
+                .onSuccess { homeWidgetStatePublisher.refreshAfterConfirmedStateChange() }
                 .onFailure { error ->
                     _events.send(HomeEvent.ShowMessage(error.toUserMessage("복귀 연기에 실패했습니다.")))
                 }
