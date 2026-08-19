@@ -295,8 +295,16 @@ fun SpendingEmotionAnalysis(stats: List<EmotionStat>, modifier: Modifier = Modif
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            stats.forEach { stat ->
-                EmotionChip(stat = stat, modifier = Modifier.weight(1f))
+            if (stats.isEmpty()) {
+                Text(
+                    "소비 감정 기록이 없어요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = HPText
+                )
+            } else {
+                stats.forEach { stat ->
+                    EmotionChip(stat = stat, modifier = Modifier.weight(1f))
+                }
             }
         }
     }
@@ -443,6 +451,16 @@ fun DailyRecordCalendar(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+        if (records.isEmpty()) {
+            Text(
+                "표시할 하루 기록이 없어요.",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPText,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         Row(
             modifier = Modifier.padding(start = 20.dp),
             verticalAlignment = Alignment.CenterVertically

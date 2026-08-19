@@ -21,7 +21,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface HamBattleEvent {
-    data object Created : HamBattleEvent
+    data class Created(val battleCode: String?) : HamBattleEvent
 
     data class Joined(val battleId: Long) : HamBattleEvent
 
@@ -123,7 +123,9 @@ class HamBattleViewModel @Inject constructor(
     fun create(request: HamBattleChallengeRequest) {
         viewModelScope.launch {
             battleRepository.create(request)
-                .onSuccess { _events.send(HamBattleEvent.Created) }
+                .onSuccess { challenge ->
+                    _events.send(HamBattleEvent.Created(challenge.battleCode))
+                }
                 .onFailure { notify(it, "햄배틀 생성에 실패했습니다.") }
         }
     }

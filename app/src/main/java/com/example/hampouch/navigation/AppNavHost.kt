@@ -34,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -177,6 +179,7 @@ fun AppNavHost(
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val startDestinationViewModel: StartDestinationViewModel = hiltViewModel()
     val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInviteViewModel: BattleInviteViewModel = hiltViewModel()
@@ -187,7 +190,24 @@ fun AppNavHost(
     LaunchedEffect(battleViewModel) {
         battleViewModel.events.collect { event ->
             when (event) {
-                HamBattleEvent.Created -> navController.popBackStack()
+                is HamBattleEvent.Created -> {
+                    event.battleCode
+                        ?.let(::buildBattleInviteUrl)
+                        ?.let { inviteUrl ->
+                            clipboardManager.setText(AnnotatedString(inviteUrl))
+                            Toast.makeText(
+                                context,
+                                "초대 링크가 복사되었어요.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        ?: Toast.makeText(
+                            context,
+                            "햄배틀은 생성됐지만 초대 링크를 만들지 못했어요.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    navController.popBackStack()
+                }
                 is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
                     externalJoinCodeInFlight = null
                     battleInviteViewModel.consume(code)
@@ -915,7 +935,7 @@ fun AppNavHost(
                         )
                     },
                     onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
-                    onShareClick = { onBottomNavItemSelected(BottomNavItem.COMMUNITY) },
+                    onShareClick = {},
                     onStartNewChallengeClick = { suggestedTargetAmount ->
                         val dueDraft = fixedDateDraft?.takeIf { it.isDue }
                         if (dueDraft != null) {
