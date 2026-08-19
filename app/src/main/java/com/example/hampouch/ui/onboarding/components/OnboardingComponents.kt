@@ -77,8 +77,7 @@ fun Int.toWonText(): String = NumberFormat.getNumberInstance(Locale.KOREA).forma
 
 internal const val FocusHandoffDelayMillis: Long = 60L
 
-/** Int로 안전하게 변환 가능한 자리수 상한(최대 999,999,999 < Int.MAX_VALUE)으로, 오버플로로 인한 서식·값 갱신 중단을 막는다. */
-private const val MaxAmountInputDigits = 9
+private const val MAX_AMOUNT_INPUT_DIGITS = 9
 
 @Composable
 fun OnboardingTopBar(
@@ -459,7 +458,7 @@ fun EditableAmountRow(
                             val allDigits = newValue.text.filter(Char::isDigit)
                             val normalizedInputDigits = allDigits.trimStart('0')
                                 .ifEmpty { if (allDigits.isEmpty()) "" else "0" }
-                            val digitsOnly = allDigits.take(MaxAmountInputDigits)
+                            val digitsOnly = allDigits.take(MAX_AMOUNT_INPUT_DIGITS)
                             val normalizedDigitsRaw = digitsOnly.trimStart('0')
                                 .ifEmpty { if (digitsOnly.isEmpty()) "" else "0" }
                             val exceedsMax = exceedsAmountMax(normalizedInputDigits, maxValue)

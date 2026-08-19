@@ -41,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.hampouch.R
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.ui.common.ScreenCenteredTopBar
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.hampouch.ui.hamtips.components.rememberImageBitmapFromUri
@@ -83,7 +82,6 @@ internal fun formatWon(amount: Int): String = "%,d".format(amount)
 fun MyPageMainTopBar(
     title: String,
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(start = 4.dp, end = 20.dp)
 ) {
@@ -98,8 +96,7 @@ fun MyPageMainTopBar(
                     tint = HPBlack
                 )
             }
-        },
-        trailing = { NotificationBellIcon(onClick = onNotificationClick) }
+        }
     ) {
         Text(
             text = title,
@@ -115,7 +112,7 @@ fun MyPageMainTopBar(
 @Composable
 private fun MyPageMainTopBarPreview() {
     HampouchTheme {
-        MyPageMainTopBar(title = "마이페이지", onBackClick = {}, onNotificationClick = {})
+        MyPageMainTopBar(title = "마이페이지", onBackClick = {})
     }
 }
 

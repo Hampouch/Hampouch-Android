@@ -9,19 +9,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.hampouch.navigation.AppNavHost
 import com.example.hampouch.ui.hambattle.BattleInviteViewModel
-import com.example.hampouch.ui.notification.EXTRA_NOTIFICATION_ID
 import com.example.hampouch.ui.theme.HampouchTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var pendingNotificationId by mutableStateOf<String?>(null)
     private val battleInviteViewModel: BattleInviteViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,14 +24,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
         )
-        pendingNotificationId = intent?.getStringExtra(EXTRA_NOTIFICATION_ID)
         battleInviteViewModel.acceptUrl(intent?.dataString)
         setContent {
             HampouchTheme {
                 AppNavHost(
-                    modifier = Modifier.fillMaxSize(),
-                    pendingNotificationId = pendingNotificationId,
-                    onPendingNotificationConsumed = { pendingNotificationId = null }
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
@@ -45,7 +37,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingNotificationId = intent.getStringExtra(EXTRA_NOTIFICATION_ID)
         battleInviteViewModel.acceptUrl(intent.dataString)
     }
 }

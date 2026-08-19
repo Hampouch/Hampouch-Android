@@ -354,8 +354,6 @@ fun HamTipsWriteMenuContent(
         )
         Spacer(modifier = Modifier.height(15.dp))
         HamTipsFieldCard {
-            HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_title_preview_label))
-            Spacer(modifier = Modifier.height(5.dp))
             HamTipsTitlePreviewBox(previewText = previewTitle)
             Spacer(modifier = Modifier.height(15.dp))
             HamTipsFieldLabel(stringResource(R.string.hamtips_write_menu_name_label))

@@ -49,7 +49,6 @@ import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 
-/** 홈 화면의 4x2 식비 절약 챌린지 위젯. */
 class HomeWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
@@ -59,7 +58,6 @@ class HomeWidget : GlanceAppWidget() {
     }
 }
 
-/** [HomeWidget]을 홈 화면에 등록하는 리시버. */
 class HomeWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HomeWidget()
 }

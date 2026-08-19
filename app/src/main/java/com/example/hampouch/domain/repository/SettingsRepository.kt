@@ -1,21 +1,10 @@
 package com.example.hampouch.domain.repository
 
 import com.example.hampouch.domain.model.MyPageProfile
-import com.example.hampouch.domain.model.NotificationSettingsState
 import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import com.example.hampouch.domain.model.User
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
-
-interface NotificationSettingsRepository {
-    val state: StateFlow<NotificationSettingsState>
-
-    fun update(transform: (NotificationSettingsState) -> NotificationSettingsState)
-
-    fun reserveMarketingConsent(email: String, enabled: Boolean)
-
-    fun activateAccount(accountId: String, email: String?)
-}
 
 interface RecordAlarmRepository {
     val state: StateFlow<RecordAlarmSettingsState>

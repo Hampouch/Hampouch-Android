@@ -61,8 +61,7 @@ private enum class PasswordField { CURRENT, NEW, CONFIRM }
 
 data class ChangePasswordActions(
     val onBackClick: () -> Unit,
-    val onSubmitSuccess: () -> Unit,
-    val onNotificationClick: () -> Unit
+    val onSubmitSuccess: () -> Unit
 )
 
 private class PasswordFieldState(initialValue: String = "", initialVisible: Boolean = false) {
@@ -124,8 +123,7 @@ private fun ChangePasswordContent(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.change_password_title),
-            onBackClick = actions.onBackClick,
-            onNotificationClick = actions.onNotificationClick
+            onBackClick = actions.onBackClick
         )
         ChangePasswordForm(
             email = email,
@@ -374,7 +372,7 @@ private fun ChangePasswordScreenPreview() {
     HampouchTheme {
         ChangePasswordContent(
             email = "hampouch@example.com",
-            actions = ChangePasswordActions(onBackClick = {}, onSubmitSuccess = {}, onNotificationClick = {}),
+            actions = ChangePasswordActions(onBackClick = {}, onSubmitSuccess = {}),
             onChangePassword = { _, _ -> Result.success(Unit) }
         )
     }

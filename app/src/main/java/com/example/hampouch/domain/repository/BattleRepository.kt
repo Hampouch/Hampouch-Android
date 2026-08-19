@@ -20,6 +20,5 @@ interface BattleRepository {
 
     suspend fun create(request: HamBattleChallengeRequest): Result<HamBattleChallenge>
 
-    /** 프로필 사진 변경 직후 서버 목록 재조회 전에도 내 참가자 이미지에 반영한다. */
     fun updateMyAvatar(avatarUrl: String?)
 }

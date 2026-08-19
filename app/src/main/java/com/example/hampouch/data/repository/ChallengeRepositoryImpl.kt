@@ -125,8 +125,6 @@ class ChallengeRepositoryImpl @Inject constructor(
             val existingIndex = state.challenges.indexOfFirst { it.id == entry.id }
             val updated = if (existingIndex >= 0) {
                 val existing = state.challenges[existingIndex]
-                // 로컬에서 이미 포기 처리된 챌린지는, 서버가 뒤늦게(또는 일시적으로) 비-포기 상태로
-                // 응답하더라도 로컬 abandonedDate를 잃지 않도록 보존한다.
                 val merged = if (existing.abandonedDate != null && entry.abandonedDate == null) {
                     entry.copy(abandonedDate = existing.abandonedDate)
                 } else {
@@ -207,8 +205,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                 savedAmount = data.progress?.savedAmountSoFar ?: 0,
                 streakDays = data.progress?.currentStreak ?: 0,
                 editCount = 0,
-                remoteStatus = summary.status,
-                warningCodes = data.warningCards.orEmpty().mapNotNull { it.type }
+                remoteStatus = summary.status
             )
         )
     }
@@ -425,8 +422,6 @@ class ChallengeRepositoryImpl @Inject constructor(
             abandonedDate = referenceToday,
             remoteStatus = remoteStatus ?: challenge.remoteStatus
         )
-        // dropLast(1)로 지우면 안 된다: challenges의 마지막 요소가 항상 challenge와 같다는
-        // 보장이 없다(리스트에 항목이 쌓인 순서에 따라 달라짐). id로 정확히 찾아 교체한다.
         upsertChallenge(updated)
         _state.update {
             it.copy(

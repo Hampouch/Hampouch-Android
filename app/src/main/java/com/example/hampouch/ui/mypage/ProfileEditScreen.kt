@@ -75,8 +75,7 @@ fun ProfileEditScreen(
     onValidateNickname: suspend (String) -> Result<Boolean>,
     onBackClick: () -> Unit,
     onSubmit: (newName: String, newAvatarUri: String?) -> Unit,
-    modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     var isEditingName by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
@@ -116,8 +115,7 @@ fun ProfileEditScreen(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.profile_edit_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = onBackClick
         )
         Column(
             modifier = Modifier
@@ -293,7 +291,7 @@ private fun ProfileEditScreenPreview() {
             currentAvatarUri = null,
             onValidateNickname = { Result.success(it == "햄포치") },
             onBackClick = {},
-            onSubmit = { _, _ -> }, onNotificationClick = {}
+            onSubmit = { _, _ -> }
         )
     }
 }

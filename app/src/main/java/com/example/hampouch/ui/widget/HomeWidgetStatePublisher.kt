@@ -32,7 +32,6 @@ fun interface HomeWidgetRefreshRequester {
     fun refreshAfterExpenseChange()
 }
 
-/** 앱 상태 변경을 감지해 주기적인 네트워크 조회 없이 위젯 스냅샷을 갱신한다. */
 @Singleton
 class HomeWidgetStatePublisher @Inject constructor(
     @param:ApplicationContext private val context: Context,

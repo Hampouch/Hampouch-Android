@@ -45,13 +45,6 @@ data class ExpenseInputUiState(
     val isSubmitting: Boolean = false
 )
 
-/**
- * 작성 중인 지출 폼의 화면 상태.
- *
- * 사진 URI는 Photo Picker가 보장하는 읽기 권한의 수명 밖에서 재사용하면 안 되므로
- * [SavedStateHandle]에는 저장하지 않는다. 대신 ViewModel 상태에만 두어 구성 변경 중에는
- * 유지하고, 시스템 프로세스 재생성 뒤에는 사용자가 다시 선택하게 한다.
- */
 data class ExpenseInputFormState(
     val step: Int = 1,
     val date: LocalDate = LocalDate.now(),
@@ -70,7 +63,6 @@ data class ExpenseInputFormState(
 sealed interface ExpenseInputEvent {
     data object Saved : ExpenseInputEvent
 
-    /** "오늘은 안 썼어요" 기록 완료. 화면은 홈으로 돌아간다. */
     data object NoSpendSaved : ExpenseInputEvent
     data class ShowMessage(val message: String) : ExpenseInputEvent
 }
@@ -193,7 +185,6 @@ class ExpenseInputViewModel @Inject constructor(
         )
     }
 
-    /** 사용자가 화면을 취소하거나 저장에 성공하면 다음 진입에서 이전 초안을 복원하지 않는다. */
     fun discardDraft() {
         DraftKeys.forEach { key -> savedStateHandle.remove<Any?>(key) }
         _uiState.value = _uiState.value.copy(

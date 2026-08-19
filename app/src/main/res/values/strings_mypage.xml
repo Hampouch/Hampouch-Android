@@ -28,16 +28,8 @@
 
     <string name="settings_title">전체 설정</string>
     <string name="settings_section_notification">알림 설정</string>
-    <string name="settings_record_alarm_title">기록 알림</string>
-    <string name="settings_record_alarm_subtitle">미입력 · 한도 초과</string>
-    <string name="settings_challenge_alarm_title">식비 절약 챌린지 알림</string>
-    <string name="settings_challenge_alarm_subtitle">시작 · 응원 · 종료</string>
-    <string name="settings_hambattle_alarm_title">햄배틀 알림</string>
-    <string name="settings_hambattle_alarm_subtitle">참여 · 시작 · 결과</string>
-    <string name="settings_community_alarm_title">커뮤니티 알림</string>
-    <string name="settings_community_alarm_subtitle">좋아요 · 댓글 · 인기글 선정</string>
-    <string name="settings_marketing_information_title">마케팅 정보 수신</string>
-    <string name="settings_marketing_information_subtitle">이벤트, 혜택과 신규 기능 소식을 받아요.</string>
+    <string name="settings_marketing_alarm_title">마케팅 알림 수신</string>
+    <string name="settings_marketing_alarm_subtitle">이벤트 · 혜택 안내</string>
 
     <string name="settings_change_password">비밀번호 변경</string>
 
@@ -55,13 +47,8 @@
     <string name="settings_withdraw_confirm_title">햄포치 계정을 삭제할까요?</string>
     <string name="settings_withdraw_confirm_subtext">탈퇴 시 모든 기록은 사라지고 다시 불러올 수 없어요.</string>
 
-    <string name="record_alarm_title">기록 알림</string>
-    <string name="record_alarm_receive_title">기록 알림</string>
-    <string name="record_alarm_receive_subtitle">미입력 · 한도 초과</string>
     <string name="record_alarm_missing_reminder_title">미입력 알림</string>
     <string name="record_alarm_missing_reminder_subtitle">오늘 지출을 입력하지 않았을 때</string>
-    <string name="record_alarm_limit_over_title">한도 초과 알림</string>
-    <string name="record_alarm_limit_over_subtitle">하루 한도를 넘겼을 때</string>
     <string name="record_alarm_mode_weekday">평일</string>
     <string name="record_alarm_mode_weekend">주말</string>
     <string name="record_alarm_mode_daily">매일</string>

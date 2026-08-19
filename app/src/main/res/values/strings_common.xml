@@ -3,7 +3,6 @@
 
     <string name="cd_back">뒤로 가기</string>
     <string name="cd_next">다음</string>
-    <string name="cd_notification">알림</string>
     <string name="cd_calendar">달력</string>
 
     <string name="common_confirm">확인</string>

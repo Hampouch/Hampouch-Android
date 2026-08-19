@@ -1,18 +1,14 @@
 package com.example.hampouch.data.remote.dto
 
-/** PUT /api/expenses/no-spend — 0원 지출이 아니라 "그 날짜는 지출 없이 마감" 기록이다. */
 data class ExpenseNoSpendRequest(
     val date: String
 )
 
 data class ExpenseCreateRequest(
-    /** 서버 필수 항목은 date/price뿐이다. 지출명을 안 적었으면 null로 보낸다. */
     val name: String?,
     val price: Int,
-    /** 미선택이면 null — 서버가 내부적으로 ETC를 붙인다. 직접입력이면 "ETC". */
     val category: String?,
     val customCategory: String?,
-    /** 미선택이면 null — 서버가 내부적으로 ETC를 붙인다. 직접입력이면 "ETC". */
     val emotion: String?,
     val customEmotion: String?,
     val date: String,
@@ -35,7 +31,6 @@ data class ExpenseIdData(val expenseId: Long)
 
 data class ExpenseDetailData(
     val expenseId: Long,
-    /** 지출명은 선택 입력이라 서버가 null을 내려줄 수 있다. */
     val name: String?,
     val price: Int,
     val date: String,
@@ -62,7 +57,6 @@ data class ExpensePhotoConfirmRequest(val imageKey: String)
 
 data class ExpenseDaySummaryItemData(
     val expenseId: Long,
-    /** 지출명은 선택 입력이라 서버가 null을 내려줄 수 있다. */
     val name: String?,
     val price: Int,
     val category: String?,
@@ -74,7 +68,6 @@ data class ExpenseDaySummaryItemData(
 data class ExpenseDaySummaryData(
     val date: String,
     val totalAmount: Int,
-    /** ACTIVE 지출이 있거나 "오늘은 안 썼어요" 기록이 있으면 true. */
     val hasRecord: Boolean? = null,
     val expenses: List<ExpenseDaySummaryItemData>
 )
@@ -109,7 +102,6 @@ data class ExpenseAnalysisData(
 data class ExpenseTagAnalysisItemData(
     val expenseId: Long,
     val date: String,
-    /** 지출명은 선택 입력이라 서버가 null을 내려줄 수 있다. */
     val name: String?,
     val category: String?,
     val categoryLabel: String? = null,

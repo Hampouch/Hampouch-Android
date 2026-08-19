@@ -67,9 +67,7 @@ import com.example.hampouch.data.remote.dto.MiniChallengeCheckData
 import com.example.hampouch.data.remote.dto.MiniChallengeCheckRequest
 import com.example.hampouch.data.remote.dto.MiniChallengeCreatedData
 import com.example.hampouch.data.remote.dto.MiniChallengeDayData
-import com.example.hampouch.data.remote.dto.DeviceTokenRequest
 import com.example.hampouch.data.remote.dto.NicknameCheckData
-import com.example.hampouch.data.remote.dto.NotificationListData
 import com.example.hampouch.data.remote.dto.PasswordResetRequest
 import com.example.hampouch.data.remote.dto.RecommendedMiniChallengeListData
 import com.example.hampouch.data.remote.dto.RefreshTokenData
@@ -151,9 +149,6 @@ interface AuthApi {
 }
 
 interface BattleApi {
-    /**
-     * 로그인한 사용자가 참가 중인 햄배틀을 상태별로 조회한다. status를 생략하면 전체 상태를 조회한다.
-     */
     @GET("api/battles")
     suspend fun getMyBattles(
         @Query("status") status: String? = null
@@ -368,10 +363,6 @@ interface ExpenseApi {
         @Path("expenseId") expenseId: Long
     ): Response<ApiResponse<Unit>>
 
-    /**
-     * "오늘은 안 썼어요". 0원 지출을 만드는 게 아니라 no_spend_day 기록을 남긴다.
-     * 같은 날짜에 일반 지출이 생기면 서버가 이 기록을 지운다.
-     */
     @PUT("api/expenses/no-spend")
     suspend fun markNoSpend(
         @Body request: ExpenseNoSpendRequest
@@ -496,25 +487,6 @@ interface RestApi {
     suspend fun resumeRest(
         @Body request: RestResumeRequest
     ): Response<ApiResponse<RestResumeData>>
-}
-
-interface NotificationApi {
-    @GET("api/notifications")
-    suspend fun getNotifications(): Response<ApiResponse<NotificationListData>>
-
-    @PATCH("api/notifications/{notificationId}/read")
-    suspend fun markNotificationRead(
-        @Path("notificationId") notificationId: Long
-    ): Response<ApiResponse<Unit>>
-
-    @PATCH("api/notifications/read-all")
-    suspend fun markAllNotificationsRead(): Response<ApiResponse<Unit>>
-
-    @POST("api/notifications/token")
-    suspend fun registerDeviceToken(@Body request: DeviceTokenRequest): Response<ApiResponse<Unit>>
-
-    @DELETE("api/notifications/token")
-    suspend fun unregisterDeviceToken(@Body request: DeviceTokenRequest): Response<ApiResponse<Unit>>
 }
 
 interface UsersApi {

@@ -165,22 +165,15 @@ class ExpenseRepositoryImpl @Inject constructor(
     private val localReasonFromServer: Map<String, String> =
         localReasonToServer.entries.associate { (local, server) -> server to local }
 
-    /**
-     * 서버는 `category == ETC`와 `customCategory != null`을 함께 요구한다(categoryConsistent).
-     * 그래서 "기타" 칩은 ETC + [ETC_CATEGORY_LABEL]로 보내 제약을 만족시키면서
-     * 건너뛰기(둘 다 null)와 구분되게 한다.
-     */
     private fun categoryRequestPair(record: ExpenseRecord): Pair<String?, String?> =
         expenseCategoryRequestFields(record.categoryId, record.customCategoryName)
 
-    /** [categoryRequestPair]와 같은 규칙. */
     private fun emotionRequestPair(record: ExpenseRecord): Pair<String?, String?> {
         val custom = record.customReason?.takeIf { it.isNotBlank() }
         if (custom != null) return "ETC" to custom
         return record.reasonId?.let { localReasonToServer[it] } to null
     }
 
-    /** [categoryRequestPair]의 역변환. ETC + "기타"는 칩 선택으로 되돌린다. */
     private fun categoryFieldsFromServer(category: String?, customCategory: String?): Pair<String?, String?> = when {
         category != null && category != "ETC" -> serverCategoryToLocal[category] to null
         customCategory == ETC_CATEGORY_LABEL -> ExpenseAnalysisEtcId to null

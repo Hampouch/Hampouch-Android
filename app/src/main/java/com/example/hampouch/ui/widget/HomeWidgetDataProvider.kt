@@ -20,10 +20,6 @@ private const val TYPE_IN_PROGRESS = "in_progress"
 private const val TYPE_RESTING = "resting"
 private const val TYPE_NO_ACTIVE = "no_active"
 
-/**
- * 위젯 프로세스가 앱의 인메모리 상태에 의존하지 않도록 마지막 표시 상태를 저장한다.
- * 토큰·이메일은 저장하지 않고 계정 전환 감지용 내부 id와 화면 표시 데이터만 보관한다.
- */
 @Singleton
 class HomeWidgetSnapshotStore @Inject constructor(
     @param:ApplicationContext private val context: Context

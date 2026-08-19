@@ -65,7 +65,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hampouch.R
-import com.example.hampouch.ui.common.NotificationBellIcon
 import com.example.hampouch.domain.model.MiniChallengeEntry
 import com.example.hampouch.domain.model.RecommendedMiniChallenge
 import com.example.hampouch.domain.model.miniChallengeDuration
@@ -90,7 +89,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun MiniChallengeTopBar(
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier,
     title: String = stringResource(R.string.minichallenge_title)
 ) {
@@ -117,7 +115,6 @@ fun MiniChallengeTopBar(
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f)
         )
-        NotificationBellIcon(onClick = onNotificationClick)
     }
 }
 
@@ -125,7 +122,7 @@ fun MiniChallengeTopBar(
 @Composable
 private fun MiniChallengeTopBarPreview() {
     HampouchTheme {
-        MiniChallengeTopBar(onBackClick = {}, onNotificationClick = {})
+        MiniChallengeTopBar(onBackClick = {})
     }
 }
 

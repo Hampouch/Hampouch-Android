@@ -58,9 +58,7 @@ data class HamBattleChallenge(
     val cancelled: Boolean = false,
     val battleId: Long? = null,
     val battleCode: String? = null,
-    /** 서버 응답은 상태별 필수값을 각 subtype으로 보존한다. null은 목데이터의 날짜 기반 상태다. */
     val serverState: HamBattleServerState? = null,
-    /** TERMINATED 상세 응답의 벌칙 대상자 닉네임(penaltyUserNickname). */
     val penaltyUserName: String? = null,
 ) {
     val isOneVsOne: Boolean get() = type == "1 vs 1"

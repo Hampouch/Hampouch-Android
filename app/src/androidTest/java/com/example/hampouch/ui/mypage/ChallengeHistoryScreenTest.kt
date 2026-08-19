@@ -56,8 +56,7 @@ class ChallengeHistoryScreenTest {
                 ChallengeHistoryScreen(
                     records = records,
                     onBackClick = {},
-                    onRecordClick = {},
-                    onNotificationClick = {}
+                    onRecordClick = {}
                 )
             }
         }

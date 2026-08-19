@@ -58,7 +58,6 @@ fun MiniChallengeScreen(
     modifier: Modifier = Modifier,
     initialDate: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     viewModel: MiniChallengeViewModel = hiltViewModel()
 ) {
     var step by remember { mutableStateOf(MiniChallengeStep.DASHBOARD) }
@@ -98,7 +97,6 @@ fun MiniChallengeScreen(
             recommendedChallenges = miniChallengeState.recommendedChallenges,
             existingNames = miniChallengeState.challengesFor(selectedDate).map { it.name },
             onBackClick = { step = MiniChallengeStep.DASHBOARD },
-            onNotificationClick = onNotificationClick,
             onAddChallenge = { recommended: RecommendedMiniChallenge ->
                 viewModel.addRecommended(selectedDate, recommended)
             }
@@ -129,7 +127,6 @@ fun MiniChallengeScreen(
                 viewModel.addRecommended(selectedDate, recommended)
             },
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick,
             onStartNewChallengeClick = { step = MiniChallengeStep.CREATE },
             onViewAllRecommendedClick = { step = MiniChallengeStep.RECOMMENDED_LIST }
         )
@@ -148,7 +145,6 @@ private fun MiniChallengeDashboardScreen(
     onDeleteChallenge: (String) -> Unit,
     onAddRecommendedChallenge: (RecommendedMiniChallenge) -> Unit,
     onBackClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     onStartNewChallengeClick: () -> Unit,
     onViewAllRecommendedClick: () -> Unit
 ) {
@@ -162,8 +158,7 @@ private fun MiniChallengeDashboardScreen(
         containerColor = HPGray2,
         topBar = {
             MiniChallengeTopBar(
-                onBackClick = onBackClick,
-                onNotificationClick = onNotificationClick
+                onBackClick = onBackClick
             )
         },
         bottomBar = {
@@ -294,7 +289,6 @@ private fun MiniChallengeScreenPreview() {
             onDeleteChallenge = {},
             onAddRecommendedChallenge = {},
             onBackClick = {},
-            onNotificationClick = {},
             onStartNewChallengeClick = {},
             onViewAllRecommendedClick = {}
         )

@@ -16,24 +16,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,15 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.hampouch.R
-import com.example.hampouch.ui.notification.NotificationViewModel
 import com.example.hampouch.ui.theme.Body16Bold
 import com.example.hampouch.ui.theme.HampouchTheme
 import com.example.hampouch.ui.theme.HPBlack
@@ -359,40 +348,6 @@ private fun ReasonTagAndAmountColumnPreview() {
     }
 }
 
-@Composable
-private fun rememberHasUnreadNotifications(): Boolean {
-    if (LocalInspectionMode.current) return false
-    val viewModel: NotificationViewModel = hiltViewModel()
-    val items by viewModel.items.collectAsStateWithLifecycle()
-    return items.any { !it.isRead }
-}
-
-@Composable
-fun NotificationBellIcon(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    hasUnread: Boolean = rememberHasUnreadNotifications()
-) {
-    Box(modifier = modifier) {
-        IconButton(onClick = onClick) {
-            Icon(
-                imageVector = Icons.Filled.Notifications,
-                contentDescription = stringResource(R.string.cd_notification),
-                tint = HPBlack
-            )
-        }
-        if (hasUnread) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 8.dp, end = 8.dp)
-                    .size(8.dp)
-                    .align(Alignment.TopEnd)
-                    .background(HPSub, CircleShape)
-            )
-        }
-    }
-}
-
 /**
  * 제목을 좌우 액션 요소의 폭과 무관하게 화면(바) 전체 너비 기준으로 항상 중앙 정렬하는 상단바 레이아웃.
  * `Row` + `weight(1f)` 방식은 좌우 요소 폭이 다르면 제목이 남는 공간의 중앙으로 쏠리므로 사용하지 않는다.
@@ -436,10 +391,3 @@ fun ScreenCenteredTopBar(
     }
 }
 
-@Preview(showBackground = true, name = "알림 벨 아이콘")
-@Composable
-private fun NotificationBellIconPreview() {
-    HampouchTheme {
-        NotificationBellIcon(onClick = {}, hasUnread = true)
-    }
-}

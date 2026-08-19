@@ -69,7 +69,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private enum class MyPageRoute {
-    MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, RECORD_ALARM, CHANGE_PASSWORD, CHALLENGE_HISTORY,
+    MAIN, ACCOUNT_SETTINGS, PROFILE_EDIT, ALL_SETTINGS, CHANGE_PASSWORD, CHALLENGE_HISTORY,
     CHALLENGE_RESULT, MY_TIPS, SAVED_TIPS, TIP_DETAIL, BATTLE_DETAIL, EDIT_TIP, EDIT_MENU, EDIT_BATTLE
 }
 
@@ -80,7 +80,6 @@ fun MyPageScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToHamBattleLink: (String) -> Unit,
-    onNotificationClick: () -> Unit,
     onLoggedOut: (isWithdrawal: Boolean) -> Unit,
     onNavigateToChallengeExpenseAnalysis: (totalDays: Int, periodStart: LocalDate, periodEnd: LocalDate) -> Unit,
     onNavigateToAmountAdjustment: () -> Unit,
@@ -174,7 +173,6 @@ fun MyPageScreen(
                         onSavedTipsClick = { route = MyPageRoute.SAVED_TIPS },
                         onAllSettingsClick = { route = MyPageRoute.ALL_SETTINGS },
                         onLogoutClick = { showLogoutConfirm = true },
-                        onNotificationClick = onNotificationClick,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -206,7 +204,6 @@ fun MyPageScreen(
                     onProfileEditClick = { route = MyPageRoute.PROFILE_EDIT },
                     onChangePasswordClick = { route = MyPageRoute.CHANGE_PASSWORD },
                     onLoggedOut = onLoggedOut,
-                    onNotificationClick = onNotificationClick,
                     modifier = Modifier.fillMaxSize()
                 )
                 if (showPasswordChangedDialog) {
@@ -232,7 +229,6 @@ fun MyPageScreen(
                     profileViewModel.update(currentUser, newName, newAvatarUri)
                     route = MyPageRoute.MAIN
                 },
-                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -241,17 +237,6 @@ fun MyPageScreen(
             BackHandler { route = MyPageRoute.MAIN }
             AllSettingsScreen(
                 onBackClick = { route = MyPageRoute.MAIN },
-                onRecordAlarmClick = { route = MyPageRoute.RECORD_ALARM },
-                onNotificationClick = onNotificationClick,
-                modifier = modifier.fillMaxSize()
-            )
-        }
-
-        MyPageRoute.RECORD_ALARM -> {
-            BackHandler { route = MyPageRoute.ALL_SETTINGS }
-            RecordAlarmScreen(
-                onBackClick = { route = MyPageRoute.ALL_SETTINGS },
-                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -265,8 +250,7 @@ fun MyPageScreen(
                     onSubmitSuccess = {
                         showPasswordChangedDialog = true
                         route = MyPageRoute.ACCOUNT_SETTINGS
-                    },
-                    onNotificationClick = onNotificationClick
+                    }
                 ),
                 modifier = modifier.fillMaxSize()
             )
@@ -281,7 +265,6 @@ fun MyPageScreen(
                     selectedChallengeId = record.id
                     route = MyPageRoute.CHALLENGE_RESULT
                 },
-                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -320,7 +303,6 @@ fun MyPageScreen(
                 tips = myTips,
                 onBackClick = { route = MyPageRoute.MAIN },
                 onTipClick = onTipClick,
-                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -334,7 +316,6 @@ fun MyPageScreen(
                 tips = savedTips,
                 onBackClick = { route = MyPageRoute.MAIN },
                 onTipClick = onTipClick,
-                onNotificationClick = onNotificationClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -417,7 +398,6 @@ private fun MyPageMainContent(
     onSavedTipsClick: () -> Unit,
     onAllSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -427,8 +407,7 @@ private fun MyPageMainContent(
     ) {
         MyPageMainTopBar(
             title = stringResource(R.string.mypage_title),
-            onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onBackClick = onBackClick
         )
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             ProfileCard(
@@ -481,8 +460,7 @@ private fun MyPageScreenPreview() {
             onMyTipsClick = {},
             onSavedTipsClick = {},
             onAllSettingsClick = {},
-            onLogoutClick = {},
-            onNotificationClick = {}
+            onLogoutClick = {}
         )
     }
 }

@@ -12,7 +12,6 @@ interface RestRepository {
 
     suspend fun startBreak(period: RestPeriod): Result<Unit>
 
-    /** 이미 휴식 중일 때 기간을 연장한다("더 쉬기"). */
     suspend fun extendBreak(period: RestPeriod): Result<Unit>
 
     suspend fun resumeNow(): Result<Unit>
