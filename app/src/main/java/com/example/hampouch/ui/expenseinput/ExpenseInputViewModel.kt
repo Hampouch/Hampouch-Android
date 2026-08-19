@@ -220,7 +220,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.markNoSpend(date)
                 .onSuccess {
                     discardDraft()
-                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(ExpenseInputEvent.NoSpendSaved)
                 }
                 .onFailure {
@@ -239,7 +239,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.createExpense(_uiState.value.form.toExpenseRecord())
                 .onSuccess {
                     discardDraft()
-                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    homeWidgetRefreshRequester.refreshAfterConfirmedStateChange()
                     _events.send(ExpenseInputEvent.Saved)
                 }
                 .onFailure {

@@ -5,6 +5,7 @@ import com.example.hampouch.domain.model.BreakDuration
 import com.example.hampouch.domain.model.RestState
 import com.example.hampouch.domain.model.RestPeriod
 import com.example.hampouch.domain.repository.RestRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +24,7 @@ class TakeABreakViewModelTest {
 
     @Test
     fun `직접 입력은 숫자 네 자리만 남기고 preset 선택을 해제한다`() {
-        val viewModel = TakeABreakViewModel(FakeRestRepository())
+        val viewModel = TakeABreakViewModel(FakeRestRepository(), HomeWidgetRefreshRequester {})
 
         viewModel.changeCustomDays("12a34")
 
@@ -34,7 +35,11 @@ class TakeABreakViewModelTest {
     @Test
     fun `직접 입력은 Swagger 상한인 3650일까지 허용한다`() = runTest {
         val repository = FakeRestRepository()
-        val viewModel = TakeABreakViewModel(repository)
+        var widgetRefreshCount = 0
+        val viewModel = TakeABreakViewModel(
+            repository,
+            HomeWidgetRefreshRequester { widgetRefreshCount++ }
+        )
 
         viewModel.changeCustomDays("3650")
         viewModel.submit(isExtending = false)
@@ -42,12 +47,13 @@ class TakeABreakViewModelTest {
 
         assertEquals(RestPeriod.Custom(3650), repository.lastStartedPeriod)
         assertEquals(1, repository.startCallCount)
+        assertEquals(1, widgetRefreshCount)
     }
 
     @Test
     fun `직접 입력이 3650일을 넘으면 요청하지 않는다`() = runTest {
         val repository = FakeRestRepository()
-        val viewModel = TakeABreakViewModel(repository)
+        val viewModel = TakeABreakViewModel(repository, HomeWidgetRefreshRequester {})
 
         viewModel.changeCustomDays("3651")
         viewModel.submit(isExtending = false)
@@ -65,7 +71,11 @@ class TakeABreakViewModelTest {
     @Test
     fun `휴식 시작 실패는 submitting을 해제하고 오류를 UiState에 기록한다`() = runTest {
         val repository = FakeRestRepository(startResult = Result.failure(IllegalStateException("시작 실패")))
-        val viewModel = TakeABreakViewModel(repository)
+        var widgetRefreshCount = 0
+        val viewModel = TakeABreakViewModel(
+            repository,
+            HomeWidgetRefreshRequester { widgetRefreshCount++ }
+        )
 
         viewModel.submit(isExtending = false)
         advanceUntilIdle()
@@ -73,6 +83,7 @@ class TakeABreakViewModelTest {
         assertFalse(viewModel.uiState.value.isSubmitting)
         assertEquals("시작 실패", viewModel.uiState.value.errorMessage)
         assertEquals(1, repository.startCallCount)
+        assertEquals(0, widgetRefreshCount)
     }
 
     private class FakeRestRepository(
