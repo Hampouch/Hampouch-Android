@@ -7,6 +7,7 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ExpenseRepository
 import com.example.hampouch.ui.common.LoadState
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ sealed interface ExpenseDetailEvent {
 @HiltViewModel
 class ExpenseDetailViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
+    private val homeWidgetRefreshRequester: HomeWidgetRefreshRequester,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -68,7 +70,10 @@ class ExpenseDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isProcessing = true)
         viewModelScope.launch {
             expenseRepository.deleteExpense(expenseId)
-                .onSuccess { _events.send(ExpenseDetailEvent.Finished) }
+                .onSuccess {
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    _events.send(ExpenseDetailEvent.Finished)
+                }
                 .onFailure {
                     _events.send(ExpenseDetailEvent.ShowMessage(it.toUserMessage("지출 내역 삭제에 실패했습니다.")))
                 }
@@ -81,7 +86,10 @@ class ExpenseDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isProcessing = true)
         viewModelScope.launch {
             expenseRepository.updateExpense(updated)
-                .onSuccess { _events.send(ExpenseDetailEvent.Finished) }
+                .onSuccess {
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
+                    _events.send(ExpenseDetailEvent.Finished)
+                }
                 .onFailure {
                     _events.send(ExpenseDetailEvent.ShowMessage(it.toUserMessage("지출 내역 수정에 실패했습니다.")))
                 }

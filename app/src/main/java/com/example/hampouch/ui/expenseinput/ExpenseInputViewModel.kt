@@ -3,10 +3,12 @@ package com.example.hampouch.ui.expenseinput
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +18,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+
+internal const val EXPENSE_DATE_LOCKED_MESSAGE = "이 날짜의 지출기록은 지금 변경할 수 없습니다."
+
+internal fun ChallengeState.canChangeExpenseOn(date: LocalDate): Boolean =
+    challengeFor(date) != null
 
 data class ExpenseInputUiState(
     val dailyLimit: Int = 0,
@@ -59,6 +66,7 @@ sealed interface ExpenseInputEvent {
 class ExpenseInputViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val challengeRepository: ChallengeRepository,
+    private val homeWidgetRefreshRequester: HomeWidgetRefreshRequester,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -111,7 +119,28 @@ class ExpenseInputViewModel @Inject constructor(
 
     fun changeDate(date: LocalDate) = updateForm { it.copy(date = date.coerceAtMost(LocalDate.now())) }
 
-    fun changeStep(step: Int) = updateForm { it.copy(step = step.coerceAtLeast(1)) }
+    fun changeStep(step: Int) {
+        val targetStep = step.coerceAtLeast(1)
+        if (_uiState.value.form.step == 1 && targetStep > 1) {
+            proceedToDetails()
+            return
+        }
+        setStep(targetStep)
+    }
+
+    private fun proceedToDetails() {
+        val form = _uiState.value.form
+        if (form.amount <= 0) return
+        if (!challengeRepository.state.value.canChangeExpenseOn(form.date)) {
+            viewModelScope.launch {
+                _events.send(ExpenseInputEvent.ShowMessage(EXPENSE_DATE_LOCKED_MESSAGE))
+            }
+            return
+        }
+        setStep(2)
+    }
+
+    private fun setStep(step: Int) = updateForm { it.copy(step = step) }
 
     fun changeExpenseName(name: String) = updateForm { it.copy(expenseName = name) }
 
@@ -187,6 +216,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.markNoSpend(date)
                 .onSuccess {
                     discardDraft()
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
                     _events.send(ExpenseInputEvent.NoSpendSaved)
                 }
                 .onFailure {
@@ -205,6 +235,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.createExpense(_uiState.value.form.toExpenseRecord())
                 .onSuccess {
                     discardDraft()
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
                     _events.send(ExpenseInputEvent.Saved)
                 }
                 .onFailure {

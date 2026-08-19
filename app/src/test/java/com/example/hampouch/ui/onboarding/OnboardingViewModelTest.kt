@@ -23,6 +23,33 @@ class OnboardingViewModelTest {
     }
 
     @Test
+    fun `지난달 식비 입력을 모두 지우면 draft 금액도 초기화한다`() {
+        val viewModel = OnboardingViewModel()
+        viewModel.changeExpense(99_999_999)
+
+        viewModel.changeExpense(0)
+
+        assertNull(viewModel.uiState.value.draft.lastMonthFoodExpense)
+    }
+
+    @Test
+    fun `날짜 고정을 선택하면 기존 기간을 초기화한다`() {
+        val viewModel = OnboardingViewModel()
+        viewModel.changePeriodEnabled(true)
+        viewModel.changePeriod(30)
+
+        viewModel.changeDateFixed(true)
+        viewModel.changeStartDate(LocalDate.of(2026, 8, 20))
+        viewModel.changePeriodEnabled(true)
+
+        val draft = viewModel.uiState.value.draft
+        assertEquals(true, draft.periodEnabled)
+        assertEquals(false, draft.dateFixed)
+        assertNull(draft.challengePeriodDays)
+        assertNull(draft.startDate)
+    }
+
+    @Test
     fun `검증된 draft만 non-null 제출 모델로 변환한다`() {
         val viewModel = OnboardingViewModel()
         viewModel.changeDateFixed(true)
