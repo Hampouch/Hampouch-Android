@@ -47,7 +47,8 @@ enum class DayOfWeekLabel(val labelResId: Int) {
 data class NotificationSettingsState(
     val challengeAlarmEnabled: Boolean = true,
     val hamBattleAlarmEnabled: Boolean = true,
-    val communityAlarmEnabled: Boolean = true
+    val communityAlarmEnabled: Boolean = true,
+    val marketingInformationEnabled: Boolean = false
 )
 
 data class RecordAlarmSettingsState(

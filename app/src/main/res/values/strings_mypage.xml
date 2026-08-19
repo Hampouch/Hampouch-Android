@@ -36,6 +36,8 @@
     <string name="settings_hambattle_alarm_subtitle">참여 · 시작 · 결과</string>
     <string name="settings_community_alarm_title">커뮤니티 알림</string>
     <string name="settings_community_alarm_subtitle">좋아요 · 댓글 · 인기글 선정</string>
+    <string name="settings_marketing_information_title">마케팅 정보 수신</string>
+    <string name="settings_marketing_information_subtitle">이벤트, 혜택과 신규 기능 소식을 받아요.</string>
 
     <string name="settings_change_password">비밀번호 변경</string>
 

@@ -20,7 +20,6 @@ import com.example.hampouch.data.remote.unauthorized
 import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.DayOfWeekLabel
 import com.example.hampouch.domain.model.MyPageProfile
-import com.example.hampouch.domain.model.NotificationSettingsState
 import com.example.hampouch.domain.model.RecordAlarmSettingsState
 import com.example.hampouch.domain.model.ReminderDayMode
 import com.example.hampouch.domain.repository.MyPageProfileRepository
@@ -157,8 +156,8 @@ class UsersRepositoryImpl @Inject constructor(
     }
 
     private fun applyScheduleData(data: UsersNotificationScheduleData) {
-        notificationSettingsRepository.update {
-            NotificationSettingsState(
+        notificationSettingsRepository.update { current ->
+            current.copy(
                 challengeAlarmEnabled = data.challengeAlert,
                 hamBattleAlarmEnabled = data.battleAlert,
                 communityAlarmEnabled = data.communityAlert

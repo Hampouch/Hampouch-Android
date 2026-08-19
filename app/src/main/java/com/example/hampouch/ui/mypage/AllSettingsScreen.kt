@@ -52,7 +52,8 @@ fun AllSettingsScreen(
             onNotificationClick = onNotificationClick,
             onChallengeAlarmChange = viewModel::setChallengeAlarmEnabled,
             onHamBattleAlarmChange = viewModel::setHamBattleAlarmEnabled,
-            onCommunityAlarmChange = viewModel::setCommunityAlarmEnabled
+            onCommunityAlarmChange = viewModel::setCommunityAlarmEnabled,
+            onMarketingInformationChange = viewModel::setMarketingInformationEnabled
         ),
         modifier = modifier
     )
@@ -133,6 +134,15 @@ private fun AllSettingsNotificationSection(notificationState: NotificationSettin
             onCheckedChange = actions.onCommunityAlarmChange,
             onRowClick = { actions.onCommunityAlarmChange(!notificationState.communityAlarmEnabled) }
         )
+        SettingsToggleCard(
+            title = stringResource(R.string.settings_marketing_information_title),
+            subtitle = stringResource(R.string.settings_marketing_information_subtitle),
+            checked = notificationState.marketingInformationEnabled,
+            onCheckedChange = actions.onMarketingInformationChange,
+            onRowClick = {
+                actions.onMarketingInformationChange(!notificationState.marketingInformationEnabled)
+            }
+        )
     }
 }
 
@@ -178,7 +188,8 @@ private fun AllSettingsScreenPreview() {
                 onNotificationClick = {},
                 onChallengeAlarmChange = {},
                 onHamBattleAlarmChange = {},
-                onCommunityAlarmChange = {}
+                onCommunityAlarmChange = {},
+                onMarketingInformationChange = {}
             )
         )
     }
