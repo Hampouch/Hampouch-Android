@@ -14,10 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -136,7 +135,7 @@ fun ExpenseInputRoute(
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.imePadding(),
         topBar = {
             ExpenseInputTopBar(
                 title = stringResource(R.string.expenseinput_title),
@@ -180,7 +179,7 @@ fun ExpenseInputRoute(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 20.dp)
             ) {
                 ExpenseInputDetailStep(

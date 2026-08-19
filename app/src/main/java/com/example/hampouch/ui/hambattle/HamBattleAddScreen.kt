@@ -53,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -253,7 +252,7 @@ private fun ChallengeNameField(value: String, onValueChange: (String) -> Unit) {
         singleLine = true,
         shape = RoundedCornerShape(10.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = HPGray5,
             focusedBorderColor = HPMain,
             unfocusedContainerColor = HPWhite,
             focusedContainerColor = HPWhite
