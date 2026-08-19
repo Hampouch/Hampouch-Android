@@ -13,6 +13,7 @@ import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -119,14 +120,39 @@ class ExpenseInputViewModelTest {
         assertEquals(2, viewModel.uiState.value.form.step)
     }
 
+    @Test
+    fun `지출 저장 성공 시 위젯 동기화를 요청한다`() = runTest {
+        val refreshRequester = CountingWidgetRefreshRequester()
+        val viewModel = createViewModel(
+            savedStateHandle = SavedStateHandle(),
+            homeWidgetRefreshRequester = refreshRequester
+        )
+        viewModel.appendAmountDigit("1")
+
+        viewModel.save()
+        advanceUntilIdle()
+
+        assertEquals(1, refreshRequester.requestCount)
+    }
+
     private fun createViewModel(
         savedStateHandle: SavedStateHandle,
-        challengeRepository: ChallengeRepository = FakeChallengeRepository(editableChallengeState())
+        challengeRepository: ChallengeRepository = FakeChallengeRepository(editableChallengeState()),
+        homeWidgetRefreshRequester: HomeWidgetRefreshRequester = HomeWidgetRefreshRequester {}
     ) = ExpenseInputViewModel(
         expenseRepository = FakeExpenseRepository(),
         challengeRepository = challengeRepository,
+        homeWidgetRefreshRequester = homeWidgetRefreshRequester,
         savedStateHandle = savedStateHandle
     )
+
+    private class CountingWidgetRefreshRequester : HomeWidgetRefreshRequester {
+        var requestCount = 0
+
+        override fun refreshAfterExpenseChange() {
+            requestCount++
+        }
+    }
 
     private fun editableChallengeState(): ChallengeState = ChallengeState(
         challenges = listOf(

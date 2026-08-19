@@ -8,6 +8,7 @@ import com.example.hampouch.domain.model.ExpenseRecord
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
 import com.example.hampouch.domain.repository.ExpenseRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,6 +66,7 @@ sealed interface ExpenseInputEvent {
 class ExpenseInputViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val challengeRepository: ChallengeRepository,
+    private val homeWidgetRefreshRequester: HomeWidgetRefreshRequester,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -214,6 +216,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.markNoSpend(date)
                 .onSuccess {
                     discardDraft()
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
                     _events.send(ExpenseInputEvent.NoSpendSaved)
                 }
                 .onFailure {
@@ -232,6 +235,7 @@ class ExpenseInputViewModel @Inject constructor(
             expenseRepository.createExpense(_uiState.value.form.toExpenseRecord())
                 .onSuccess {
                     discardDraft()
+                    homeWidgetRefreshRequester.refreshAfterExpenseChange()
                     _events.send(ExpenseInputEvent.Saved)
                 }
                 .onFailure {

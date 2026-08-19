@@ -28,6 +28,10 @@ import javax.inject.Singleton
 private const val TAG = "HomeWidgetPublisher"
 private const val STATE_PUBLISH_DEBOUNCE_MILLIS = 300L
 
+fun interface HomeWidgetRefreshRequester {
+    fun refreshAfterExpenseChange()
+}
+
 /** 앱 상태 변경을 감지해 주기적인 네트워크 조회 없이 위젯 스냅샷을 갱신한다. */
 @Singleton
 class HomeWidgetStatePublisher @Inject constructor(
@@ -37,7 +41,7 @@ class HomeWidgetStatePublisher @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val restRepository: RestRepository,
     private val snapshotStore: HomeWidgetSnapshotStore
-) {
+) : HomeWidgetRefreshRequester {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val publishMutex = Mutex()
     private val serverSyncMutex = Mutex()
@@ -83,6 +87,10 @@ class HomeWidgetStatePublisher @Inject constructor(
         if (!syncFromServer(forceWidgetUpdate = true)) {
             Log.w(TAG, "수동 위젯 동기화 중 일부 서버 조회에 실패했습니다.")
         }
+    }
+
+    override fun refreshAfterExpenseChange() {
+        scope.launch { requestImmediateSync() }
     }
 
     internal suspend fun syncFromServer(forceWidgetUpdate: Boolean = false): Boolean = serverSyncMutex.withLock {

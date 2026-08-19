@@ -24,6 +24,8 @@ import com.example.hampouch.domain.repository.NotificationSettingsRepository
 import com.example.hampouch.domain.repository.RecordAlarmRepository
 import com.example.hampouch.domain.repository.RestRepository
 import com.example.hampouch.domain.repository.UsersRepository
+import com.example.hampouch.ui.widget.HomeWidgetRefreshRequester
+import com.example.hampouch.ui.widget.HomeWidgetStatePublisher
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -85,4 +87,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUsersRepository(impl: UsersRepositoryImpl): UsersRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHomeWidgetRefreshRequester(
+        impl: HomeWidgetStatePublisher
+    ): HomeWidgetRefreshRequester
 }
