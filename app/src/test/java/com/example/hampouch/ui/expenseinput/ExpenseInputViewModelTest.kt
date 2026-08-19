@@ -92,10 +92,51 @@ class ExpenseInputViewModelTest {
     }
 
     @Test
-    fun `선택 날짜의 지출을 변경할 수 없으면 첫 단계에서 메시지를 표시한다`() = runTest {
+    fun `챌린지 기간이 아닌 이틀 전 날짜는 첫 단계에서 메시지를 표시한다`() = runTest {
         val viewModel = createViewModel(
             savedStateHandle = SavedStateHandle(),
             challengeRepository = FakeChallengeRepository(ChallengeState())
+        )
+        viewModel.appendAmountDigit("1")
+        viewModel.changeDate(LocalDate.now().minusDays(2))
+        val event = async { viewModel.events.first() }
+
+        viewModel.changeStep(2)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.form.step)
+        assertEquals(
+            ExpenseInputEvent.ShowMessage(EXPENSE_DATE_LOCKED_MESSAGE),
+            event.await()
+        )
+    }
+
+    @Test
+    fun `챌린지가 없어도 오늘 지출은 상세 단계로 이동한다`() {
+        val viewModel = createViewModel(
+            savedStateHandle = SavedStateHandle(),
+            challengeRepository = FakeChallengeRepository(ChallengeState())
+        )
+        viewModel.appendAmountDigit("1")
+
+        viewModel.changeStep(2)
+
+        assertEquals(2, viewModel.uiState.value.form.step)
+    }
+
+    @Test
+    fun `잠긴 챌린지 기간의 날짜는 첫 단계에서 메시지를 표시한다`() = runTest {
+        val today = LocalDate.now()
+        val lockedChallenge = editableChallengeState().challenges.single().copy(
+            periodStart = today.minusDays(1),
+            periodEnd = today.plusDays(1),
+            expenseLockedAt = "2026-08-19T00:00:00"
+        )
+        val viewModel = createViewModel(
+            savedStateHandle = SavedStateHandle(),
+            challengeRepository = FakeChallengeRepository(
+                ChallengeState(challenges = listOf(lockedChallenge))
+            )
         )
         viewModel.appendAmountDigit("1")
         val event = async { viewModel.events.first() }

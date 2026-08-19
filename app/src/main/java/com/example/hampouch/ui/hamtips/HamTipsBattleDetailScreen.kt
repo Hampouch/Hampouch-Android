@@ -67,9 +67,10 @@ private fun battleChallengeRequestFrom(
     post: TipPost,
     durationLabel: String,
     capacityLabel: String,
+    battleTitle: String,
     linkedChallenge: HamBattleChallenge? = null
 ) = HamBattleChallengeRequest(
-    challengeName = linkedChallenge?.title ?: post.title,
+    challengeName = battleTitle,
     participantCount = capacityLabel,
     durationDays = durationLabel,
     startDateMillis = linkedChallenge?.startDate
@@ -161,6 +162,7 @@ fun HamTipsBattleDetailScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val battleInvitationPreview by viewModel.battleInvitationPreview.collectAsStateWithLifecycle()
     var refreshRequestedByGesture by remember { mutableStateOf(false) }
     HamTipsRefreshCompletionToast(
         isRefreshing = isRefreshing,
@@ -193,18 +195,42 @@ fun HamTipsBattleDetailScreen(
     val canDeletePost = viewModel.canDeletePost(post)
     val titleRes = if (post.isEditorAuthor) R.string.hamtips_pochipick_title else R.string.hamtips_title
     val battleViewModel: HamBattleViewModel = hiltViewModel()
+    val battleState by battleViewModel.state.collectAsStateWithLifecycle()
+    val mockChallenges by battleViewModel.mockChallenges.collectAsStateWithLifecycle()
     val battleInfo = post.battleInfo
-    val linkedBattleCode = battleInfo?.link?.let(::extractBattleCode)
-    val linkedChallenge = linkedBattleCode?.let { battleCode ->
-        battleViewModel.mockChallenges.value.find { it.battleCode == battleCode }
+    LaunchedEffect(post.id, battleInfo?.link) {
+        if (BattleConfig.USE_SERVER_BATTLE) {
+            battleInfo?.link?.let(viewModel::loadBattleInvitationPreview)
+        }
     }
+    val linkedBattleCode = battleInfo?.link?.let(::extractBattleCode)
+    val knownChallenges = if (BattleConfig.USE_SERVER_BATTLE) {
+        battleState.readyBattles +
+            battleState.ongoingBattles +
+            battleState.terminatedBattles +
+            battleState.detailByBattleId.values
+    } else {
+        mockChallenges
+    }
+    val linkedChallenge = linkedBattleCode?.let { battleCode ->
+        knownChallenges.find { it.battleCode == battleCode }
+    }
+    val battleTitle = linkedChallenge?.title
+        ?: battleInvitationPreview?.title
+        ?: if (BattleConfig.USE_SERVER_BATTLE) "햄배틀" else post.title
 
     val durationLabel = stringResource(R.string.hamtips_battle_days_format, battleInfo?.durationDays ?: 0)
     val capacityLabel = stringResource(
         R.string.hamtips_battle_capacity_format,
         linkedChallenge?.totalCount ?: battleInfo?.capacity ?: 0
     )
-    val summaryRequest = battleChallengeRequestFrom(post, durationLabel, capacityLabel, linkedChallenge)
+    val summaryRequest = battleChallengeRequestFrom(
+        post = post,
+        durationLabel = durationLabel,
+        capacityLabel = capacityLabel,
+        battleTitle = battleTitle,
+        linkedChallenge = linkedChallenge
+    )
 
     Scaffold(
         modifier = modifier,
@@ -351,7 +377,7 @@ fun HamTipsBattleDetailScreen(
                         } else {
                             val joinedChallenge = battleViewModel.joinChallengeFromCommunityPost(
                                 authorName = post.authorName,
-                                title = post.title,
+                                title = summaryRequest.challengeName,
                                 penalty = battleInfo.penalty,
                                 battleCode = battleCode,
                                 totalCount = battleInfo.capacity
@@ -429,7 +455,8 @@ private fun HamTipsBattleJoinConfirmPreview() {
             summaryRequest = battleChallengeRequestFrom(
                 previewPost,
                 stringResource(R.string.hamtips_battle_days_format, info.durationDays),
-                stringResource(R.string.hamtips_battle_capacity_format, info.capacity)
+                stringResource(R.string.hamtips_battle_capacity_format, info.capacity),
+                battleTitle = previewPost.title
             ),
             onCancel = {},
             onConfirm = {}
