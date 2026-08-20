@@ -25,7 +25,7 @@ class HomeChallengeProgressTest {
     )
 
     @Test
-    fun `서버 모드에서는 Swagger 진행 현황을 유지한다`() {
+    fun `서버 모드에서는 절약액은 서버 값을 유지하고 연속 달성은 챌린지 상세와 동일하게 로컬로 계산한다`() {
         val resolved = resolveHomeChallengeProgress(
             challenge = serverChallenge,
             localProgress = localProgress,
@@ -33,7 +33,7 @@ class HomeChallengeProgressTest {
         )
 
         assertEquals(-9_000, resolved.savedAmount)
-        assertEquals(1, resolved.streakDays)
+        assertEquals(0, resolved.streakDays)
     }
 
     @Test

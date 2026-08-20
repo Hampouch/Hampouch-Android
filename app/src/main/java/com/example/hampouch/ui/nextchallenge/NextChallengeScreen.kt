@@ -93,6 +93,7 @@ import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.ui.challengeresult.formatWon
 import com.example.hampouch.ui.dialog.NextChallengeStartConfirmDialog
 import com.example.hampouch.ui.expensedetail.DashedDivider
+import com.example.hampouch.ui.onboarding.FIXED_DATE_DAILY_TARGET_DIVISOR
 import com.example.hampouch.ui.onboarding.components.EditableAmountRow
 import com.example.hampouch.ui.onboarding.components.FocusHandoffDelayMillis
 import com.example.hampouch.ui.onboarding.components.LabeledInputRow
@@ -116,6 +117,7 @@ import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
 import com.example.hampouch.ui.theme.HampouchTheme
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -256,7 +258,8 @@ private fun NextChallengeContent(
     val currentStartDate = startDate
     val dailyGoal = when {
         periodEnabled -> (targetAmount ?: 0) / effectivePeriodDays
-        currentStartDate != null -> (targetAmount ?: 0) / monthlyTotalDays(currentStartDate)
+        currentStartDate != null ->
+            ((targetAmount ?: 0).toDouble() / FIXED_DATE_DAILY_TARGET_DIVISOR).roundToInt()
         else -> targetAmount ?: 0
     }
     val startDateText =
@@ -454,18 +457,26 @@ private fun NextChallengeContent(
             onCancel = { showStartConfirmDialog = false },
             onConfirm = {
                 showStartConfirmDialog = false
-                val request = OnboardingRequest(
-                    period = if (dateFixed) {
-                        ChallengePeriod.FixedStart(requireNotNull(startDate))
-                    } else {
-                        ChallengePeriod.Duration(effectivePeriodDays)
-                    },
-                    dailyTargetAmount = (targetAmount ?: suggestedTargetAmount) / effectivePeriodDays,
-                    totalTargetAmount = targetAmount ?: suggestedTargetAmount
-                )
                 if (fixedDateDraft != null && dateFixed) {
                     onStartFixedDateChallenge(fixedDateDraft, requireNotNull(startDate))
                 } else {
+                    val totalTarget = targetAmount ?: suggestedTargetAmount
+                    val request = if (dateFixed) {
+                        val days = monthlyTotalDays(requireNotNull(startDate))
+                        val dailyTarget =
+                            (totalTarget.toDouble() / FIXED_DATE_DAILY_TARGET_DIVISOR).roundToInt()
+                        OnboardingRequest(
+                            period = ChallengePeriod.FixedStart(requireNotNull(startDate)),
+                            dailyTargetAmount = dailyTarget,
+                            totalTargetAmount = dailyTarget * days
+                        )
+                    } else {
+                        OnboardingRequest(
+                            period = ChallengePeriod.Duration(effectivePeriodDays),
+                            dailyTargetAmount = totalTarget / effectivePeriodDays,
+                            totalTargetAmount = totalTarget
+                        )
+                    }
                     onStartNewChallenge(request)
                 }
             }

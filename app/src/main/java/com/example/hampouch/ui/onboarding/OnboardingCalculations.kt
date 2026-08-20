@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-private const val FIXED_DATE_DAILY_TARGET_DIVISOR = 30
+internal const val FIXED_DATE_DAILY_TARGET_DIVISOR = 30
 
 object OnboardingCalculations {
 

@@ -210,15 +210,13 @@ fun HomeScreen(
     val liveChallenge = if (isChallengeOverByToday) null else uiState.challenge?.let { challenge ->
         val liveDailyLimit = resolvedChallenge?.dailyLimitOn(selectedDate) ?: challenge.dailyLimit
         val todaySpent = uiState.expenses.sumOf { it.amount }
-        val localProgress = resolvedChallenge
-            ?.takeUnless { ChallengeConfig.USE_SERVER_CHALLENGE }
-            ?.let { rc ->
-                challengeState.computeProgress(
-                    referenceToday,
-                    rc,
-                    hasRecordOnDate = { date -> recordsForDate(date).isNotEmpty() || date in daysWithRecord }
-                ) { date -> recordsForDate(date).sumOf { it.amount } }
-            }
+        val localProgress = resolvedChallenge?.let { rc ->
+            challengeState.computeProgress(
+                referenceToday,
+                rc,
+                hasRecordOnDate = { date -> recordsForDate(date).isNotEmpty() || date in daysWithRecord }
+            ) { date -> recordsForDate(date).sumOf { it.amount } }
+        }
         val challengeWithTodayBalance = challenge.copy(
             dailyLimit = liveDailyLimit,
             todayBalance = liveDailyLimit - todaySpent
