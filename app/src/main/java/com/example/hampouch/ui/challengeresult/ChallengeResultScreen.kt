@@ -102,7 +102,13 @@ fun ChallengeResultScreen(
     }
 
     Scaffold(
-        topBar = { ChallengeResultTopBar(onBackClick = onBackClick, showBackButton = showBackButton) },
+        topBar = {
+            ChallengeResultTopBar(
+                onBackClick = onBackClick,
+                showBackButton = showBackButton,
+                isFinished = isFinished
+            )
+        },
         containerColor = HPWhite
     ) { innerPadding ->
         Column(
@@ -250,10 +256,18 @@ fun ChallengeResultScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChallengeResultTopBar(onBackClick: () -> Unit, showBackButton: Boolean = true) {
+private fun ChallengeResultTopBar(
+    onBackClick: () -> Unit,
+    showBackButton: Boolean = true,
+    isFinished: Boolean = true
+) {
     CenterAlignedTopAppBar(
         title = {
-            Text("챌린지 결과", style = MaterialTheme.typography.titleSmall, color = HPBlack)
+            Text(
+                if (isFinished) "챌린지 결과" else "챌린지 상세",
+                style = MaterialTheme.typography.titleSmall,
+                color = HPBlack
+            )
         },
         navigationIcon = {
             if (showBackButton) {

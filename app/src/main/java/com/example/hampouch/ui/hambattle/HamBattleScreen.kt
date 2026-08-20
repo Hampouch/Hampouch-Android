@@ -326,7 +326,7 @@ private fun HamBattleEmptyContent(
             StartNewChallengeButton(onClick = onStartNewChallengeClick)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "진행중인 챌린지가 없어요.\n새 챌린지를 시작해봐요.",
+                "진행중인 햄배틀이 없어요.\n새 햄배틀을 시작해봐요.",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium,

@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -177,6 +179,7 @@ fun AppNavHost(
     var completeDialogMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val startDestinationViewModel: StartDestinationViewModel = hiltViewModel()
     val battleViewModel: HamBattleViewModel = hiltViewModel()
     val battleInviteViewModel: BattleInviteViewModel = hiltViewModel()
@@ -187,7 +190,15 @@ fun AppNavHost(
     LaunchedEffect(battleViewModel) {
         battleViewModel.events.collect { event ->
             when (event) {
-                HamBattleEvent.Created -> navController.popBackStack()
+                is HamBattleEvent.Created -> {
+                    event.challenge.battleCode
+                        ?.let(::buildBattleInviteUrl)
+                        ?.let { inviteUrl ->
+                            clipboardManager.setText(AnnotatedString(inviteUrl))
+                            Toast.makeText(context, "초대 링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                        }
+                    navController.popBackStack()
+                }
                 is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
                     externalJoinCodeInFlight = null
                     battleInviteViewModel.consume(code)
@@ -450,6 +461,9 @@ fun AppNavHost(
                 onAddExpenseClick = {
                     navController.navigate(Screen.ExpenseInput.createRoute(LocalDate.now()))
                 },
+                onAddExpenseClickForDate = { date ->
+                    navController.navigate(Screen.ExpenseInput.createRoute(date))
+                },
                 onNavigateToAmountAdjustment = {
                     navController.navigate(Screen.AmountAdjustment.route)
                 },
@@ -618,6 +632,7 @@ fun AppNavHost(
                 },
                 onNoSpendingToday = { viewModel.markNoSpend(uiState.form.date) },
                 onDateSelected = viewModel::changeDate,
+                isDateSelectable = viewModel::isDateSelectable,
                 onAmountDigit = viewModel::appendAmountDigit,
                 onAmountDelete = viewModel::deleteAmountDigit,
                 onStepChanged = viewModel::changeStep,

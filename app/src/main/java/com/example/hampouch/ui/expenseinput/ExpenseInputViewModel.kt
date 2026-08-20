@@ -25,6 +25,7 @@ internal fun ChallengeState.canChangeExpenseOn(
     date: LocalDate,
     referenceToday: LocalDate = LocalDate.now()
 ): Boolean {
+    if (date.isAfter(referenceToday)) return false
     val recordBasedChallenges = challenges.filter { challenge ->
         challenge.abandonedDate == null &&
             !date.isBefore(challenge.periodStart) &&
@@ -32,8 +33,8 @@ internal fun ChallengeState.canChangeExpenseOn(
     }
     return when {
         recordBasedChallenges.any { it.expenseLockedAt != null } -> false
-        recordBasedChallenges.isNotEmpty() -> true
-        else -> !date.isBefore(referenceToday.minusDays(1)) && !date.isAfter(referenceToday)
+        recordBasedChallenges.isNotEmpty() -> date == referenceToday
+        else -> true
     }
 }
 
@@ -123,6 +124,8 @@ class ExpenseInputViewModel @Inject constructor(
     }
 
     fun changeDate(date: LocalDate) = updateForm { it.copy(date = date.coerceAtMost(LocalDate.now())) }
+
+    fun isDateSelectable(date: LocalDate): Boolean = challengeRepository.state.value.canChangeExpenseOn(date)
 
     fun changeStep(step: Int) {
         val targetStep = step.coerceAtLeast(1)

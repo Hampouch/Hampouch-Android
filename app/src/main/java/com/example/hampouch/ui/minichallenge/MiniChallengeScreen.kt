@@ -153,6 +153,22 @@ private fun MiniChallengeDashboardScreen(
     val duplicateNameMessage = stringResource(R.string.minichallenge_name_duplicate_error)
     val today = remember { LocalDate.now() }
 
+    val progressTitleRes = when {
+        selectedDate.isEqual(today) -> R.string.minichallenge_today_progress_title
+        selectedDate.isEqual(today.minusDays(1)) -> R.string.minichallenge_yesterday_progress_title
+        else -> R.string.minichallenge_past_progress_title
+    }
+    val sectionTitleRes = when {
+        selectedDate.isEqual(today) -> R.string.minichallenge_today_title
+        selectedDate.isEqual(today.minusDays(1)) -> R.string.minichallenge_yesterday_title
+        else -> R.string.minichallenge_past_title
+    }
+    val emptyTitleRes = when {
+        selectedDate.isEqual(today) -> R.string.minichallenge_today_empty
+        selectedDate.isEqual(today.minusDays(1)) -> R.string.minichallenge_yesterday_empty
+        else -> R.string.minichallenge_past_empty
+    }
+
     Scaffold(
         modifier = modifier,
         containerColor = HPGray2,
@@ -205,13 +221,14 @@ private fun MiniChallengeDashboardScreen(
                 MiniChallengeSummaryCard(
                     completedCount = todayChallenges.count { it.isChecked },
                     totalCount = todayChallenges.size,
-                    streakDays = streakDaysOverride ?: (todayChallenges.maxOfOrNull { it.achievedDays } ?: 0)
+                    streakDays = streakDaysOverride ?: (todayChallenges.maxOfOrNull { it.achievedDays } ?: 0),
+                    progressTitleRes = progressTitleRes
                 )
                 Spacer(modifier = Modifier.height(20.dp))
             }
             item(contentType = "section_header") {
                 Text(
-                    stringResource(R.string.minichallenge_today_title),
+                    stringResource(sectionTitleRes),
                     style = MaterialTheme.typography.titleSmall,
                     color = HPBlack
                 )
@@ -219,7 +236,7 @@ private fun MiniChallengeDashboardScreen(
             }
             if (todayChallenges.isEmpty()) {
                 item(contentType = "empty_state") {
-                    EmptyStateBlock(title = stringResource(R.string.minichallenge_today_empty))
+                    EmptyStateBlock(title = stringResource(emptyTitleRes))
                 }
             } else {
                 items(

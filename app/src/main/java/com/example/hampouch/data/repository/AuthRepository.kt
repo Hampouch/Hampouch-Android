@@ -670,8 +670,16 @@ class AuthRepository @Inject constructor(
             name = session.nickname ?: mockAccount?.name ?: session.email ?: "회원",
             email = session.email ?: mockAccount?.email ?: "",
             password = "",
-            role = runCatching { UserRole.valueOf(session.role) }.getOrDefault(UserRole.NORMAL)
+            role = parseUserRole(session.role)
         )
+    }
+
+    private fun parseUserRole(rawRole: String): UserRole {
+        val role = runCatching { UserRole.valueOf(rawRole.trim().uppercase()) }.getOrNull()
+        if (role == null) {
+            Log.w(TAG, "알 수 없는 role 값 수신: \"$rawRole\" — UserRole.NORMAL로 대체합니다.")
+        }
+        return role ?: UserRole.NORMAL
     }
 
     override suspend fun currentAuthHeader(): String? {

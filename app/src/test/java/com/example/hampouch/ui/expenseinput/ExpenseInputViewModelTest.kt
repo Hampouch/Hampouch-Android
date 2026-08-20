@@ -38,7 +38,10 @@ class ExpenseInputViewModelTest {
     @Test
     fun `SavedStateHandle은 작성 중인 작은 폼 입력을 복원한다`() {
         val savedStateHandle = SavedStateHandle(mapOf("initialDateEpochDay" to 20_000L))
-        val firstViewModel = createViewModel(savedStateHandle)
+        val firstViewModel = createViewModel(
+            savedStateHandle,
+            challengeRepository = FakeChallengeRepository(ChallengeState())
+        )
 
         firstViewModel.appendAmountDigit("1")
         firstViewModel.appendAmountDigit("2")
@@ -92,11 +95,22 @@ class ExpenseInputViewModelTest {
     }
 
     @Test
-    fun `챌린지 기간이 아닌 이틀 전 날짜는 첫 단계에서 메시지를 표시한다`() = runTest {
+    fun `챌린지 기간이 아닌 이틀 전 날짜는 상세 단계로 이동한다`() {
         val viewModel = createViewModel(
             savedStateHandle = SavedStateHandle(),
             challengeRepository = FakeChallengeRepository(ChallengeState())
         )
+        viewModel.appendAmountDigit("1")
+        viewModel.changeDate(LocalDate.now().minusDays(2))
+
+        viewModel.changeStep(2)
+
+        assertEquals(2, viewModel.uiState.value.form.step)
+    }
+
+    @Test
+    fun `챌린지 기간 내 오늘이 아닌 날짜는 첫 단계에서 메시지를 표시한다`() = runTest {
+        val viewModel = createViewModel(savedStateHandle = SavedStateHandle())
         viewModel.appendAmountDigit("1")
         viewModel.changeDate(LocalDate.now().minusDays(2))
         val event = async { viewModel.events.first() }

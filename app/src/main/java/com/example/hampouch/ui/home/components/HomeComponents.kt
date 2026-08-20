@@ -483,7 +483,8 @@ fun TodayExpenseSection(
     expenses: List<ExpenseEntry>,
     onViewAllClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
-    onExpenseClick: (String) -> Unit
+    onExpenseClick: (String) -> Unit,
+    addExpenseEnabled: Boolean = true
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(title = title, onViewAllClick = onViewAllClick)
@@ -500,11 +501,17 @@ fun TodayExpenseSection(
         Spacer(modifier = Modifier.height(14.dp))
         Button(
             onClick = onAddExpenseClick,
+            enabled = addExpenseEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HPMain, contentColor = HPWhite)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = HPMain,
+                contentColor = HPWhite,
+                disabledContainerColor = HPGray4,
+                disabledContentColor = HPText
+            )
         ) {
             Text(stringResource(R.string.home_expense_input_button), style = MaterialTheme.typography.titleSmall)
         }
@@ -589,12 +596,14 @@ fun MiniChallengeSection(
     items: List<MiniChallengeEntry>,
     onViewAllClick: () -> Unit,
     onToggle: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    titleRes: Int = R.string.home_mini_challenge_title,
+    emptyTitleRes: Int = R.string.home_mini_challenge_empty
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader(title = stringResource(R.string.home_mini_challenge_title), onViewAllClick = onViewAllClick)
+        SectionHeader(title = stringResource(titleRes), onViewAllClick = onViewAllClick)
         if (items.isEmpty()) {
-            EmptyStateBlock(title = stringResource(R.string.home_mini_challenge_empty))
+            EmptyStateBlock(title = stringResource(emptyTitleRes))
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items.forEach { item -> MiniChallengeRow(item = item, onToggle = { onToggle(item.id) }) }
@@ -764,8 +773,8 @@ fun NoActiveChallengeSection(
                 .align(Alignment.BottomEnd)
                 .padding(end = 12.dp)
                 .offset(y = 28.dp)
-                .width(110.dp)
-                .height(128.dp)
+                .width(90.dp)
+                .height(110.dp)
         )
     }
 }

@@ -2,11 +2,17 @@
     <string name="minichallenge_title">미니 챌린지</string>
     <string name="minichallenge_label">MINI CHALLENGE</string>
     <string name="minichallenge_today_progress_title">오늘의 달성 현황</string>
+    <string name="minichallenge_yesterday_progress_title">어제의 달성 현황</string>
+    <string name="minichallenge_past_progress_title">달성 현황</string>
     <string name="minichallenge_progress_total_format"> /%1$d 완료</string>
     <string name="minichallenge_streak_label">연속 달성</string>
     <string name="minichallenge_streak_unit">일째</string>
     <string name="minichallenge_today_title">오늘 나의 미니 챌린지</string>
+    <string name="minichallenge_yesterday_title">어제 나의 미니 챌린지</string>
+    <string name="minichallenge_past_title">나의 미니 챌린지</string>
     <string name="minichallenge_today_empty">등록된 오늘의 미니 챌린지가 없어요.</string>
+    <string name="minichallenge_yesterday_empty">등록된 어제의 미니 챌린지가 없어요.</string>
+    <string name="minichallenge_past_empty">등록된 미니 챌린지가 없어요.</string>
     <string name="minichallenge_recommended_title">추천 미니 챌린지</string>
     <string name="minichallenge_recommended_empty">추천할 미니 챌린지가 없어요.</string>
     <string name="minichallenge_add_button">추가하기</string>

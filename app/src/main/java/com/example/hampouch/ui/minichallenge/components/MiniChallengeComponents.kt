@@ -200,7 +200,8 @@ fun MiniChallengeSummaryCard(
     completedCount: Int,
     totalCount: Int,
     streakDays: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    progressTitleRes: Int = R.string.minichallenge_today_progress_title
 ) {
     Row(
         modifier = modifier
@@ -220,7 +221,7 @@ fun MiniChallengeSummaryCard(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = stringResource(R.string.minichallenge_today_progress_title),
+                text = stringResource(progressTitleRes),
                 style = MaterialTheme.typography.titleSmall,
                 fontSize = 16.sp,
                 color = HPBlack

@@ -55,6 +55,7 @@ import com.example.hampouch.ui.common.previewChallengeState
 import com.example.hampouch.ui.dialog.ChallengeEndedDialog
 import com.example.hampouch.ui.dialog.MissingExpenseReminderDialog
 import com.example.hampouch.ui.dialog.TakeABreakEndedDialog
+import com.example.hampouch.ui.expenseinput.canChangeExpenseOn
 import com.example.hampouch.ui.expensedetail.resolveReasonLabel
 import com.example.hampouch.ui.hambattle.HamBattleScreen
 import com.example.hampouch.ui.hambattle.HamBattleViewModel
@@ -126,6 +127,7 @@ fun HomeScreen(
     onNavigateToTakeABreak: () -> Unit,
     onExtendBreak: () -> Unit,
     onAddExpenseClick: () -> Unit,
+    onAddExpenseClickForDate: (LocalDate) -> Unit,
     onNavigateToAmountAdjustment: () -> Unit,
     onNavigateToYesterdayExpenseInput: () -> Unit,
     onLoggedOut: (isWithdrawal: Boolean) -> Unit,
@@ -266,7 +268,8 @@ fun HomeScreen(
                     onChallengeSummaryClick = { resolvedChallenge?.let { onChallengeSummaryClick(it.id) } },
                     onExpenseClick = onNavigateToExpenseDetail,
                     onViewAllExpensesClick = onNavigateToExpenseCalendar,
-                    onAddExpenseClick = onAddExpenseClick,
+                    onAddExpenseClick = { onAddExpenseClickForDate(selectedDate) },
+                    addExpenseEnabled = challengeState.canChangeExpenseOn(selectedDate, referenceToday),
                     modifier = Modifier.padding(innerPadding)
                 )
 
@@ -396,6 +399,7 @@ private fun HomeContent(
     onExpenseClick: (String) -> Unit,
     onViewAllExpensesClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
+    addExpenseEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -482,13 +486,16 @@ private fun HomeContent(
                     expenses = recentHomeExpenses(animatedUiState.expenses),
                     onViewAllClick = onViewAllExpensesClick,
                     onAddExpenseClick = onAddExpenseClick,
-                    onExpenseClick = onExpenseClick
+                    onExpenseClick = onExpenseClick,
+                    addExpenseEnabled = addExpenseEnabled
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 MiniChallengeSection(
                     items = animatedUiState.miniChallenges,
                     onViewAllClick = onViewAllMiniChallengesClick,
-                    onToggle = onToggleMiniChallenge
+                    onToggle = onToggleMiniChallenge,
+                    titleRes = homeMiniChallengeTitleRes(animatedUiState.selectedDate, referenceToday),
+                    emptyTitleRes = homeMiniChallengeEmptyRes(animatedUiState.selectedDate, referenceToday)
                 )
             }
         }
@@ -518,6 +525,7 @@ private fun HomeScreenPreviewScaffold(state: HomeUiState, referenceToday: LocalD
             onExpenseClick = {},
             onViewAllExpensesClick = {},
             onAddExpenseClick = {},
+            addExpenseEnabled = true,
             modifier = Modifier.padding(innerPadding)
         )
     }

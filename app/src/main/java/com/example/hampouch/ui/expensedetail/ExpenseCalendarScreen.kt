@@ -55,6 +55,7 @@ import com.example.hampouch.R
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hampouch.core.config.ExpenseConfig
+import com.example.hampouch.domain.model.ChallengeState
 import com.example.hampouch.domain.model.DailyAmount
 import com.example.hampouch.domain.model.ExpensePeriodSummary
 import com.example.hampouch.domain.model.ExpenseCalendarViewMode
@@ -74,6 +75,7 @@ import com.example.hampouch.ui.theme.HPSub2
 import com.example.hampouch.ui.theme.HPSub4
 import com.example.hampouch.ui.theme.HPText
 import com.example.hampouch.ui.theme.HPWhite
+import com.example.hampouch.ui.expenseinput.canChangeExpenseOn
 import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -82,17 +84,14 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private fun expenseInputEnabled(
+    challengeState: ChallengeState,
     period: ExpenseChallengePeriod?,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    restrictToChallengePeriod: Boolean,
-    isResting: Boolean
+    restrictToChallengePeriod: Boolean
 ): Boolean {
-    if (period == null) return false
-    if (restrictToChallengePeriod) return period.isActiveOn(selectedDate)
-    if (isResting) return !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
-    return !referenceToday.isBefore(period.startDate) && !referenceToday.isAfter(period.endDate) &&
-        !selectedDate.isBefore(period.startDate) && !selectedDate.isAfter(referenceToday)
+    if (restrictToChallengePeriod) return period != null && period.isActiveOn(selectedDate)
+    return challengeState.canChangeExpenseOn(selectedDate, referenceToday)
 }
 
 private fun weekGridStart(date: LocalDate): LocalDate {
@@ -148,6 +147,7 @@ fun ExpenseCalendarRoute(
 
     ExpenseCalendarContent(
         referenceToday = referenceToday,
+        challengeState = calendarChallengeState,
         effectiveChallengePeriod = effectiveChallengePeriod,
         restrictToChallengePeriod = restrictToChallengePeriod,
         viewMode = viewMode,
@@ -187,6 +187,7 @@ fun ExpenseCalendarRoute(
 @Composable
 private fun ExpenseCalendarContent(
     referenceToday: LocalDate,
+    challengeState: ChallengeState,
     effectiveChallengePeriod: ExpenseChallengePeriod?,
     restrictToChallengePeriod: Boolean,
     viewMode: ExpenseCalendarViewMode,
@@ -222,11 +223,11 @@ private fun ExpenseCalendarContent(
     val summaryByDate = activeSummary?.dailyBreakdown?.associate { it.date to it.amount }.orEmpty()
     val dayRecords = records.values.filter { it.date == selectedDate }.asReversed()
     val inputEnabled = expenseInputEnabled(
+        challengeState,
         effectiveChallengePeriod,
         referenceToday,
         selectedDate,
-        restrictToChallengePeriod,
-        isResting
+        restrictToChallengePeriod
     )
     val challengeEnded = !isResting &&
         effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
@@ -915,6 +916,7 @@ private fun ExpenseCalendarMonthlyPreview() {
     HampouchTheme {
         ExpenseCalendarContent(
             referenceToday = referenceToday,
+            challengeState = ChallengeState(),
             effectiveChallengePeriod = null,
             restrictToChallengePeriod = false,
             viewMode = ExpenseCalendarViewMode.MONTHLY,
@@ -953,6 +955,7 @@ private fun ExpenseCalendarEmptyDayPreview() {
     HampouchTheme {
         ExpenseCalendarContent(
             referenceToday = referenceToday,
+            challengeState = ChallengeState(),
             effectiveChallengePeriod = null,
             restrictToChallengePeriod = false,
             viewMode = ExpenseCalendarViewMode.MONTHLY,
@@ -991,6 +994,7 @@ private fun ExpenseCalendarChallengeEndedPreview() {
     HampouchTheme {
         ExpenseCalendarContent(
             referenceToday = referenceToday,
+            challengeState = ChallengeState(),
             effectiveChallengePeriod = challengePeriod,
             restrictToChallengePeriod = false,
             viewMode = ExpenseCalendarViewMode.MONTHLY,
@@ -1028,6 +1032,7 @@ private fun ExpenseCalendarWeeklyPreview() {
     HampouchTheme {
         ExpenseCalendarContent(
             referenceToday = referenceToday,
+            challengeState = ChallengeState(),
             effectiveChallengePeriod = null,
             restrictToChallengePeriod = false,
             viewMode = ExpenseCalendarViewMode.WEEKLY,
@@ -1066,6 +1071,7 @@ private fun ExpenseCalendarChallengeEndEditPreview() {
     HampouchTheme {
         ExpenseCalendarContent(
             referenceToday = referenceToday,
+            challengeState = ChallengeState(),
             effectiveChallengePeriod = challengePeriod,
             restrictToChallengePeriod = true,
             viewMode = ExpenseCalendarViewMode.MONTHLY,

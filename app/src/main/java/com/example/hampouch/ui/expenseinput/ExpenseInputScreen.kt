@@ -107,6 +107,7 @@ fun ExpenseInputRoute(
     form: ExpenseInputFormState = ExpenseInputFormState(),
     showMaxAmountError: Boolean = false,
     onDateSelected: (LocalDate) -> Unit = {},
+    isDateSelectable: (LocalDate) -> Boolean = { true },
     onAmountDigit: (String) -> Unit = {},
     onAmountDelete: () -> Unit = {},
     onStepChanged: (Int) -> Unit = {},
@@ -228,7 +229,8 @@ fun ExpenseInputRoute(
                 initialSelectedDateMillis = form.date.coerceAtMost(today).toEpochMillisUtc(),
                 selectableDates = object : SelectableDates {
                     override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                        isExpenseInputDateSelectable(utcTimeMillis, today)
+                        isExpenseInputDateSelectable(utcTimeMillis, today) &&
+                            isDateSelectable(utcTimeMillis.toLocalDateUtc())
 
                     override fun isSelectableYear(year: Int): Boolean = year <= today.year
                 }
@@ -239,7 +241,7 @@ fun ExpenseInputRoute(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         millis.toLocalDateUtc()
-                            .takeIf { !it.isAfter(today) }
+                            .takeIf { !it.isAfter(today) && isDateSelectable(it) }
                             ?.let(onDateSelected)
                     }
                     showDatePicker = false
