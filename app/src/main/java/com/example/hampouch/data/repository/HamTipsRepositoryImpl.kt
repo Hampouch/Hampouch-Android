@@ -186,7 +186,7 @@ class HamTipsRepositoryImpl @Inject constructor(
         content = content,
         timeLabel = formatTimeAgoLabel(minutesAgoFrom(createdAt)),
         isDeleted = isDeleted,
-        authorAvatarUrl = if (isMine) activeUserAvatarUrl else profileImageUrl
+        authorAvatarUrl = profileImageUrl ?: activeUserAvatarUrl
     )
 
     private fun CommunityCommentData.toTipComment(): TipComment = TipComment(
@@ -199,7 +199,7 @@ class HamTipsRepositoryImpl @Inject constructor(
         replies = replies.map { it.toTipReply() },
         replyCount = replyCount,
         hasMoreReplies = hasMoreReplies,
-        authorAvatarUrl = if (isMine) activeUserAvatarUrl else profileImageUrl
+        authorAvatarUrl = profileImageUrl ?: activeUserAvatarUrl
     )
 
     private fun CommunityPostDetailData.toTipPost(isEditorAuthor: Boolean): TipPost = TipPost(
@@ -836,6 +836,9 @@ class HamTipsRepositoryImpl @Inject constructor(
                     )
                     post.copy(comments = post.comments + comment, commentCount = post.commentCount + 1)
                 }
+                loadPostDetail(postId).onFailure { error ->
+                    Log.w(TAG, "댓글 작성 후 프로필 조회 실패", error)
+                }
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "댓글 작성에 실패했습니다."))
@@ -876,6 +879,9 @@ class HamTipsRepositoryImpl @Inject constructor(
                         if (comment.id == commentId) comment.copy(replies = comment.replies + reply) else comment
                     }
                     post.copy(comments = comments, commentCount = post.commentCount + 1)
+                }
+                loadPostDetail(postId).onFailure { error ->
+                    Log.w(TAG, "답글 작성 후 프로필 조회 실패", error)
                 }
                 Result.success(Unit)
             } else {

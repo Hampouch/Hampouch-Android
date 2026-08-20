@@ -1,6 +1,5 @@
 package com.example.hampouch.ui.hamtips.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.hampouch.R
 import com.example.hampouch.domain.model.TipComment
 import com.example.hampouch.domain.model.TipReply
@@ -100,22 +100,15 @@ fun HamTipsProfileAvatar(
             .background(HPGray5),
         contentAlignment = Alignment.Center
     ) {
-        val bitmap = avatarUrl?.let { rememberImageBitmapFromUri(it) }
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Image(
-                painter = painterResource(R.drawable.icon_normal_avatar),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.icon_normal_avatar),
+            error = painterResource(R.drawable.icon_normal_avatar),
+            fallback = painterResource(R.drawable.icon_normal_avatar),
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 

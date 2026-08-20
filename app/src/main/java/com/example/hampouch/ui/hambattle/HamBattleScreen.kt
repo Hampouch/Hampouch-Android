@@ -618,7 +618,10 @@ private fun WaitingChallengeCard(challenge: HamBattleChallenge, onClick: () -> U
                     indices.forEachIndexed { i, index ->
                         if (i > 0) Spacer(modifier = Modifier.width(8.dp))
                         if (index < challenge.joinedCount) {
-                            ParticipantAvatar(size = 32.dp)
+                            ParticipantAvatar(
+                                size = 32.dp,
+                                avatarUrl = challenge.participants.getOrNull(index)?.avatarUrl
+                            )
                         } else {
                             EmptyAvatarSlot(size = 32.dp)
                         }

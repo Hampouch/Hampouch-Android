@@ -75,7 +75,20 @@ class BattleRepositoryImpl @Inject constructor(
         } else {
             detail
         }
-        _state.update { it.copy(detailByBattleId = it.detailByBattleId + (battleId to merged)) }
+        _state.update { current ->
+            current.copy(
+                readyBattles = current.readyBattles.map { summary ->
+                    summary.mergeDetailIfMatching(battleId, merged)
+                },
+                ongoingBattles = current.ongoingBattles.map { summary ->
+                    summary.mergeDetailIfMatching(battleId, merged)
+                },
+                terminatedBattles = current.terminatedBattles.map { summary ->
+                    summary.mergeDetailIfMatching(battleId, merged)
+                },
+                detailByBattleId = current.detailByBattleId + (battleId to merged)
+            )
+        }
     }
 
     override fun resetForAccount() {
@@ -131,6 +144,25 @@ class BattleRepositoryImpl @Inject constructor(
                 }
             }
             replaceLists(ready, ongoing, terminated)
+
+            // READY와 TERMINATED 목록 응답에는 참가자 avatarUrl이 없으므로, 카드 표시용으로 상세
+            // 응답의 참가자 정보를 보강한다. 개별 상세 조회 실패는 이미 표시 가능한 목록을 지우지 않는다.
+            (ready + terminated).forEach { summary ->
+                val battleId = summary.battleId ?: return@forEach
+                runCatching {
+                    val detailResponse = apiService.getBattleDetail(battleId)
+                    requireBody(detailResponse, "햄배틀 상세 조회에 실패했습니다.").toDomain(
+                        myUserId = myUserId,
+                        hasMyAvatarOverride = hasMyAvatarOverride,
+                        myAvatarOverride = myAvatarOverride
+                    )
+                }.onSuccess { detail ->
+                    setDetail(battleId, detail)
+                }.onFailure { error ->
+                    if (error is CancellationException) throw error
+                    Log.w(TAG, "햄배틀 목록 프로필 조회 실패: battleId=$battleId", error)
+                }
+            }
         }.onFailure { rethrowIfCancelled(it, "햄배틀 목록 조회") }
     }
 
@@ -317,6 +349,18 @@ private fun MyBattleSummaryDto.Terminated.toDomain(): HamBattleChallenge = HamBa
     battleCode = battleCode,
     serverState = HamBattleServerState.Terminated(winnerNickname)
 )
+
+private fun HamBattleChallenge.mergeDetailIfMatching(
+    battleId: Long,
+    detail: HamBattleChallenge
+): HamBattleChallenge {
+    if (this.battleId != battleId) return this
+    return detail.copy(
+        type = type,
+        totalCount = totalCount.coerceAtLeast(detail.totalCount),
+        serverState = serverState
+    )
+}
 
 internal fun BattleDetailData.toDomain(
     myUserId: Long,
