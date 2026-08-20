@@ -64,14 +64,11 @@ class NextChallengeViewModel @Inject constructor(
 
     fun startFixedDateChallenge(
         draft: FixedDateChallengeDraft,
-        startDate: java.time.LocalDate,
-        budgetTotal: Int
+        startDate: java.time.LocalDate
     ) {
         if (_isStarting.value) return
         _isStarting.value = true
         viewModelScope.launch {
-            // budgetTotal is the user's edited preview value; the server now derives the actual
-            // budget/dailyLimit from the source challenge and ignores any client-sent amount.
             attemptStartFixedDateChallenge(draft.sourceChallengeId, startDate, allowRetryOnStale = true)
             _isStarting.value = false
         }
@@ -89,7 +86,8 @@ class NextChallengeViewModel @Inject constructor(
             homeWidgetStatePublisher.publishAfterHomeSync()
             _events.send(NextChallengeEvent.Started)
         }.onFailure { error ->
-            val freshSourceChallengeId = if (allowRetryOnStale && (error as? ApiException)?.code == "FIXED_DATE_SOURCE_STALE") {
+            val isStale = allowRetryOnStale && (error as? ApiException)?.code == "FIXED_DATE_SOURCE_STALE"
+            val freshSourceChallengeId = if (isStale) {
                 challengeRepository.loadFixedDateDraft().getOrNull()?.takeIf { it.isDue }?.sourceChallengeId
             } else {
                 null

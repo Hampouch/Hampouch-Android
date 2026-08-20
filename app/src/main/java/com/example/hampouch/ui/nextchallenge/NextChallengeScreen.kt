@@ -235,7 +235,7 @@ private fun NextChallengeContent(
     fixedDateDraft: FixedDateChallengeDraft?,
     recommendationMessage: AnnotatedString,
     modifier: Modifier = Modifier,
-    onStartFixedDateChallenge: (draft: FixedDateChallengeDraft, startDate: LocalDate, budgetTotal: Int) -> Unit,
+    onStartFixedDateChallenge: (draft: FixedDateChallengeDraft, startDate: LocalDate) -> Unit,
     onStartNewChallenge: (OnboardingRequest) -> Unit
 ) {
     var periodEnabled by remember(previousResult, fixedDateDraft) { mutableStateOf(fixedDateDraft == null) }
@@ -361,13 +361,38 @@ private fun NextChallengeContent(
             ) {
                 Text("챌린지 전체 식비 목표", style = Body16Bold, color = HPBlack)
                 Spacer(modifier = Modifier.height(8.dp))
-                EditableAmountRow(
-                    label = null,
-                    value = targetAmount,
-                    onValueChange = { targetAmount = it },
-                    placeholder = "직접 입력",
-                    suffix = "원"
-                )
+                if (fixedDateDraft != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(HPSub2)
+                            .padding(horizontal = 18.dp, vertical = 14.dp)
+                    ) {
+                        Text(
+                            formatWon(targetAmount ?: 0),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = HPWhite,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "이전 챌린지 결과에 맞춰 자동으로 계산돼요.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = HPSub
+                    )
+                } else {
+                    EditableAmountRow(
+                        label = null,
+                        value = targetAmount,
+                        onValueChange = { targetAmount = it },
+                        placeholder = "직접 입력",
+                        suffix = "원"
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("하루 식비 목표", style = Body16Bold, color = HPBlack)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -439,11 +464,7 @@ private fun NextChallengeContent(
                     totalTargetAmount = targetAmount ?: suggestedTargetAmount
                 )
                 if (fixedDateDraft != null && dateFixed) {
-                    onStartFixedDateChallenge(
-                        fixedDateDraft,
-                        requireNotNull(startDate),
-                        targetAmount ?: fixedDateDraft.budgetTotal
-                    )
+                    onStartFixedDateChallenge(fixedDateDraft, requireNotNull(startDate))
                 } else {
                     onStartNewChallenge(request)
                 }
@@ -985,7 +1006,7 @@ private fun NextChallengeRouteCompletePreview() {
             suggestedTargetAmount = 350_000,
             fixedDateDraft = null,
             recommendationMessage = buildRecommendationMessage(PreviewCompleteResult, 350_000),
-            onStartFixedDateChallenge = { _, _, _ -> },
+            onStartFixedDateChallenge = { _, _ -> },
             onStartNewChallenge = {}
         )
     }
@@ -1000,7 +1021,7 @@ private fun NextChallengeRouteFailPreview() {
             suggestedTargetAmount = 440_000,
             fixedDateDraft = null,
             recommendationMessage = buildRecommendationMessage(PreviewFailResult, 440_000),
-            onStartFixedDateChallenge = { _, _, _ -> },
+            onStartFixedDateChallenge = { _, _ -> },
             onStartNewChallenge = {}
         )
     }
