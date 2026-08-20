@@ -96,6 +96,10 @@ class HamTipsRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun replacePosts(posts: List<TipPost>) {
+        _posts.value = posts.distinctBy(TipPost::id)
+    }
+
     private fun prepend(post: TipPost) {
         _posts.update { listOf(post) + it.filterNot { existing -> existing.id == post.id } }
     }
@@ -286,9 +290,11 @@ class HamTipsRepositoryImpl @Inject constructor(
             val response = apiService.getCommunityHome(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.popularPosts.forEach { upsert(it.toTipPost()) }
-                data.pochiPicks.forEach { upsert(it.toTipPost(isEditorAuthor = true)) }
-                data.posts.content.forEach { upsert(it.toTipPost()) }
+                replacePosts(
+                    data.popularPosts.map { it.toTipPost() } +
+                        data.pochiPicks.map { it.toTipPost(isEditorAuthor = true) } +
+                        data.posts.content.map { it.toTipPost() }
+                )
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "커뮤니티 홈을 불러오지 못했습니다."))
@@ -305,7 +311,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             )
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.content.forEach { upsert(it.toTipPost()) }
+                replacePosts(data.content.map { it.toTipPost() })
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "게시글 목록을 불러오지 못했습니다."))
@@ -320,7 +326,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             val response = apiService.getCommunityPopularPosts(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.content.forEach { upsert(it.toTipPost()) }
+                replacePosts(data.content.map { it.toTipPost() })
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "인기글을 불러오지 못했습니다."))
@@ -335,7 +341,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             val response = apiService.getCommunityPochiPicks(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.content.forEach { upsert(it.toTipPost(isEditorAuthor = true)) }
+                replacePosts(data.content.map { it.toTipPost(isEditorAuthor = true) })
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "포치픽 목록을 불러오지 못했습니다."))
@@ -350,7 +356,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             val response = apiService.getMyCommunityPosts(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.content.forEach { upsert(it.toTipPost()) }
+                replacePosts(data.content.map { it.toTipPost() })
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "내가 쓴 꿀팁을 불러오지 못했습니다."))
@@ -365,7 +371,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             val response = apiService.getMyCommunityBookmarks(sortType.toServerSortType(), 0, DEFAULT_PAGE_SIZE)
             val data = response.body()?.data
             if (response.isSuccessful && data != null) {
-                data.content.forEach { upsert(it.toTipPost()) }
+                replacePosts(data.content.map { it.toTipPost() })
                 Result.success(Unit)
             } else {
                 Result.failure(errorFrom(response, "저장한 꿀팁을 불러오지 못했습니다."))

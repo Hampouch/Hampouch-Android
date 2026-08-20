@@ -3,6 +3,7 @@ package com.example.hampouch.ui.expensedetail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -184,25 +185,33 @@ fun ExpenseEditRoute(
                 }
                 ExpenseFormSection(label = stringResource(R.string.expensedetail_field_reason)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ChipGrid(items = reasonOptions) { option ->
-                            when (option) {
-                                is ReasonOption.Preset -> ChoiceChip(
-                                    label = stringResource(option.reason.labelResId),
-                                    selected = !isCustomReason && reasonId == option.reason.id,
-                                    onClick = {
-                                        reasonId = option.reason.id
-                                        isCustomReason = false
-                                    }
-                                )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            reasonOptions.forEach { option ->
+                                when (option) {
+                                    is ReasonOption.Preset -> ChoiceChip(
+                                        label = stringResource(option.reason.labelResId),
+                                        selected = !isCustomReason && reasonId == option.reason.id,
+                                        maxLines = 1,
+                                        fillAvailableWidth = false,
+                                        onClick = {
+                                            reasonId = option.reason.id
+                                            isCustomReason = false
+                                        }
+                                    )
 
-                                ReasonOption.CustomInput -> ChoiceChip(
-                                    label = stringResource(R.string.expensedetail_option_custom_input),
-                                    selected = isCustomReason,
-                                    onClick = {
-                                        isCustomReason = true
-                                        reasonId = null
-                                    }
-                                )
+                                    ReasonOption.CustomInput -> ChoiceChip(
+                                        label = stringResource(R.string.expensedetail_option_custom_input),
+                                        selected = isCustomReason,
+                                        fillAvailableWidth = false,
+                                        onClick = {
+                                            isCustomReason = true
+                                            reasonId = null
+                                        }
+                                    )
+                                }
                             }
                         }
                         if (isCustomReason) {

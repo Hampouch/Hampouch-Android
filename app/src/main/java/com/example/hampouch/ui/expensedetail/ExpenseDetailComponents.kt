@@ -331,13 +331,14 @@ fun ChoiceChip(
     icon: ChoiceChipIcon? = null,
     iconSize: Dp = 16.dp,
     iconSpacing: Dp = 4.dp,
-    maxLines: Int = Int.MAX_VALUE
+    maxLines: Int = Int.MAX_VALUE,
+    fillAvailableWidth: Boolean = true
 ) {
     val backgroundColor = if (selected) HPMain else HPWhite
     val contentColor = if (selected) HPWhite else HPBlack
     Row(
         modifier = modifier
-            .fillMaxWidth()
+            .then(if (fillAvailableWidth) Modifier.fillMaxWidth() else Modifier)
             .fillMaxHeight()
             .heightIn(min = ChoiceChipMinHeight)
             .clip(RoundedCornerShape(50))
