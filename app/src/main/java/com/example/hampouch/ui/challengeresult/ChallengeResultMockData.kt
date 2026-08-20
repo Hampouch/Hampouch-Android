@@ -53,8 +53,17 @@ object ChallengeResultMockData {
     ): ChallengeResultUiState {
         val isOngoing = challenge.isOngoingOn(referenceToday)
         val serverResult = serverResultOrNull(challenge, isOngoing)
-        if (serverResult != null) return serverResult
-        return computeLocalResult(challenge, challengeState, recordsForDate, hasRecordOnDate, referenceToday)
+        val localResult = computeLocalResult(
+            challenge,
+            challengeState,
+            recordsForDate,
+            hasRecordOnDate,
+            referenceToday
+        )
+        return serverResult?.copy(
+            emotionStats = serverResult.emotionStats.ifEmpty { localResult.emotionStats },
+            dailyRecords = serverResult.dailyRecords.ifEmpty { localResult.dailyRecords }
+        ) ?: localResult
     }
 
     private fun computeLocalResult(

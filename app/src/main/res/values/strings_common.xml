@@ -8,6 +8,7 @@
     <string name="common_confirm">확인</string>
     <string name="common_cancel">취소</string>
     <string name="common_retry">다시 시도</string>
+    <string name="common_optional_suffix">(선택)</string>
     <string name="common_load_error_fallback">일시적인 오류로 정보를 불러오지 못했습니다.</string>
     <string name="common_refresh_error_fallback">최신 정보를 불러오지 못했습니다.</string>
 

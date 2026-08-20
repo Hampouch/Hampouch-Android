@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -517,11 +518,7 @@ private fun ExpenseInputDetailStep(
         )
 
         Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            stringResource(R.string.expenseinput_expense_name_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPBlack
-        )
+        ExpenseInputFieldLabel(stringResource(R.string.expenseinput_expense_name_label))
         Spacer(modifier = Modifier.height(10.dp))
         ExpenseTextField(
             value = expenseName,
@@ -530,11 +527,7 @@ private fun ExpenseInputDetailStep(
         )
 
         Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            stringResource(R.string.expensedetail_field_category),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPBlack
-        )
+        ExpenseInputFieldLabel(stringResource(R.string.expensedetail_field_category))
         Spacer(modifier = Modifier.height(10.dp))
         ChipGrid(items = inputCategoryOptions, minColumnWidth = 96.dp) { option ->
             when (option) {
@@ -561,11 +554,7 @@ private fun ExpenseInputDetailStep(
         }
 
         Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            stringResource(R.string.expenseinput_reason_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPBlack
-        )
+        ExpenseInputFieldLabel(stringResource(R.string.expenseinput_reason_label))
         Spacer(modifier = Modifier.height(10.dp))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             presetReasons.chunked(2).forEach { pair ->
@@ -602,11 +591,7 @@ private fun ExpenseInputDetailStep(
         }
 
         Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            stringResource(R.string.expenseinput_memo_label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = HPBlack
-        )
+        ExpenseInputFieldLabel(stringResource(R.string.expenseinput_memo_label))
         Spacer(modifier = Modifier.height(10.dp))
         ExpenseTextField(
             value = memo,
@@ -622,7 +607,21 @@ private fun ExpenseInputDetailStep(
             onPhotosAdded = onPhotosAdded,
             onPhotosRemoved = onPhotosRemoved,
             onPhotoReplaced = onPhotoReplaced,
+            label = { ExpenseInputFieldLabel(stringResource(R.string.expenseinput_photo_label)) },
             maxCount = ExpenseInputPhotoMaxCount
+        )
+    }
+}
+
+@Composable
+private fun ExpenseInputFieldLabel(label: String, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = HPBlack)
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            stringResource(R.string.common_optional_suffix),
+            style = MaterialTheme.typography.bodyMedium,
+            color = HPText
         )
     }
 }

@@ -156,8 +156,8 @@ class ExpenseInputViewModel @Inject constructor(
         it.copy(categoryId = categoryId, isCustomCategory = false)
     }
 
-    fun confirmCustomCategory() = updateForm {
-        it.copy(categoryId = null, isCustomCategory = true)
+    fun confirmCustomCategory() = updateForm { form ->
+        if (form.customCategoryText.isBlank()) form else form.copy(categoryId = null, isCustomCategory = true)
     }
 
     fun changeCustomCategory(text: String) = updateForm { it.copy(customCategoryText = text) }
@@ -166,8 +166,8 @@ class ExpenseInputViewModel @Inject constructor(
         it.copy(reasonId = reasonId, isCustomReason = false)
     }
 
-    fun confirmCustomReason() = updateForm {
-        it.copy(reasonId = null, isCustomReason = true)
+    fun confirmCustomReason() = updateForm { form ->
+        if (form.customReasonText.isBlank()) form else form.copy(reasonId = null, isCustomReason = true)
     }
 
     fun changeCustomReason(text: String) = updateForm { it.copy(customReasonText = text) }

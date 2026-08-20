@@ -1,8 +1,10 @@
 package com.example.hampouch.ui.challengeresult
 
 import com.example.hampouch.domain.model.ActiveChallenge
+import com.example.hampouch.domain.model.ChallengeResultSummary
 import com.example.hampouch.domain.model.ChallengeResultStatus
 import com.example.hampouch.domain.model.ChallengeState
+import com.example.hampouch.domain.model.SpendingEmotion
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -160,5 +162,43 @@ class ChallengeResultMockDataTest {
 
         assertEquals(7, result.totalDays)
         assertEquals("7일 챌린지", result.title)
+    }
+
+    @Test
+    fun `서버 결과의 감정과 캘린더가 비어 있으면 로컬 결과를 유지한다`() {
+        val startDate = LocalDate.of(2026, 8, 16)
+        val challenge = ActiveChallenge(
+            id = "abandoned",
+            totalDays = 7,
+            periodStart = startDate,
+            periodEnd = startDate.plusDays(6),
+            dailyLimit = 10_000,
+            targetAmount = 70_000,
+            savedAmount = 0,
+            streakDays = 0,
+            editCount = 0,
+            abandonedDate = startDate.plusDays(3),
+            remoteStatus = "FAIL",
+            resultSummary = ChallengeResultSummary(
+                successDays = 0,
+                overDays = 0,
+                savedAmount = 0,
+                overAmount = 0,
+                maxStreak = 0,
+                budgetTotal = 70_000,
+                actualSpent = 0
+            )
+        )
+
+        val result = ChallengeResultMockData.forChallenge(
+            challenge = challenge,
+            challengeState = ChallengeState(challenges = listOf(challenge)),
+            recordsForDate = { emptyList() },
+            hasRecordOnDate = { false },
+            referenceToday = startDate.plusDays(3)
+        )
+
+        assertEquals(SpendingEmotion.entries.size, result.emotionStats.size)
+        assertEquals(3, result.dailyRecords.size)
     }
 }

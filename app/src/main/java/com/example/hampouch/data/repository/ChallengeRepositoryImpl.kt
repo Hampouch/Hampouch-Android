@@ -308,7 +308,13 @@ class ChallengeRepositoryImpl @Inject constructor(
     )
 
     private fun ChallengeEmotionBreakdownDto.toDomain(): EmotionStat = EmotionStat(
-        emotion = runCatching { SpendingEmotion.valueOf(emotion) }.getOrDefault(SpendingEmotion.ETC),
+        emotion = when (emotion) {
+            "COMPENSATION", "REWARD" -> SpendingEmotion.REWARD
+            "CONVENIENCE", "LAZY" -> SpendingEmotion.LAZY
+            "IMPULSE", "CRAVING" -> SpendingEmotion.CRAVING
+            "STRESS" -> SpendingEmotion.STRESS
+            else -> SpendingEmotion.ETC
+        },
         percent = ratio,
         amount = amount
     )

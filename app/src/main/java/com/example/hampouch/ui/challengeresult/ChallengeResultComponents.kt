@@ -296,8 +296,16 @@ fun SpendingEmotionAnalysis(stats: List<EmotionStat>, modifier: Modifier = Modif
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            stats.forEach { stat ->
-                EmotionChip(stat = stat, modifier = Modifier.weight(1f))
+            if (stats.isEmpty()) {
+                Text(
+                    "소비 감정 기록이 없어요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = HPText
+                )
+            } else {
+                stats.forEach { stat ->
+                    EmotionChip(stat = stat, modifier = Modifier.weight(1f))
+                }
             }
         }
     }
@@ -444,6 +452,16 @@ fun DailyRecordCalendar(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+        if (records.isEmpty()) {
+            Text(
+                "표시할 하루 기록이 없어요.",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = HPText,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         Row(
             modifier = Modifier.padding(start = 20.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -534,60 +552,69 @@ private fun CalendarLegendItem(color: Color, label: String) {
     }
 }
 
+@Suppress("LongParameterList")
 @Composable
 fun ChallengeResultBottomActions(
+    showShareAction: Boolean = true,
+    showFollowUpActions: Boolean = true,
     onShareClick: () -> Unit,
     onStartNewChallengeClick: () -> Unit,
     onTakeABreakClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = onShareClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(10.dp),
-            border = BorderStroke(1.dp, HPMain),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = HPWhite,
-                contentColor = HPBlack
-            )
-        ) {
-            Text(
-                "결과 공유하기",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
-            )
+        if (showShareAction) {
+            OutlinedButton(
+                onClick = onShareClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, HPMain),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = HPWhite,
+                    contentColor = HPBlack
+                )
+            ) {
+                Text(
+                    "결과 공유하기",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(20.dp))
-        Button(
-            onClick = onStartNewChallengeClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = HPMain)
-        ) {
-            Text(
-                "다음 챌린지 시작하기",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = HPWhite
-            )
+        if (showShareAction && showFollowUpActions) {
+            Spacer(modifier = Modifier.height(20.dp))
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        TextButton(
-            onClick = onTakeABreakClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                "챌린지 쉬어가기",
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = HPText
-            )
+        if (showFollowUpActions) {
+            Button(
+                onClick = onStartNewChallengeClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HPMain)
+            ) {
+                Text(
+                    "다음 챌린지 시작하기",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = HPWhite
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            TextButton(
+                onClick = onTakeABreakClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "챌린지 쉬어가기",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HPText
+                )
+            }
         }
     }
 }

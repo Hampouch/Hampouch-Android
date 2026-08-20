@@ -283,11 +283,12 @@ fun MyPageScreen(
                     state = state,
                     onBackClick = { route = MyPageRoute.CHALLENGE_HISTORY },
                     showFollowUpActions = false,
+                    showShareAction = true,
                     onExpenseAnalysisClick = {
                         onNavigateToChallengeExpenseAnalysis(state.totalDays, state.periodStart, state.periodEnd)
                     },
                     onAdjustGoalClick = onNavigateToAmountAdjustment,
-                    onShareClick = { route = MyPageRoute.MY_TIPS },
+                    onShareClick = {},
                     onStartNewChallengeClick = onStartNewChallengeClick,
                     onTakeABreakClick = onNavigateToTakeABreak
                 )

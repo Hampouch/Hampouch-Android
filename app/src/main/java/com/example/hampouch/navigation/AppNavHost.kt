@@ -191,12 +191,21 @@ fun AppNavHost(
         battleViewModel.events.collect { event ->
             when (event) {
                 is HamBattleEvent.Created -> {
-                    event.challenge.battleCode
+                    event.battleCode
                         ?.let(::buildBattleInviteUrl)
                         ?.let { inviteUrl ->
                             clipboardManager.setText(AnnotatedString(inviteUrl))
-                            Toast.makeText(context, "초대 링크가 복사되었어요.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "초대 링크가 복사되었어요.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
+                        ?: Toast.makeText(
+                            context,
+                            "햄배틀은 생성됐지만 초대 링크를 만들지 못했어요.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     navController.popBackStack()
                 }
                 is HamBattleEvent.Joined -> externalJoinCodeInFlight?.let { code ->
@@ -930,7 +939,7 @@ fun AppNavHost(
                         )
                     },
                     onAdjustGoalClick = { navController.navigate(Screen.AmountAdjustment.route) },
-                    onShareClick = { onBottomNavItemSelected(BottomNavItem.COMMUNITY) },
+                    onShareClick = {},
                     onStartNewChallengeClick = { suggestedTargetAmount ->
                         val dueDraft = fixedDateDraft?.takeIf { it.isDue }
                         if (dueDraft != null) {
