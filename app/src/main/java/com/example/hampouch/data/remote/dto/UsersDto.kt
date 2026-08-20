@@ -56,4 +56,4 @@ data class UsersProfilePhotoPresignData(
 
 data class UsersProfilePhotoApplyRequest(val imageKey: String)
 
-data class UsersProfilePhotoApplyData(val profileImageUrl: String)
+data class UsersProfilePhotoApplyData(val imageUrl: String)

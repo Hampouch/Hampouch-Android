@@ -104,9 +104,16 @@ private fun monthGridStart(date: LocalDate): LocalDate {
     return weekGridStart(firstOfMonth)
 }
 
+private fun weekReferenceDate(weekStart: LocalDate): LocalDate = weekStart.plusDays(4)
+
 private fun weekOfMonthOrdinal(weekStart: LocalDate): Int {
-    val gridStart = monthGridStart(weekStart)
-    return ((weekStart.toEpochDay() - gridStart.toEpochDay()) / 7).toInt() + 1
+    val month = YearMonth.from(weekReferenceDate(weekStart))
+    var firstThursday = month.atDay(1)
+    while (firstThursday.dayOfWeek != DayOfWeek.THURSDAY) {
+        firstThursday = firstThursday.plusDays(1)
+    }
+    val firstWeekStart = firstThursday.minusDays(4)
+    return ((weekStart.toEpochDay() - firstWeekStart.toEpochDay()) / 7).toInt() + 1
 }
 
 @Composable
@@ -116,7 +123,7 @@ fun ExpenseCalendarRoute(
     modifier: Modifier = Modifier,
     referenceToday: LocalDate = LocalDate.now(),
     challengePeriod: ExpenseChallengePeriod? = null,
-    onExpenseAnalysisClick: () -> Unit,
+    onExpenseAnalysisClick: (YearMonth) -> Unit,
     onAddExpenseClick: (LocalDate) -> Unit,
     restrictToChallengePeriod: Boolean = false,
     viewModel: ExpenseCalendarViewModel = hiltViewModel()
@@ -175,7 +182,7 @@ fun ExpenseCalendarRoute(
         isResting = restState.isResting,
         onBackClick = onBackClick,
         onExpenseClick = onExpenseClick,
-        onExpenseAnalysisClick = onExpenseAnalysisClick,
+        onExpenseAnalysisClick = { onExpenseAnalysisClick(YearMonth.from(displayedMonth)) },
         onAddExpenseClick = onAddExpenseClick,
         onRetryMonth = viewModel::retryMonth,
         onRetryWeek = viewModel::retryWeek,
@@ -239,7 +246,11 @@ private fun ExpenseCalendarContent(
     val weeklyTotal = weekSummary?.totalAmount ?: 0L
     val weeklyDailyAverage = weekSummary?.dailyAverage ?: 0L
 
-    val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) displayedWeekStart else displayedMonth
+    val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) {
+        weekReferenceDate(displayedWeekStart)
+    } else {
+        displayedMonth
+    }
 
     Scaffold(
         modifier = modifier,
@@ -328,7 +339,7 @@ private fun ExpenseCalendarContent(
                         } else {
                             stringResource(
                                 R.string.expensedetail_calendar_weekly_total_format,
-                                displayedWeekStart.monthValue,
+                                weekReferenceDate(displayedWeekStart).monthValue,
                                 weekOrdinals[weekOrdinalIndex]
                             )
                         },
@@ -733,7 +744,11 @@ private fun WeekNavigator(
                 Icon(Icons.Filled.ChevronLeft, contentDescription = stringResource(R.string.cd_calendar_week_prev), tint = HPBlack)
             }
             Text(
-                stringResource(R.string.expensedetail_calendar_week_label_format, weekStart.monthValue, ordinals[ordinalIndex]),
+                stringResource(
+                    R.string.expensedetail_calendar_week_label_format,
+                    weekReferenceDate(weekStart).monthValue,
+                    ordinals[ordinalIndex]
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = HPBlack

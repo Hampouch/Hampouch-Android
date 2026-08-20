@@ -19,7 +19,7 @@
 
     <string name="onboarding_step1_badge">식비 현실 진단</string>
     <string name="onboarding_step1_title">지난달 식비가 얼마였나요?</string>
-    <string name="onboarding_step1_caption">솔직하게 입력할수록\n더 정확한 진단이 돼요.</string>
+    <string name="onboarding_step1_caption">솔직하게 입력할수록 더 정확한 진단이 돼요.</string>
     <string name="onboarding_last_month_expense_label">지난 달 식비</string>
     <string name="onboarding_last_month_expense_max_error_format">%1$s원까지 입력할 수 있어요</string>
     <string name="onboarding_step1_bullet1">배달, 카페, 외식 모두 포함해서 적어주세요.</string>

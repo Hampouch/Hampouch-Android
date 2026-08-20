@@ -15,6 +15,7 @@ import com.example.hampouch.data.remote.CommunityApi
 import com.example.hampouch.data.remote.toApiException
 import com.example.hampouch.domain.repository.AccountScopedState
 import com.example.hampouch.domain.repository.HamTipsRepository
+import com.example.hampouch.domain.repository.MyPageProfileRepository
 import okhttp3.OkHttpClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,11 +67,13 @@ class HamTipsRepositoryImpl @Inject constructor(
     private val apiService: CommunityApi,
     private val okHttpClient: OkHttpClient,
     private val authRepository: AuthRepository,
-    private val mockDataSource: HamTipsMockDataSource
+    private val mockDataSource: HamTipsMockDataSource,
+    private val myPageProfileRepository: MyPageProfileRepository
 ) : HamTipsRepository, AccountScopedState {
 
     private val activeUserId: String get() = authRepository.currentUser.value.id
     private val activeUserName: String get() = authRepository.currentUser.value.name
+    private val activeUserAvatarUrl: String? get() = myPageProfileRepository.profile.value?.avatarUri
 
     private val _posts = MutableStateFlow(
         if (CommunityConfig.USE_SERVER_COMMUNITY) emptyList() else mockDataSource.allPosts()
@@ -182,7 +185,8 @@ class HamTipsRepositoryImpl @Inject constructor(
         authorName = authorName,
         content = content,
         timeLabel = formatTimeAgoLabel(minutesAgoFrom(createdAt)),
-        isDeleted = isDeleted
+        isDeleted = isDeleted,
+        authorAvatarUrl = if (isMine) activeUserAvatarUrl else profileImageUrl
     )
 
     private fun CommunityCommentData.toTipComment(): TipComment = TipComment(
@@ -194,7 +198,8 @@ class HamTipsRepositoryImpl @Inject constructor(
         isDeleted = isDeleted,
         replies = replies.map { it.toTipReply() },
         replyCount = replyCount,
-        hasMoreReplies = hasMoreReplies
+        hasMoreReplies = hasMoreReplies,
+        authorAvatarUrl = if (isMine) activeUserAvatarUrl else profileImageUrl
     )
 
     private fun CommunityPostDetailData.toTipPost(isEditorAuthor: Boolean): TipPost = TipPost(
@@ -810,7 +815,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             mutate(postId) { post ->
                 val comment = TipComment(
                     id = newId("comment"), authorId = activeUserId, authorName = activeUserName,
-                    content = content, timeLabel = JUST_NOW_LABEL
+                    content = content, timeLabel = JUST_NOW_LABEL, authorAvatarUrl = activeUserAvatarUrl
                 )
                 post.copy(comments = post.comments + comment, commentCount = post.commentCount + 1)
             }
@@ -827,7 +832,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                 mutate(postId) { post ->
                     val comment = TipComment(
                         id = data.commentId.toString(), authorId = activeUserId, authorName = activeUserName,
-                        content = content, timeLabel = JUST_NOW_LABEL
+                        content = content, timeLabel = JUST_NOW_LABEL, authorAvatarUrl = activeUserAvatarUrl
                     )
                     post.copy(comments = post.comments + comment, commentCount = post.commentCount + 1)
                 }
@@ -843,7 +848,7 @@ class HamTipsRepositoryImpl @Inject constructor(
             mutate(postId) { post ->
                 val reply = TipReply(
                     id = newId("reply"), authorId = activeUserId, authorName = activeUserName,
-                    content = content, timeLabel = JUST_NOW_LABEL
+                    content = content, timeLabel = JUST_NOW_LABEL, authorAvatarUrl = activeUserAvatarUrl
                 )
                 val comments = post.comments.map { comment ->
                     if (comment.id == commentId) comment.copy(replies = comment.replies + reply) else comment
@@ -865,7 +870,7 @@ class HamTipsRepositoryImpl @Inject constructor(
                 mutate(postId) { post ->
                     val reply = TipReply(
                         id = data.commentId.toString(), authorId = activeUserId, authorName = activeUserName,
-                        content = content, timeLabel = JUST_NOW_LABEL
+                        content = content, timeLabel = JUST_NOW_LABEL, authorAvatarUrl = activeUserAvatarUrl
                     )
                     val comments = post.comments.map { comment ->
                         if (comment.id == commentId) comment.copy(replies = comment.replies + reply) else comment

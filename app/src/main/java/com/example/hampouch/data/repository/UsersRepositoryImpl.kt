@@ -223,7 +223,7 @@ class UsersRepositoryImpl @Inject constructor(
             val applyData = applyResponse.body()?.data
             if (applyResponse.isSuccessful && applyData != null) {
                 myPageProfileRepository.profile.value?.let {
-                    myPageProfileRepository.setProfile(it.copy(avatarUri = applyData.profileImageUrl))
+                    myPageProfileRepository.setProfile(it.copy(avatarUri = applyData.imageUrl))
                 }
                 Result.success(Unit)
             } else {

@@ -580,8 +580,8 @@ fun AppNavHost(
                 onExpenseClick = { expenseId ->
                     navController.navigate(Screen.ExpenseDetail.createRoute(expenseId))
                 },
-                onExpenseAnalysisClick = {
-                    navController.navigate(Screen.ExpenseAnalysis.createRoute(YearMonth.now()))
+                onExpenseAnalysisClick = { month ->
+                    navController.navigate(Screen.ExpenseAnalysis.createRoute(month))
                 },
                 onAddExpenseClick = { date ->
                     navController.navigate(Screen.ExpenseInput.createRoute(date))

@@ -66,7 +66,8 @@ data class TipReply(
     val authorName: String,
     val content: String,
     val timeLabel: String,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val authorAvatarUrl: String? = null
 )
 
 data class TipComment(
@@ -78,7 +79,8 @@ data class TipComment(
     val isDeleted: Boolean = false,
     val replies: List<TipReply> = emptyList(),
     val replyCount: Int = 0,
-    val hasMoreReplies: Boolean = false
+    val hasMoreReplies: Boolean = false,
+    val authorAvatarUrl: String? = null
 )
 
 data class TipPost(

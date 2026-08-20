@@ -99,7 +99,10 @@ class MyPageProfileViewModel @Inject constructor(
 
     fun update(user: User, name: String, avatarUri: String?) {
         val previous = myPageProfileRepository.profile.value ?: myPageProfileRepository.defaultProfileFor(user)
-        myPageProfileRepository.update(user, name, avatarUri)
+        // avatarUri may be a temporary local picker URI (content://) that can't be re-read once this
+        // screen is left, so keep showing the previous (durable) avatar until the upload confirms a
+        // real server URL — otherwise the picture appears to apply, then reverts after navigating away.
+        myPageProfileRepository.update(user, name, previous.avatarUri)
         viewModelScope.launch {
             if (name != previous.name) {
                 usersRepository.updateNickname(name).onFailure { error ->

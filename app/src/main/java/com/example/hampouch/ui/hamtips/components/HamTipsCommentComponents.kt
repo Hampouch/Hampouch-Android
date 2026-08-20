@@ -88,7 +88,11 @@ fun HamTipsMoreMenuSheet(items: List<HamTipsMenuSheetItem>, onDismiss: () -> Uni
 }
 
 @Composable
-fun HamTipsProfileAvatar(size: androidx.compose.ui.unit.Dp = 36.dp, modifier: Modifier = Modifier) {
+fun HamTipsProfileAvatar(
+    size: androidx.compose.ui.unit.Dp = 36.dp,
+    modifier: Modifier = Modifier,
+    avatarUrl: String? = null
+) {
     Box(
         modifier = modifier
             .size(size)
@@ -96,12 +100,22 @@ fun HamTipsProfileAvatar(size: androidx.compose.ui.unit.Dp = 36.dp, modifier: Mo
             .background(HPGray5),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(R.drawable.icon_normal_avatar),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        val bitmap = avatarUrl?.let { rememberImageBitmapFromUri(it) }
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.icon_normal_avatar),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -149,7 +163,7 @@ fun HamTipsReplyRow(
         modifier = modifier.fillMaxWidth().padding(start = 46.dp, top = 10.dp),
         verticalAlignment = Alignment.Top
     ) {
-        HamTipsProfileAvatar(size = 28.dp)
+        HamTipsProfileAvatar(size = 28.dp, avatarUrl = reply.authorAvatarUrl)
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -215,7 +229,7 @@ fun HamTipsCommentRow(
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(top = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            HamTipsProfileAvatar(size = 36.dp)
+            HamTipsProfileAvatar(size = 36.dp, avatarUrl = comment.authorAvatarUrl)
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
