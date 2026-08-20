@@ -52,7 +52,7 @@ class ExpenseAnalysisViewModel @Inject constructor(
             expenseRepository.loadAnalysis(periodStart, periodEnd)
                 .onSuccess {
                     _summary.value = it
-                    _loadState.value = LoadState.Content(it.totalAmount == 0)
+                    _loadState.value = LoadState.Content(it.totalAmount == 0L)
                 }
                 .onFailure { _loadState.value = LoadState.Failure(it.toUserMessage("지출 분석을 불러오지 못했습니다.")) }
         }

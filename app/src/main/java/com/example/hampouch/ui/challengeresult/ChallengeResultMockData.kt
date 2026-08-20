@@ -70,7 +70,7 @@ object ChallengeResultMockData {
             .takeWhile { !it.isAfter(trackedEnd) }
             .flatMap { recordsForDate(it) }
             .toList()
-        val actualAmount = recordsInPeriod.sumOf { it.amount }
+        val actualAmount = recordsInPeriod.sumOf { it.amount.toLong() }
 
         val progress = challengeState.computeProgress(
             referenceToday,
@@ -155,6 +155,6 @@ object ChallengeResultMockData {
     ): ChallengeResultUiState =
         forChallenge(challengeState.activeChallenge!!, challengeState, recordsForDate, hasRecordOnDate, referenceToday)
 
-    fun recommendedTightenedTarget(actualAmount: Int): Int =
+    fun recommendedTightenedTarget(actualAmount: Long): Int =
         com.example.hampouch.domain.model.recommendedTightenedTarget(actualAmount)
 }

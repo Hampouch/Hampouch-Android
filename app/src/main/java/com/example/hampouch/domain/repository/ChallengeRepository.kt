@@ -34,9 +34,7 @@ interface ChallengeRepository {
 
     suspend fun startFixedDateChallenge(
         sourceChallengeId: Long,
-        startDate: LocalDate,
-        budgetTotal: Int,
-        fixedDay: Int
+        startDate: LocalDate
     ): Result<ActiveChallenge>
 
     suspend fun updateTargetAmount(newTargetAmount: Int, effectiveFrom: LocalDate = LocalDate.now()): Result<Unit>

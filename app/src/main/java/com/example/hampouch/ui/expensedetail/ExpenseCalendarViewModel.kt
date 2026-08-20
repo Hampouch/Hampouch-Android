@@ -60,7 +60,7 @@ class ExpenseCalendarViewModel @Inject constructor(
             expenseRepository.loadMonthSummary(month)
                 .onSuccess {
                     _monthSummary.value = it
-                    _monthLoadState.value = LoadState.Content(it.totalAmount == 0)
+                    _monthLoadState.value = LoadState.Content(it.totalAmount == 0L)
                 }
                 .onFailure { _monthLoadState.value = LoadState.Failure(it.toUserMessage("월간 기록을 불러오지 못했습니다.")) }
         }
@@ -73,7 +73,7 @@ class ExpenseCalendarViewModel @Inject constructor(
             expenseRepository.loadWeekSummary(weekStart)
                 .onSuccess {
                     _weekSummary.value = it
-                    _weekLoadState.value = LoadState.Content(it.totalAmount == 0)
+                    _weekLoadState.value = LoadState.Content(it.totalAmount == 0L)
                 }
                 .onFailure { _weekLoadState.value = LoadState.Failure(it.toUserMessage("주간 기록을 불러오지 못했습니다.")) }
         }

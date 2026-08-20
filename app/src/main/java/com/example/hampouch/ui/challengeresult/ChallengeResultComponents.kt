@@ -79,8 +79,9 @@ val RecordSuccessColor = HPSub2
 val RecordFailColor = HPSub
 
 fun formatWon(amount: Int): String = String.format(Locale.KOREA, "%,d원", amount)
+fun formatWon(amount: Long): String = String.format(Locale.KOREA, "%,d원", amount)
 
-private fun formatNumber(amount: Int): String = String.format(Locale.KOREA, "%,d", amount)
+private fun formatNumber(amount: Long): String = String.format(Locale.KOREA, "%,d", amount)
 
 @Composable
 fun StatBox(label: String, value: String, highlighted: Boolean, modifier: Modifier = Modifier) {
@@ -121,9 +122,9 @@ private fun StatBoxPreview() {
 @Composable
 fun GoalSummaryCard(
     label: String,
-    amount: Int,
+    amount: Long,
     goalAmount: Int,
-    actualAmount: Int,
+    actualAmount: Long,
     modifier: Modifier = Modifier
 ) {
     Column(

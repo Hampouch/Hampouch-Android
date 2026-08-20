@@ -24,15 +24,15 @@ enum class SpendingEmotion {
 data class EmotionStat(
     val emotion: SpendingEmotion,
     val percent: Int,
-    val amount: Int = 0
+    val amount: Long = 0
 )
 
 data class ChallengeResultSummary(
     val successDays: Int,
     val overDays: Int,
-    val savedAmount: Int,
-    val overAmount: Int,
+    val savedAmount: Long,
+    val overAmount: Long,
     val maxStreak: Int,
     val budgetTotal: Int,
-    val actualSpent: Int
+    val actualSpent: Long
 )

@@ -15,7 +15,7 @@ data class ActiveChallenge(
     val periodEnd: LocalDate,
     val dailyLimit: Int,
     val targetAmount: Int,
-    val savedAmount: Int,
+    val savedAmount: Long,
     val streakDays: Int,
     val editCount: Int,
     val repeatMonthly: Boolean = false,
@@ -63,7 +63,7 @@ data class ActiveChallenge(
 }
 
 data class ChallengeProgress(
-    val savedAmount: Int,
+    val savedAmount: Long,
     val streakDays: Int,
     val dailyRecords: Map<LocalDate, DailyRecordStatus>
 )

@@ -11,6 +11,9 @@ data class ChallengeCreateRequest(
 
 data class ChallengeCreateData(
     val challengeId: Long,
+    val fixedDay: Int? = null,
+    val durationDays: Int,
+    val budgetTotal: Int,
     val dailyLimit: Int,
     val startDate: String,
     val endDate: String,
@@ -33,12 +36,12 @@ data class ChallengeProgressDto(
     val successDays: Int,
     val overDays: Int,
     val currentStreak: Int,
-    val savedAmountSoFar: Int
+    val savedAmountSoFar: Long
 )
 
 data class ChallengeConsumptionDto(
-    val todaySpent: Int,
-    val todayRemaining: Int,
+    val todaySpent: Long,
+    val todayRemaining: Long,
     val dailyLimit: Int,
     val usageRate: Double,
     val character: String,
@@ -71,8 +74,8 @@ data class ChallengeHistoryItemDto(
     val endDate: String,
     val durationDays: Int,
     val budgetTotal: Int,
-    val actualSpent: Int,
-    val savedAmount: Int
+    val actualSpent: Long,
+    val savedAmount: Long
 )
 
 data class ChallengeHistoryListData(
@@ -88,16 +91,16 @@ data class ChallengeResultPeriodDto(
 data class ChallengeResultSummaryDto(
     val successDays: Int,
     val overDays: Int,
-    val savedAmount: Int,
-    val overAmount: Int,
+    val savedAmount: Long,
+    val overAmount: Long,
     val maxStreak: Int,
     val budgetTotal: Int,
-    val actualSpent: Int
+    val actualSpent: Long
 )
 
 data class ChallengeEmotionBreakdownDto(
     val emotion: String,
-    val amount: Int,
+    val amount: Long,
     val ratio: Int
 )
 
@@ -132,14 +135,14 @@ data class ChallengeFocusCategoriesData(
 
 data class ChallengeFixedDateStartRequest(
     val sourceChallengeId: Long,
-    val startDate: String,
-    val budgetTotal: Int,
-    val fixedDay: Int
+    val startDate: String
 )
 
 data class ChallengeFixedDateStartData(
     val challengeId: Long,
+    val fixedDay: Int? = null,
     val durationDays: Int,
+    val budgetTotal: Int,
     val dailyLimit: Int,
     val startDate: String,
     val endDate: String,
@@ -162,7 +165,7 @@ data class ChallengeFixedDateDraftData(
 data class ChallengeCalendarDayDto(
     val date: String,
     val status: String,
-    val spentAmount: Int
+    val spentAmount: Long
 )
 
 data class ChallengeCalendarData(

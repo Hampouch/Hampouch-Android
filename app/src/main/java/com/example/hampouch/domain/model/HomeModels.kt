@@ -24,7 +24,7 @@ data class HomeChallenge(
     val periodEndLabel: String,
     val dailyLimit: Int,
     val todayBalance: Int,
-    val savedAmount: Int,
+    val savedAmount: Long,
     val streakDays: Int,
     val isEnded: Boolean = false
 ) {

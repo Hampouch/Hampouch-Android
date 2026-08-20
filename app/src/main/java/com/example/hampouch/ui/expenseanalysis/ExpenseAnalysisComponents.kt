@@ -143,7 +143,7 @@ fun resolveAnalysisCategoryLabel(record: ExpenseRecord): String {
 @Composable
 fun ExpenseAnalysisDonutChart(
     items: List<AmountBreakdownItem>,
-    totalAmount: Int,
+    totalAmount: Long,
     colorOf: @Composable (String) -> Color,
     modifier: Modifier = Modifier
 ) {
@@ -205,7 +205,7 @@ private fun ExpenseAnalysisDonutChartPreview() {
 fun CategoryLegendRow(
     label: String,
     dotColor: Color,
-    amount: Int,
+    amount: Long,
     percent: Int,
     modifier: Modifier = Modifier
 ) {
@@ -310,7 +310,7 @@ private fun ReasonStatChipPreview() {
 }
 
 @Composable
-fun ReasonProgressRow(label: String, amount: Int, fraction: Float, barColor: Color, modifier: Modifier = Modifier) {
+fun ReasonProgressRow(label: String, amount: Long, fraction: Float, barColor: Color, modifier: Modifier = Modifier) {
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             label,
@@ -464,12 +464,12 @@ fun MonthlyTrendChart(items: List<MonthlyTotal>, modifier: Modifier = Modifier) 
                 val topInset = size.height * 0.06f
                 val usableHeight = size.height * 0.88f
                 val axisRange = (axisMax - axisMin).coerceAtLeast(1)
-                fun yFor(amount: Int): Float {
+                fun yFor(amount: Long): Float {
                     val t = (amount - axisMin) / axisRange.toFloat()
                     return topInset + usableHeight - (t * usableHeight)
                 }
                 ticks.forEach { tick ->
-                    val y = yFor(tick)
+                    val y = yFor(tick.toLong())
                     drawLine(HPGray4, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
                 }
                 val points = items.mapIndexed { index, item -> Offset(index * stepX, yFor(item.amount)) }
@@ -569,7 +569,7 @@ private fun AnalysisTabRowPreview() {
 fun DetailSpentSummaryCard(
     titleFormatResId: Int,
     label: String,
-    amount: Int,
+    amount: Long,
     count: Int,
     percent: Int,
     modifier: Modifier = Modifier
@@ -733,7 +733,7 @@ fun weekdayFullNames(days: List<DayOfWeek>): List<String> =
 @Composable
 fun PochiAnalysisCard(
     periodLabel: String,
-    totalAmount: Int,
+    totalAmount: Long,
     topCategoryLabels: String,
     topCategoryPercent: Int,
     topReasonLabel: String,

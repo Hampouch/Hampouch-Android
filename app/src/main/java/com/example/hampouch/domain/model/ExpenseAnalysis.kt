@@ -19,37 +19,37 @@ val ExpenseWeekdayOrder: List<DayOfWeek> = listOf(
 
 data class AmountBreakdownItem(
     val id: String,
-    val amount: Int,
+    val amount: Long,
     val percent: Int
 )
 
 data class WeekdayAmount(
     val dayOfWeek: DayOfWeek,
-    val amount: Int
+    val amount: Long
 )
 
 data class MonthlyTotal(
     val month: YearMonth,
-    val amount: Int
+    val amount: Long
 )
 
 data class DailyAmount(
     val date: LocalDate,
-    val amount: Int
+    val amount: Long
 )
 
 data class ExpensePeriodSummary(
     val periodStart: LocalDate,
     val periodEnd: LocalDate,
-    val totalAmount: Int,
-    val dailyAverage: Int,
+    val totalAmount: Long,
+    val dailyAverage: Long,
     val dailyBreakdown: List<DailyAmount>
 )
 
 data class ExpenseAnalysisSummary(
     val periodStart: LocalDate,
     val periodEnd: LocalDate,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val categoryBreakdown: List<AmountBreakdownItem>,
     val reasonBreakdown: List<AmountBreakdownItem>,
     val weekdayBreakdown: List<WeekdayAmount>,
@@ -59,7 +59,7 @@ data class ExpenseAnalysisSummary(
 
 data class ExpenseTagAnalysisResult(
     val id: String,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val count: Int,
     val percent: Int,
     val records: List<ExpenseRecord>
@@ -67,8 +67,8 @@ data class ExpenseTagAnalysisResult(
 
 data class ExpenseTrendResult(
     val month: YearMonth,
-    val totalAmount: Int,
-    val monthlyAverage: Int,
+    val totalAmount: Long,
+    val monthlyAverage: Long,
     val diffRateFromLastMonth: Int?,
     val trend: List<MonthlyTotal>,
     val trendInsight: String?

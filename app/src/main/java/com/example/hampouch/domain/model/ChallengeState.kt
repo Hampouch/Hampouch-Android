@@ -43,7 +43,7 @@ data class ChallengeState(
         fun balanceOn(date: LocalDate) = challenge.dailyLimitOn(date) - spentOnDate(date)
         fun isSuccess(date: LocalDate) = date !in noRecordDates && hasRecordOnDate(date) && balanceOn(date) >= 0
 
-        val savedAmount = days.sumOf { balanceOn(it) }
+        val savedAmount = days.sumOf { balanceOn(it).toLong() }
         var streakDays = 0
         for (day in days.asReversed()) {
             if (isSuccess(day)) streakDays++ else break
@@ -55,5 +55,5 @@ data class ChallengeState(
     }
 }
 
-fun recommendedTightenedTarget(actualAmount: Int): Int =
-    ((actualAmount / 50_000).coerceAtLeast(1)) * 50_000
+fun recommendedTightenedTarget(actualAmount: Long): Int =
+    (((actualAmount / 50_000).coerceAtLeast(1)) * 50_000).toInt()

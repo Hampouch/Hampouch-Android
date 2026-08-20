@@ -233,11 +233,11 @@ private fun ExpenseCalendarContent(
         effectiveChallengePeriod != null && referenceToday.isAfter(effectiveChallengePeriod.endDate)
     val editableRange = effectiveChallengePeriod.takeIf { restrictToChallengePeriod }
 
-    val monthlyTotal = monthSummary?.totalAmount ?: 0
-    val monthlyDailyAverage = monthSummary?.dailyAverage ?: 0
+    val monthlyTotal = monthSummary?.totalAmount ?: 0L
+    val monthlyDailyAverage = monthSummary?.dailyAverage ?: 0L
 
-    val weeklyTotal = weekSummary?.totalAmount ?: 0
-    val weeklyDailyAverage = weekSummary?.dailyAverage ?: 0
+    val weeklyTotal = weekSummary?.totalAmount ?: 0L
+    val weeklyDailyAverage = weekSummary?.dailyAverage ?: 0L
 
     val topBarYearMonth = if (viewMode == ExpenseCalendarViewMode.WEEKLY) displayedWeekStart else displayedMonth
 
@@ -548,8 +548,8 @@ private fun CalendarToggleSegment(
 @Composable
 private fun CalendarStatCard(
     totalLabel: String,
-    totalAmount: Int,
-    dailyAverage: Int,
+    totalAmount: Long,
+    dailyAverage: Long,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false
 ) {
@@ -608,7 +608,7 @@ private fun MonthCalendarGrid(
     month: LocalDate,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    summaryByDate: Map<LocalDate, Int>,
+    summaryByDate: Map<LocalDate, Long>,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     editableRange: ExpenseChallengePeriod? = null
@@ -644,7 +644,7 @@ private fun WeekCalendarRow(
     weekStart: LocalDate,
     referenceToday: LocalDate,
     selectedDate: LocalDate,
-    summaryByDate: Map<LocalDate, Int>,
+    summaryByDate: Map<LocalDate, Long>,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -674,7 +674,7 @@ private fun CalendarDayCell(
     isCurrentMonth: Boolean,
     referenceToday: LocalDate,
     selected: Boolean,
-    amount: Int?,
+    amount: Long?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     forceMutedColor: Boolean = false

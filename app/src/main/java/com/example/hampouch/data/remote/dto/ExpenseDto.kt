@@ -67,31 +67,31 @@ data class ExpenseDaySummaryItemData(
 
 data class ExpenseDaySummaryData(
     val date: String,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val hasRecord: Boolean? = null,
     val expenses: List<ExpenseDaySummaryItemData>
 )
 
-data class ExpenseDailyAmountData(val date: String, val amount: Int)
+data class ExpenseDailyAmountData(val date: String, val amount: Long)
 
 data class ExpensePeriodSummaryData(
     val periodStart: String,
     val periodEnd: String,
-    val totalAmount: Int,
-    val dailyAverage: Int,
+    val totalAmount: Long,
+    val dailyAverage: Long,
     val dailyBreakdown: List<ExpenseDailyAmountData>
 )
 
-data class ExpenseCategoryAmountData(val category: String, val amount: Int, val ratio: Int)
+data class ExpenseCategoryAmountData(val category: String, val amount: Long, val ratio: Int)
 
-data class ExpenseEmotionAmountData(val emotion: String, val amount: Int, val ratio: Int)
+data class ExpenseEmotionAmountData(val emotion: String, val amount: Long, val ratio: Int)
 
-data class ExpenseWeekdayAmountData(val dayOfWeek: String, val amount: Int)
+data class ExpenseWeekdayAmountData(val dayOfWeek: String, val amount: Long)
 
 data class ExpenseAnalysisData(
     val periodStart: String,
     val periodEnd: String,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val categoryBreakdown: List<ExpenseCategoryAmountData>,
     val emotionBreakdown: List<ExpenseEmotionAmountData>,
     val weekdayBreakdown: List<ExpenseWeekdayAmountData>,
@@ -111,7 +111,7 @@ data class ExpenseTagAnalysisItemData(
 
 data class ExpenseCategoryAnalysisData(
     val category: String,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val count: Int,
     val ratio: Int,
     val items: List<ExpenseTagAnalysisItemData>
@@ -119,18 +119,18 @@ data class ExpenseCategoryAnalysisData(
 
 data class ExpenseEmotionAnalysisData(
     val emotion: String,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val count: Int,
     val ratio: Int,
     val items: List<ExpenseTagAnalysisItemData>
 )
 
-data class ExpenseTrendPointData(val month: String, val amount: Int)
+data class ExpenseTrendPointData(val month: String, val amount: Long)
 
 data class ExpenseTrendData(
     val month: String,
-    val totalAmount: Int,
-    val monthlyAverage: Int,
+    val totalAmount: Long,
+    val monthlyAverage: Long,
     val diffRateFromLastMonth: Int? = null,
     val trend: List<ExpenseTrendPointData>,
     val trendInsight: String

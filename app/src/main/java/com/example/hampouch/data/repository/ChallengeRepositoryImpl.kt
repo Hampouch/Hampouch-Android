@@ -40,7 +40,7 @@ private const val TAG = "ChallengeRepository"
 
 private const val CHALLENGE_TOTAL_DAYS = 14
 private const val CHALLENGE_DAILY_LIMIT = 20_000
-private const val CHALLENGE_SAVED_AMOUNT = 21_400
+private const val CHALLENGE_SAVED_AMOUNT = 21_400L
 private const val CHALLENGE_STREAK_DAYS = 4
 private const val HTTP_NOT_FOUND = 404
 
@@ -202,7 +202,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                 periodEnd = LocalDate.parse(summary.endDate),
                 dailyLimit = summary.dailyLimit,
                 targetAmount = summary.budgetTotal,
-                savedAmount = data.progress?.savedAmountSoFar ?: 0,
+                savedAmount = data.progress?.savedAmountSoFar ?: 0L,
                 streakDays = data.progress?.currentStreak ?: 0,
                 editCount = 0,
                 remoteStatus = summary.status
@@ -350,7 +350,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             periodEnd = periodEnd,
             dailyLimit = dailyLimit,
             targetAmount = targetAmount,
-            savedAmount = 0,
+            savedAmount = 0L,
             streakDays = 0,
             editCount = 0,
             repeatMonthly = repeatMonthly
@@ -393,12 +393,12 @@ class ChallengeRepositoryImpl @Inject constructor(
                 val createdEnd = LocalDate.parse(data.endDate)
                 val newChallenge = ActiveChallenge(
                     id = data.challengeId.toString(),
-                    totalDays = challengeDurationDays(createdStart, createdEnd),
+                    totalDays = data.durationDays,
                     periodStart = createdStart,
                     periodEnd = createdEnd,
                     dailyLimit = data.dailyLimit,
-                    targetAmount = budgetTotal,
-                    savedAmount = 0,
+                    targetAmount = data.budgetTotal,
+                    savedAmount = 0L,
                     streakDays = 0,
                     editCount = 0,
                     repeatMonthly = repeatMonthly,
@@ -465,7 +465,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                 periodEnd = nextEnd,
                 dailyLimit = ended.dailyLimit,
                 targetAmount = ended.targetAmount,
-                savedAmount = 0,
+                savedAmount = 0L,
                 streakDays = 0,
                 editCount = 0,
                 repeatMonthly = true
@@ -529,9 +529,7 @@ class ChallengeRepositoryImpl @Inject constructor(
 
     override suspend fun startFixedDateChallenge(
         sourceChallengeId: Long,
-        startDate: LocalDate,
-        budgetTotal: Int,
-        fixedDay: Int
+        startDate: LocalDate
     ): Result<ActiveChallenge> {
         if (!ChallengeConfig.USE_SERVER_CHALLENGE) {
             return Result.failure(ApiException(code = "SERVER_DISABLED", message = "날짜 고정 챌린지를 시작할 수 없습니다."))
@@ -541,9 +539,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             val startResponse = apiService.startFixedDateChallenge(
                 ChallengeFixedDateStartRequest(
                     sourceChallengeId = sourceChallengeId,
-                    startDate = startDate.toString(),
-                    budgetTotal = budgetTotal,
-                    fixedDay = fixedDay
+                    startDate = startDate.toString()
                 )
             )
             val data = startResponse.body()?.data
@@ -554,8 +550,8 @@ class ChallengeRepositoryImpl @Inject constructor(
                     periodStart = LocalDate.parse(data.startDate),
                     periodEnd = LocalDate.parse(data.endDate),
                     dailyLimit = data.dailyLimit,
-                    targetAmount = budgetTotal,
-                    savedAmount = 0,
+                    targetAmount = data.budgetTotal,
+                    savedAmount = 0L,
                     streakDays = 0,
                     editCount = 0,
                     repeatMonthly = true,

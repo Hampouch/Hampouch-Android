@@ -81,6 +81,9 @@ import com.example.hampouch.ui.theme.HampouchTheme
 import java.time.LocalDate
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
+internal fun formatWon(amount: Long): String = "%,d".format(amount)
+
+private const val MaxEditExpenseAmount = 10_000_000
 
 private val MockDrawableRes = mapOf(
     "img_hamster_chubby" to R.drawable.img_hamster_chubby
@@ -467,7 +470,12 @@ fun AmountTextField(
         value = if (amount == 0) "" else formatWon(amount),
         onValueChange = { raw ->
             val digitsOnly = raw.filter { it.isDigit() }
-            onAmountChange(digitsOnly.toIntOrNull() ?: 0)
+            val parsed = digitsOnly.toIntOrNull()
+            when {
+                digitsOnly.isEmpty() -> onAmountChange(0)
+                parsed != null && parsed <= MaxEditExpenseAmount -> onAmountChange(parsed)
+                else -> Unit
+            }
         },
         placeholder = "0",
         modifier = modifier,

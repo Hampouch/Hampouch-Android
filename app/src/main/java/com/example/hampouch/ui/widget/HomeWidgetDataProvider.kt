@@ -105,7 +105,7 @@ class HomeWidgetSnapshotStore @Inject constructor(
             putInt(KEY_TOTAL_DAYS, values.totalDays)
             putInt(KEY_DAILY_LIMIT, values.dailyLimit)
             putInt(KEY_TODAY_BALANCE, values.todayBalance)
-            putInt(KEY_SAVED_AMOUNT, values.savedAmount)
+            putLong(KEY_SAVED_AMOUNT, values.savedAmount)
             putInt(KEY_STREAK_DAYS, values.streakDays)
         }
         HomeWidget().updateAll(context)
@@ -135,7 +135,7 @@ class HomeWidgetSnapshotStore @Inject constructor(
             preferences.getInt(KEY_TOTAL_DAYS, -1) == values.totalDays &&
             preferences.getInt(KEY_DAILY_LIMIT, -1) == values.dailyLimit &&
             preferences.getInt(KEY_TODAY_BALANCE, Int.MIN_VALUE) == values.todayBalance &&
-            preferences.getInt(KEY_SAVED_AMOUNT, Int.MIN_VALUE) == values.savedAmount &&
+            preferences.getLong(KEY_SAVED_AMOUNT, Long.MIN_VALUE) == values.savedAmount &&
             preferences.getInt(KEY_STREAK_DAYS, -1) == values.streakDays
 
     private fun readChallenge(referenceToday: LocalDate): HomeWidgetState {
@@ -162,7 +162,7 @@ class HomeWidgetSnapshotStore @Inject constructor(
                 periodEndLabel = periodEnd.format(periodLabelFormatter),
                 dailyLimit = dailyLimit,
                 todayBalance = todayBalance,
-                savedAmount = preferences.getInt(KEY_SAVED_AMOUNT, 0),
+                savedAmount = preferences.getLong(KEY_SAVED_AMOUNT, 0L),
                 streakDays = preferences.getInt(KEY_STREAK_DAYS, 0)
             )
         )
@@ -194,6 +194,6 @@ private data class ChallengeSnapshot(
     val totalDays: Int,
     val dailyLimit: Int,
     val todayBalance: Int,
-    val savedAmount: Int,
+    val savedAmount: Long,
     val streakDays: Int
 )

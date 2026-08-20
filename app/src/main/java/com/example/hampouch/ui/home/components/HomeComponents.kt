@@ -72,6 +72,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.hampouch.ui.theme.HampouchTheme
 
 internal fun formatWon(amount: Int): String = "%,d".format(amount)
+internal fun formatWon(amount: Long): String = "%,d".format(amount)
 
 @Composable
 fun HomeHeader(
@@ -371,7 +372,7 @@ private fun CharacterGaugeSectionPreview() {
 private const val StreakBoxWidthDeltaRatio = 0.2f
 
 @Composable
-fun SavingsStreakRow(savedAmount: Int, streakDays: Int, modifier: Modifier = Modifier) {
+fun SavingsStreakRow(savedAmount: Long, streakDays: Int, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val gap = 12.dp
         val halfWidth = (maxWidth - gap) / 2

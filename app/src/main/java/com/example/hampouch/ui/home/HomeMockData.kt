@@ -61,7 +61,7 @@ private fun buildChallenge(
     challenge: ActiveChallenge,
     date: LocalDate,
     todayBalance: Int,
-    savedAmount: Int = challenge.savedAmount,
+    savedAmount: Long = challenge.savedAmount,
     streakDays: Int = challenge.streakDays
 ): HomeChallenge = HomeChallenge(
     totalDays = challenge.totalDays,

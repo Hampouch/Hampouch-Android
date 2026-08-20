@@ -174,17 +174,17 @@ private fun ExpenseAnalysisContent(
         }
     }
 
-    val totalAmount = summary?.totalAmount ?: 0
+    val totalAmount = summary?.totalAmount ?: 0L
     val categoryItems = summary?.categoryBreakdown.orEmpty()
     val reasonItemsSorted = summary?.reasonBreakdown?.sortedByDescending { it.amount }.orEmpty()
     val weekdayItems = summary?.weekdayBreakdown
-        ?: ExpenseAnalysisWeekdayOrder.map { WeekdayAmount(it, 0) }
+        ?: ExpenseAnalysisWeekdayOrder.map { WeekdayAmount(it, 0L) }
     val peakDays = remember(weekdayItems) {
-        val maxAmount = weekdayItems.maxOfOrNull { it.amount } ?: 0
+        val maxAmount = weekdayItems.maxOfOrNull { it.amount } ?: 0L
         if (maxAmount <= 0) emptySet() else weekdayItems.filter { it.amount == maxAmount }.map { it.dayOfWeek }.take(2).toSet()
     }
 
-    val topCategoryAmount = categoryItems.maxOfOrNull { it.amount } ?: 0
+    val topCategoryAmount = categoryItems.maxOfOrNull { it.amount } ?: 0L
     val topCategoryItems = categoryItems.filter { it.amount == topCategoryAmount && topCategoryAmount > 0 }.take(2)
     val topReasonItem = reasonItemsSorted.firstOrNull()
     val peakWeekdayNames = weekdayFullNames(ExpenseAnalysisWeekdayOrder.filter { it in peakDays }.take(2))
@@ -311,7 +311,7 @@ private fun ExpenseAnalysisTopBar(title: String, onBackClick: () -> Unit, modifi
 @Composable
 private fun MonthHeaderCard(
     month: YearMonth,
-    totalAmount: Int,
+    totalAmount: Long,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
@@ -348,7 +348,7 @@ private fun ChallengeHeaderCard(
     totalDays: Int,
     periodStart: LocalDate,
     periodEnd: LocalDate,
-    totalAmount: Int,
+    totalAmount: Long,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -398,7 +398,7 @@ private fun AnalysisSectionHeader(title: String, onDetailClick: () -> Unit, modi
 }
 
 @Composable
-private fun CategoryAnalysisCard(items: List<AmountBreakdownItem>, totalAmount: Int, modifier: Modifier = Modifier) {
+private fun CategoryAnalysisCard(items: List<AmountBreakdownItem>, totalAmount: Long, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -430,7 +430,7 @@ private fun CategoryAnalysisCard(items: List<AmountBreakdownItem>, totalAmount: 
 
 @Composable
 private fun ReasonAnalysisCard(items: List<AmountBreakdownItem>, modifier: Modifier = Modifier) {
-    val maxAmount = (items.maxOfOrNull { it.amount } ?: 0).coerceAtLeast(1)
+    val maxAmount = (items.maxOfOrNull { it.amount } ?: 0L).coerceAtLeast(1)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -535,10 +535,10 @@ private fun MonthlyExpenseContent(
     onRetry: () -> Unit
 ) {
     val totals = trend?.trend.orEmpty()
-    val currentTotal = trend?.totalAmount ?: 0
-    val average = trend?.monthlyAverage ?: 0
+    val currentTotal = trend?.totalAmount ?: 0L
+    val average = trend?.monthlyAverage ?: 0L
     val changePercent = trend?.diffRateFromLastMonth ?: 0
-    val maxTotal = totals.maxOfOrNull { it.amount } ?: 0
+    val maxTotal = totals.maxOfOrNull { it.amount } ?: 0L
 
     Scaffold(
         modifier = modifier,
@@ -602,8 +602,8 @@ private fun MonthlyExpenseContent(
 @Composable
 private fun MonthlyStatRow(
     currentMonth: YearMonth,
-    currentTotal: Int,
-    average: Int,
+    currentTotal: Long,
+    average: Long,
     changePercent: Int,
     modifier: Modifier = Modifier
 ) {
@@ -650,7 +650,7 @@ private fun MonthlyTotalRow(
     total: MonthlyTotal,
     isHighest: Boolean,
     isCurrent: Boolean,
-    maxAmount: Int,
+    maxAmount: Long,
     modifier: Modifier = Modifier
 ) {
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -744,7 +744,7 @@ private fun CategoryDetailContent(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit
 ) {
-    val selectedAmount = tagResult?.totalAmount ?: 0
+    val selectedAmount = tagResult?.totalAmount ?: 0L
     val selectedPercent = tagResult?.percent ?: 0
     val records = tagResult?.records.orEmpty()
 
@@ -847,7 +847,7 @@ private fun ReasonDetailContent(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit
 ) {
-    val selectedAmount = tagResult?.totalAmount ?: 0
+    val selectedAmount = tagResult?.totalAmount ?: 0L
     val selectedPercent = tagResult?.percent ?: 0
     val records = tagResult?.records.orEmpty()
 

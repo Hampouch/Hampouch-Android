@@ -258,9 +258,7 @@ class ExpenseInputViewModelTest {
         override suspend fun loadFixedDateDraft(): Result<FixedDateChallengeDraft?> = Result.success(null)
         override suspend fun startFixedDateChallenge(
             sourceChallengeId: Long,
-            startDate: LocalDate,
-            budgetTotal: Int,
-            fixedDay: Int
+            startDate: LocalDate
         ): Result<ActiveChallenge> = error("unused")
         override suspend fun updateTargetAmount(
             newTargetAmount: Int,

@@ -49,9 +49,9 @@ class PendingChallengeResultStore @Inject constructor(
             .putInt(KEY_TOTAL_DAYS, value.totalDays)
             .putInt(KEY_SUCCESS_DAYS, value.successDays)
             .putInt(KEY_STREAK_DAYS, value.streakDays)
-            .putInt(KEY_AMOUNT_VALUE, value.amountValue)
+            .putLong(KEY_AMOUNT_VALUE, value.amountValue)
             .putInt(KEY_GOAL_AMOUNT, value.goalAmount)
-            .putInt(KEY_ACTUAL_AMOUNT, value.actualAmount)
+            .putLong(KEY_ACTUAL_AMOUNT, value.actualAmount)
             .putInt(KEY_DAILY_LIMIT, value.dailyLimit)
             .putStringSet(KEY_EMOTION_STATS, value.emotionStats.map(::encodeEmotionStat).toSet())
             .putStringSet(KEY_DAILY_RECORDS, value.dailyRecords.map(::encodeDailyRecord).toSet())
@@ -82,9 +82,9 @@ class PendingChallengeResultStore @Inject constructor(
             totalDays = totalDays,
             successDays = preferences.getInt(KEY_SUCCESS_DAYS, 0),
             streakDays = preferences.getInt(KEY_STREAK_DAYS, 0),
-            amountValue = preferences.getInt(KEY_AMOUNT_VALUE, 0),
+            amountValue = preferences.getLong(KEY_AMOUNT_VALUE, 0L),
             goalAmount = preferences.getInt(KEY_GOAL_AMOUNT, 0),
-            actualAmount = preferences.getInt(KEY_ACTUAL_AMOUNT, 0),
+            actualAmount = preferences.getLong(KEY_ACTUAL_AMOUNT, 0L),
             dailyLimit = preferences.getInt(KEY_DAILY_LIMIT, 0),
             emotionStats = readEmotionStats(),
             dailyRecords = readDailyRecords()
@@ -108,7 +108,7 @@ class PendingChallengeResultStore @Inject constructor(
 
     private fun decodeEmotionStat(encoded: String): EmotionStat? = runCatching {
         val (emotion, percent, amount) = encoded.split(SEPARATOR)
-        EmotionStat(SpendingEmotion.valueOf(emotion), percent.toInt(), amount.toInt())
+        EmotionStat(SpendingEmotion.valueOf(emotion), percent.toInt(), amount.toLong())
     }.getOrNull()
 
     private fun encodeDailyRecord(entry: Map.Entry<LocalDate, DailyRecordStatus>): String =

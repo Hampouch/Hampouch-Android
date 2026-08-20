@@ -11,9 +11,9 @@ data class PendingChallengeResult(
     val totalDays: Int,
     val successDays: Int,
     val streakDays: Int,
-    val amountValue: Int,
+    val amountValue: Long,
     val goalAmount: Int,
-    val actualAmount: Int,
+    val actualAmount: Long,
     val dailyLimit: Int,
     val emotionStats: List<EmotionStat>,
     val dailyRecords: Map<LocalDate, DailyRecordStatus>

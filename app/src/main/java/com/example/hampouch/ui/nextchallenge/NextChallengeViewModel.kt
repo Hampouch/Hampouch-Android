@@ -2,6 +2,7 @@ package com.example.hampouch.ui.nextchallenge
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.OnboardingRequest
 import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
@@ -69,20 +70,37 @@ class NextChallengeViewModel @Inject constructor(
         if (_isStarting.value) return
         _isStarting.value = true
         viewModelScope.launch {
-            challengeRepository.startFixedDateChallenge(
-                sourceChallengeId = draft.sourceChallengeId,
-                startDate = startDate,
-                budgetTotal = budgetTotal,
-                fixedDay = startDate.dayOfMonth
-            ).onSuccess {
-                homeWidgetStatePublisher.publishAfterHomeSync()
-                _events.send(NextChallengeEvent.Started)
-            }.onFailure { error ->
+            // budgetTotal is the user's edited preview value; the server now derives the actual
+            // budget/dailyLimit from the source challenge and ignores any client-sent amount.
+            attemptStartFixedDateChallenge(draft.sourceChallengeId, startDate, allowRetryOnStale = true)
+            _isStarting.value = false
+        }
+    }
+
+    private suspend fun attemptStartFixedDateChallenge(
+        sourceChallengeId: Long,
+        startDate: java.time.LocalDate,
+        allowRetryOnStale: Boolean
+    ) {
+        challengeRepository.startFixedDateChallenge(
+            sourceChallengeId = sourceChallengeId,
+            startDate = startDate
+        ).onSuccess {
+            homeWidgetStatePublisher.publishAfterHomeSync()
+            _events.send(NextChallengeEvent.Started)
+        }.onFailure { error ->
+            val freshSourceChallengeId = if (allowRetryOnStale && (error as? ApiException)?.code == "FIXED_DATE_SOURCE_STALE") {
+                challengeRepository.loadFixedDateDraft().getOrNull()?.takeIf { it.isDue }?.sourceChallengeId
+            } else {
+                null
+            }
+            if (freshSourceChallengeId != null) {
+                attemptStartFixedDateChallenge(freshSourceChallengeId, startDate, allowRetryOnStale = false)
+            } else {
                 _events.send(
                     NextChallengeEvent.ShowMessage(error.toUserMessage("챌린지 시작에 실패했습니다."))
                 )
             }
-            _isStarting.value = false
         }
     }
 }

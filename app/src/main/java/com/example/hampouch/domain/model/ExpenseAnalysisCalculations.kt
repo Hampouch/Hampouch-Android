@@ -11,7 +11,7 @@ private fun categoryBucketOf(record: ExpenseRecord): String =
 private fun reasonBucketOf(record: ExpenseRecord): String =
     record.reasonId?.takeIf { it in ExpenseReasonIds } ?: ExpenseAnalysisEtcId
 
-private fun percentOf(amount: Int, total: Int): Int =
+private fun percentOf(amount: Long, total: Long): Int =
     if (total <= 0) 0 else Math.round(amount * 100f / total)
 
 fun List<ExpenseRecord>.inPeriod(start: LocalDate, end: LocalDate): List<ExpenseRecord> =
@@ -20,11 +20,11 @@ fun List<ExpenseRecord>.inPeriod(start: LocalDate, end: LocalDate): List<Expense
 fun List<ExpenseRecord>.categoryBreakdown(
     order: List<String> = ExpenseCategoryIds
 ): List<AmountBreakdownItem> {
-    val total = sumOf { it.amount }
+    val total = sumOf { it.amount.toLong() }
     val amountByBucket = groupBy { categoryBucketOf(it) }
-        .mapValues { (_, records) -> records.sumOf { it.amount } }
+        .mapValues { (_, records) -> records.sumOf { it.amount.toLong() } }
     return order.map { id ->
-        val amount = amountByBucket[id] ?: 0
+        val amount = amountByBucket[id] ?: 0L
         AmountBreakdownItem(id, amount, percentOf(amount, total))
     }
 }
@@ -32,11 +32,11 @@ fun List<ExpenseRecord>.categoryBreakdown(
 fun List<ExpenseRecord>.reasonBreakdown(
     order: List<String> = ExpenseReasonIds
 ): List<AmountBreakdownItem> {
-    val total = sumOf { it.amount }
+    val total = sumOf { it.amount.toLong() }
     val amountByBucket = groupBy { reasonBucketOf(it) }
-        .mapValues { (_, records) -> records.sumOf { it.amount } }
+        .mapValues { (_, records) -> records.sumOf { it.amount.toLong() } }
     return order.map { id ->
-        val amount = amountByBucket[id] ?: 0
+        val amount = amountByBucket[id] ?: 0L
         AmountBreakdownItem(id, amount, percentOf(amount, total))
     }
 }
@@ -49,13 +49,13 @@ fun List<ExpenseRecord>.recordsForReason(reasonId: String): List<ExpenseRecord> 
 
 fun List<ExpenseRecord>.weekdayBreakdown(): List<WeekdayAmount> {
     val amountByDay = groupBy { it.date.dayOfWeek }
-        .mapValues { (_, records) -> records.sumOf { it.amount } }
-    return ExpenseWeekdayOrder.map { WeekdayAmount(it, amountByDay[it] ?: 0) }
+        .mapValues { (_, records) -> records.sumOf { it.amount.toLong() } }
+    return ExpenseWeekdayOrder.map { WeekdayAmount(it, amountByDay[it] ?: 0L) }
 }
 
 fun List<ExpenseRecord>.peakWeekdays(maxCount: Int = 2): List<DayOfWeek> {
     val breakdown = weekdayBreakdown()
-    val maxAmount = breakdown.maxOfOrNull { it.amount } ?: 0
+    val maxAmount = breakdown.maxOfOrNull { it.amount } ?: 0L
     if (maxAmount <= 0) return emptyList()
     return breakdown.filter { it.amount == maxAmount }.map { it.dayOfWeek }.take(maxCount)
 }
@@ -66,9 +66,9 @@ fun List<ExpenseRecord>.monthlyTotals(
 ): List<MonthlyTotal> {
     val startMonth = YearMonth.from(referenceToday).minusMonths((monthCount - 1).toLong())
     val amountByMonth = groupBy { YearMonth.from(it.date) }
-        .mapValues { (_, records) -> records.sumOf { it.amount } }
+        .mapValues { (_, records) -> records.sumOf { it.amount.toLong() } }
     return (0 until monthCount).map { offset ->
         val month = startMonth.plusMonths(offset.toLong())
-        MonthlyTotal(month, amountByMonth[month] ?: 0)
+        MonthlyTotal(month, amountByMonth[month] ?: 0L)
     }
 }

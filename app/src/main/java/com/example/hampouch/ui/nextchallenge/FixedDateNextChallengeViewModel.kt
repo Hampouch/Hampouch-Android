@@ -2,6 +2,7 @@ package com.example.hampouch.ui.nextchallenge
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hampouch.domain.model.ApiException
 import com.example.hampouch.domain.model.FixedDateChallengeDraft
 import com.example.hampouch.domain.model.toUserMessage
 import com.example.hampouch.domain.repository.ChallengeRepository
@@ -51,22 +52,50 @@ class FixedDateNextChallengeViewModel @Inject constructor(
         if (isStarting) return
         isStarting = true
         viewModelScope.launch {
-            challengeRepository.startFixedDateChallenge(
-                sourceChallengeId = draft.sourceChallengeId,
-                startDate = draft.nextStartDate,
-                budgetTotal = draft.budgetTotal,
-                fixedDay = draft.fixedDay
-            ).onSuccess {
-                homeWidgetStatePublisher.publishAfterHomeSync()
-                _events.send(FixedDateNextChallengeEvent.Started)
-            }.onFailure { error ->
+            attemptStartChallenge(draft, allowRetryOnStale = true)
+            isStarting = false
+        }
+    }
+
+    private suspend fun attemptStartChallenge(draft: FixedDateChallengeDraft, allowRetryOnStale: Boolean) {
+        challengeRepository.startFixedDateChallenge(
+            sourceChallengeId = draft.sourceChallengeId,
+            startDate = draft.nextStartDate
+        ).onSuccess {
+            homeWidgetStatePublisher.publishAfterHomeSync()
+            _events.send(FixedDateNextChallengeEvent.Started)
+        }.onFailure { error ->
+            if (allowRetryOnStale && (error as? ApiException)?.code == "FIXED_DATE_SOURCE_STALE") {
+                retryWithFreshDraft()
+            } else {
                 _events.send(
                     FixedDateNextChallengeEvent.ShowMessage(
                         error.toUserMessage("다음 챌린지 시작에 실패했습니다.")
                     )
                 )
             }
-            isStarting = false
         }
+    }
+
+    /**
+     * FIXED_DATE_SOURCE_STALE means midnight passed between fetching the draft and confirming
+     * start, so the cycle rolled over — re-fetch the draft and retry once with the fresh values.
+     */
+    private suspend fun retryWithFreshDraft() {
+        challengeRepository.loadFixedDateDraft()
+            .onSuccess { freshDraft ->
+                if (freshDraft?.isDue == true) {
+                    attemptStartChallenge(freshDraft, allowRetryOnStale = false)
+                } else {
+                    _events.send(FixedDateNextChallengeEvent.Unavailable)
+                }
+            }
+            .onFailure { error ->
+                _events.send(
+                    FixedDateNextChallengeEvent.ShowMessage(
+                        error.toUserMessage("다음 챌린지 정보를 불러오지 못했습니다.")
+                    )
+                )
+            }
     }
 }

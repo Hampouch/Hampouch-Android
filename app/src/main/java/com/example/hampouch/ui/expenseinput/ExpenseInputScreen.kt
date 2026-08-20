@@ -68,7 +68,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-internal const val MaxExpenseAmount = 999_999_999L
+internal const val MaxExpenseAmount = 10_000_000L
 private const val ExpenseInputPhotoMaxCount = 5
 
 private val inputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")

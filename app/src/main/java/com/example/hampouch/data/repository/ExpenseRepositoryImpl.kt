@@ -445,8 +445,8 @@ class ExpenseRepositoryImpl @Inject constructor(
     private fun localPeriodSummary(start: LocalDate, end: LocalDate): ExpensePeriodSummary {
         val records = _records.value.values.toList().inPeriod(start, end)
         val days = (ChronoUnit.DAYS.between(start, end).toInt() + 1).coerceAtLeast(1)
-        val total = records.sumOf { it.amount }
-        val byDate = records.groupBy { it.date }.mapValues { (_, r) -> r.sumOf { it.amount } }
+        val total = records.sumOf { it.amount.toLong() }
+        val byDate = records.groupBy { it.date }.mapValues { (_, r) -> r.sumOf { it.amount.toLong() } }
         return ExpensePeriodSummary(
             periodStart = start,
             periodEnd = end,
@@ -498,7 +498,7 @@ class ExpenseRepositoryImpl @Inject constructor(
                 ExpenseAnalysisSummary(
                     periodStart = periodStart,
                     periodEnd = periodEnd,
-                    totalAmount = records.sumOf { it.amount },
+                    totalAmount = records.sumOf { it.amount.toLong() },
                     categoryBreakdown = records.categoryBreakdown(),
                     reasonBreakdown = records.reasonBreakdown(),
                     weekdayBreakdown = records.weekdayBreakdown(),
@@ -516,17 +516,17 @@ class ExpenseRepositoryImpl @Inject constructor(
                     .associateBy { serverCategoryToLocal[it.category] ?: ExpenseAnalysisEtcId }
                 val categoryItems = ExpenseCategoryIds.map { id ->
                     val entry = categoryByLocalId[id]
-                    AmountBreakdownItem(id, entry?.amount ?: 0, entry?.ratio ?: 0)
+                    AmountBreakdownItem(id, entry?.amount ?: 0L, entry?.ratio ?: 0)
                 }
                 val reasonByLocalId = data.emotionBreakdown
                     .associateBy { localReasonFromServer[it.emotion] ?: ExpenseAnalysisEtcId }
                 val reasonItems = ExpenseReasonIds.map { id ->
                     val entry = reasonByLocalId[id]
-                    AmountBreakdownItem(id, entry?.amount ?: 0, entry?.ratio ?: 0)
+                    AmountBreakdownItem(id, entry?.amount ?: 0L, entry?.ratio ?: 0)
                 }
                 val weekdayByDay = data.weekdayBreakdown.associateBy { DayOfWeek.valueOf(it.dayOfWeek) }
                 val weekdayItems = ExpenseWeekdayOrder.map { day ->
-                    WeekdayAmount(day, weekdayByDay[day]?.amount ?: 0)
+                    WeekdayAmount(day, weekdayByDay[day]?.amount ?: 0L)
                 }
                 Result.success(
                     ExpenseAnalysisSummary(
@@ -624,8 +624,8 @@ class ExpenseRepositoryImpl @Inject constructor(
     ): ExpenseTagAnalysisResult {
         val periodRecords = _records.value.values.toList().inPeriod(periodStart, periodEnd)
         val picked = pick(periodRecords)
-        val periodTotal = periodRecords.sumOf { it.amount }
-        val total = picked.sumOf { it.amount }
+        val periodTotal = periodRecords.sumOf { it.amount.toLong() }
+        val total = picked.sumOf { it.amount.toLong() }
         return ExpenseTagAnalysisResult(
             id = id,
             totalAmount = total,
@@ -638,13 +638,13 @@ class ExpenseRepositoryImpl @Inject constructor(
     override suspend fun loadTrend(month: YearMonth): Result<ExpenseTrendResult> {
         if (!ExpenseConfig.USE_SERVER_EXPENSE) {
             val totals = _records.value.values.toList().monthlyTotals(month.atDay(1))
-            val currentTotal = totals.lastOrNull()?.amount ?: 0
-            val previousTotal = totals.getOrNull(totals.lastIndex - 1)?.amount ?: 0
+            val currentTotal = totals.lastOrNull()?.amount ?: 0L
+            val previousTotal = totals.getOrNull(totals.lastIndex - 1)?.amount ?: 0L
             return Result.success(
                 ExpenseTrendResult(
                     month = month,
                     totalAmount = currentTotal,
-                    monthlyAverage = if (totals.isEmpty()) 0 else totals.sumOf { it.amount } / totals.size,
+                    monthlyAverage = if (totals.isEmpty()) 0L else totals.sumOf { it.amount } / totals.size,
                     diffRateFromLastMonth = if (previousTotal <= 0) {
                         null
                     } else {
